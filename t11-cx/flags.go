@@ -118,35 +118,35 @@ func printVersion() {
 }
 
 func checkHelp(args []string) bool {
-	if strings.Contains(args[0], "help") {
+	if command(args[0], "help") {
 		return true
 	}
 	return false
 }
 
 func checkversion(args []string) bool {
-	if strings.Contains(args[0], "version") {
+	if command(args[0], "version") {
 		return true
 	}
 	return false
 }
 
 func checkenv(args []string) bool {
-	if strings.Contains(args[0], "env") {
+	if command(args[0], "env") {
 		return true
 	}
 	return false
 }
 
 func checkAST(args []string) bool {
-	if strings.Contains(args[0], "ast") {
+	if command(args[0], "ast") {
 		return true
 	}
 	return false
 }
 
 func checktokenizeMode(args []string) bool {
-	if strings.Contains(args[0], "tokenize") {
+	if command(args[0], "tokenize") {
 		return true
 	}
 	return false
@@ -162,4 +162,10 @@ func printEnv() {
 	fmt.Println("Operating system: ", runtime.GOOS)
 	fmt.Println("CX version: ", VERSION)
 	fmt.Println("CX binary location: ", filepath.Dir(ex))
+}
+
+// command reports whether arg names the subcommand, with or without leading
+// dashes, so a file path containing the name is not taken for it.
+func command(arg, name string) bool {
+	return strings.TrimLeft(arg, "-") == name
 }
