@@ -21,7 +21,7 @@ runner. `tests/` holds the CX test programs, `lib/` CX libraries and
 the former CX repositories with a keep, merge or delete recommendation.
 
 
-[Table of Contents](#Table-ofContents) 
+Table of Contents
 
    * [CX Programming Language](#cx-programming-language-1)
    * [Installation](#installation)
@@ -56,7 +56,7 @@ You can find binary releases for most major systems on the [release page](https:
 
 ### Compiling on Linux
 
-If you are using a `apt` compatible system, install the dependencies with"
+If you are using an `apt` compatible system, install the dependencies with:
 
 ```
 sudo apt-get update
@@ -64,9 +64,9 @@ sudo apt-get update
 sudo apt-get install -y glade xvfb libxinerama-dev libxcursor-dev libxrandr-dev libgl1-mesa-dev libxi-dev libperl-dev libcairo2-dev libpango1.0-dev libglib2.0-dev libopenal-dev libxxf86vm-dev make
 ```
 
-If you have not setup Golang on your machine, follow this [guide](https://www.tecmint.com/install-go-in-ubuntu/) to install and setup Go. 
+If you have not set up Go on your machine, follow this [guide](https://www.tecmint.com/install-go-in-ubuntu/) to install and set up Go.
 
-Download CX's repository using Go:
+Download CX's repository with git:
 
 ```
 git clone https://github.com/skycoin/skycoin-cx
@@ -91,7 +91,7 @@ make test
 Add the CX binary path to your operating system's `$PATH`. For example, in Linux:
 
 ```
-export PATH=$PATH:$HOME/cx/bin
+export PATH=$PATH:$HOME/skycoin-cx/bin
 ```
 
 You should test your installation by running:
@@ -102,15 +102,15 @@ make test
 
 ### Compiling on MacOS
 
-If you have not setup Golang on your machine, follow this [guide](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos) to install and setup Go. 
+If you have not set up Go on your machine, follow this [guide](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos) to install and set up Go.
 
-If you do not have `git` installed, do so with:
+If you do not have `git` installed, install it with:
 
 ```
 brew install git
 ```
 
-Download CX's repository using Go:
+Download CX's repository with git:
 
 ```
 git clone https://github.com/skycoin/skycoin-cx
@@ -124,10 +124,10 @@ Build CX's binary and install by running:
 make build
 ```
 
-Add the CX binary path to your operating system's `$PATH`. For example, in Linux:
+Add the CX binary path to your operating system's `$PATH`. For example:
 
 ```
-export PATH=$PATH:$HOME/cx/bin
+export PATH=$PATH:$HOME/skycoin-cx/bin
 ```
 
 You should test your installation by running:
@@ -142,9 +142,9 @@ Compiling CX on Windows requires a recent version of Git to be installed.
 
 Pacman is a utility which manages software packages.   
 
-To install pacman, download [Mysys2](https://www.msys2.org) and run the installer.
+To install pacman, download [MSYS2](https://www.msys2.org) and run the installer.
 
-When the installation is complete, click ` Run MSYS2 now `.     
+When the installation is complete, click `Run MSYS2 now`.
 
 If MSYS2 has already been installed, run it through the start menu.
 
@@ -172,9 +172,11 @@ cx lib/args.cx tests/main.cx ++wdir=tests ++disable-tests=issue
 
 ## Updating CX
 
-You can update your CX installation by running:
+You can update your CX installation by running, in the repository:
 
 ```
+git pull
+make build
 ```
 
 Or on Windows:
@@ -189,11 +191,10 @@ If you are interested in learning more about CX, please refer to the [resources 
 
 If you want to get started with some basic example programs and tutorials check out the [tutorials section](docs/cx-tutorials.md). 
 
-The docs also provide a high level [overview](docs/overview.md) over the language. 
+The docs also provide a high level [overview](docs/overview.md) of the language.
 
-
-Guide for  cx compiler development
+Guide for CX compiler development:
 * [Compiler Development](docs/CompilerDevelopment.md)
 
-how  to write cx wrapping libraty in Go Programming Language
-* [Wrapping golang libraries](docs/Wrappinggolanglibraries.md)
+How to write a CX library that wraps a Go library:
+* [Wrapping Go libraries](docs/Wrappinggolanglibraries.md)
