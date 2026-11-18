@@ -193,13 +193,7 @@ type SourceCode struct {
 // `CXPATH`. If not, CX creates a workspace at $HOME/cx, along with $HOME/cx/bin,
 // $HOME/cx/pkg and $HOME/cx/src
 func GetCXPath(options cxCmdFlags) {
-	// Determining the filepath of the directory where the user
-	// started the `cx` command.
-	_, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
+	var err error
 	CXPATH := ""
 	if os.Getenv("CXPATH") != "" {
 		CXPATH = os.Getenv("CXPATH")
