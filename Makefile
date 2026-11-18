@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-tests test test-all test-go vet check build-parser clean help
+.PHONY: build build-gui build-debug build-tests test test-all test-go vet check-tiers check build-parser clean help
 
 CXEXE := cx
 ifeq ($(OS),Windows_NT)
@@ -12,16 +12,16 @@ TAGS ?=
 GUI_TAGS := cxfx
 
 build: ## Build cx into ./bin
-	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./cmd/cx
+	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
 
 build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/GL headers)
-	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/$(CXEXE) ./cmd/cx
+	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/$(CXEXE) ./t11-cx
 
 build-debug: ## Build cx without optimizations
-	go build -gcflags="all=-N -l" -tags="$(TAGS)" -o ./bin/$(CXEXE) ./cmd/cx
+	go build -gcflags="all=-N -l" -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
 
 build-tests: build ## Build the cx program test runner
-	go build -o ./bin/cxtest ./cmd/cxtest
+	go build -o ./bin/cxtest ./t1-cxtest
 
 test: build-tests ## Run the stable CX program tests
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
@@ -34,15 +34,18 @@ test-go: ## Run the Go unit tests
 
 vet: ## go vet with default, ptr64 and cxfx tags
 	go vet ./...
-	go vet -tags ptr64 ./n001_types ./n006_ast
-	go vet -tags cxfx ./n017_cxfx ./n018_init ./cmd/cx
+	go vet -tags ptr64 ./t0-types ./t3-ast
+	go vet -tags cxfx ./t6-cxfx ./t7-init ./t11-cx
 
-check: vet test-go test ## vet, Go tests and CX program tests
+check-tiers: ## Check that packages only import lower tiers and sit at <dir>/<file>.go
+	./check-tiers.sh
+
+check: check-tiers vet test-go test ## tier check, vet, Go tests and CX program tests
 
 build-parser: ## Regenerate the CX parsers from the .y grammars
-	go tool goyacc -o n019_cxpartialparsing/cxpartialparsing.go -v /dev/null n019_cxpartialparsing/cxpartialparsing.y
-	go tool goyacc -o n020_cxparsingcompletor/parsingcompletor.go -v /dev/null n020_cxparsingcompletor/parsingcompletor.y
-	gofmt -w n019_cxpartialparsing n020_cxparsingcompletor
+	go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y
+	go tool goyacc -o t8-cxparsingcompletor/parsingcompletor.go -v /dev/null t8-cxparsingcompletor/parsingcompletor.y
+	gofmt -w t5-cxpartialparsing t8-cxparsingcompletor
 
 clean: ## Remove binaries
 	rm -rf ./bin

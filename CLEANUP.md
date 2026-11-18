@@ -30,84 +30,84 @@ Counts are files, not rows.
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cx/assert/` | 1 | delete | `n012_assert` | Nothing imports it |
-| cx | `cx/ast/` | 32 | keep | `n006_ast` | AST, memory model, serializer and GC |
-| cx | `cx/constants/` | 2 | keep | `n004_constants` | Opcode, type and exit code constants |
-| cx | `cx/globals/` | 3 | keep | `n005_globals` | Compiler wide flags and counters, a source of the shared process state |
-| cx | `cx/init/` | 1 | keep | `n018_init` | Builds an empty program and registers the stdlib |
-| cx | `cx/types/` | 5 | keep | `n001_types` | Leaf type codes and pointer size, imported by everything |
-| cx | `cx/util/` | 1 | keep | `n002_util` | Small helpers used by ast, os and profiling |
+| cx | `cx/assert/` | 1 | delete | `t4-assert` | Nothing imports it |
+| cx | `cx/ast/` | 32 | keep | `t3-ast` | AST, memory model, serializer and GC |
+| cx | `cx/constants/` | 2 | keep | `t1-constants` | Opcode, type and exit code constants |
+| cx | `cx/globals/` | 3 | keep | `t2-globals` | Compiler wide flags and counters, a source of the shared process state |
+| cx | `cx/init/` | 1 | keep | `t7-init` | Builds an empty program and registers the stdlib |
+| cx | `cx/types/` | 5 | keep | `t0-types` | Leaf type codes and pointer size, imported by everything |
+| cx | `cx/util/` | 1 | keep | `t0-util` | Small helpers used by ast, os and profiling |
 
 ## Compiler
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cx/astapi/` | 10 | keep | `n022_astapi` | Programmatic AST construction, used by the generator and tests |
-| cx | `cx/generator/` | 2 | keep | `n023_generator` | Random program generator for the serializer tests |
-| cx | `cxparser/actions/` | 16 | keep | `n011_actions` | Semantic actions called from the grammars |
-| cx | `cxparser/cxparsing/` | 3 | keep | `n021_cxparsing` | Driver for the parse passes, gained ParseSourceStrings |
-| cx | `cxparser/cxparsingcompletor/` | 7 | keep | `n020_cxparsingcompletor` | Pass two grammar (.y) and its generated parser |
-| cx | `cxparser/cxpartialparsing/` | 5 | keep | `n019_cxpartialparsing` | Pass one grammar (.y) and its generated parser |
+| cx | `cx/astapi/` | 10 | keep | `t9-astapi` | Programmatic AST construction, used by the generator and tests |
+| cx | `cx/generator/` | 2 | keep | `t10-generator` | Random program generator for the serializer tests |
+| cx | `cxparser/actions/` | 16 | keep | `t4-actions` | Semantic actions called from the grammars |
+| cx | `cxparser/cxparsing/` | 3 | keep | `t9-cxparsing` | Driver for the parse passes, gained ParseSourceStrings |
+| cx | `cxparser/cxparsingcompletor/` | 7 | keep | `t8-cxparsingcompletor` | Pass two grammar (.y) and its generated parser |
+| cx | `cxparser/cxpartialparsing/` | 5 | keep | `t5-cxpartialparsing` | Pass one grammar (.y) and its generated parser |
 
 ## VM and runtime
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cx/execute/` | 2 | keep | `n010_execute` | The interpreter loop |
-| cx | `cx/opcodes/` | 21 | keep | `n009_opcodes` | Native opcode implementations |
+| cx | `cx/execute/` | 2 | keep | `t4-execute` | The interpreter loop |
+| cx | `cx/opcodes/` | 21 | keep | `t4-opcodes` | Native opcode implementations |
 
 ## Standard library
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cx/packages/` | 1 | keep | `n003_packages` | Registry of built in package names |
-| cx | `cx/packages/cipher/` | 3 | keep | `n013_cipher` | CX cipher package, on by default now |
-| cx | `cx/packages/cxfx/` | 15 | keep | `n017_cxfx` | GL, GLFW, OpenAL and gltext bindings behind the cxfx tag (cgo) |
-| cx | `cx/packages/cxos/` | 7 | keep | `n016_cxos` | CX os, json, time and profile packages, on by default now |
-| cx | `cx/packages/regexp/` | 3 | keep | `n014_regexp` | CX regexp package, on by default now |
-| cx | `cx/packages/tcp/` | 2 | keep | `n015_tcp` | CX tcp package |
+| cx | `cx/packages/` | 1 | keep | `t0-packages` | Registry of built in package names |
+| cx | `cx/packages/cipher/` | 3 | keep | `t5-cipher` | CX cipher package, on by default now |
+| cx | `cx/packages/cxfx/` | 15 | keep | `t6-cxfx` | GL, GLFW, OpenAL and gltext bindings behind the cxfx tag (cgo) |
+| cx | `cx/packages/cxos/` | 7 | keep | `t5-cxos` | CX os, json, time and profile packages, on by default now |
+| cx | `cx/packages/regexp/` | 3 | keep | `t5-regexp` | CX regexp package, on by default now |
+| cx | `cx/packages/tcp/` | 2 | keep | `t5-tcp` | CX tcp package |
 | cx-games | `libs/utest/` | 4 | merge | `skycoin-cx/lib/utest` | CX unit test library, runs on the current compiler |
 
 ## New compiler (WIP)
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cmd/declaration_extractor/` | 70 | keep | `n035_declextractor` | Declaration extraction for the new type checker, tests pass |
-| cx | `cmd/packageloader/` | 3 | keep | `cmd/packageloader` | CLI main and makefile for the v1 loader |
-| cx | `cmd/packageloader2/` | 3 | merge | `cmd/packageloader2` | CLI for the v2 loader, merge into cmd/packageloader |
-| cx | `cmd/packageloader2/bolt/` | 1 | delete | `(shared n026)` | Byte identical copy of packageloader/bolt |
-| cx | `cmd/packageloader2/encoder/` | 2 | delete | `(shared n030)` | Byte identical copy of packageloader/encoder |
-| cx | `cmd/packageloader2/file_output/` | 10 | delete | `(shared n031)` | Byte identical copy of packageloader/file_output |
-| cx | `cmd/packageloader2/graph/` | 2 | merge | `n032_plgraph` | Same code as v1, only its newer graph_test.go was kept |
-| cx | `cmd/packageloader2/loader/` | 26 | merge | `n029_plloader2` | Newer loader, merge into n028 once the type checker moves to it |
-| cx | `cmd/packageloader2/redis/` | 1 | delete | `(shared n027)` | Byte identical copy of packageloader/redis |
-| cx | `cmd/packageloader2/tree/` | 9 | merge | `n034_pltree2` | Newer tree, merge with n033 together with the loaders |
-| cx | `cmd/packageloader/bolt/` | 1 | keep | `n026_plbolt` | BoltDB store for the package loader |
-| cx | `cmd/packageloader/encoder/` | 2 | keep | `n030_plencoder` | Package encoder |
-| cx | `cmd/packageloader/file_output/` | 10 | keep | `n031_plfileoutput` | Loads files back from the store |
-| cx | `cmd/packageloader/graph/` | 2 | keep | `n032_plgraph` | Import graph output |
-| cx | `cmd/packageloader/loader/` | 17 | keep | `n028_plloader` | v1 loader, used by the type checker |
-| cx | `cmd/packageloader/redis/` | 1 | keep | `n027_plredis` | Redis store for the package loader |
-| cx | `cmd/packageloader/tree/` | 7 | keep | `n033_pltree` | Import tree output |
-| cx | `cmd/type_checker/` | 24 | keep | `n036_typechecker` | Work in progress type checker, its tests panic upstream too |
+| cx | `cmd/declaration_extractor/` | 70 | keep | `t6-declextractor` | Declaration extraction for the new type checker, tests pass |
+| cx | `cmd/packageloader/` | 3 | keep | `t3-packageloader` | CLI main and makefile for the v1 loader |
+| cx | `cmd/packageloader2/` | 3 | merge | `t3-packageloader2` | CLI for the v2 loader, merge into t3-packageloader |
+| cx | `cmd/packageloader2/bolt/` | 1 | delete | `(shared t0-plbolt)` | Byte identical copy of packageloader/bolt |
+| cx | `cmd/packageloader2/encoder/` | 2 | delete | `(shared t2-plencoder)` | Byte identical copy of packageloader/encoder |
+| cx | `cmd/packageloader2/file_output/` | 10 | delete | `(shared t5-plfileoutput)` | Byte identical copy of packageloader/file_output |
+| cx | `cmd/packageloader2/graph/` | 2 | merge | `t2-plgraph` | Same code as v1, only its newer graph_test.go was kept |
+| cx | `cmd/packageloader2/loader/` | 26 | merge | `t1-plloader2` | Newer loader, merge into t1-plloader once the type checker moves to it |
+| cx | `cmd/packageloader2/redis/` | 1 | delete | `(shared t0-plredis)` | Byte identical copy of packageloader/redis |
+| cx | `cmd/packageloader2/tree/` | 9 | merge | `t2-pltree2` | Newer tree, merge with t2-pltree together with the loaders |
+| cx | `cmd/packageloader/bolt/` | 1 | keep | `t0-plbolt` | BoltDB store for the package loader |
+| cx | `cmd/packageloader/encoder/` | 2 | keep | `t2-plencoder` | Package encoder |
+| cx | `cmd/packageloader/file_output/` | 10 | keep | `t5-plfileoutput` | Loads files back from the store |
+| cx | `cmd/packageloader/graph/` | 2 | keep | `t2-plgraph` | Import graph output |
+| cx | `cmd/packageloader/loader/` | 17 | keep | `t1-plloader` | v1 loader, used by the type checker |
+| cx | `cmd/packageloader/redis/` | 1 | keep | `t0-plredis` | Redis store for the package loader |
+| cx | `cmd/packageloader/tree/` | 7 | keep | `t2-pltree` | Import tree output |
+| cx | `cmd/type_checker/` | 24 | keep | `t8-typechecker` | Work in progress type checker, its tests panic upstream too |
 
 ## Tooling
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cmd/cx/` | 5 | keep | `cmd/cx` | The cx compiler and interpreter binary |
-| cx | `cmd/cxmobile/` | 2 | delete | `cmd/cxmobile` | Android only (cxfx && android), unbuilt since 2021, cannot be tested here |
-| cx | `cmd/cxrepl/` | 1 | keep | `n024_cxrepl` | REPL used by cmd/cx |
+| cx | `cmd/cx/` | 5 | keep | `t11-cx` | The cx compiler and interpreter binary |
+| cx | `cmd/cxmobile/` | 2 | delete | `t7-cxmobile` | Android only (cxfx && android), unbuilt since 2021, cannot be tested here |
+| cx | `cmd/cxrepl/` | 1 | keep | `t10-cxrepl` | REPL used by t11-cx |
 | cx | `cmd/goyacc/` | 187 | delete | `go tool goyacc` | modernc goyacc copy, did not build and did not generate the parsers. golang.org/x/tools goyacc does |
-| cx | `cmd/token-fuzzer/` | 1 | keep | `cmd/token-fuzzer` | Lexer fuzzer, small |
-| cx | `cxparser/util/cxprof/` | 1 | merge | `n008_cxprof` | Nothing imports it, fold into n007_profiling or delete |
-| cx | `cxparser/util/profiling/` | 1 | keep | `n007_profiling` | Used by cmd/cx and the parser |
+| cx | `cmd/token-fuzzer/` | 1 | keep | `t9-token-fuzzer` | Lexer fuzzer, small |
+| cx | `cxparser/util/cxprof/` | 1 | merge | `t1-cxprof` | Nothing imports it, fold into t1-profiling or delete |
+| cx | `cxparser/util/profiling/` | 1 | keep | `t1-profiling` | Used by t11-cx and the parser |
 
 ## Tests
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cmd/cxtest/` | 4 | keep | `cmd/cxtest, n025_cxtestrunner` | Runner for the tests/ CX programs |
+| cx | `cmd/cxtest/` | 4 | keep | `t1-cxtest, t0-cxtestrunner` | Runner for the tests/ CX programs |
 | cx | `tests/` | 230 | keep | `tests` | Stable and issue CX test programs run by cxtest |
 | cx | `tests/deprecated/` | 4 | delete | `tests/deprecated` | Excluded from the runner |
 | cx | `tests/issue-177/` | 4 | keep | `tests/issue-177` | Multi file issue test |
@@ -138,11 +138,11 @@ Counts are files, not rows.
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx-benchmark | `benchmarks/` | 4 | merge | `skycoin-cx/benchmarks` | CX struct benchmarks and their Go side (structser) |
-| cx-benchmark | `benchmarks/cx-benchmarks/` | 5 | merge | `skycoin-cx/benchmarks/cx` | CX versions of the algorithms |
-| cx-benchmark | `benchmarks/golang-benchmarks/` | 9 | merge | `skycoin-cx/benchmarks/<name>` | Go versions for comparison, one package each |
+| cx-benchmark | `benchmarks/` | 4 | merge | `skycoin-cx/t0-benchmarks, t0-benchmarks-structser` | CX struct benchmarks and their Go side (structser) |
+| cx-benchmark | `benchmarks/cx-benchmarks/` | 5 | merge | `skycoin-cx/t0-benchmarks/cx` | CX versions of the algorithms |
+| cx-benchmark | `benchmarks/golang-benchmarks/` | 9 | merge | `skycoin-cx/t0-benchmarks` | Go versions for comparison, one file each |
 | cx-benchmark | `benchmarks/python-benchmarks/` | 6 | delete | - | Python comparison, not part of a Go repo |
-| cx-benchmark | `README.md` | 1 | merge | `skycoin-cx/benchmarks/README.md` | Rewritten |
+| cx-benchmark | `README.md` | 1 | merge | `skycoin-cx/t0-benchmarks/README.md` | Rewritten |
 
 ## Docs
 

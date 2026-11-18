@@ -11,11 +11,14 @@ the concept of affordances.
 
 ## Repository layout
 
-Every Go package sits one level below the root as `nNNN_<name>`. The number
-is its place in the import order, so a package only imports packages with a
-lower number. `cmd/` holds the binaries, `tests/` the CX test programs and
-`benchmarks/` the CX and Go benchmarks. `CLEANUP.md` lists every file of the
-former CX repositories with a keep, merge or delete recommendation.
+Every Go package, binaries included, sits one level below the root as
+`t<N>-<name>`, so no Go file is deeper than `<dir>/<file>.go`. N is the
+package's tier in the import graph. A tier 0 package imports no other package
+of this module, and a tier N package imports only packages of lower tiers,
+tests included. `t11-cx` is the cx binary, `t1-cxtest` the CX program test
+runner. `tests/` holds the CX test programs, `lib/` CX libraries and
+`t0-benchmarks/` the CX and Go benchmarks. `CLEANUP.md` lists every file of
+the former CX repositories with a keep, merge or delete recommendation.
 
 
 [Table of Contents](#Table-ofContents) 
@@ -45,7 +48,7 @@ purpose programming.
 
 ## Installation
 
-CX requires Go 1.26 or newer. `go build ./cmd/cx` builds the language with cipher, os and regexp support; `make build-gui` adds the cxfx GL package, which needs cgo and X11/GL headers.
+CX requires Go 1.26 or newer. `make build` (or `go build -o bin/cx ./t11-cx`) builds the language with cipher, os and regexp support; `make build-gui` adds the cxfx GL package, which needs cgo and X11/GL headers.
 
 ### Binary Releases
 
