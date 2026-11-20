@@ -30,7 +30,7 @@ Counts are files, not rows.
 
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
-| cx | `cx/assert/` | 1 | delete | `t4-assert` | Nothing imports it |
+| cx | `cx/assert/` | 1 | removed (#107) | `t4-assert` | Nothing imports it |
 | cx | `cx/ast/` | 32 | keep | `t3-ast` | AST, memory model, serializer and GC |
 | cx | `cx/constants/` | 2 | keep | `t1-constants` | Opcode, type and exit code constants |
 | cx | `cx/globals/` | 3 | keep | `t2-globals` | Compiler wide flags and counters, a source of the shared process state |
