@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -89,6 +90,10 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 		"test-array.cx":                                     13,
 		"test-slices.cx":                                    8,
 		"examples/testing-pointers-to-arrays-of-structs.cx": 6,
+	}
+	// One more on Windows, measured by the windows-latest CI job.
+	if runtime.GOOS == "windows" {
+		ceilings["examples/hello-world.cx"] = 10
 	}
 	for _, programPath := range compileBenchmarkPrograms {
 		if programPath == "test-gc.cx" {
