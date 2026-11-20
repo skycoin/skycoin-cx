@@ -1,0 +1,18 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func main() {
+	test(1, 2.0, "test")
+	var a i32
+	a = 3
+	panic(a, 2.0, "panic")
+	var p P
+	var q P
+	var r P
+	r = p + q
+	var b i32
+	b = 4
+}

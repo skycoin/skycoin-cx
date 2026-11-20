@@ -206,6 +206,11 @@ func runTestCases(t *runner.TestRunner) {
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",
 		"test-test-line.cx: 8: result was not equal to the expected value; after an assignment",
 	)
+	t.RunWant("test-test-type-line.cx", types.CX_COMPILATION_ERROR, "a test(), panic or operator type error names the line of the call (skycoin-cx#259)",
+		"test-test-type-line.cx:8 first and second input arguments' types are not equal in 'test' call",
+		"test-test-type-line.cx:11 first and second input arguments' types are not equal in 'panic' call",
+		"test-test-type-line.cx:15 invalid argument types for 'add' operator",
+	)
 
 	t.Run("--cxpath test-workspace test-workspace-a.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-b.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a nested library, taking that workspace as the new relative path.")

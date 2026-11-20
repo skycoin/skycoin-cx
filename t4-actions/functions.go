@@ -121,11 +121,11 @@ func isParseOp(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 // CheckUndValidTypes checks if an expression with a generic operator (operators that
 // accept `cxcore.TYPE_UNDEFINED` arguments) is receiving arguments of valid types. For example,
 // the expression `sa + sb` is not valid if they are struct instances.
-func CheckUndValidTypes(prgrm *ast.CXProgram, expr *ast.CXExpression) {
-	expressionIdx := expr.Index
+func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expressionIdx := exprs[currIndex].Index
 	expressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[expressionIdx].Operator)
-	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, expr) {
-		println(ast.CompilationError(CurrentFile, LineNo), fmt.Sprintf("invalid argument types for '%s' operator", ast.OpNames[expressionOperator.AtomicOPCode]))
+	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, &exprs[currIndex]) {
+		println(ast.CompilationError(exprLine(prgrm, exprs, currIndex)), fmt.Sprintf("invalid argument types for '%s' operator", ast.OpNames[expressionOperator.AtomicOPCode]))
 	}
 }
 
@@ -237,10 +237,10 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		ProcessStringAssignment(prgrm, &expr)
 		// ProcessReferenceAssignment(prgrm, &expr)
 		ProcessShortDeclaration(prgrm, &expr, fn.Expressions, i)
-		processTestExpression(prgrm, &expr)
+		processTestExpression(prgrm, fn.Expressions, i)
 
 		CheckTypes(prgrm, fn.Expressions, i)
-		CheckUndValidTypes(prgrm, &expr)
+		CheckUndValidTypes(prgrm, fn.Expressions, i)
 		checkOperatorOperands(prgrm, fn.Expressions, i)
 		ProcessTypedOperator(prgrm, &expr)
 		if expr.IsScopeDel() {
@@ -375,11 +375,9 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 		return
 	}
 
-	file, line := CurrentFile, LineNo
+	file, line := exprLine(prgrm, exprs, currIndex)
 	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != nil && sig.ArgDetails.FileLine > 0 {
 		file, line = sig.ArgDetails.FileName, sig.ArgDetails.FileLine
-	} else if exprCXLine, err := prgrm.GetPreviousCXLine(exprs, currIndex); err == nil && exprCXLine.LineNumber > 0 {
-		file, line = exprCXLine.FileName, exprCXLine.LineNumber
 	}
 	println(ast.CompilationError(file, line), msg)
 }
@@ -791,9 +789,10 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 // Input arguments description:
 //
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
-//	expr - the operator expression.
-func processTestExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
-	expression, err := prgrm.GetCXAtomicOp(expr.Index)
+//	exprs - the function's expressions.
+//	currIndex - the index of the operator expression in exprs.
+func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expression, err := prgrm.GetCXAtomicOp(exprs[currIndex].Index)
 	if err != nil {
 		panic(err)
 	}
@@ -811,7 +810,7 @@ func processTestExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 			expressionInputSecondTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[1])
 			inp2Type = ast.GetFormattedType(prgrm, expressionInputSecondTypeSig)
 			if inp1Type != inp2Type {
-				println(ast.CompilationError(CurrentFile, LineNo), fmt.Sprintf("first and second input arguments' types are not equal in '%s' call ('%s' != '%s')", ast.OpNames[expressionOperator.AtomicOPCode], inp1Type, inp2Type))
+				println(ast.CompilationError(exprLine(prgrm, exprs, currIndex)), fmt.Sprintf("first and second input arguments' types are not equal in '%s' call ('%s' != '%s')", ast.OpNames[expressionOperator.AtomicOPCode], inp1Type, inp2Type))
 			}
 		}
 	}
@@ -2707,4 +2706,13 @@ func GetGlobalSymbol(prgrm *ast.CXProgram, symbolsData *SymbolsData, symPkg *ast
 			(symbolsData.symbolsIndex)[lastIdx][symPkg.Name+"."+ident] = len(symbolsData.symbols) - 1
 		}
 	}
+}
+
+// exprLine returns the file and line of the CX_LINE marker before exprs[currIndex].
+// It falls back to the parser position, which is the end of the function once the body is parsed.
+func exprLine(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) (string, int) {
+	if cxLine, err := prgrm.GetPreviousCXLine(exprs, currIndex); err == nil && cxLine.LineNumber > 0 {
+		return cxLine.FileName, cxLine.LineNumber
+	}
+	return CurrentFile, LineNo
 }
