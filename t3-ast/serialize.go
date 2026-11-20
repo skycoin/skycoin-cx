@@ -770,7 +770,10 @@ func SerializeCXProgram(prgrm *CXProgram, includeDataMemory, useCompression bool
 	serializeProgram(prgrm, &s)
 
 	// serializing everything
-	b = encoder.Serialize(s)
+	b, err := EncodeSerializedCXProgram(&s)
+	if err != nil {
+		panic(err)
+	}
 
 	if useCompression {
 		// Compress using LZ4
@@ -1222,7 +1225,9 @@ func Deserialize(b []byte, useCompression bool) (prgrm *CXProgram) {
 		UncompressBytesLZ4(&b)
 	}
 
-	deserializeRaw(b, 0, types.Cast_int_to_ptr(len(b)), &s)
+	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
+		panic(err)
+	}
 	initDeserialization(prgrm, &s)
 
 	return prgrm

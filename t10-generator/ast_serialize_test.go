@@ -27,7 +27,7 @@ import (
 
 // FAILING: t3-ast serializeExpression and serializeFunctionArguments drop TYPE_ATOMIC signatures via
 // ConvertIndexTypeSignaturesToPointerArgs, and deserializePackages leaves pkg.Globals nil; see #12
-// func TestSerialize_CipherEncoder(t *testing.T) {
+// func TestSerialize(t *testing.T) {
 // 	tests := []struct {
 // 		scenario          string
 // 		program           *cxast.CXProgram
@@ -84,96 +84,6 @@ import (
 // 		})
 // 	}
 // }
-
-// FAILING: t3-ast serializeExpression and serializeFunctionArguments drop TYPE_ATOMIC signatures via
-// ConvertIndexTypeSignaturesToPointerArgs, and deserializePackages leaves pkg.Globals nil; see #12
-// func TestSerialize_SkyEncoder(t *testing.T) {
-// 	tests := []struct {
-// 		scenario          string
-// 		program           *cxast.CXProgram
-// 		includeDataMemory bool
-// 		useCompression    bool
-// 	}{
-// 		{
-// 			scenario:          "program without literal",
-// 			program:           generateSampleProgramFromCXEvolves(t, false),
-// 			includeDataMemory: false,
-// 			useCompression:    false,
-// 		},
-// 		{
-// 			scenario:          "program with literal",
-// 			program:           generateSampleProgramFromCXEvolves(t, true),
-// 			includeDataMemory: true,
-// 			useCompression:    false,
-// 		},
-// 		{
-// 			scenario:          "program without literal, use compression",
-// 			program:           generateSampleProgramFromCXEvolves(t, false),
-// 			includeDataMemory: false,
-// 			useCompression:    true,
-// 		},
-// 		{
-// 			scenario:          "program with literal, use compression",
-// 			program:           generateSampleProgramFromCXEvolves(t, true),
-// 			includeDataMemory: true,
-// 			useCompression:    true,
-// 		},
-// 	}
-//
-// 	for _, tc := range tests {
-// 		t.Run(tc.scenario, func(t *testing.T) {
-// 			timeStart := time.Now()
-// 			serializedBytes := cxast.SerializeCXProgramV2(tc.program, tc.includeDataMemory, tc.useCompression)
-// 			t.Logf("Serialization took=%v\n", time.Since(timeStart))
-//
-// 			timeStart = time.Now()
-// 			deserializedCXProgram := cxast.DeserializeCXProgramV2(serializedBytes, tc.useCompression)
-// 			t.Logf("Deserialization took=%v\n", time.Since(timeStart))
-// 			if cxast.ToString(deserializedCXProgram) != cxast.ToString(tc.program) {
-// 				t.Errorf("want same program, got different")
-// 			}
-//
-// 			if tc.includeDataMemory {
-// 				wantDataSegmentMemory := tc.program.Memory[tc.program.Data.StartsAt : tc.program.Data.StartsAt+tc.program.Data.Size]
-// 				gotDataSegmentMemory := deserializedCXProgram.Memory[deserializedCXProgram.Data.StartsAt : deserializedCXProgram.Data.StartsAt+deserializedCXProgram.Data.Size]
-// 				if !reflect.DeepEqual(wantDataSegmentMemory, gotDataSegmentMemory) {
-// 					t.Errorf("want %v, got %v", wantDataSegmentMemory, gotDataSegmentMemory)
-// 				}
-// 			}
-// 		})
-// 	}
-// }
-
-func TestSerialize_SkyEncoder_VS_CipherEncoder(t *testing.T) {
-	tests := []struct {
-		scenario string
-		program  *cxast.CXProgram
-		wantSame bool
-	}{
-		{
-			scenario: "Valid program",
-			program:  generateSampleProgramFromCXEvolves(t, false),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.scenario, func(t *testing.T) {
-			skyEncoderSerializedBytes := cxast.SerializeCXProgramV2(tc.program, false, false)
-			cipherEncoderSerializedBytes := cxast.SerializeCXProgram(tc.program, false, false)
-
-			// Check byte per byte
-			var diffCount int = 0
-			var pos []int
-			for i := range skyEncoderSerializedBytes {
-				if skyEncoderSerializedBytes[i] != cipherEncoderSerializedBytes[i] {
-					pos = append(pos, i)
-					diffCount++
-				}
-			}
-			t.Logf("There were %v indexes that have different values. \nThese indexes are %v", diffCount, pos)
-		})
-	}
-}
 
 func TestCompression_LZ4(t *testing.T) {
 	tests := []struct {

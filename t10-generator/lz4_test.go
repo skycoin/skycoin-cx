@@ -88,11 +88,11 @@ func TestSerializeDebugInfoCompressed(t *testing.T) {
 	}
 }
 
-// DeserializeCXProgramV2 ignored the decoder error. See #80.
-func TestDeserializeCXProgramV2Compressed(t *testing.T) {
+// Deserialize ignored the decoder error. See #80.
+func TestDeserializeCompressed(t *testing.T) {
 	prgrm := generateSampleProgramFromCXEvolves(t, false)
-	b := cxast.SerializeCXProgramV2(prgrm, false, true)
-	got := cxast.DeserializeCXProgramV2(b, true)
+	b := cxast.SerializeCXProgram(prgrm, false, true)
+	got := cxast.Deserialize(b, true)
 	if len(got.Packages) != len(prgrm.Packages) {
 		t.Fatalf("got %d packages, want %d", len(got.Packages), len(prgrm.Packages))
 	}
@@ -102,6 +102,6 @@ func TestDeserializeCXProgramV2Compressed(t *testing.T) {
 			t.Fatal("want a panic for truncated input")
 		}
 	}()
-	short := cxast.SerializeCXProgramV2(prgrm, false, false)
-	cxast.DeserializeCXProgramV2(short[:8], false)
+	short := cxast.SerializeCXProgram(prgrm, false, false)
+	cxast.Deserialize(short[:8], false)
 }
