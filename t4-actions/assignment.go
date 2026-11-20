@@ -626,7 +626,7 @@ func checkIfFunctionCallNeedsAnOutput(prgrm *ast.CXProgram, fromExpressionOperat
 		toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpressionOutputs[0])
 
 		println(ast.CompilationError(toExpressionOutputTypeSig.ArgDetails.FileName, toExpressionOutputTypeSig.ArgDetails.FileLine), "trying to use an outputless operator in an assignment")
-		os.Exit(constants.CX_COMPILATION_ERROR)
+		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 }
 

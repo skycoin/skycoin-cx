@@ -217,6 +217,6 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 	}
 
 	if opcodes.AssertFailed() {
-		os.Exit(constants.CX_ASSERT)
+		os.Exit(types.CX_ASSERT)
 	}
 }

@@ -70,7 +70,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	if len(prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)) < 1 {
 		if len(lastCondExpressionOperatorOutputs) == 0 {
 			println(ast.CompilationError(CurrentFile, LineNo), "loop condition has no value")
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 		lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
 
@@ -583,7 +583,7 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 	if len(lastPrevExpression.GetOutputs(prgrm)) == 0 {
 		println(ast.CompilationError(CurrentFile, LineNo), "invalid indirection")
 		// needs to be stopped immediately
-		os.Exit(constants.CX_COMPILATION_ERROR)
+		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 
 	lastPrevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastPrevExpression.GetOutputs(prgrm)[0])

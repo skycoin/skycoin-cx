@@ -14,7 +14,6 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t0-util"
-	"github.com/skycoin/skycoin-cx/t1-constants" // thin: only CX_RUNTIME_INVALID_ARGUMENT; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -450,7 +449,7 @@ func getSlice(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue)
 	}
 
 	if inpType != outType || !inpIsSlice || !outIsSlice {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	count = inputs[2].Get_ptr(prgrm)

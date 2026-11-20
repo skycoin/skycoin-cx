@@ -89,7 +89,7 @@ func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStr
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Name == cxArgument.Name {
 			fmt.Printf("%s : duplicate field", CompilationError(typeSignature.ArgDetails.FileName, typeSignature.ArgDetails.FileLine))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 	}
 
@@ -131,7 +131,7 @@ func (strct *CXStruct) AddField_TypeSignature(prgrm *CXProgram, fieldIdx CXTypeS
 		field := prgrm.GetCXTypeSignatureFromArray(fieldIdx)
 		if typeSignature.Name == field.Name {
 			fmt.Printf("%s : duplicate field", CompilationError(typeSignature.ArgDetails.FileName, typeSignature.ArgDetails.FileLine))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 	}
 
@@ -154,7 +154,7 @@ func (strct *CXStruct) AddField_Globals_CXAtomicOps(prgrm *CXProgram, cxArgIdx C
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Name == cxArgument.Name {
 			fmt.Printf("%s : duplicate field", CompilationError(typeSignature.ArgDetails.FileName, typeSignature.ArgDetails.FileLine))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 	}
 

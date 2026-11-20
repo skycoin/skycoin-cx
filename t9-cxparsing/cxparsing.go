@@ -41,7 +41,7 @@ func ParseSourceCode(sourceCode []*os.File, fileNames []string) {
 	}
 
 	if err := ParseSourceStrings(sourceCodeStrings, fileNames); err != nil {
-		profiling.CleanupAndExit(constants.CX_COMPILATION_ERROR)
+		profiling.CleanupAndExit(types.CX_COMPILATION_ERROR)
 	}
 }
 

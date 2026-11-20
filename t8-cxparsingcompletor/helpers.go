@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 
 	"github.com/skycoin/skycoin-cx/t4-actions"
@@ -56,7 +56,7 @@ func NewLexer(rdr io.Reader) *Lexer {
 			panic(fmt.Sprintf("[%d:%d] %s\n", l, c, msg))
 		}
 		println(ast.CompilationError(actions.CurrentFile, l), msg)
-		os.Exit(constants.CX_COMPILATION_ERROR)
+		os.Exit(types.CX_COMPILATION_ERROR)
 	})
 	return lx
 }

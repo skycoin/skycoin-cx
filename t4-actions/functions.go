@@ -1172,14 +1172,14 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 
 	// then we need to be strict in the number of inputs
 	println(ast.CompilationError(exprCXLine.FileName, exprCXLine.LineNumber), fmt.Sprintf("operator '%s' expects %d input/s, but %d input argument\n were provided", opName, len(expressionOperatorInputs), len(expression.GetInputs(prgrm))))
-	os.Exit(constants.CX_COMPILATION_ERROR)
+	os.Exit(types.CX_COMPILATION_ERROR)
 }
 
 func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) {
 	// checking if number of outputs is not the same as the required number of outputs
 	if len(expression.GetOutputs(prgrm)) != len(expressionOperatorOutputs) {
 		println(ast.CompilationError(exprCXLine.FileName, exprCXLine.LineNumber), fmt.Sprintf("operator '%s' expects to return %d output/s, but %d receiving argument/s were provided", opName, len(expressionOperatorOutputs), len(expression.GetOutputs(prgrm))))
-		os.Exit(constants.CX_COMPILATION_ERROR)
+		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 }
 
@@ -1830,7 +1830,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				strct := argOut.StructType
 				if strct == nil {
 					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutType))
-					os.Exit(constants.CX_COMPILATION_ERROR)
+					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
 				prgrm.CXAtomicOps[expr.Index].Inputs.Fields = append(prgrm.CXAtomicOps[expr.Index].Outputs.Fields[:1], prgrm.CXAtomicOps[expr.Index].Inputs.Fields...)
@@ -1862,7 +1862,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			argOutTypeSignature, err := lookupSymbol(prgrm, outPkg.Name, prgrm.CXArgs[outIdx].Name, symbolsData)
 			if err != nil {
 				println(ast.CompilationError(prgrm.CXArgs[outIdx].ArgDetails.FileName, prgrm.CXArgs[outIdx].ArgDetails.FileLine), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
-				os.Exit(constants.CX_COMPILATION_ERROR)
+				os.Exit(types.CX_COMPILATION_ERROR)
 			}
 			// then we found an output
 			if len(prgrm.CXArgs[outIdx].Fields) > 0 {
@@ -1906,7 +1906,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		argOutTypeSignature, err := lookupSymbol(prgrm, outPkg.Name, prgrm.CXArgs[outIdx].Name, symbolsData)
 		if err != nil {
 			println(ast.CompilationError(prgrm.CXArgs[outIdx].ArgDetails.FileName, prgrm.CXArgs[outIdx].ArgDetails.FileLine), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 
 		// VIOLATION: created outside manager; phase 1.
@@ -1920,7 +1920,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 				if strct == nil {
 					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOut.Type.Name()))
-					os.Exit(constants.CX_COMPILATION_ERROR)
+					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
@@ -1962,7 +1962,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if strct == nil {
 					// TODO: add proper println for error
 					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutTypeSignature.GetTypeString(prgrm)))
-					os.Exit(constants.CX_COMPILATION_ERROR)
+					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)

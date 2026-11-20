@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -114,7 +113,7 @@ func opTest(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 
 func opPanic(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	if !assert(prgrm, inputs, outputs) {
-		panic(constants.CX_ASSERT)
+		panic(types.CX_ASSERT)
 	}
 }
 
@@ -127,7 +126,7 @@ func panicIf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue, 
 		cxLine, _ := prgrm.GetPreviousCXLine(call.Operator.Expressions, call.Line)
 
 		fmt.Printf("%s : %d, %s\n", cxLine.FileName, cxLine.LineNumber, str)
-		panic(constants.CX_ASSERT)
+		panic(types.CX_ASSERT)
 	}
 }
 

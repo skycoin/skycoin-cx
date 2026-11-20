@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-globals" // thin: only DBG_GOLANG_STACK_TRACE, FoundCompileErrors, HeapOffset; core globals, keep
 )
@@ -26,7 +27,7 @@ func ErrorString(code int) string {
 	if str, found := constants.ErrorStrings[code]; found {
 		return str
 	}
-	return constants.ErrorStrings[constants.CX_RUNTIME_ERROR]
+	return constants.ErrorStrings[types.CX_RUNTIME_ERROR]
 }
 
 func errorCode(r interface{}) int {
@@ -34,7 +35,7 @@ func errorCode(r interface{}) int {
 	case int:
 		return int(v)
 	default:
-		return constants.CX_RUNTIME_ERROR
+		return types.CX_RUNTIME_ERROR
 	}
 }
 
@@ -42,7 +43,7 @@ func RuntimeErrorInfo(prgrm *CXProgram, r interface{}, printStack bool, defaultE
 	call := prgrm.CallStack[prgrm.CallCounter]
 	// expr := call.Operator.Expressions[call.Line]
 	code := errorCode(r)
-	if code == constants.CX_RUNTIME_ERROR {
+	if code == types.CX_RUNTIME_ERROR {
 		code = defaultError
 	}
 
@@ -70,15 +71,15 @@ func RuntimeError(prgrm *CXProgram) {
 			if prgrm.CallCounter > 0 {
 				prgrm.CallCounter--
 				prgrm.Stack.Pointer = call.FramePointer
-				RuntimeErrorInfo(prgrm, r, true, constants.CX_RUNTIME_STACK_OVERFLOW_ERROR)
+				RuntimeErrorInfo(prgrm, r, true, types.CX_RUNTIME_STACK_OVERFLOW_ERROR)
 			} else {
 				// error at entry point
-				RuntimeErrorInfo(prgrm, r, false, constants.CX_RUNTIME_STACK_OVERFLOW_ERROR)
+				RuntimeErrorInfo(prgrm, r, false, types.CX_RUNTIME_STACK_OVERFLOW_ERROR)
 			}
 		case constants.HEAP_EXHAUSTED_ERROR:
-			RuntimeErrorInfo(prgrm, r, true, constants.CX_RUNTIME_HEAP_EXHAUSTED_ERROR)
+			RuntimeErrorInfo(prgrm, r, true, types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR)
 		default:
-			RuntimeErrorInfo(prgrm, r, true, constants.CX_RUNTIME_ERROR)
+			RuntimeErrorInfo(prgrm, r, true, types.CX_RUNTIME_ERROR)
 		}
 	}
 }

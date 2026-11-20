@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -42,7 +41,7 @@ func Callback(cxprogram *ast.CXProgram, fn *ast.CXFunction, inputs [][]byte) (ou
 	//err := cxprogram.Run(true, maxOps, previousCall)
 	err := RunCxAst(cxprogram, true, maxOps, previousCall)
 	if err != nil {
-		os.Exit(constants.CX_INTERNAL_ERROR)
+		os.Exit(types.CX_INTERNAL_ERROR)
 	}
 
 	cxprogram.CallCounter = previousCall

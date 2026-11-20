@@ -2,7 +2,6 @@ package opcodes
 
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -150,7 +149,7 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	sliceInputsLen := types.Cast_int_to_ptr(len(sliceInputs))
 
 	if inp0Type != inp1Type || inp0Type != out0Type || !input0IsSlice || !outputIsSlice {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	var inputSliceLen types.Pointer
@@ -180,7 +179,7 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 		}
 
 		if inp0Type != inpType {
-			panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+			panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 		}
 		if inpType == types.STR || inpType == types.AFF {
 			var obj [types.POINTER_SIZE]byte
@@ -233,7 +232,7 @@ func opSliceResize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	fp := inputs[0].FramePointer
 
 	if inpType != outType || !inpIsSlice || !outIsSlice {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	outputSliceOffset := ast.SliceResize(prgrm, fp, outputs[0].TypeSignature, inputs[0].TypeSignature, types.Cast_i32_to_ptr(inputs[1].Get_i32(prgrm)), inpSize)
@@ -303,7 +302,7 @@ func opSliceInsertElement(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []
 	fp := inputs[0].FramePointer
 
 	if inp0Type != inp2Type || inp0Type != out0Type || !inpIsSlice || !outIsSlice {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	index := types.Cast_i32_to_ptr(inputs[1].Get_i32(prgrm))
@@ -360,7 +359,7 @@ func opSliceRemoveElement(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []
 	fp := inputs[0].FramePointer
 
 	if inpType != outType || !inpIsSlice || !outIsSlice {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	outputSliceOffset := ast.SliceRemove(prgrm, fp, outputs[0].TypeSignature, inputs[0].TypeSignature, types.Cast_i32_to_ptr(inputs[1].Get_i32(prgrm)), inpSize)
@@ -415,7 +414,7 @@ func opSliceCopy(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	srcOffset := ast.GetSliceOffset(prgrm, fp, inputs[1].TypeSignature)
 
 	if dstType != srcType || !dstIsSlice || !srcIsSlice || dstSize != srcSize {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	dst := ast.GetSliceData(prgrm, dstOffset, dstSize)
@@ -425,10 +424,10 @@ func opSliceCopy(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	if dstType == srcType {
 		count = types.Cast_int_to_ptr(copy(dst, src))
 		if count%dstSize != 0 {
-			panic(constants.CX_RUNTIME_ERROR)
+			panic(types.CX_RUNTIME_ERROR)
 		}
 	} else {
-		panic(constants.CX_RUNTIME_INVALID_ARGUMENT)
+		panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 	}
 
 	outputs[0].Set_i32(prgrm, types.Cast_ptr_to_i32(count/dstSize)) // TODO:PTR use ptr instead of i32

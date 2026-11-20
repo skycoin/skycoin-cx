@@ -254,7 +254,7 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			argTypeSigOffset += types.Cast_i32_to_ptr(indexValue) * sizeToUse // TODO:PTR Use ptr/Read_ptr, array/slice indexing only works with i32.
 
 			if !IsValidSliceIndex(prgrm, baseOffset, argTypeSigOffset, sizeToUse) {
-				panic(constants.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+				panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 			}
 		}
 
@@ -366,7 +366,7 @@ func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 	drfsStruct.finalOffset += types.Cast_i32_to_ptr(indexValue) * sizeToUse // TODO:PTR Use ptr/Read_ptr, array/slice indexing only works with i32.
 
 	if !IsValidSliceIndex(prgrm, drfsStruct.baseOffset, drfsStruct.finalOffset, sizeToUse) {
-		panic(constants.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+		panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 	}
 
 	drfsStruct.idxCounter++
@@ -423,7 +423,7 @@ func CalculateDereferences(prgrm *CXProgram, arg *CXArgument, finalOffset types.
 		if drfsStruct.arg.IsSlice() {
 			drfsStruct.finalOffset += constants.SLICE_HEADER_SIZE
 			if !IsValidSliceIndex(prgrm, drfsStruct.baseOffset, drfsStruct.finalOffset, drfsStruct.sizeofElement) {
-				panic(constants.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+				panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 			}
 		}
 	}

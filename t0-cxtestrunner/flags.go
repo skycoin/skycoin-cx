@@ -35,18 +35,3 @@ var LogBits = map[string]Bits{
 	"skip":    LogSkip,
 	"time":    LogTime,
 }
-
-const (
-	CxSuccess = iota
-	CxCompilationError
-	CxPanic // 2
-	CxInternalError
-	CxAssert
-	CxRuntimeError
-	CxRuntimeStackOverflowError
-	CxRuntimeHeapExhaustedError
-	CxRuntimeInvalidArgument
-	CxRuntimeSliceIndexOutOfRange
-	CxRuntimeNotImplemented
-	CxRuntimeInvalidCast
-)

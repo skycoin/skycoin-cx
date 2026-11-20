@@ -62,7 +62,7 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 	if globals.FoundCompileErrors {
 		//cleanupAndExit(cxcore.CX_COMPILATION_ERROR)
 		profiling.StopCPUProfile(profile)
-		exitCode := constants.CX_COMPILATION_ERROR
+		exitCode := types.CX_COMPILATION_ERROR
 		os.Exit(exitCode)
 
 	}
@@ -142,7 +142,7 @@ func printProgramAST(options cxCmdFlags, cxArgs []string, sourceCode []*os.File)
 	actions.AST.PrintProgram()
 
 	if opcodes.AssertFailed() {
-		os.Exit(constants.CX_ASSERT)
+		os.Exit(types.CX_ASSERT)
 	}
 }
 

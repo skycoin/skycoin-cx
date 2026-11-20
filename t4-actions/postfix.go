@@ -699,7 +699,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			println(ast.CompilationError(leftExprOutputTypeSig.ArgDetails.FileName, leftExprOutputTypeSig.ArgDetails.FileLine),
 				fmt.Sprintf("identifier '%s' does not exist",
 					leftExprOutputTypeSig.Name))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 
 		// then it's a struct

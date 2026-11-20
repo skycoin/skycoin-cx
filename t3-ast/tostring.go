@@ -771,7 +771,7 @@ func ParseArgsForCX(args []string, alsoSubdirs bool) (cxArgs []string, sourceCod
 		fi, err := util.CXStatFile(arg)
 		if err != nil {
 			println(fmt.Sprintf("%s: source file or library not found", arg))
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 
 		switch mode := fi.Mode(); {
@@ -796,7 +796,7 @@ func ParseArgsForCX(args []string, alsoSubdirs bool) (cxArgs []string, sourceCod
 
 				if err != nil {
 					println(fmt.Sprintf("%s: source file or library not found", arg))
-					os.Exit(constants.CX_COMPILATION_ERROR)
+					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
 				fiName := file.Name()
@@ -1065,7 +1065,7 @@ func getFormattedType_CXArg(prgrm *CXProgram, arg *CXArgument) string {
 					pkg, err := prgrm.GetPackageFromArray(arg.Package)
 					if err != nil {
 						println(CompilationError(elt.ArgDetails.FileName, elt.ArgDetails.FileLine), err.Error())
-						os.Exit(constants.CX_COMPILATION_ERROR)
+						os.Exit(types.CX_COMPILATION_ERROR)
 					}
 
 					fn, err := pkg.GetFunction(prgrm, elt.Name)

@@ -8,7 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t0-types"
 )
 
 type Lexer struct {
@@ -173,7 +173,7 @@ func (s *Lexer) next() {
 	s.nlsemi = false
 	if s.eof {
 		if s.crash {
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 		s.tok.yys = -1
 		return
@@ -200,7 +200,7 @@ redonext:
 		s.eof = true
 		s.tok.yys = -1
 		if s.crash {
-			os.Exit(constants.CX_COMPILATION_ERROR)
+			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 	case '\n':
 		s.nextch()

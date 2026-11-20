@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
 func opStrToI8(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseInt(inputs[0].Get_str(prgrm), 10, 8)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_i8(prgrm, int8(outV0))
 }
@@ -20,7 +20,7 @@ func opStrToI8(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue
 func opStrToI16(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseInt(inputs[0].Get_str(prgrm), 10, 16)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_i16(prgrm, int16(outV0))
 }
@@ -28,7 +28,7 @@ func opStrToI16(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func opStrToI32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseInt(inputs[0].Get_str(prgrm), 10, 32)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_i32(prgrm, int32(outV0))
 }
@@ -36,7 +36,7 @@ func opStrToI32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func opStrToI64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseInt(inputs[0].Get_str(prgrm), 10, 64)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_i64(prgrm, int64(outV0))
 }
@@ -44,7 +44,7 @@ func opStrToI64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func opStrToUI8(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseUint(inputs[0].Get_str(prgrm), 10, 8)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_ui8(prgrm, uint8(outV0))
 }
@@ -52,7 +52,7 @@ func opStrToUI8(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func opStrToUI16(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseUint(inputs[0].Get_str(prgrm), 10, 16)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_ui16(prgrm, uint16(outV0))
 }
@@ -60,7 +60,7 @@ func opStrToUI16(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 func opStrToUI32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseUint(inputs[0].Get_str(prgrm), 10, 32)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_ui32(prgrm, uint32(outV0))
 }
@@ -68,7 +68,7 @@ func opStrToUI32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 func opStrToUI64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseUint(inputs[0].Get_str(prgrm), 10, 64)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_ui64(prgrm, uint64(outV0))
 }
@@ -76,7 +76,7 @@ func opStrToUI64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 func opStrToF32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseFloat(inputs[0].Get_str(prgrm), 32)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_f32(prgrm, float32(outV0))
 }
@@ -84,7 +84,7 @@ func opStrToF32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func opStrToF64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0, err := strconv.ParseFloat(inputs[0].Get_str(prgrm), 64)
 	if err != nil {
-		panic(constants.CX_RUNTIME_ERROR)
+		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_f64(prgrm, float64(outV0))
 }

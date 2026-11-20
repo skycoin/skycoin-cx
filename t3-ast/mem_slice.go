@@ -7,7 +7,7 @@ import (
 
 // TODO: rewrite slice api.
 // TODO: remove all offset > 0 tests.
-// TODO: panic(constants.CX_RUNTIME_*) instead of silent failure.
+// TODO: panic(types.CX_RUNTIME_*) instead of silent failure.
 
 // IsValidSliceIndex ...
 func IsValidSliceIndex(prgrm *CXProgram, offset types.Pointer, index types.Pointer, sizeofElement types.Pointer) bool {
@@ -185,7 +185,7 @@ func SliceInsert(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 	}
 
 	if index > inputSliceLen {
-		panic(constants.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+		panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 	}
 
 	var newLen = inputSliceLen + 1
@@ -208,7 +208,7 @@ func SliceRemove(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 	}
 
 	if index >= inputSliceLen {
-		panic(constants.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+		panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 	}
 
 	outputSliceData := GetSliceData(prgrm, outputSliceOffset, sizeofElement)
