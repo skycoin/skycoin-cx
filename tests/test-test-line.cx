@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	test(1, 2, "first statement")
+	var a i32 = 1
+	test(a, 3, "after a declaration")
+	a = 2
+	test(a, 4, "after an assignment")
+}

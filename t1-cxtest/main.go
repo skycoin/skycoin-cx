@@ -190,6 +190,11 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
 	t.Run("test-slices-of-slices-literal.cx", types.CX_SUCCESS, "slice of slices literal with two inner literals")
+	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
+		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
+		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",
+		"test-test-line.cx: 8: result was not equal to the expected value; after an assignment",
+	)
 
 	t.Run("--cxpath test-workspace test-workspace-a.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-b.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a nested library, taking that workspace as the new relative path.")

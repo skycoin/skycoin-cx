@@ -1219,10 +1219,12 @@ expression_statement:
 					println(ast.CompilationError(actions.CurrentFile, actions.LineNo), "invalid expression")
 				}
 				$$ = nil
+			} else if len($1) > 0 && $1[0].Type != ast.CX_LINE {
+				// test() and assert report the CX_LINE before them (skycoin-cx#254)
+				$$ = append([]ast.CXExpression{*ast.MakeCXLineExpression(actions.AST, actions.CurrentFile, actions.LineNo, actions.LineStr)}, $1...)
 			} else {
 				$$ = $1
 			}
-			// $$ = $1
                 }
                 ;
 
