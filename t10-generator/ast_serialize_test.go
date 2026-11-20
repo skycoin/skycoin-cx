@@ -25,7 +25,8 @@ import (
 // t.Logf("memory len=%v\n", len(tc.program.Memory))
 // t.Logf("value at memory data offset=%v\n", tc.program.Memory[tc.program.DataSegmentStartsAt:tc.program.DataSegmentStartsAt+tc.program.DataSegmentSize])
 
-// FAILING: the generator panics, it still assumes deprecated CXArgument inputs; see #12
+// FAILING: t3-ast serializeExpression and serializeFunctionArguments drop TYPE_ATOMIC signatures via
+// ConvertIndexTypeSignaturesToPointerArgs, and deserializePackages leaves pkg.Globals nil; see #12
 // func TestSerialize_CipherEncoder(t *testing.T) {
 // 	tests := []struct {
 // 		scenario          string
@@ -84,7 +85,8 @@ import (
 // 	}
 // }
 
-// FAILING: the generator panics, it still assumes deprecated CXArgument inputs; see #12
+// FAILING: t3-ast serializeExpression and serializeFunctionArguments drop TYPE_ATOMIC signatures via
+// ConvertIndexTypeSignaturesToPointerArgs, and deserializePackages leaves pkg.Globals nil; see #12
 // func TestSerialize_SkyEncoder(t *testing.T) {
 // 	tests := []struct {
 // 		scenario          string
@@ -142,37 +144,36 @@ import (
 // 	}
 // }
 
-// FAILING: the generator panics, it still assumes deprecated CXArgument inputs; see #12
-// func TestSerialize_SkyEncoder_VS_CipherEncoder(t *testing.T) {
-// 	tests := []struct {
-// 		scenario string
-// 		program  *cxast.CXProgram
-// 		wantSame bool
-// 	}{
-// 		{
-// 			scenario: "Valid program",
-// 			program:  generateSampleProgramFromCXEvolves(t, false),
-// 		},
-// 	}
-//
-// 	for _, tc := range tests {
-// 		t.Run(tc.scenario, func(t *testing.T) {
-// 			skyEncoderSerializedBytes := cxast.SerializeCXProgramV2(tc.program, false, false)
-// 			cipherEncoderSerializedBytes := cxast.SerializeCXProgram(tc.program, false, false)
-//
-// 			// Check byte per byte
-// 			var diffCount int = 0
-// 			var pos []int
-// 			for i := range skyEncoderSerializedBytes {
-// 				if skyEncoderSerializedBytes[i] != cipherEncoderSerializedBytes[i] {
-// 					pos = append(pos, i)
-// 					diffCount++
-// 				}
-// 			}
-// 			t.Logf("There were %v indexes that have different values. \nThese indexes are %v", diffCount, pos)
-// 		})
-// 	}
-// }
+func TestSerialize_SkyEncoder_VS_CipherEncoder(t *testing.T) {
+	tests := []struct {
+		scenario string
+		program  *cxast.CXProgram
+		wantSame bool
+	}{
+		{
+			scenario: "Valid program",
+			program:  generateSampleProgramFromCXEvolves(t, false),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.scenario, func(t *testing.T) {
+			skyEncoderSerializedBytes := cxast.SerializeCXProgramV2(tc.program, false, false)
+			cipherEncoderSerializedBytes := cxast.SerializeCXProgram(tc.program, false, false)
+
+			// Check byte per byte
+			var diffCount int = 0
+			var pos []int
+			for i := range skyEncoderSerializedBytes {
+				if skyEncoderSerializedBytes[i] != cipherEncoderSerializedBytes[i] {
+					pos = append(pos, i)
+					diffCount++
+				}
+			}
+			t.Logf("There were %v indexes that have different values. \nThese indexes are %v", diffCount, pos)
+		})
+	}
+}
 
 func TestCompression_LZ4(t *testing.T) {
 	tests := []struct {
