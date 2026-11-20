@@ -59,14 +59,7 @@ func popStack(prgrm *CXProgram, call *CXCall) error {
 	return nil
 }
 
-func wipeDeclarationMemory(prgrm *CXProgram, expr *CXExpression) error {
-	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-	// Now an arena getter, site S0100.
-	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
-	if err != nil {
-		return err
-	}
-
+func wipeDeclarationMemory(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator) error {
 	newCall := &prgrm.CallStack[prgrm.CallCounter]
 	newFP := newCall.FramePointer
 	cxAtomicOpOutputs := cxAtomicOp.GetOutputs(prgrm)
@@ -104,18 +97,7 @@ func wipeDeclarationMemory(prgrm *CXProgram, expr *CXExpression) error {
 	return nil
 }
 
-func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, globalInputs *[]CXValue, globalOutputs *[]CXValue, fp types.Pointer) error {
-	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-	// Now an arena getter, site S0102.
-	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
-	if err != nil {
-		return err
-	}
-
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0103.
-	cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
-
+func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, cxAtomicOp *CXAtomicOperator, cxAtomicOpOperator *CXFunction, globalInputs *[]CXValue, globalOutputs *[]CXValue, fp types.Pointer) error {
 	inputs := cxAtomicOp.GetInputs(prgrm)
 	inputCount := len(inputs)
 	if inputCount > len(*globalInputs) {
@@ -207,17 +189,7 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, globalInputs 
 	return nil
 }
 
-func processNonAtomicOperators(prgrm *CXProgram, expr *CXExpression, fp types.Pointer) error {
-	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-	// Now an arena getter, site S0110.
-	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
-	if err != nil {
-		return err
-	}
-
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0111.
-	cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
+func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, cxAtomicOpOperator *CXFunction, fp types.Pointer) error {
 	//TODO: Is this only called for user defined functions?
 	/*
 	   It was not a native, so we need to create another call
@@ -337,7 +309,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 	if cxAtomicOpOperator == nil {
 		// then it's a declaration
 		// wiping this declaration's memory (removing garbage)
-		err := wipeDeclarationMemory(prgrm, expr)
+		err := wipeDeclarationMemory(prgrm, cxAtomicOp)
 		if err != nil {
 			return err
 		}
@@ -345,7 +317,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 		call.Line++
 	} else if cxAtomicOpOperator.IsBuiltIn() {
 		//TODO: SLICES ARE NON ATOMIC
-		err := processBuiltInOperators(prgrm, expr, globalInputs, globalOutputs, fp)
+		err := processBuiltInOperators(prgrm, expr, cxAtomicOp, cxAtomicOpOperator, globalInputs, globalOutputs, fp)
 		if err != nil {
 			return err
 		}
@@ -353,7 +325,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 		call.Line++
 	} else {
 		//NON-ATOMIC OPERATOR
-		err := processNonAtomicOperators(prgrm, expr, fp)
+		err := processNonAtomicOperators(prgrm, cxAtomicOp, cxAtomicOpOperator, fp)
 		if err != nil {
 			return err
 		}
