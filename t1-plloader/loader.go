@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-packages" // thin: only CheckImport, IsBuiltinImport; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-plbolt"   // thin: only Add; no depth gain
 	"golang.org/x/crypto/blake2b"
 )
@@ -131,15 +131,15 @@ func addNewPackage(packageListStruct *PackageList, packageName string, fileMap m
 		return errors.New("add package: empty package name")
 	}
 
-	// Checks if package is found in the directory
-	files, ok := fileMap[packageName]
-	if !ok && !packages.IsDefaultPackage(packageName) {
-		return fmt.Errorf("package %s not found", packageName)
+	// Built-in packages are not in the directory
+	if packages.IsBuiltinImport(packageName) {
+		return packages.CheckImport(packageName)
 	}
 
-	// Skip if the import is a built-in package
-	if packages.IsDefaultPackage(packageName) {
-		return nil
+	// Checks if package is found in the directory
+	files, ok := fileMap[packageName]
+	if !ok {
+		return fmt.Errorf("package %s not found", packageName)
 	}
 
 	// Creates the package struct

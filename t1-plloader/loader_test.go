@@ -563,7 +563,7 @@ func TestLoadCXProgramBuiltinImports(t *testing.T) {
 			if err := os.Mkdir(src, 0755); err != nil {
 				t.Fatal(err)
 			}
-			content := "package main\nimport \"" + name + "\"\nfunc main() {\n}\n"
+			content := "package main\nimport \"" + packages.SysPrefix + name + "\"\nfunc main() {\n}\n"
 			if err := os.WriteFile(filepath.Join(src, "m.cx"), []byte(content), 0644); err != nil {
 				t.Fatal(err)
 			}

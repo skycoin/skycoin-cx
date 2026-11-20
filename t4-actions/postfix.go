@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
+	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage, SysPrefix; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
@@ -887,8 +887,8 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		// then left is not a package name
 		if cxpackages.IsDefaultPackage(leftExprOutputTypeSig.Name) {
 			println(ast.CompilationError(leftExprOutputTypeSig.ArgDetails.FileName, leftExprOutputTypeSig.ArgDetails.FileLine),
-				fmt.Sprintf("identifier '%s' does not exist",
-					leftExprOutputTypeSig.Name))
+				fmt.Sprintf("built-in package %s is used without importing it, add import \"%s%s\"",
+					leftExprOutputTypeSig.Name, cxpackages.SysPrefix, leftExprOutputTypeSig.Name))
 			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 

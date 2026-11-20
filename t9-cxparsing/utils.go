@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
+	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsBuiltinImport; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -175,7 +175,7 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 				if match := reImpName.FindStringSubmatch(string(line)); match != nil {
 					pkgName := match[len(match)-1]
 					// Checking if `pkgName` already exists and if it's not a standard library package.
-					if _, err := cxpartialparsing.Program.GetPackage(pkgName); err != nil && !cxpackages.IsDefaultPackage(pkgName) {
+					if _, err := cxpartialparsing.Program.GetPackage(pkgName); err != nil && !cxpackages.IsBuiltinImport(pkgName) {
 						_, sourceCode, fileNames, err := util.ParseArgsForCX([]string{filepath.Join(globals.SRCPATH, pkgName)}, false)
 						if err != nil {
 							println(err.Error())

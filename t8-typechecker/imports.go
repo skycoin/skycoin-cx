@@ -1,6 +1,7 @@
 package type_checker
 
 import (
+	"github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsBuiltinImport; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t6-declextractor"
@@ -10,6 +11,11 @@ func ParseImports(imports []declaration_extractor.ImportDeclaration) error {
 
 	// Make and add import packages to AST
 	for _, imprt := range imports {
+		// DeclareImport adds the built-in packages under their own name.
+		if packages.IsBuiltinImport(imprt.ImportName) {
+			continue
+		}
+
 		// Get Package
 		pkg, err := actions.AST.GetPackage(imprt.ImportName)
 

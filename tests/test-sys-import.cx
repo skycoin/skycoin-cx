@@ -1,0 +1,16 @@
+package main
+
+import "sys/os"
+import "sys/regexp"
+
+func main() {
+	var r regexp.Regexp
+	r = regexp.MustCompile("b+")
+	var found str
+	found = r.Find("abbbc")
+	test(found, "bbb", "regexp through sys/regexp")
+
+	var dir str
+	dir = os.GetWorkingDirectory()
+	test(len(dir) > 0, true, "os through sys/os")
+}

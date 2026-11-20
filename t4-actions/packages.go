@@ -3,7 +3,7 @@ package actions
 import (
 	"fmt"
 
-	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
+	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only CheckImport, IsDefaultPackage; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -44,6 +44,11 @@ func DeclareImport(prgrm *ast.CXProgram, impName string, currentFile string, lin
 	if err != nil {
 		// FIXME: Should give a relevant error message
 		panic(err)
+	}
+
+	if err := cxpackages.CheckImport(impName); err != nil {
+		println(ast.CompilationError(currentFile, lineNo), err.Error())
+		return
 	}
 
 	// Checking if it's a package in the CX workspace by trying to find a
