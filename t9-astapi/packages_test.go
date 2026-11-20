@@ -10,9 +10,12 @@ import (
 
 func TestASTAPI_Packages(t *testing.T) {
 	var cxprogram *cxast.CXProgram
+	// The native packages are registered before main.
+	var nativePkgs int
 	t.Run("make program", func(t *testing.T) {
 		cxprogram = cxinit.MakeProgram()
 		cxinit.RegisterPackages(cxprogram)
+		nativePkgs = len(cxprogram.Packages)
 	})
 
 	t.Run("add empty package", func(t *testing.T) {
@@ -24,7 +27,7 @@ func TestASTAPI_Packages(t *testing.T) {
 
 	t.Run("get packages name lists", func(t *testing.T) {
 		list := astapi.GetPackagesNameList(cxprogram)
-		wantLen := 1
+		wantLen := nativePkgs + 1
 		if len(list) != wantLen {
 			t.Errorf("got len(list)=%v, want %v", len(list), wantLen)
 		}

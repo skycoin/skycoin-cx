@@ -1,41 +1,29 @@
 package tree
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: tests use only DBPath; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-plredis"
+	"github.com/skycoin/skycoin-cx/t1-plloader2"
 )
 
 func TestTree(t *testing.T) {
-	tests := []struct {
-		Scenario       string
-		Database       string
-		ExpectedResult string
-	}{
-		{
-			Scenario:       "Test with Redis database",
-			Database:       "redis",
-			ExpectedResult: "main\n|--os\n|--testimport2\n|  |--testimport1\n|  |  `--gl\n|  `--testimport3\n|     `--testimport1\n|        `--gl\n`--testimport1\n   `--gl\n",
-		},
-		{
-			Scenario:       "Test with Bolt database",
-			Database:       "bolt",
-			ExpectedResult: "main\n|--os\n|--testimport2\n|  |--testimport1\n|  |  `--gl\n|  `--testimport3\n|     `--testimport1\n|        `--gl\n`--testimport1\n   `--gl\n",
-		},
-	}
-	for _, testcase := range tests {
-		t.Run(testcase.Scenario, func(t *testing.T) {
-			bolt.DBPath = ".."
-			output, err := GetImportTree("TestTree", testcase.Database)
-			if err != nil {
-				t.Error(err)
+	const want = "main\n|--os\n|--testimport2\n|  |--testimport1\n|  |  `--gl\n|  `--testimport3\n|     `--testimport1\n|        `--gl\n`--testimport1\n   `--gl\n"
+	for _, database := range []string{"redis", "bolt"} {
+		t.Run(database, func(t *testing.T) {
+			if database == "redis" && redis.Ping() != nil {
+				t.Skip("needs a redis server on localhost:6379")
 			}
-
-			if fmt.Sprintf("%q", output) != fmt.Sprintf("%q", testcase.ExpectedResult) {
-				t.Error("The string produced by Tree does not match the expected result:")
-				t.Errorf("%q", output)
-				t.Errorf("%q", testcase.ExpectedResult)
+			_, sourceCodes, _ := loader.ParseArgsForCX([]string{"test_tree"}, true)
+			if err := loader.LoadCXProgram("TestTree", sourceCodes, database); err != nil {
+				t.Fatal(err)
+			}
+			output, err := GetImportTree("TestTree", database)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if output != want {
+				t.Errorf("GetImportTree:\n got %q\nwant %q", output, want)
 			}
 		})
 	}

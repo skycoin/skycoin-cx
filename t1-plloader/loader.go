@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
-	"sync"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt"  // thin: only Add; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-plredis" // thin: only Add; no depth gain
@@ -135,20 +135,29 @@ func LoadCXProgram(programName string, sourceCode []*os.File, database string) (
 		return
 	}
 
+	packageNames := make([]string, 0, len(fileMap))
+	for key := range fileMap {
+		packageNames = append(packageNames, key)
+	}
+	sort.Strings(packageNames)
+
 	packageListStruct := PackageList{}
-	for key, files := range fileMap {
-		addNewPackage(&packageListStruct, key, files, database)
+	for _, key := range packageNames {
+		err = addNewPackage(&packageListStruct, key, fileMap[key], database)
+		if err != nil {
+			return err
+		}
 	}
 
 	switch database {
 	case "redis":
-		redis.Add(programName, packageListStruct)
+		return redis.Add(programName, packageListStruct)
 	case "bolt":
 		value, err := packageListStruct.MarshalBinary()
 		if err != nil {
 			return err
 		}
-		bolt.Add(programName, value)
+		return bolt.Add(programName, value)
 	}
 
 	return nil
@@ -159,33 +168,18 @@ func addNewPackage(packageListStruct *PackageList, packageName string, files []*
 		PackageName: packageName,
 	}
 
-	var wg sync.WaitGroup
 	for _, file := range files {
-		wg.Add(1)
-		errs := make(chan error)
-		go func(file *os.File) {
-			defer wg.Done()
-			fileStruct, err := fileStructFromFile(file)
-			if err != nil {
-				errs <- err
-			}
-			err = packageStruct.appendFile(&fileStruct, database)
-			if err != nil {
-				errs <- err
-			}
-			close(errs)
-		}(file)
-		for err := range errs {
-			if err != nil {
-				return err
-			}
+		fileStruct, err := fileStructFromFile(file)
+		if err != nil {
+			return err
+		}
+		err = packageStruct.appendFile(&fileStruct, database)
+		if err != nil {
+			return err
 		}
 	}
-	wg.Wait()
 
-	packageListStruct.appendPackage(&packageStruct, database)
-
-	return nil
+	return packageListStruct.appendPackage(&packageStruct, database)
 }
 
 func fileStructFromFile(file *os.File) (File, error) {

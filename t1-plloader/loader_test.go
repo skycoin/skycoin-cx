@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/skycoin/skycoin-cx/t0-plredis"
 	"github.com/skycoin/skycoin-cx/t1-plloader"
 )
 
@@ -128,6 +129,9 @@ func TestAddNewPackage(t *testing.T) {
 	}
 	for _, testcase := range tests {
 		t.Run(testcase.Scenario, func(t *testing.T) {
+			if testcase.Database == "redis" && redis.Ping() != nil {
+				t.Skip("needs a redis server on localhost:6379")
+			}
 			_, sourceCodes, _ := loader.ParseArgsForCX([]string{testcase.FilesPath}, false)
 			testPackageStruct := loader.PackageList{}
 			err := loader.AddNewPackage(&testPackageStruct, "main", sourceCodes, testcase.Database)
@@ -163,6 +167,9 @@ func TestLoadCXProgram(t *testing.T) {
 	}
 	for _, testcase := range tests {
 		t.Run(testcase.Scenario, func(t *testing.T) {
+			if testcase.Database == "redis" && redis.Ping() != nil {
+				t.Skip("needs a redis server on localhost:6379")
+			}
 			_, sourceCodes, _ := loader.ParseArgsForCX([]string{testcase.FilesPath}, false)
 			err := loader.LoadCXProgram("test", sourceCodes, testcase.Database)
 			if err != nil {

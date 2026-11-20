@@ -68,7 +68,7 @@ func SavePackagesToDisk(packageName string, path string, database string) error 
 }
 
 func SaveFilesToDisk(packageStruct loader.Package, filePath string, database string) error {
-	err := os.Mkdir(filePath, 0755)
+	err := os.MkdirAll(filePath, 0755)
 	if err != nil {
 		return err
 	}

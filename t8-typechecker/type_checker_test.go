@@ -525,58 +525,31 @@ func TestTypeChecker_ParseGlobals(t *testing.T) {
 
 			program := actions.AST
 
+			// Index is the global's position in its package, since the
+			// native packages register type signatures before main.
 			for _, wantGlobal := range tc.globalTypeSignatures {
+				pkg, err := program.GetPackage(wantGlobal.Package)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-				for _, pkgIdx := range program.Packages {
-
-					pkg, err := program.GetPackageFromArray(pkgIdx)
-					gotPkgName := pkg.Name
-
-					if err != nil {
-						t.Log(err)
-					}
-
-					if cxpackages.IsDefaultPackage(pkg.Name) {
-						continue
-					}
-
-					var match bool
-					var gotGlobal *ast.CXTypeSignature
-					var gotGlobalType string
-
-					for _, globalIdx := range pkg.Globals.Fields {
-						gotGlobal = program.GetCXTypeSignatureFromArray(globalIdx)
-
-						if gotGlobal.Name == wantGlobal.Name {
-
-							gotGlobalType = ast.GetFormattedType(actions.AST, gotGlobal)
-
-							if int(gotGlobal.Index) == wantGlobal.Index &&
-								gotPkgName == wantGlobal.Package &&
-								gotGlobalType == wantGlobal.Type {
-								match = true
-							}
-
-							break
-						}
-
-					}
-
-					if !match {
-
-						if gotGlobal.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-							t.Errorf("want global %v %v %v %v, got %v %v %v %v", wantGlobal.Name, wantGlobal.Index, wantGlobal.Package, wantGlobal.Type, program.GetCXArg(ast.CXArgumentIndex(gotGlobal.Meta)).Name, gotGlobal.Index, gotPkgName, gotGlobalType)
-						} else {
-							t.Errorf("want global %v %v %v %v, got %v %v %v %v", wantGlobal.Name, wantGlobal.Index, wantGlobal.Package, wantGlobal.Type, gotGlobal.Name, gotGlobal.Index, gotPkgName, gotGlobalType)
-						}
+				gotIndex := -1
+				var gotGlobalType string
+				for i, globalIdx := range pkg.Globals.Fields {
+					gotGlobal := program.GetCXTypeSignatureFromArray(globalIdx)
+					if gotGlobal.Name == wantGlobal.Name {
+						gotIndex = i
+						gotGlobalType = ast.GetFormattedType(actions.AST, gotGlobal)
+						break
 					}
 				}
 
+				if gotIndex != wantGlobal.Index || gotGlobalType != wantGlobal.Type {
+					t.Errorf("want global %v %v %v %v, got index %v type %q", wantGlobal.Name, wantGlobal.Index, wantGlobal.Package, wantGlobal.Type, gotIndex, gotGlobalType)
+				}
 			}
-
 		})
 	}
-
 }
 
 // func TestTypeChecks_ParseEnums(t *testing.T) {
@@ -621,7 +594,7 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 			structTypeSignatures: []StructTypeSignature{
 				{
 					Name:    "CustomType",
-					Index:   1,
+					Index:   0,
 					Package: "main",
 					Fields: []StructFieldTypeSignature{
 						{
@@ -638,7 +611,7 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 				},
 				{
 					Name:    "AnotherType",
-					Index:   2,
+					Index:   1,
 					Package: "main",
 					Fields: []StructFieldTypeSignature{
 						{
@@ -656,7 +629,7 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 			structTypeSignatures: []StructTypeSignature{
 				{
 					Name:    "animal",
-					Index:   1,
+					Index:   0,
 					Package: "main",
 					Fields: []StructFieldTypeSignature{
 						{
@@ -697,6 +670,8 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 
 			structs, err := declaration_extractor.ExtractStructs(ReplaceCommentsWithWhitespaces, files[0].FileName)
 
+			// The native packages register structs first, so count from the first new one.
+			firstStruct := len(actions.AST.CXStructs)
 			type_checker.ParseStructs(files, structs)
 
 			program := actions.AST
@@ -725,9 +700,9 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 
 						if gotStruct.Name == wantStruct.Name &&
 							gotPkgName == wantStruct.Package {
-							ast3 += fmt.Sprintf("want %s %d. %s, got %s %d. %s\n", wantStruct.Package, wantStruct.Index, wantStruct.Name, gotPkgName, gotStruct.Index, gotStruct.Name)
+							ast3 += fmt.Sprintf("want %s %d. %s, got %s %d. %s\n", wantStruct.Package, wantStruct.Index, wantStruct.Name, gotPkgName, gotStruct.Index-firstStruct, gotStruct.Name)
 
-							if gotStruct.Index != wantStruct.Index || len(gotStruct.Fields) != len(wantStruct.Fields) {
+							if gotStruct.Index-firstStruct != wantStruct.Index || len(gotStruct.Fields) != len(wantStruct.Fields) {
 								ast3 += fmt.Sprintf("want %d fields, got %d fields", len(wantStruct.Fields), len(gotStruct.Fields))
 								break
 							}
@@ -780,7 +755,7 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 	type CXFunc struct {
 		Name    string
 		Index   int
-		Package int
+		Package string
 		Inputs  string
 		Outputs string
 	}
@@ -797,26 +772,26 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 				{
 					Name:    "main",
 					Index:   0,
-					Package: 1,
+					Package: "main",
 				},
 				{
 					Name:    "add",
 					Index:   1,
-					Package: 1,
+					Package: "main",
 					Inputs:  "a i32, b i32",
 					Outputs: "answer i32",
 				},
 				{
 					Name:    "divide",
 					Index:   2,
-					Package: 1,
+					Package: "main",
 					Inputs:  "c i32, d i32",
 					Outputs: "quotient i32, remainder f32",
 				},
 				{
 					Name:    "printer",
 					Index:   3,
-					Package: 1,
+					Package: "main",
 					Inputs:  "message str",
 				},
 			},
@@ -828,12 +803,12 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 				{
 					Name:    "main",
 					Index:   0,
-					Package: 1,
+					Package: "main",
 				},
 				{
 					Name:    "is_divisible",
 					Index:   1,
-					Package: 1,
+					Package: "main",
 					Inputs:  "x i32, y i32",
 					Outputs: "result bool",
 				},
@@ -907,7 +882,7 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 
 						if gotFuncName == wantFuncName &&
 							gotFunc.Index == wantFunc.Index &&
-							int(gotFunc.Package) == wantFunc.Package {
+							pkg.Name == wantFunc.Package {
 							if gotFuncInputs == wantFuncInputs && gotFuncOutputs == wantFuncOutputs {
 								match = true
 							}
@@ -919,7 +894,7 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 				}
 
 				if !match {
-					t.Errorf("want func %d %d. %s (%s) (%s), got %d %d. %s (%s) (%s)", wantFunc.Package, wantFunc.Index, wantFuncName, wantFuncInputs, wantFuncOutputs, gotFunc.Package, gotFunc.Index, gotFuncName, gotFuncInputs, gotFuncOutputs)
+					t.Errorf("want func %v %d. %s (%s) (%s), got %v %d. %s (%s) (%s)", wantFunc.Package, wantFunc.Index, wantFuncName, wantFuncInputs, wantFuncOutputs, gotFunc.Package, gotFunc.Index, gotFuncName, gotFuncInputs, gotFuncOutputs)
 				}
 			}
 

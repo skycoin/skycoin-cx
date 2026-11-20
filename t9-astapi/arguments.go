@@ -337,10 +337,10 @@ func MakeOutputExpressionAPointer(cxprogram *cxast.CXProgram, functionName strin
 //
 // We use GetAccessibleArgsForFunctionByType(cxprogram, "main", "TestFunction", cxtypes.I16).
 // We then get a result of
-// 1. testGlobal i16 arg in the form of cxast.CXArgument.
-// 2. x i16 arg in th eform of cxast.CXArgument.
-func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocationName, functionName string, argType types.Code) ([]*cxast.CXArgument, error) {
-	var argsList []*cxast.CXArgument
+// 1. testGlobal i16 arg in the form of cxast.CXTypeSignature.
+// 2. x i16 arg in the form of cxast.CXTypeSignature.
+func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocationName, functionName string, argType types.Code) ([]*cxast.CXTypeSignature, error) {
+	var argsList []*cxast.CXTypeSignature
 
 	// Get all globals
 	pkg, err := FindPackage(cxprogram, packageLocationName)
@@ -349,22 +349,7 @@ func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocat
 	}
 
 	for _, glblFldIdx := range pkg.Globals.Fields {
-		glblFld := cxprogram.GetCXTypeSignatureFromArray(glblFldIdx)
-		// Assuming only all are TYPE_CXARGUMENT_DEPRECATE
-		// TODO: To be replaced
-		global := cxprogram.GetCXArg(ast.CXArgumentIndex(glblFld.Meta))
-		if global.IsStruct() {
-			for _, typeSignatureIdx := range global.StructType.Fields {
-				typeSignature := cxprogram.GetCXTypeSignatureFromArray(typeSignatureIdx)
-				fieldIdx := typeSignature.Meta
-				field := cxprogram.CXArgs[fieldIdx]
-				if field.Type == argType {
-					argsList = append(argsList, &field)
-				}
-			}
-		} else if global.Type == argType {
-			argsList = append(argsList, global)
-		}
+		argsList = appendArgsByType(cxprogram, argsList, cxprogram.GetCXTypeSignatureFromArray(glblFldIdx), argType)
 	}
 
 	for _, impIdx := range pkg.Imports {
@@ -373,22 +358,7 @@ func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocat
 			panic(err)
 		}
 		for _, glblFldIdx := range imp.Globals.Fields {
-			glblFld := cxprogram.GetCXTypeSignatureFromArray(glblFldIdx)
-			// Assuming only all are TYPE_CXARGUMENT_DEPRECATE
-			// TODO: To be replaced
-			global := cxprogram.GetCXArg(ast.CXArgumentIndex(glblFld.Meta))
-			if global.IsStruct() {
-				for _, typeSignatureIdx := range global.StructType.Fields {
-					typeSignature := cxprogram.GetCXTypeSignatureFromArray(typeSignatureIdx)
-					fieldIdx := typeSignature.Meta
-					field := cxprogram.CXArgs[fieldIdx]
-					if field.Type == argType {
-						argsList = append(argsList, &field)
-					}
-				}
-			} else if global.Type == argType {
-				argsList = append(argsList, global)
-			}
+			argsList = appendArgsByType(cxprogram, argsList, cxprogram.GetCXTypeSignatureFromArray(glblFldIdx), argType)
 		}
 	}
 
@@ -404,31 +374,32 @@ func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocat
 			panic(err)
 		}
 		for _, inputArgIdx := range cxAtomicOp.GetInputs(cxprogram) {
-			inputArg := cxprogram.GetCXTypeSignatureFromArray(inputArgIdx)
-
-			var arg *ast.CXArgument
-			if inputArg.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				arg = cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(inputArg.Meta))
-			} else {
-				panic("type is not type cx argument deprecate\n\n")
-			}
-
-			if arg.IsStruct() {
-				for _, typeSignatureIdx := range arg.StructType.Fields {
-					typeSignature := cxprogram.GetCXTypeSignatureFromArray(typeSignatureIdx)
-					fieldIdx := typeSignature.Meta
-					field := cxprogram.CXArgs[fieldIdx]
-					if field.Type == argType {
-						argsList = append(argsList, &field)
-					}
-				}
-			} else if arg.Type == argType {
-				argsList = append(argsList, arg)
-			}
+			argsList = appendArgsByType(cxprogram, argsList, cxprogram.GetCXTypeSignatureFromArray(inputArgIdx), argType)
 		}
 	}
 
 	return argsList, nil
+}
+
+// appendArgsByType appends typeSig, or its struct fields, to argsList if
+// they are of argType. typeSig may be atomic or a deprecated CXArgument.
+func appendArgsByType(cxprogram *cxast.CXProgram, argsList []*cxast.CXTypeSignature, typeSig *cxast.CXTypeSignature, argType types.Code) []*cxast.CXTypeSignature {
+	switch typeSig.Type {
+	case cxast.TYPE_ATOMIC, cxast.TYPE_POINTER_ATOMIC:
+		if types.Code(typeSig.Meta) == argType {
+			argsList = append(argsList, typeSig)
+		}
+	case cxast.TYPE_CXARGUMENT_DEPRECATE:
+		arg := cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(typeSig.Meta))
+		if arg.IsStruct() {
+			for _, fieldIdx := range arg.StructType.Fields {
+				argsList = appendArgsByType(cxprogram, argsList, cxprogram.GetCXTypeSignatureFromArray(fieldIdx), argType)
+			}
+		} else if arg.Type == argType {
+			argsList = append(argsList, cxast.GetCXTypeSignatureRepresentationOfCXArg(cxprogram, arg))
+		}
+	}
+	return argsList
 }
 
 func AddLiteralInputToExpression(cxprogram *cxast.CXProgram, packageName, functionName string, bytes []byte, argType types.Code, lineNumber int) error {

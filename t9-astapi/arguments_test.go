@@ -142,8 +142,15 @@ func TestASTAPI_Arguments(t *testing.T) {
 			t.Errorf("want no error, got %v", err)
 		}
 
+		got := map[string]bool{}
 		for _, arg := range args {
-			t.Logf("Arg (name,type)=(%v,%v)\n", arg.Name, types.Code(arg.Type))
+			t.Logf("Arg (name,type)=(%v,%v)\n", arg.Name, types.Code(arg.Meta))
+			got[arg.Name] = true
+		}
+		for _, want := range []string{"testGlobal", "y"} {
+			if !got[want] {
+				t.Errorf("want accessible i16 arg %s, got %v", want, got)
+			}
 		}
 	})
 }

@@ -36,3 +36,8 @@ func Get(key string) (interface{}, error) {
 	}
 	return ret, nil
 }
+
+// Ping reports whether the redis server on localhost:6379 answers.
+func Ping() error {
+	return rdb.Ping(ctx).Err()
+}

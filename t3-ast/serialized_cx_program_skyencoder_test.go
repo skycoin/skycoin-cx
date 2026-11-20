@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -217,7 +216,8 @@ func testSkyencoderSerializedCXProgram(t *testing.T, obj *SerializedCXProgram) {
 }
 
 func TestSkyencoderSerializedCXProgram(t *testing.T) {
-	rand := mathrand.New(mathrand.NewSource(time.Now().Unix()))
+	// Fixed seed so a failure can be reproduced; was time.Now().Unix().
+	rand := mathrand.New(mathrand.NewSource(1))
 
 	type testCase struct {
 		name string
@@ -404,7 +404,8 @@ func testSkyencoderSerializedCXProgramDecodeErrors(t *testing.T, k int, tag stri
 }
 
 func TestSkyencoderSerializedCXProgramDecodeErrors(t *testing.T) {
-	rand := mathrand.New(mathrand.NewSource(time.Now().Unix()))
+	// Fixed seed so a failure can be reproduced; was time.Now().Unix().
+	rand := mathrand.New(mathrand.NewSource(1))
 	n := 10
 
 	for i := 0; i < n; i++ {

@@ -3,6 +3,7 @@ package file_output_test
 import (
 	"testing"
 
+	"github.com/skycoin/skycoin-cx/t0-plredis"
 	"github.com/skycoin/skycoin-cx/t1-plloader"
 	"github.com/skycoin/skycoin-cx/t4-actions" // thin: tests use only AST; tests only set actions.AST = nil, could drop it, tier 5 to 2
 	"github.com/skycoin/skycoin-cx/t5-plfileoutput"
@@ -65,6 +66,9 @@ func TestFile_Output_GetImportFiles(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
+			if tc.database == "redis" && redis.Ping() != nil {
+				t.Skip("needs a redis server on localhost:6379")
+			}
 
 			actions.AST = nil
 

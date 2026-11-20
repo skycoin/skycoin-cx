@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt"  // thin: only Add; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-plredis" // thin: only Add; no depth gain
@@ -137,13 +136,13 @@ func LoadCXProgram(programName string, sourceCode []*os.File, database string) (
 
 	switch database {
 	case "redis":
-		redis.Add(programName, packageListStruct)
+		return redis.Add(programName, packageListStruct)
 	case "bolt":
 		value, err := packageListStruct.MarshalBinary()
 		if err != nil {
 			return err
 		}
-		bolt.Add(programName, value)
+		return bolt.Add(programName, value)
 	}
 
 	return nil
@@ -253,9 +252,7 @@ func addNewPackage(packageListStruct *PackageList, packageName string, fileMap m
 	importMap[packageName] = newImportList
 
 	// Append the package to the package struct
-	packageListStruct.appendPackage(&packageStruct, database)
-
-	return nil
+	return packageListStruct.appendPackage(&packageStruct, database)
 }
 
 func getImports(file *os.File) (imports []string, err error) {
@@ -406,40 +403,14 @@ func createImportList(files []*os.File, importList []string) ([]string, error) {
 //
 // This function works recursively, loading the import packages and then loading import packages of imports
 func loadImportPackages(packageListStruct *PackageList, importName string, fileMap map[string][]*os.File, importMap map[string][]string, database string) error {
-
-	errChannel := make(chan error, len(importMap))
-
-	var wg sync.WaitGroup
-	// loops over import list
 	for _, imprt := range importMap[importName] {
+		err := addNewPackage(packageListStruct, imprt, fileMap, importMap, database)
+		if err != nil {
+			return err
+		}
 
-		wg.Add(1)
-
-		go func(packageListStruct *PackageList, imprt string, fileMap map[string][]*os.File, importMap map[string][]string, database string, errChannel chan error, wg *sync.WaitGroup) {
-			defer wg.Done()
-			// Add package
-			err := addNewPackage(packageListStruct, imprt, fileMap, importMap, database)
-			if err != nil {
-				errChannel <- err
-				return
-			}
-
-			// Call itself for loading imports of the import
-			err = loadImportPackages(packageListStruct, imprt, fileMap, importMap, database)
-			if err != nil {
-				errChannel <- err
-				return
-			}
-
-		}(packageListStruct, imprt, fileMap, importMap, database, errChannel, &wg)
-
-	}
-
-	wg.Wait()
-
-	close(errChannel)
-
-	for err := range errChannel {
+		// Load the imports of the import
+		err = loadImportPackages(packageListStruct, imprt, fileMap, importMap, database)
 		if err != nil {
 			return err
 		}
