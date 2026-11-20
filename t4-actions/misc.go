@@ -300,9 +300,7 @@ func IsAllArgsBasicTypes(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 
 		var inpType types.Code
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S1086.
-		var inp *ast.CXArgument = &ast.CXArgument{}
+		var inp *ast.CXArgument
 		if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1087.

@@ -100,10 +100,11 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		// then it was only added a reference to the symbol
 
 		// if offset is not valid, assign new offset
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S1215.
-		var glblArg *ast.CXArgument = &ast.CXArgument{}
+		// The offset and pass-by of the new data, zero when the offset is valid.
+		var glblArgOffset types.Pointer
+		var glblArgPassBy int
 		if !glbl.Offset.IsValid() {
+			var glblArg *ast.CXArgument
 			if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 				glblArg = WritePrimary(prgrm, declaration_specifiers.Type,
 					make([]byte, types.POINTER_SIZE), true)
@@ -111,14 +112,15 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 				glblArg = WritePrimary(prgrm, declaration_specifiers.Type,
 					make([]byte, totalSize), false)
 			}
-
+			glblArgOffset = glblArg.Offset
+			glblArgPassBy = glblArg.PassBy
 		}
 
 		if ast.IsTypeAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_ATOMIC
 			glbl.Meta = int(declaration_specifiers.Type)
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 
 			glbl.PassBy = declaration_specifiers.PassBy
@@ -126,7 +128,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			glbl.Type = ast.TYPE_POINTER_ATOMIC
 			glbl.Meta = int(declaration_specifiers.Type)
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 
 			glbl.PassBy = declaration_specifiers.PassBy
@@ -144,7 +146,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 		} else if ast.IsTypePointerArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_POINTER_ARRAY_ATOMIC
@@ -158,7 +160,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 		} else if ast.IsTypeSliceAtomic(declaration_specifiers) {
 			// If slice atomic type, i.e. []i32, []f64, etc.
@@ -174,7 +176,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 		} else if ast.IsTypePointerSliceAtomic(declaration_specifiers) {
 			// If pointer slice atomic type, i.e. *[]i32, *[]f64, etc.
@@ -190,14 +192,12 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
-				glbl.Offset = glblArg.Offset
+				glbl.Offset = glblArgOffset
 			}
 		} else {
 			// its a cxargument_deprecate type
 			var glblIdx int
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S1224.
-			var glblCXArg *ast.CXArgument = &ast.CXArgument{}
+			var glblCXArg *ast.CXArgument
 			if glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				glblIdx = glbl.Meta
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -210,10 +210,10 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			if glblCXArg.Size == 0 || totalSize == 0 {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1763.
-				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Offset = glblArg.Offset
+				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Offset = glblArgOffset
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1764.
-				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).PassBy = glblArg.PassBy
+				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).PassBy = glblArgPassBy
 			}
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -247,9 +247,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 	} else {
 		// then it hasn't been defined
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S1227.
-		var glblArg *ast.CXArgument = &ast.CXArgument{}
+		var glblArg *ast.CXArgument
 		if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, types.POINTER_SIZE), true)
 		} else {

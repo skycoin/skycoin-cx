@@ -52,9 +52,8 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S0514.
 			toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0])
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S0515.
-			var toExpressionOutput *ast.CXArgument = &ast.CXArgument{}
+			// nil for an atomic output.
+			var toExpressionOutput *ast.CXArgument
 			if toExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0516.
@@ -67,7 +66,7 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 				panic("type is not known")
 			}
 
-			if len(toExpressionOutput.Indexes) > 0 {
+			if toExpressionOutput != nil && len(toExpressionOutput.Indexes) > 0 {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1635.
 				prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Lengths = toExpressionOutput.Lengths
@@ -120,9 +119,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0518.
 	lastFromExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastFromExpression.GetOutputs(prgrm)[0])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0519.
-	var lastFromExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	var lastFromExpressionOutputArg *ast.CXArgument
 	if lastFromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0520.
@@ -279,9 +276,7 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 		typeSig := prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0]
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSig)
 	} else {
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0535.
-		var fromExpressionInputArg *ast.CXArgument = &ast.CXArgument{}
+		var fromExpressionInputArg *ast.CXArgument
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0536.
 		fromExpressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)[0])
@@ -386,9 +381,8 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 	expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 	expressionIdx := expr.Index
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0551.
-	var sym *ast.CXArgument = &ast.CXArgument{}
+	// nil for an atomic output.
+	var sym *ast.CXArgument
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0552.
@@ -410,9 +404,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0553.
 		fromExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0])
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0554.
-		var fromExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+		var fromExpressionOutputArg *ast.CXArgument
 		if fromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0555.
@@ -456,9 +448,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 				// Now an arena getter, site S0566.
 				fromExpressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)[0])
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S0567.
-				var fromExpressionInputArg *ast.CXArgument = &ast.CXArgument{}
+				var fromExpressionInputArg *ast.CXArgument
 				if fromExpressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S0568.
@@ -499,6 +489,15 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, typeSigIdx)
 
+	// The type an atomic output gives its receivers is zero.
+	var symType, symPointerTargetType types.Code
+	var symSize types.Pointer
+	if sym != nil {
+		symType = sym.Type
+		symPointerTargetType = sym.PointerTargetType
+		symSize = sym.Size
+	}
+
 	for _, toExpr := range toExprs {
 		if toExpr.Type == ast.CX_LINE {
 			continue
@@ -526,13 +525,13 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S1642.
-		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Type = sym.Type
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Type = symType
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S1643.
-		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).PointerTargetType = sym.PointerTargetType
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).PointerTargetType = symPointerTargetType
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S1644.
-		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Size = sym.Size
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Size = symSize
 	}
 
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.

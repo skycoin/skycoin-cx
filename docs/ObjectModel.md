@@ -422,6 +422,13 @@ program until the `CXNativeFunction` allocation phase.
 6. **No interfaces.** Managers, Gids and helpers are concrete types, by the
    repository rule. There is no `Manager` interface and no generic manager
    type.
+7. **No IR objects as temporaries.** A value that lives only within one call
+   frame, is never stored and is never named by a Gid needs no manager. It
+   is not part of `CxIrState` and never becomes IR. Building a whole IR
+   object, such as a `CXArgument`, only to read or pass a few of its fields
+   is a misuse. The code passes those fields as plain typed values, or does
+   the work once at compile time and keeps the result in the IR. A pointer
+   that may name no object is nil, never a pointer to an empty placeholder.
 
 ## Teardown
 

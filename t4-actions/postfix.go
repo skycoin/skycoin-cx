@@ -20,9 +20,7 @@ import (
 //		prevExprs - the previous expressions that compose the postfix expression.
 //	 postExprs - the array expressions.
 func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, postExprs []ast.CXExpression) []ast.CXExpression {
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S1093.
-	var elt *ast.CXArgument = &ast.CXArgument{}
+	var elt *ast.CXArgument
 
 	prevExpressionIdx := prevExprs[len(prevExprs)-1].Index
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
@@ -136,9 +134,8 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	// Now an arena getter, site S1114.
 	prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S1115.
-	var prevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	// nil for a slice output, which has no fields.
+	var prevExpressionOutputArg *ast.CXArgument
 	if prevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S1116.
@@ -183,13 +180,6 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		elt.DeclarationSpecifiers = append(elt.DeclarationSpecifiers, constants.DECL_INDEXING)
 	} else if prevExpressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 		prevExpressionOutputTypeSig.IsDeref = true
-		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
-		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
-		argDetails.FileName = CurrentFile
-		argDetails.FileLine = LineNo
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S1121.
-		prevExpressionOutputArg = &ast.CXArgument{ArgDetails: argDetailsGid}
 	} else {
 		panic("type is not known")
 	}
@@ -200,7 +190,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	postExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[postExpressionIdx].Operator)
 	postExpressionOperatorOutputs := postExpressionOperator.GetOutputs(prgrm)
 
-	if len(prevExpressionOutputArg.Fields) > 0 {
+	if prevExpressionOutputArg != nil && len(prevExpressionOutputArg.Fields) > 0 {
 		fldIdx := prevExpressionOutputArg.Fields[len(prevExpressionOutputArg.Fields)-1]
 
 		if postExpressionOperator == nil {
@@ -212,9 +202,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S1124.
 			postExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(postExpressionOperatorOutputs[0])
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S1125.
-			var postExpressionOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
+			var postExpressionOperatorOutputArg *ast.CXArgument
 			if postExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1126.
@@ -295,9 +283,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S1139.
 			prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S1140.
-			var prevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+			var prevExpressionOutputArg *ast.CXArgument
 			if prevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1141.
@@ -411,9 +397,8 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 		}
 	}
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S1149.
-	var prevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	// nil when there is no output or it is not an argument.
+	var prevExpressionOutputArg *ast.CXArgument
 	if prevExpression.Outputs != nil {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S1150.
@@ -423,15 +408,11 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1151.
 				prevExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(prevExpressionOutputTypeSig.Meta))
-			} else {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S1152.
-				prevExpressionOutputArg = &ast.CXArgument{}
 			}
 		}
 	}
 
-	if prevExpression.Outputs != nil && len(prevExpressionOutputArg.Fields) > 0 {
+	if prevExpressionOutputArg != nil && len(prevExpressionOutputArg.Fields) > 0 {
 		// then it's a method call or function in field
 
 	} else if prevExpressionOperator == nil {
@@ -480,9 +461,8 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 
 	var lastPrevExpressionOutputTypeSig *ast.CXTypeSignature
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S1156.
-	var lastPrevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	// nil when there is no output or it is atomic.
+	var lastPrevExpressionOutputArg *ast.CXArgument
 	if lastPrevExpression.Outputs != nil {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S1157.
@@ -499,7 +479,7 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 		}
 	}
 
-	if lastPrevExpression.Outputs != nil && len(lastPrevExpressionOutputArg.Fields) > 0 {
+	if lastPrevExpressionOutputArg != nil && len(lastPrevExpressionOutputArg.Fields) > 0 {
 		// then it's a method
 		// prevExprs[len(prevExprs) - 1].IsMethodCall = true
 
@@ -808,9 +788,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				// Now an arena getter, site S1192.
 				lastExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastExpressionIdx].GetOutputs(prgrm)[0])
 
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S1193.
-				var lastExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+				var lastExpressionOutputArg *ast.CXArgument
 				if lastExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1194.
@@ -852,9 +830,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S1196.
 			lastExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastExpressionIdx].GetOutputs(prgrm)[0])
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S1197.
-			var lastExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+			var lastExpressionOutputArg *ast.CXArgument
 			if lastExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1198.

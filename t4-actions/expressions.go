@@ -530,9 +530,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0659.
 		lastRightExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastRightExpressionOperatorOutputs[0])
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0660.
-		var lastRightExpressionOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
+		var lastRightExpressionOperatorOutputArg *ast.CXArgument
 
 		var typeSigIdx ast.CXTypeSignatureIndex
 		if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -600,22 +598,19 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0672.
 	lastLeftExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0673.
-	var lastLeftExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	// nil for an atomic output.
+	var lastLeftExpressionOutputArg *ast.CXArgument
 	if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0674.
 		lastLeftExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOutputTypeSig.Meta))
 	} else if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastLeftExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0675.
-		lastLeftExpressionOutputArg = &ast.CXArgument{}
+		// An atomic output has no indexes.
 	} else {
 		panic("type is not known")
 	}
 
-	if len(lastLeftExpressionOutputArg.Indexes) > 0 || lastLeftExpressionOperator != nil {
+	if lastLeftExpressionOutputArg != nil && len(lastLeftExpressionOutputArg.Indexes) > 0 || lastLeftExpressionOperator != nil {
 		typeSigIdx := prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0]
 		// then it's a function call or an array access
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
@@ -633,22 +628,19 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0676.
 	lastRightExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0677.
-	var lastRightExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	// nil for an atomic output.
+	var lastRightExpressionOutputArg *ast.CXArgument
 	if lastRightExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0678.
 		lastRightExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOutputTypeSig.Meta))
 	} else if lastRightExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastRightExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0679.
-		lastRightExpressionOutputArg = &ast.CXArgument{}
+		// An atomic output has no indexes.
 	} else {
 		panic("type is not known")
 	}
 
-	if len(lastRightExpressionOutputArg.Indexes) > 0 || lastRightExpressionOperator != nil {
+	if lastRightExpressionOutputArg != nil && len(lastRightExpressionOutputArg.Indexes) > 0 || lastRightExpressionOperator != nil {
 		typeSigIdx := prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0]
 		// then it's a function call or an array access
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
@@ -691,9 +683,7 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0680.
 	lastPrevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastPrevExpression.GetOutputs(prgrm)[0])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0681.
-	var lastPrevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
+	var lastPrevExpressionOutputArg *ast.CXArgument
 	if lastPrevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0682.
@@ -850,9 +840,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0699.
 	fnOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnOutputs[idx])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0700.
-	var outParam *ast.CXArgument = &ast.CXArgument{}
+	var outParam *ast.CXArgument
 	var typeSigIdx ast.CXTypeSignatureIndex
 	if fnOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
