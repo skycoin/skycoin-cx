@@ -31,7 +31,7 @@ func compileBenchmarkObjectCount() int {
 	return len(program.CXPackages) + len(program.CXFunctions) + len(program.CXStructs) +
 		len(program.CXAtomicOps) + program.CxIrState.CXLineMng.CXLineLen() + len(program.CXArgs) +
 		len(program.CXTypeSignatures) + program.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayLen() +
-		len(program.TypeSignatureForStructs)
+		program.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructLen()
 }
 
 // BenchmarkCompile measures the compiler alone, parse passes one and two

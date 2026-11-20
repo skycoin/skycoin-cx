@@ -527,34 +527,22 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now a heap literal, site S0314.
-		typeSignatureForStruct := &CXTypeSignature_Struct{
-			Fields:     cxArgument.Fields,
-			StructType: cxArgument.StructType,
-		}
+		structGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+		typeSignatureForStruct := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(structGid)
+		typeSignatureForStruct.Fields = cxArgument.Fields
+		typeSignatureForStruct.StructType = cxArgument.StructType
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an arena insert, site S0315.
-		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
-
-		newCXTypeSignature.Meta = typeSignatureForStructIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else if IsTypePointerStruct(cxArgument) {
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now a heap literal, site S0316.
-		typeSignatureForStruct := &CXTypeSignature_Struct{
-			Fields:     cxArgument.Fields,
-			StructType: cxArgument.StructType,
-		}
+		structGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+		typeSignatureForStruct := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(structGid)
+		typeSignatureForStruct.Fields = cxArgument.Fields
+		typeSignatureForStruct.StructType = cxArgument.StructType
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an arena insert, site S0317.
-		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
-
-		newCXTypeSignature.Meta = typeSignatureForStructIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now an arena insert, site S0318.
@@ -646,34 +634,22 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now a heap literal, site S0328.
-		typeSignatureForStruct := &CXTypeSignature_Struct{
-			Fields:     cxArgument.Fields,
-			StructType: cxArgument.StructType,
-		}
+		structGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+		typeSignatureForStruct := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(structGid)
+		typeSignatureForStruct.Fields = cxArgument.Fields
+		typeSignatureForStruct.StructType = cxArgument.StructType
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an arena insert, site S0329.
-		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
-
-		newCXTypeSignature.Meta = typeSignatureForStructIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else if IsTypePointerStruct(cxArgument) {
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now a heap literal, site S0330.
-		typeSignatureForStruct := &CXTypeSignature_Struct{
-			Fields:     cxArgument.Fields,
-			StructType: cxArgument.StructType,
-		}
+		structGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+		typeSignatureForStruct := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(structGid)
+		typeSignatureForStruct.Fields = cxArgument.Fields
+		typeSignatureForStruct.StructType = cxArgument.StructType
 
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an arena insert, site S0331.
-		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
-
-		newCXTypeSignature.Meta = typeSignatureForStructIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else {
 		// TYPE_CXARGUMENT_DEPRECATE
 		// FieldIdx or the CXArg ID is in Meta field.

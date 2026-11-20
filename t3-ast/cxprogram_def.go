@@ -35,13 +35,12 @@ type CXProgram struct {
 	ProgramError   error
 
 	// For new CX AST arrays
-	CXAtomicOps             []CXAtomicOperator
-	CXArgs                  []CXArgument
-	CXPackages              []CXPackage
-	CXFunctions             []CXFunction
-	CXStructs               []CXStruct
-	CXTypeSignatures        []CXTypeSignature
-	TypeSignatureForStructs []CXTypeSignature_Struct
+	CXAtomicOps      []CXAtomicOperator
+	CXArgs           []CXArgument
+	CXPackages       []CXPackage
+	CXFunctions      []CXFunction
+	CXStructs        []CXStruct
+	CXTypeSignatures []CXTypeSignature
 	// Then reference the package of function by CxFunction id
 
 	// CxIrState owns this program's IR objects. The program reaches it here until

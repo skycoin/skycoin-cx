@@ -49,7 +49,7 @@ free one.
 | `CXArgumentDebug` | `0x0A` | none, heap | `*CXArgumentDebug` |
 | `CXTypeSignature` | `0x0B` | `CXProgram.CXTypeSignatures` | `CXTypeSignatureIndex` |
 | `CXTypeSignature_Array` | `0x0C` | `CxIrState.CXTypeSignature_ArrayMng` since #316 | `int`, the slot index |
-| `CXTypeSignature_Struct` | `0x0D` | `CXProgram.TypeSignatureForStructs` | `int` |
+| `CXTypeSignature_Struct` | `0x0D` | `CxIrState.CXTypeSignature_StructMng` since #321 | `int`, the slot index |
 | `CXCall` | `0x0E` | `CXProgram.CallStack` | `types.Pointer` (`CallCounter`) |
 
 Tags `0x00` and `0x80` to `0xFF` are never used, see

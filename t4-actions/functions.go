@@ -2652,17 +2652,14 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_STRUCT || argTypeSignature.Type == ast.TYPE_POINTER_STRUCT {
+		structGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 		// Now an arena getter, site S0956.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSignature.Meta)
-
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an object copy, site S0957.
-		newStructDetails := *structDetails
+		newStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(structGid)
+		newStructDetails.StructType = structDetails.StructType
 		newStructDetails.Fields = sym.Fields
-		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-		// Now an arena insert, site S0958.
-		newStructDetailsIdx := prgrm.AddCXTypeSignatureStructInArray(&newStructDetails)
+		newStructDetailsIdx := int(objmodel.GidIndex(int64(structGid)))
 
 		symTypeSignature.Name = argTypeSignature.Name
 		symTypeSignature.Package = argTypeSignature.Package

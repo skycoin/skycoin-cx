@@ -33,6 +33,7 @@
 
 #### Changed
 
+- `CXTypeSignature_Struct` objects live in `CxIrState.CXTypeSignature_StructMng`. Struct signatures are allocated there, `CXProgram.TypeSignatureForStructs` and `AddCXTypeSignatureStructInArray` are gone, and `GetCXTypeSignatureStructFromArray` reads the manager by slot index (#299, #321)
 - `CXTypeSignature_Array` objects live in `CxIrState.CXTypeSignature_ArrayMng`. Array and slice signatures are allocated there, `CXProgram.TypeSignatureForArrays` and `AddCXTypeSignatureArrayInArray` are gone, and `GetCXTypeSignatureArrayFromArray` reads the manager by slot index (#299, #316)
 - `CXLine` objects live in `CxIrState.CXLineMng`. `MakeCXLineExpression` and `Deserialize` allocate them there, `CXProgram.CXLines` and `CXProgram.AddCXLine` are gone, and `GetCXLine` reads the manager by slot index. `GetOperation` returns a nil line for an expression that is not a line instead of a new empty one (#299, #311)
 - Every program has its own `CxIrState`, reached through `CXProgram.CxIrState` until phase 5 of `CXProgram`. `MakeProgram` and `Deserialize` make and initialize it, see "Until the program is managed" in `docs/ObjectModel.md`. The `CXArgumentDebug` allocation sites stay as they are until its Gid phase, because the object is shared through a pointer field (#299, #306)

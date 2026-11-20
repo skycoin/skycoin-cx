@@ -117,7 +117,7 @@ such as `CXFunctionIndex`.
 | `CXArgs` | `CXArgument` | `CXArgumentIndex` | `GetCXArg`, `GetCXArgFromArray` |
 | `CXTypeSignatures` | `CXTypeSignature` | `CXTypeSignatureIndex` | `GetCXTypeSignatureFromArray` |
 | `CxIrState.CXTypeSignature_ArrayMng`, was `TypeSignatureForArrays` | `CXTypeSignature_Array` | `int`, the slot index | `GetCXTypeSignatureArrayFromArray` |
-| `TypeSignatureForStructs` | `CXTypeSignature_Struct` | `int` | `GetCXTypeSignatureStructFromArray` |
+| `CxIrState.CXTypeSignature_StructMng`, was `TypeSignatureForStructs` | `CXTypeSignature_Struct` | `int`, the slot index | `GetCXTypeSignatureStructFromArray` |
 
 Several fields still hold Go pointers instead of indexes. Each is marked
 in the source and becomes a generational index under the object model in
@@ -270,13 +270,13 @@ on it.
 | `TYPE_POINTER_ARRAY_ATOMIC` | 4 | Slot in `CxIrState.CXTypeSignature_ArrayMng` |
 | `TYPE_SLICE_ATOMIC` | 5 | Slot in `CxIrState.CXTypeSignature_ArrayMng` |
 | `TYPE_POINTER_SLICE_ATOMIC` | 6 | Slot in `CxIrState.CXTypeSignature_ArrayMng` |
-| `TYPE_STRUCT` | 7 | Index into `TypeSignatureForStructs` |
-| `TYPE_POINTER_STRUCT` | 8 | Index into `TypeSignatureForStructs` |
+| `TYPE_STRUCT` | 7 | Slot in `CxIrState.CXTypeSignature_StructMng` |
+| `TYPE_POINTER_STRUCT` | 8 | Slot in `CxIrState.CXTypeSignature_StructMng` |
 | `TYPE_ARRAY_STRUCT` to `TYPE_SLICE_POINTER_COMPLEX` | 9 to 18 | Declared, not produced |
 | `TYPE_CXARGUMENT_DEPRECATE` | 19 | Index into `CXArgs` |
 
 `ast.CXTypeSignature_Array` holds `Meta` (the element `types.Code` or a
-`TypeSignatureForStructs` index), `Lengths []types.Pointer` (one entry per
+`CXTypeSignature_StructMng` slot), `Lengths []types.Pointer` (one entry per
 dimension, 0 for a slice dimension) and `Indexes`, the index operands when
 the signature reads an element. `ast.CXTypeSignature_Struct` holds
 `StructType` and `Fields`, the field access chain.

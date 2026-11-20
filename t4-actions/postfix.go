@@ -671,18 +671,16 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 			lastExpressionIdx = lastExpr.Index
 		} else if lastExpressionOperatorOutputTypeSig.Type == ast.TYPE_STRUCT {
-			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-			// Now a local object, site S1175.
-			var newStructDetails ast.CXTypeSignature_Struct
 			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 			// Now an arena getter, site S1176.
 			structDetails := prgrm.GetCXTypeSignatureStructFromArray(lastExpressionOperatorOutputTypeSig.Meta)
-			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-			// Now an object copy, site S1177.
-			newStructDetails = *structDetails
-			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-			// Now an arena insert, site S1178.
-			outStructDetailsIdx := prgrm.AddCXTypeSignatureStructInArray(&newStructDetails)
+			structFields, structType := structDetails.Fields, structDetails.StructType
+
+			outStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+			outStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(outStructGid)
+			outStructDetails.Fields = structFields
+			outStructDetails.StructType = structType
+			outStructDetailsIdx := int(objmodel.GidIndex(int64(outStructGid)))
 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 			// Now an object copy, site S1179.
@@ -700,10 +698,11 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// Now an object copy, site S1181.
 			inpTypeSig := *lastExpressionOperatorOutputTypeSig
 			inpTypeSig.Name = symName
-			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
-			// Now an arena insert, site S1182.
-			inpStructDetailsIdx := prgrm.AddCXTypeSignatureStructInArray(&newStructDetails)
-			inpTypeSig.Meta = inpStructDetailsIdx
+			inpStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
+			inpStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(inpStructGid)
+			inpStructDetails.Fields = structFields
+			inpStructDetails.StructType = structType
+			inpTypeSig.Meta = int(objmodel.GidIndex(int64(inpStructGid)))
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 			// Now an arena insert, site S1183.
 			inpTypeSigIdx := prgrm.AddCXTypeSignatureInArray(&inpTypeSig)
