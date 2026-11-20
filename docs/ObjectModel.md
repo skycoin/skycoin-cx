@@ -272,7 +272,7 @@ held.
 * Alloc on a full manager between two boundaries asserts. This is an
   unhandled case for now. The initial Caps in `CxIrStateInit` and the
   boundaries are set so that compiling every program in `tests/` and
-  `examples/` never reaches it.
+  `examples/` never reaches it, see [Capacity trace](#capacity-trace).
 * Storage stays one array per manager, so Get is one index. Chunked storage
   would keep pointers valid across growth but lose that.
 
@@ -297,6 +297,33 @@ Counting the live flags would make every Alloc O(Cap).
 Every check builds its message only when it fails, `if !ok {
 assert.AssertPreconditionTrue(false, fmt.Sprintf(...)) }`, because Get and
 Alloc are on the compiler's hot path once the sites use them.
+
+### Capacity trace
+
+The initial Caps are checked with a traced build that records, for each
+manager, the most slots in use at any grow boundary or at the end of
+compile, and runs every .cx file in the repository, 564 of them. A Cap is
+raised when a trace passes half of it, so that no program grows a manager.
+
+Measured on 2026-11-20 after the builders of #326 and #331 allocate in
+their managers and release the ones that end up named by nothing (#421,
+#427, #429).
+
+| Manager | Cap | Most in use | Program | Before the builders |
+| --- | --- | --- | --- | --- |
+| `CXLineMng` | 2048 | 658 | `test-slices.cx` | 658 |
+| `CXArgumentMng` | 8192 | 2312 | `test-gc.cx` | 2728 |
+| `CXArgumentDebugMng` | 4096 | 1730 | `test-slices.cx` | 1939 |
+| `CXTypeSignatureMng` | 8192 | 2962 | `test-slices.cx` | 2962 |
+| `CXTypeSignature_ArrayMng` | 1024 | 313 | `test-slices.cx` | 313 |
+| `CXTypeSignature_StructMng` | 256 | 83 | `test-gc.cx` | 83 |
+
+Every trace is under half of its Cap, so the Caps stay. No run printed a
+growth warning or reached the full-manager assert, and the exit codes of
+all 564 runs match those before the builders. The highest slot ever used
+equals the most in use at the same points, because a released builder's
+slot is reused before a new one is taken. `CXArgumentDebugMng` is the
+closest, at 85% of half its Cap.
 
 ### Generated
 
