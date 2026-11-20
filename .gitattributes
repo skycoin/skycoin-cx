@@ -1,3 +1,4 @@
 # The check scripts compare these files line by line, so keep LF on Windows too.
 *.sh text eol=lf
 *.txt text eol=lf
+*.cx text eol=lf
