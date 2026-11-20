@@ -19,41 +19,81 @@ struct, nil on success. It does not return the Go `error` interface.
 
 ### Error structs
 
-Errors are plain structs. There is no interface.
+Errors are plain structs. There is no interface, and there is no shared
+error package that every module imports.
 
-Each module or system area has one error struct, for example a file system
-error, a networking error and a package loader error. Its fields are
+Each module or system area defines its own error struct in its own package,
+for example `FileError`, `PathError`, `NetworkingError` and
+`PackageLoaderError`. Its fields are
 
-- the error type code, a specific code for each failure,
+- the failure code, a specific code for each failure,
 - the operation code, which operation failed,
 - the error string, the message,
 - any context fields the area needs, such as a path or an address.
 
 ```go
-// in the file system module
-type FileSystemError struct {
-	FileSystemErrorCode      cxerrors.ErrorTypeCode      // FileSystemErrorCodeNotFound, ...
-	FileSystemErrorOperation cxerrors.ErrorOperationCode // FileSystemOperationOpen, ...
-	FileSystemErrorMessage   string
-	FileSystemErrorPath      string
+// in t0-util, next to the file calls
+type FileErrorCode uint32
+type FileOperationCode uint32
+
+const (
+	FileErrorCodeNotFound         FileErrorCode = 1001
+	FileErrorCodePermissionDenied FileErrorCode = 1002
+)
+
+const (
+	FileOperationOpen   FileOperationCode = 1501
+	FileOperationCreate FileOperationCode = 1502
+)
+
+type FileError struct {
+	FileErrorCode      FileErrorCode
+	FileErrorOperation FileOperationCode
+	FileErrorMessage   string
+	FileErrorPath      string
 }
 
-func FileSystemFileOpen(path string) (*FileSystemFile, *FileSystemError)
+func FileOpen(path string) (*os.File, *FileError)
 ```
 
 ```go
-file, fileSystemError := FileSystemFileOpen(path)
-if fileSystemError != nil {
-	if fileSystemError.FileSystemErrorCode == cxerrors.FileSystemErrorCodeNotFound {
+file, fileError := workdir.FileOpen(path)
+if fileError != nil {
+	if fileError.FileErrorCode == workdir.FileErrorCodeNotFound {
 		...
 	}
 }
 ```
 
-The failure codes and operation codes come from the global code table of
-#196. Each failure has its own code, and each operation has its own code. The
-constants are prefixed by their area, such as `FileSystemErrorCode*` for
-failures and `FileSystemOperation*` for operations.
+Each module owns its failure codes and operation codes as constants next to
+its struct. Each failure has its own code and each operation has its own
+code. The constants are prefixed by their area, `FileErrorCode*` for failures
+and `FileOperation*` for operations.
+
+Because each module defines its own struct and codes, a module imports no
+other package to report an error, and no package changes tier. The codes stay
+unique across the whole module through the code ranges below.
+
+### Code ranges
+
+Each area has a block of 1000 codes. Failure codes use the lower half of the
+block and operation codes the upper half, so a code alone names its area.
+A new area takes the next free block and is added here in the same change.
+
+| Block | Area | Struct | Package |
+|---|---|---|---|
+| 0 - 999 | CX exit and runtime codes | none, `CX_*` constants | `t0-types` |
+| 1000 - 1999 | Files | `FileError` | `t0-util` |
+| 2000 - 2999 | Paths and the working directory | `PathError` | `t0-util` |
+| 3000 - 3999 | Networking | `NetworkingError` | `t5-tcp` |
+| 4000 - 4999 | Package store database | `PackageStoreError` | `t0-plbolt` |
+| 5000 - 5999 | Package loader | `PackageLoaderError` | `t1-plloader` |
+| 6000 - 6999 | LZ4 compression | `LZ4CodecError` | `t0-lz4codec` |
+| 7000 - 7999 | Compiler | `CompilerError`, returned as a list | assigned in #202 |
+
+In the block starting at B, failure codes run from B+1 to B+499 and operation
+codes from B+500 to B+999, so files use 1001 to 1499 and 1500 to 1999. No
+check enforces the blocks yet, see #270.
 
 Pick the struct in this order.
 
@@ -99,11 +139,12 @@ constants use verbose, lexicographically prefixed, Java style names, so
 related names sort together.
 
 - An error struct is named for its area, `<Area>Error`, for example
-  `FileSystemError`, `NetworkError`, `PackageLoaderError`. A more specific
+  `FileError`, `NetworkingError`, `PackageLoaderError`. A more specific
   struct keeps the area prefix, for example `PackageLoaderImportCycleError`.
 - Failure constants are `<Area>ErrorCode<Failure>` and operation constants
-  `<Area>Operation<Operation>`, for example `FileSystemErrorCodeNotFound` and
-  `FileSystemOperationOpen`.
+  `<Area>Operation<Operation>`, for example `FileErrorCodeNotFound` and
+  `FileOperationOpen`. Their types are `<Area>ErrorCode` and
+  `<Area>OperationCode`.
 - Methods, where a struct needs any, are named `<Noun><Verb>` or
   `<Noun><Noun><Verb>`, for example `ErrorCodeGet` or `ErrorMessageFormat`.
 - `Error`, `Unwrap`, `Code`, `Is`, `As` and any other one word generic
