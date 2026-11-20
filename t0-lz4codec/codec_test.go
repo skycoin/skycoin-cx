@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pierrec/lz4"
+	"github.com/pierrec/lz4/v4"
 
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 )

@@ -7,16 +7,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pierrec/lz4"
+	"github.com/pierrec/lz4/v4"
 )
 
 // MaxRatio bounds the output of an LZ4 block. A match length byte of 255 is
 // the densest encoding, see https://github.com/lz4/lz4/blob/dev/doc/lz4_Block_format.md.
 const MaxRatio = 255
-
-// hashTableSize is the table length CompressBlock needs to use the caller's
-// table instead of its internal sync.Pool, see vendor/github.com/pierrec/lz4/block.go.
-const hashTableSize = 1 << 16
 
 var (
 	// ErrNotInitialized is returned when a Codec is used before Init.
@@ -49,14 +45,14 @@ type Config struct {
 // Codec compresses and decompresses LZ4 blocks. The zero value is not
 // initialized. A Codec is not safe for concurrent use.
 type Codec struct {
-	cfg       Config
-	state     codecState
-	hashTable []int
-	compBuf   []byte
-	decompBuf []byte
+	cfg        Config
+	state      codecState
+	compressor *lz4.Compressor
+	compBuf    []byte
+	decompBuf  []byte
 }
 
-// Init checks cfg and allocates the hash table and both buffers.
+// Init checks cfg and allocates the compressor and both buffers.
 func (c *Codec) Init(cfg Config) error {
 	if c == nil {
 		return ErrNilCodec
@@ -71,7 +67,7 @@ func (c *Codec) Init(cfg Config) error {
 		return fmt.Errorf("lz4codec: MaxInput %d and MaxOutput %d must be positive", cfg.MaxInput, cfg.MaxOutput)
 	}
 	c.cfg = cfg
-	c.hashTable = make([]int, hashTableSize)
+	c.compressor = new(lz4.Compressor)
 	c.compBuf = make([]byte, lz4.CompressBlockBound(cfg.MaxInput))
 	c.decompBuf = make([]byte, cfg.MaxOutput)
 	c.state = stateReady
@@ -83,7 +79,7 @@ func (c *Codec) Close() error {
 	if err := c.ready(); err != nil {
 		return err
 	}
-	c.hashTable, c.compBuf, c.decompBuf = nil, nil, nil
+	c.compressor, c.compBuf, c.decompBuf = nil, nil, nil
 	c.state = stateClosed
 	return nil
 }
@@ -123,9 +119,8 @@ func (c *Codec) Compress(src []byte) ([]byte, error) {
 	if len(src) == 0 {
 		return c.compBuf[:0], nil
 	}
-	// A fresh table on every call keeps the output independent of earlier calls.
-	clear(c.hashTable)
-	n, err := lz4.CompressBlock(src, c.compBuf[:lz4.CompressBlockBound(len(src))], c.hashTable)
+	// Compressor clears its table on every call, so the output does not depend on earlier calls.
+	n, err := c.compressor.CompressBlock(src, c.compBuf[:lz4.CompressBlockBound(len(src))])
 	if err != nil {
 		return nil, fmt.Errorf("lz4codec: compress: %w", err)
 	}

@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/madelynnblue/go-dsp v1.0.0
-	github.com/pierrec/lz4 v2.6.1+incompatible
+	github.com/pierrec/lz4/v4 v4.1.33
 	github.com/skycoin/encodertest v0.0.0-20190217072920-14c2e31898b9
 	github.com/skycoin/gltext v0.0.0-20200425002731-afdd8ff94e14
 	github.com/skycoin/skycoin v0.28.8-0.20261117145039-38b3036d50d8
@@ -20,7 +20,6 @@ require (
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20261013231157-39c47d93efba // indirect
