@@ -36,7 +36,7 @@ func Contains(list []string, element string) bool {
 func createFileMap(files []*os.File) (fileMap map[string][]*os.File, err error) {
 	fileMap = make(map[string][]*os.File)
 	for _, file := range files {
-		path := strings.Split(file.Name(), "/")
+		path := strings.Split(filepath.ToSlash(file.Name()), "/")
 		packageName := path[len(path)-2]
 		filePackageName, err := getPackageName(file)
 		if err != nil {
@@ -183,7 +183,7 @@ func addNewPackage(packageListStruct *PackageList, packageName string, files []*
 }
 
 func fileStructFromFile(file *os.File) (File, error) {
-	path := strings.Split(file.Name(), "/")
+	path := strings.Split(filepath.ToSlash(file.Name()), "/")
 	fileName := path[len(path)-1]
 	fileInfo, err := file.Stat()
 	if err != nil {
