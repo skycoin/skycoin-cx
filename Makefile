@@ -1,9 +1,11 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-tests test test-all test-go vet vet-gui check-tiers check-inits check-ifaces check build-parser clean help
+.PHONY: build build-gui build-debug build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check build-parser clean help
 
 CXEXE := cx
+EXE :=
 ifeq ($(OS),Windows_NT)
 CXEXE := cx.exe
+EXE := .exe
 endif
 
 # Default build includes cipher, cxos and regexp. Opt out with nocipher,
@@ -29,6 +31,11 @@ test: build-tests ## Run the stable CX program tests
 test-all: build-tests ## Run all non-GUI CX program tests, including known issues
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui
 
+test-ptr64: ## Run the stable CX program tests with a ptr64 build
+	go build -tags="$(TAGS) ptr64" -o ./bin/cx64$(EXE) ./t11-cx
+	go build -o ./bin/cxtest ./t1-cxtest
+	./bin/cxtest --cxpath=$(CURDIR)/bin/cx64$(EXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
+
 test-go: ## Run the Go unit tests
 	go test ./...
 
@@ -48,7 +55,7 @@ check-inits: ## Check that no package outside main has func init(), see init-all
 check-ifaces: ## Check that no interface embeds another interface, see iface-allowlist.txt
 	./check-ifaces.sh
 
-check: check-tiers check-inits check-ifaces vet test-go test ## tier, init and interface checks, vet, Go tests and CX program tests
+check: check-tiers check-inits check-ifaces vet test-go test test-ptr64 ## tier, init and interface checks, vet, Go tests and CX program tests (default and ptr64)
 
 build-parser: ## Regenerate the CX parsers from the .y grammars
 	go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y

@@ -157,6 +157,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-tcp.cx", runner.CxSuccess, "tcp package (skycoin-cx#115)")
 	t.Run("test-utils.cx test-pointers.cx", runner.CxSuccess, "pointers")
 	t.Run("test-slices.cx", runner.CxSuccess, "slices")
+	t.Run("test-slices-append-multi.cx", runner.CxSuccess, "append with several values")
 
 	t.Run("--cxpath test-workspace test-workspace-a.cx", runner.CxSuccess, "Testing if CX can set a workspace and then import a library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-b.cx", runner.CxSuccess, "Testing if CX can set a workspace and then import a nested library, taking that workspace as the new relative path.")

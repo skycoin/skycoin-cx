@@ -160,7 +160,8 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	}
 
 	// Preparing slice in case more memory is needed for the new element.
-	outputSliceOffset := ast.SliceAppendResize(prgrm, inputs[0].FramePointer, outputs[0].TypeSignature, inputs[0].TypeSignature, ast.GetDerefSizeSlice(prgrm, inputs[0].TypeSignature), sliceInputsLen)
+	eltSize := ast.GetDerefSizeSlice(prgrm, inputs[0].TypeSignature)
+	outputSliceOffset := ast.SliceAppendResize(prgrm, inputs[0].FramePointer, outputs[0].TypeSignature, inputs[0].TypeSignature, eltSize, sliceInputsLen)
 
 	// We need to update the address of the output and input, as the final offsets
 	// could be on the heap and they could have been moved by the GC.
@@ -186,7 +187,7 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 			types.Write_ptr(obj[:], 0, types.Read_ptr(prgrm.Memory, input.Offset))
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))
 		} else {
-			obj := inputs[1].Get_bytes(prgrm)
+			obj := types.GetSlice_byte(prgrm.Memory, input.Offset, eltSize)
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj, inputSliceLen+types.Cast_int_to_ptr(i))
 		}
 	}

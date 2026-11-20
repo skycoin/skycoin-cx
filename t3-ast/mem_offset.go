@@ -233,9 +233,15 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 		indexesLen := len(arrDetails.Indexes)
-		sizeToUse := types.Code(arrDetails.Meta).Size()
+		eltSize := types.Code(arrDetails.Meta).Size()
 
 		for i := 0; i < indexesLen; i++ {
+			// The elements of an outer slice are pointers to the inner slices.
+			sizeToUse := eltSize
+			if i+1 < len(arrDetails.Lengths) {
+				sizeToUse = types.POINTER_SIZE
+			}
+
 			argTypeSigOffset = types.Read_ptr(prgrm.Memory, argTypeSigOffset)
 			baseOffset := argTypeSigOffset
 

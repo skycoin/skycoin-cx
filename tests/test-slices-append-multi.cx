@@ -1,0 +1,10 @@
+package main
+
+func main() {
+	var s []i32
+	s = append(s, 1, 2, 3)
+	test(len(s), 3, "")
+	test(s[0], 1, "")
+	test(s[1], 2, "")
+	test(s[2], 3, "")
+}

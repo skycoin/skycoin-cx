@@ -9,6 +9,7 @@
 
 #### Fixed
 
+- Slices of slices were wrong with ptr64 builds, and `append(s, a, b, c)` wrote `a` three times. `make check` now also runs the CX tests with a ptr64 build (#176)
 - The package loader silently dropped a file whose package did not match its directory. It now reports the mismatch (#181)
 
 ### skycoin-cx, 2026-11-17 to 2026-11-20
