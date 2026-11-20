@@ -55,16 +55,28 @@ func TestCXNativeFunctionMng(t *testing.T) {
 
 func TestCXNativeFunctionMngGrowth(t *testing.T) {
 	var manager CXNativeFunctionMng
-	manager.CXNativeFunctionMngInit(0, true)
-	gids := make([]CXNativeFunctionGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXNativeFunctionAlloc()
+	manager.CXNativeFunctionMngInit(4, true)
+	gids := make([]CXNativeFunctionGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXNativeFunctionAlloc())
 		manager.CXNativeFunctionGet(gids[i]).AtomicOPCode = i + 1
-		if manager.CXNativeFunctionLen() != i+1 || manager.CXNativeFunctionCap() < manager.CXNativeFunctionLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXNativeFunctionLen(), manager.CXNativeFunctionCap())
-		}
 	}
-	CXNativeFunctionMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXNativeFunctionMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXNativeFunctionAlloc())
+	manager.CXNativeFunctionGet(gids[2]).AtomicOPCode = 3
+	if oldCap, newCap := manager.CXNativeFunctionMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXNativeFunctionAlloc())
+		manager.CXNativeFunctionGet(gids[i]).AtomicOPCode = i + 1
+	}
+	if oldCap, newCap := manager.CXNativeFunctionMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXNativeFunctionMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXNativeFunctionGet(gid).AtomicOPCode != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXNativeFunctionMngGrowth(t *testing.T) {
 	CXNativeFunctionMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXNativeFunctionMngTeardown()
 	CXNativeFunctionMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXNativeFunctionMng
+	fixed.CXNativeFunctionMngInit(1, false)
+	gid := fixed.CXNativeFunctionAlloc()
+	if oldCap, newCap := fixed.CXNativeFunctionMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXNativeFunctionRelease(gid)
+	fixed.CXNativeFunctionMngTeardown()
 }
 
 func TestCXNativeFunctionMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXNativeFunctionMngTestAsserts = map[string]struct {
 		manager.CXNativeFunctionAlloc()
 		manager.CXNativeFunctionAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXNativeFunctionMng) {
+		manager.CXNativeFunctionMngInit(1, true)
+		manager.CXNativeFunctionAlloc()
+		manager.CXNativeFunctionAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXNativeFunctionMng) {
 		manager.CXNativeFunctionAlloc()
 		manager.CXNativeFunctionMngGenerations[0] = objmodel.GidGenerationLast - 1

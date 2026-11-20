@@ -37,10 +37,10 @@ type {{.Obj}}Mng struct {
 	{{.Obj}}MngNext        uint32 // first slot never used
 	{{.Obj}}MngRetired     uint32 // slots retired at objmodel.GidGenerationLast
 	{{.Obj}}MngLen         int // live objects
-	{{.Obj}}MngGrowable    bool // grow when full instead of asserting
+	{{.Obj}}MngGrowable    bool // the grow boundary may grow it
 }
 
-// {{.Obj}}MngInit sets the Cap and whether the manager may grow.
+// {{.Obj}}MngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *{{.Obj}}Mng) {{.Obj}}MngInit(capacity int, growable bool) {
 	if manager.{{.Obj}}MngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}MngInit on a manager holding %d objects", manager.{{.Obj}}MngLen))
@@ -56,35 +56,17 @@ func (manager *{{.Obj}}Mng) {{.Obj}}MngInit(capacity int, growable bool) {
 	}
 }
 
-// {{.Obj}}Alloc returns the Gid of a new zero {{.Obj}}. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// {{.Obj}}Alloc returns the Gid of a new zero {{.Obj}}. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *{{.Obj}}Mng) {{.Obj}}Alloc() {{.Obj}}Gid {
 	var index uint32
 	if free := len(manager.{{.Obj}}MngFree); free > 0 {
 		index = manager.{{.Obj}}MngFree[free-1]
 		manager.{{.Obj}}MngFree = manager.{{.Obj}}MngFree[:free-1]
 	} else {
-		capacity := len(manager.{{.Obj}}MngObjects)
-		if int(manager.{{.Obj}}MngNext) == capacity {
-			if !manager.{{.Obj}}MngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Alloc on a full manager, Cap %d, growable %t", capacity, manager.{{.Obj}}MngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]{{.Obj}}, grown)
-			copy(objects, manager.{{.Obj}}MngObjects)
-			manager.{{.Obj}}MngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.{{.Obj}}MngGenerations)
-			manager.{{.Obj}}MngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.{{.Obj}}MngLive)
-			manager.{{.Obj}}MngLive = live
+		if capacity := len(manager.{{.Obj}}MngObjects); int(manager.{{.Obj}}MngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Alloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.{{.Obj}}MngNext
 		manager.{{.Obj}}MngNext++
@@ -126,7 +108,7 @@ func (manager *{{.Obj}}Mng) {{.Obj}}Release(gid {{.Obj}}Gid) {
 }
 
 // {{.Obj}}Get returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *{{.Obj}}Mng) {{.Obj}}Get(gid {{.Obj}}Gid) *{{.Obj}} {
 	objmodel.GidCheck(int64(gid), {{.Obj}}GidTypeTag, "{{.Obj}}", len(manager.{{.Obj}}MngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -147,6 +129,34 @@ func (manager *{{.Obj}}Mng) {{.Obj}}Len() int {
 // {{.Obj}}Cap is the number of slots, retired ones included.
 func (manager *{{.Obj}}Mng) {{.Obj}}Cap() int {
 	return len(manager.{{.Obj}}MngObjects)
+}
+
+// {{.Obj}}MngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *{{.Obj}}Mng) {{.Obj}}MngGrowBoundary() (int, int) {
+	capacity := len(manager.{{.Obj}}MngObjects)
+	free := capacity - int(manager.{{.Obj}}MngNext) + len(manager.{{.Obj}}MngFree)
+	if !manager.{{.Obj}}MngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]{{.Obj}}, grown)
+	copy(objects, manager.{{.Obj}}MngObjects)
+	manager.{{.Obj}}MngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.{{.Obj}}MngGenerations)
+	manager.{{.Obj}}MngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.{{.Obj}}MngLive)
+	manager.{{.Obj}}MngLive = live
+	return capacity, int(grown)
 }
 
 // {{.Obj}}MngTeardown asserts that Len is 0 and drops the arrays, which leaves
@@ -215,16 +225,28 @@ func Test{{.Obj}}Mng(t *testing.T) {
 
 func Test{{.Obj}}MngGrowth(t *testing.T) {
 	var manager {{.Obj}}Mng
-	manager.{{.Obj}}MngInit(0, true)
-	gids := make([]{{.Obj}}Gid, 9)
-	for i := range gids {
-		gids[i] = manager.{{.Obj}}Alloc()
+	manager.{{.Obj}}MngInit(4, true)
+	gids := make([]{{.Obj}}Gid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.{{.Obj}}Alloc())
 		{{call .Set (printf "manager.%sGet(gids[i])" .Obj) "i + 1"}}
-		if manager.{{.Obj}}Len() != i+1 || manager.{{.Obj}}Cap() < manager.{{.Obj}}Len() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.{{.Obj}}Len(), manager.{{.Obj}}Cap())
-		}
 	}
-	{{.Obj}}MngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.{{.Obj}}MngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.{{.Obj}}Alloc())
+	{{call .Set (printf "manager.%sGet(gids[2])" .Obj) "3"}}
+	if oldCap, newCap := manager.{{.Obj}}MngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.{{.Obj}}Alloc())
+		{{call .Set (printf "manager.%sGet(gids[i])" .Obj) "i + 1"}}
+	}
+	if oldCap, newCap := manager.{{.Obj}}MngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	{{.Obj}}MngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if {{call .Get (printf "manager.%sGet(gid)" .Obj)}} != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -236,6 +258,15 @@ func Test{{.Obj}}MngGrowth(t *testing.T) {
 	{{.Obj}}MngTestCheck(t, &manager, "release all", 0, 16)
 	manager.{{.Obj}}MngTeardown()
 	{{.Obj}}MngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed {{.Obj}}Mng
+	fixed.{{.Obj}}MngInit(1, false)
+	gid := fixed.{{.Obj}}Alloc()
+	if oldCap, newCap := fixed.{{.Obj}}MngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.{{.Obj}}Release(gid)
+	fixed.{{.Obj}}MngTeardown()
 }
 
 func Test{{.Obj}}MngRetirement(t *testing.T) {
@@ -299,6 +330,11 @@ var {{.Obj}}MngTestAsserts = map[string]struct {
 		manager.{{.Obj}}Alloc()
 		manager.{{.Obj}}Alloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *{{.Obj}}Mng) {
+		manager.{{.Obj}}MngInit(1, true)
+		manager.{{.Obj}}Alloc()
+		manager.{{.Obj}}Alloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *{{.Obj}}Mng) {
 		manager.{{.Obj}}Alloc()
 		manager.{{.Obj}}MngGenerations[0] = objmodel.GidGenerationLast - 1

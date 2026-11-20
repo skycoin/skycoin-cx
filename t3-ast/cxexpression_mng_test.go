@@ -55,16 +55,28 @@ func TestCXExpressionMng(t *testing.T) {
 
 func TestCXExpressionMngGrowth(t *testing.T) {
 	var manager CXExpressionMng
-	manager.CXExpressionMngInit(0, true)
-	gids := make([]CXExpressionGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXExpressionAlloc()
+	manager.CXExpressionMngInit(4, true)
+	gids := make([]CXExpressionGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXExpressionAlloc())
 		manager.CXExpressionGet(gids[i]).Index = i + 1
-		if manager.CXExpressionLen() != i+1 || manager.CXExpressionCap() < manager.CXExpressionLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXExpressionLen(), manager.CXExpressionCap())
-		}
 	}
-	CXExpressionMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXExpressionMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXExpressionAlloc())
+	manager.CXExpressionGet(gids[2]).Index = 3
+	if oldCap, newCap := manager.CXExpressionMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXExpressionAlloc())
+		manager.CXExpressionGet(gids[i]).Index = i + 1
+	}
+	if oldCap, newCap := manager.CXExpressionMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXExpressionMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXExpressionGet(gid).Index != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXExpressionMngGrowth(t *testing.T) {
 	CXExpressionMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXExpressionMngTeardown()
 	CXExpressionMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXExpressionMng
+	fixed.CXExpressionMngInit(1, false)
+	gid := fixed.CXExpressionAlloc()
+	if oldCap, newCap := fixed.CXExpressionMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXExpressionRelease(gid)
+	fixed.CXExpressionMngTeardown()
 }
 
 func TestCXExpressionMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXExpressionMngTestAsserts = map[string]struct {
 		manager.CXExpressionAlloc()
 		manager.CXExpressionAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXExpressionMng) {
+		manager.CXExpressionMngInit(1, true)
+		manager.CXExpressionAlloc()
+		manager.CXExpressionAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXExpressionMng) {
 		manager.CXExpressionAlloc()
 		manager.CXExpressionMngGenerations[0] = objmodel.GidGenerationLast - 1

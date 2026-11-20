@@ -55,16 +55,28 @@ func TestCXStructMng(t *testing.T) {
 
 func TestCXStructMngGrowth(t *testing.T) {
 	var manager CXStructMng
-	manager.CXStructMngInit(0, true)
-	gids := make([]CXStructGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXStructAlloc()
+	manager.CXStructMngInit(4, true)
+	gids := make([]CXStructGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXStructAlloc())
 		manager.CXStructGet(gids[i]).Index = i + 1
-		if manager.CXStructLen() != i+1 || manager.CXStructCap() < manager.CXStructLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXStructLen(), manager.CXStructCap())
-		}
 	}
-	CXStructMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXStructMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXStructAlloc())
+	manager.CXStructGet(gids[2]).Index = 3
+	if oldCap, newCap := manager.CXStructMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXStructAlloc())
+		manager.CXStructGet(gids[i]).Index = i + 1
+	}
+	if oldCap, newCap := manager.CXStructMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXStructMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXStructGet(gid).Index != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXStructMngGrowth(t *testing.T) {
 	CXStructMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXStructMngTeardown()
 	CXStructMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXStructMng
+	fixed.CXStructMngInit(1, false)
+	gid := fixed.CXStructAlloc()
+	if oldCap, newCap := fixed.CXStructMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXStructRelease(gid)
+	fixed.CXStructMngTeardown()
 }
 
 func TestCXStructMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXStructMngTestAsserts = map[string]struct {
 		manager.CXStructAlloc()
 		manager.CXStructAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXStructMng) {
+		manager.CXStructMngInit(1, true)
+		manager.CXStructAlloc()
+		manager.CXStructAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXStructMng) {
 		manager.CXStructAlloc()
 		manager.CXStructMngGenerations[0] = objmodel.GidGenerationLast - 1

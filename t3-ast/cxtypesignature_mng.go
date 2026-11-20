@@ -19,10 +19,10 @@ type CXTypeSignatureMng struct {
 	CXTypeSignatureMngNext        uint32            // first slot never used
 	CXTypeSignatureMngRetired     uint32            // slots retired at objmodel.GidGenerationLast
 	CXTypeSignatureMngLen         int               // live objects
-	CXTypeSignatureMngGrowable    bool              // grow when full instead of asserting
+	CXTypeSignatureMngGrowable    bool              // the grow boundary may grow it
 }
 
-// CXTypeSignatureMngInit sets the Cap and whether the manager may grow.
+// CXTypeSignatureMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXTypeSignatureMng) CXTypeSignatureMngInit(capacity int, growable bool) {
 	if manager.CXTypeSignatureMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureMngInit on a manager holding %d objects", manager.CXTypeSignatureMngLen))
@@ -38,35 +38,17 @@ func (manager *CXTypeSignatureMng) CXTypeSignatureMngInit(capacity int, growable
 	}
 }
 
-// CXTypeSignatureAlloc returns the Gid of a new zero CXTypeSignature. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXTypeSignatureAlloc returns the Gid of a new zero CXTypeSignature. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXTypeSignatureMng) CXTypeSignatureAlloc() CXTypeSignatureGid {
 	var index uint32
 	if free := len(manager.CXTypeSignatureMngFree); free > 0 {
 		index = manager.CXTypeSignatureMngFree[free-1]
 		manager.CXTypeSignatureMngFree = manager.CXTypeSignatureMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXTypeSignatureMngObjects)
-		if int(manager.CXTypeSignatureMngNext) == capacity {
-			if !manager.CXTypeSignatureMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXTypeSignatureMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXTypeSignature, grown)
-			copy(objects, manager.CXTypeSignatureMngObjects)
-			manager.CXTypeSignatureMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXTypeSignatureMngGenerations)
-			manager.CXTypeSignatureMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXTypeSignatureMngLive)
-			manager.CXTypeSignatureMngLive = live
+		if capacity := len(manager.CXTypeSignatureMngObjects); int(manager.CXTypeSignatureMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXTypeSignatureMngNext
 		manager.CXTypeSignatureMngNext++
@@ -108,7 +90,7 @@ func (manager *CXTypeSignatureMng) CXTypeSignatureRelease(gid CXTypeSignatureGid
 }
 
 // CXTypeSignatureGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXTypeSignatureMng) CXTypeSignatureGet(gid CXTypeSignatureGid) *CXTypeSignature {
 	objmodel.GidCheck(int64(gid), CXTypeSignatureGidTypeTag, "CXTypeSignature", len(manager.CXTypeSignatureMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXTypeSignatureMng) CXTypeSignatureLen() int {
 // CXTypeSignatureCap is the number of slots, retired ones included.
 func (manager *CXTypeSignatureMng) CXTypeSignatureCap() int {
 	return len(manager.CXTypeSignatureMngObjects)
+}
+
+// CXTypeSignatureMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXTypeSignatureMng) CXTypeSignatureMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXTypeSignatureMngObjects)
+	free := capacity - int(manager.CXTypeSignatureMngNext) + len(manager.CXTypeSignatureMngFree)
+	if !manager.CXTypeSignatureMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXTypeSignature, grown)
+	copy(objects, manager.CXTypeSignatureMngObjects)
+	manager.CXTypeSignatureMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXTypeSignatureMngGenerations)
+	manager.CXTypeSignatureMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXTypeSignatureMngLive)
+	manager.CXTypeSignatureMngLive = live
+	return capacity, int(grown)
 }
 
 // CXTypeSignatureMngTeardown asserts that Len is 0 and drops the arrays, which leaves

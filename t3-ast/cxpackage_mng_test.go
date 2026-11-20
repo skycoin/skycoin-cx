@@ -55,16 +55,28 @@ func TestCXPackageMng(t *testing.T) {
 
 func TestCXPackageMngGrowth(t *testing.T) {
 	var manager CXPackageMng
-	manager.CXPackageMngInit(0, true)
-	gids := make([]CXPackageGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXPackageAlloc()
+	manager.CXPackageMngInit(4, true)
+	gids := make([]CXPackageGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXPackageAlloc())
 		manager.CXPackageGet(gids[i]).Index = i + 1
-		if manager.CXPackageLen() != i+1 || manager.CXPackageCap() < manager.CXPackageLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXPackageLen(), manager.CXPackageCap())
-		}
 	}
-	CXPackageMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXPackageMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXPackageAlloc())
+	manager.CXPackageGet(gids[2]).Index = 3
+	if oldCap, newCap := manager.CXPackageMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXPackageAlloc())
+		manager.CXPackageGet(gids[i]).Index = i + 1
+	}
+	if oldCap, newCap := manager.CXPackageMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXPackageMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXPackageGet(gid).Index != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXPackageMngGrowth(t *testing.T) {
 	CXPackageMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXPackageMngTeardown()
 	CXPackageMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXPackageMng
+	fixed.CXPackageMngInit(1, false)
+	gid := fixed.CXPackageAlloc()
+	if oldCap, newCap := fixed.CXPackageMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXPackageRelease(gid)
+	fixed.CXPackageMngTeardown()
 }
 
 func TestCXPackageMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXPackageMngTestAsserts = map[string]struct {
 		manager.CXPackageAlloc()
 		manager.CXPackageAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXPackageMng) {
+		manager.CXPackageMngInit(1, true)
+		manager.CXPackageAlloc()
+		manager.CXPackageAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXPackageMng) {
 		manager.CXPackageAlloc()
 		manager.CXPackageMngGenerations[0] = objmodel.GidGenerationLast - 1

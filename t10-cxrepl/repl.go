@@ -103,6 +103,7 @@ func unsafeEval(code string) (out string) {
 		return fmt.Sprintf("%s", err)
 	}
 
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 	//err = actions.AST.RunCompiled(0, nil);
 	err = execute.RunCompiled(actions.AST, 0, nil)
 	if err != nil {
@@ -166,6 +167,7 @@ func Repl() {
 	// scanner := bufio.NewScanner(os.Stdin)
 
 	for {
+		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 		var inp string
 		var ok bool
 

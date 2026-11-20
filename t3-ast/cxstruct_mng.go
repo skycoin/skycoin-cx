@@ -19,10 +19,10 @@ type CXStructMng struct {
 	CXStructMngNext        uint32     // first slot never used
 	CXStructMngRetired     uint32     // slots retired at objmodel.GidGenerationLast
 	CXStructMngLen         int        // live objects
-	CXStructMngGrowable    bool       // grow when full instead of asserting
+	CXStructMngGrowable    bool       // the grow boundary may grow it
 }
 
-// CXStructMngInit sets the Cap and whether the manager may grow.
+// CXStructMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXStructMng) CXStructMngInit(capacity int, growable bool) {
 	if manager.CXStructMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXStructMngInit on a manager holding %d objects", manager.CXStructMngLen))
@@ -38,35 +38,17 @@ func (manager *CXStructMng) CXStructMngInit(capacity int, growable bool) {
 	}
 }
 
-// CXStructAlloc returns the Gid of a new zero CXStruct. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXStructAlloc returns the Gid of a new zero CXStruct. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXStructMng) CXStructAlloc() CXStructGid {
 	var index uint32
 	if free := len(manager.CXStructMngFree); free > 0 {
 		index = manager.CXStructMngFree[free-1]
 		manager.CXStructMngFree = manager.CXStructMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXStructMngObjects)
-		if int(manager.CXStructMngNext) == capacity {
-			if !manager.CXStructMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXStructAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXStructMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXStruct, grown)
-			copy(objects, manager.CXStructMngObjects)
-			manager.CXStructMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXStructMngGenerations)
-			manager.CXStructMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXStructMngLive)
-			manager.CXStructMngLive = live
+		if capacity := len(manager.CXStructMngObjects); int(manager.CXStructMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXStructAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXStructMngNext
 		manager.CXStructMngNext++
@@ -108,7 +90,7 @@ func (manager *CXStructMng) CXStructRelease(gid CXStructGid) {
 }
 
 // CXStructGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXStructMng) CXStructGet(gid CXStructGid) *CXStruct {
 	objmodel.GidCheck(int64(gid), CXStructGidTypeTag, "CXStruct", len(manager.CXStructMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXStructMng) CXStructLen() int {
 // CXStructCap is the number of slots, retired ones included.
 func (manager *CXStructMng) CXStructCap() int {
 	return len(manager.CXStructMngObjects)
+}
+
+// CXStructMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXStructMng) CXStructMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXStructMngObjects)
+	free := capacity - int(manager.CXStructMngNext) + len(manager.CXStructMngFree)
+	if !manager.CXStructMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXStruct, grown)
+	copy(objects, manager.CXStructMngObjects)
+	manager.CXStructMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXStructMngGenerations)
+	manager.CXStructMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXStructMngLive)
+	manager.CXStructMngLive = live
+	return capacity, int(grown)
 }
 
 // CXStructMngTeardown asserts that Len is 0 and drops the arrays, which leaves

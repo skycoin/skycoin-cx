@@ -19,10 +19,10 @@ type CXArgumentDebugMng struct {
 	CXArgumentDebugMngNext        uint32            // first slot never used
 	CXArgumentDebugMngRetired     uint32            // slots retired at objmodel.GidGenerationLast
 	CXArgumentDebugMngLen         int               // live objects
-	CXArgumentDebugMngGrowable    bool              // grow when full instead of asserting
+	CXArgumentDebugMngGrowable    bool              // the grow boundary may grow it
 }
 
-// CXArgumentDebugMngInit sets the Cap and whether the manager may grow.
+// CXArgumentDebugMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXArgumentDebugMng) CXArgumentDebugMngInit(capacity int, growable bool) {
 	if manager.CXArgumentDebugMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentDebugMngInit on a manager holding %d objects", manager.CXArgumentDebugMngLen))
@@ -38,35 +38,17 @@ func (manager *CXArgumentDebugMng) CXArgumentDebugMngInit(capacity int, growable
 	}
 }
 
-// CXArgumentDebugAlloc returns the Gid of a new zero CXArgumentDebug. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXArgumentDebugAlloc returns the Gid of a new zero CXArgumentDebug. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXArgumentDebugMng) CXArgumentDebugAlloc() CXArgumentDebugGid {
 	var index uint32
 	if free := len(manager.CXArgumentDebugMngFree); free > 0 {
 		index = manager.CXArgumentDebugMngFree[free-1]
 		manager.CXArgumentDebugMngFree = manager.CXArgumentDebugMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXArgumentDebugMngObjects)
-		if int(manager.CXArgumentDebugMngNext) == capacity {
-			if !manager.CXArgumentDebugMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentDebugAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXArgumentDebugMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXArgumentDebug, grown)
-			copy(objects, manager.CXArgumentDebugMngObjects)
-			manager.CXArgumentDebugMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXArgumentDebugMngGenerations)
-			manager.CXArgumentDebugMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXArgumentDebugMngLive)
-			manager.CXArgumentDebugMngLive = live
+		if capacity := len(manager.CXArgumentDebugMngObjects); int(manager.CXArgumentDebugMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentDebugAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXArgumentDebugMngNext
 		manager.CXArgumentDebugMngNext++
@@ -108,7 +90,7 @@ func (manager *CXArgumentDebugMng) CXArgumentDebugRelease(gid CXArgumentDebugGid
 }
 
 // CXArgumentDebugGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXArgumentDebugMng) CXArgumentDebugGet(gid CXArgumentDebugGid) *CXArgumentDebug {
 	objmodel.GidCheck(int64(gid), CXArgumentDebugGidTypeTag, "CXArgumentDebug", len(manager.CXArgumentDebugMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXArgumentDebugMng) CXArgumentDebugLen() int {
 // CXArgumentDebugCap is the number of slots, retired ones included.
 func (manager *CXArgumentDebugMng) CXArgumentDebugCap() int {
 	return len(manager.CXArgumentDebugMngObjects)
+}
+
+// CXArgumentDebugMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXArgumentDebugMng) CXArgumentDebugMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXArgumentDebugMngObjects)
+	free := capacity - int(manager.CXArgumentDebugMngNext) + len(manager.CXArgumentDebugMngFree)
+	if !manager.CXArgumentDebugMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXArgumentDebug, grown)
+	copy(objects, manager.CXArgumentDebugMngObjects)
+	manager.CXArgumentDebugMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXArgumentDebugMngGenerations)
+	manager.CXArgumentDebugMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXArgumentDebugMngLive)
+	manager.CXArgumentDebugMngLive = live
+	return capacity, int(grown)
 }
 
 // CXArgumentDebugMngTeardown asserts that Len is 0 and drops the arrays, which leaves

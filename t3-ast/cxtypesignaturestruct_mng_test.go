@@ -55,16 +55,28 @@ func TestCXTypeSignature_StructMng(t *testing.T) {
 
 func TestCXTypeSignature_StructMngGrowth(t *testing.T) {
 	var manager CXTypeSignature_StructMng
-	manager.CXTypeSignature_StructMngInit(0, true)
-	gids := make([]CXTypeSignature_StructGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXTypeSignature_StructAlloc()
+	manager.CXTypeSignature_StructMngInit(4, true)
+	gids := make([]CXTypeSignature_StructGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXTypeSignature_StructAlloc())
 		manager.CXTypeSignature_StructGet(gids[i]).Fields = make([]CXArgumentIndex, i+1)
-		if manager.CXTypeSignature_StructLen() != i+1 || manager.CXTypeSignature_StructCap() < manager.CXTypeSignature_StructLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXTypeSignature_StructLen(), manager.CXTypeSignature_StructCap())
-		}
 	}
-	CXTypeSignature_StructMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXTypeSignature_StructMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXTypeSignature_StructAlloc())
+	manager.CXTypeSignature_StructGet(gids[2]).Fields = make([]CXArgumentIndex, 3)
+	if oldCap, newCap := manager.CXTypeSignature_StructMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXTypeSignature_StructAlloc())
+		manager.CXTypeSignature_StructGet(gids[i]).Fields = make([]CXArgumentIndex, i+1)
+	}
+	if oldCap, newCap := manager.CXTypeSignature_StructMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXTypeSignature_StructMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if len(manager.CXTypeSignature_StructGet(gid).Fields) != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXTypeSignature_StructMngGrowth(t *testing.T) {
 	CXTypeSignature_StructMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXTypeSignature_StructMngTeardown()
 	CXTypeSignature_StructMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXTypeSignature_StructMng
+	fixed.CXTypeSignature_StructMngInit(1, false)
+	gid := fixed.CXTypeSignature_StructAlloc()
+	if oldCap, newCap := fixed.CXTypeSignature_StructMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXTypeSignature_StructRelease(gid)
+	fixed.CXTypeSignature_StructMngTeardown()
 }
 
 func TestCXTypeSignature_StructMngRetirement(t *testing.T) {
@@ -141,6 +162,11 @@ var CXTypeSignature_StructMngTestAsserts = map[string]struct {
 		manager.CXTypeSignature_StructAlloc()
 		manager.CXTypeSignature_StructAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXTypeSignature_StructMng) {
+		manager.CXTypeSignature_StructMngInit(1, true)
+		manager.CXTypeSignature_StructAlloc()
+		manager.CXTypeSignature_StructAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXTypeSignature_StructMng) {
 		manager.CXTypeSignature_StructAlloc()
 		manager.CXTypeSignature_StructMngGenerations[0] = objmodel.GidGenerationLast - 1

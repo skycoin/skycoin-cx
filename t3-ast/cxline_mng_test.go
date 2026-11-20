@@ -55,16 +55,28 @@ func TestCXLineMng(t *testing.T) {
 
 func TestCXLineMngGrowth(t *testing.T) {
 	var manager CXLineMng
-	manager.CXLineMngInit(0, true)
-	gids := make([]CXLineGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXLineAlloc()
+	manager.CXLineMngInit(4, true)
+	gids := make([]CXLineGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXLineAlloc())
 		manager.CXLineGet(gids[i]).LineNumber = i + 1
-		if manager.CXLineLen() != i+1 || manager.CXLineCap() < manager.CXLineLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXLineLen(), manager.CXLineCap())
-		}
 	}
-	CXLineMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXLineMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXLineAlloc())
+	manager.CXLineGet(gids[2]).LineNumber = 3
+	if oldCap, newCap := manager.CXLineMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXLineAlloc())
+		manager.CXLineGet(gids[i]).LineNumber = i + 1
+	}
+	if oldCap, newCap := manager.CXLineMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXLineMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXLineGet(gid).LineNumber != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXLineMngGrowth(t *testing.T) {
 	CXLineMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXLineMngTeardown()
 	CXLineMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXLineMng
+	fixed.CXLineMngInit(1, false)
+	gid := fixed.CXLineAlloc()
+	if oldCap, newCap := fixed.CXLineMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXLineRelease(gid)
+	fixed.CXLineMngTeardown()
 }
 
 func TestCXLineMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXLineMngTestAsserts = map[string]struct {
 		manager.CXLineAlloc()
 		manager.CXLineAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXLineMng) {
+		manager.CXLineMngInit(1, true)
+		manager.CXLineAlloc()
+		manager.CXLineAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXLineMng) {
 		manager.CXLineAlloc()
 		manager.CXLineMngGenerations[0] = objmodel.GidGenerationLast - 1

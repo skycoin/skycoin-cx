@@ -88,12 +88,11 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 			// Now an arena getter, site S1103.
 			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(prevExpressionOperatorOutputTypeSig.Meta)
-			sliceMeta, sliceLengths := sliceDetails.Meta, sliceDetails.Lengths
 
 			newTypeSigSliceGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 			newTypeSigSlice := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(newTypeSigSliceGid)
-			newTypeSigSlice.Meta = sliceMeta
-			newTypeSigSlice.Lengths = sliceLengths
+			newTypeSigSlice.Meta = sliceDetails.Meta
+			newTypeSigSlice.Lengths = sliceDetails.Lengths
 			newTypeSigSliceIdx := int(objmodel.GidIndex(int64(newTypeSigSliceGid)))
 
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
@@ -115,8 +114,8 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 			inpNewTypeSigSliceGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 			inpNewTypeSigSlice := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(inpNewTypeSigSliceGid)
-			inpNewTypeSigSlice.Meta = sliceMeta
-			inpNewTypeSigSlice.Lengths = sliceLengths
+			inpNewTypeSigSlice.Meta = sliceDetails.Meta
+			inpNewTypeSigSlice.Lengths = sliceDetails.Lengths
 			inpNewTypeSigSliceIdx := int(objmodel.GidIndex(int64(inpNewTypeSigSliceGid)))
 
 			inpArgDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
@@ -694,12 +693,11 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 			// Now an arena getter, site S1176.
 			structDetails := prgrm.GetCXTypeSignatureStructFromArray(lastExpressionOperatorOutputTypeSig.Meta)
-			structFields, structType := structDetails.Fields, structDetails.StructType
 
 			outStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
 			outStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(outStructGid)
-			outStructDetails.Fields = structFields
-			outStructDetails.StructType = structType
+			outStructDetails.Fields = structDetails.Fields
+			outStructDetails.StructType = structDetails.StructType
 			outStructDetailsIdx := int(objmodel.GidIndex(int64(outStructGid)))
 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
@@ -720,8 +718,8 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			inpTypeSig.Name = symName
 			inpStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
 			inpStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(inpStructGid)
-			inpStructDetails.Fields = structFields
-			inpStructDetails.StructType = structType
+			inpStructDetails.Fields = structDetails.Fields
+			inpStructDetails.StructType = structDetails.StructType
 			inpTypeSig.Meta = int(objmodel.GidIndex(int64(inpStructGid)))
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 			// Now an arena insert, site S1183.

@@ -19,10 +19,10 @@ type CXExpressionMng struct {
 	CXExpressionMngNext        uint32         // first slot never used
 	CXExpressionMngRetired     uint32         // slots retired at objmodel.GidGenerationLast
 	CXExpressionMngLen         int            // live objects
-	CXExpressionMngGrowable    bool           // grow when full instead of asserting
+	CXExpressionMngGrowable    bool           // the grow boundary may grow it
 }
 
-// CXExpressionMngInit sets the Cap and whether the manager may grow.
+// CXExpressionMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXExpressionMng) CXExpressionMngInit(capacity int, growable bool) {
 	if manager.CXExpressionMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXExpressionMngInit on a manager holding %d objects", manager.CXExpressionMngLen))
@@ -38,35 +38,17 @@ func (manager *CXExpressionMng) CXExpressionMngInit(capacity int, growable bool)
 	}
 }
 
-// CXExpressionAlloc returns the Gid of a new zero CXExpression. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXExpressionAlloc returns the Gid of a new zero CXExpression. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXExpressionMng) CXExpressionAlloc() CXExpressionGid {
 	var index uint32
 	if free := len(manager.CXExpressionMngFree); free > 0 {
 		index = manager.CXExpressionMngFree[free-1]
 		manager.CXExpressionMngFree = manager.CXExpressionMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXExpressionMngObjects)
-		if int(manager.CXExpressionMngNext) == capacity {
-			if !manager.CXExpressionMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXExpressionAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXExpressionMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXExpression, grown)
-			copy(objects, manager.CXExpressionMngObjects)
-			manager.CXExpressionMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXExpressionMngGenerations)
-			manager.CXExpressionMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXExpressionMngLive)
-			manager.CXExpressionMngLive = live
+		if capacity := len(manager.CXExpressionMngObjects); int(manager.CXExpressionMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXExpressionAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXExpressionMngNext
 		manager.CXExpressionMngNext++
@@ -108,7 +90,7 @@ func (manager *CXExpressionMng) CXExpressionRelease(gid CXExpressionGid) {
 }
 
 // CXExpressionGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXExpressionMng) CXExpressionGet(gid CXExpressionGid) *CXExpression {
 	objmodel.GidCheck(int64(gid), CXExpressionGidTypeTag, "CXExpression", len(manager.CXExpressionMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXExpressionMng) CXExpressionLen() int {
 // CXExpressionCap is the number of slots, retired ones included.
 func (manager *CXExpressionMng) CXExpressionCap() int {
 	return len(manager.CXExpressionMngObjects)
+}
+
+// CXExpressionMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXExpressionMng) CXExpressionMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXExpressionMngObjects)
+	free := capacity - int(manager.CXExpressionMngNext) + len(manager.CXExpressionMngFree)
+	if !manager.CXExpressionMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXExpression, grown)
+	copy(objects, manager.CXExpressionMngObjects)
+	manager.CXExpressionMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXExpressionMngGenerations)
+	manager.CXExpressionMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXExpressionMngLive)
+	manager.CXExpressionMngLive = live
+	return capacity, int(grown)
 }
 
 // CXExpressionMngTeardown asserts that Len is 0 and drops the arrays, which leaves

@@ -19,10 +19,10 @@ type CXCallMng struct {
 	CXCallMngNext        uint32   // first slot never used
 	CXCallMngRetired     uint32   // slots retired at objmodel.GidGenerationLast
 	CXCallMngLen         int      // live objects
-	CXCallMngGrowable    bool     // grow when full instead of asserting
+	CXCallMngGrowable    bool     // the grow boundary may grow it
 }
 
-// CXCallMngInit sets the Cap and whether the manager may grow.
+// CXCallMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXCallMng) CXCallMngInit(capacity int, growable bool) {
 	if manager.CXCallMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXCallMngInit on a manager holding %d objects", manager.CXCallMngLen))
@@ -38,35 +38,17 @@ func (manager *CXCallMng) CXCallMngInit(capacity int, growable bool) {
 	}
 }
 
-// CXCallAlloc returns the Gid of a new zero CXCall. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXCallAlloc returns the Gid of a new zero CXCall. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXCallMng) CXCallAlloc() CXCallGid {
 	var index uint32
 	if free := len(manager.CXCallMngFree); free > 0 {
 		index = manager.CXCallMngFree[free-1]
 		manager.CXCallMngFree = manager.CXCallMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXCallMngObjects)
-		if int(manager.CXCallMngNext) == capacity {
-			if !manager.CXCallMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXCallAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXCallMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXCall, grown)
-			copy(objects, manager.CXCallMngObjects)
-			manager.CXCallMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXCallMngGenerations)
-			manager.CXCallMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXCallMngLive)
-			manager.CXCallMngLive = live
+		if capacity := len(manager.CXCallMngObjects); int(manager.CXCallMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXCallAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXCallMngNext
 		manager.CXCallMngNext++
@@ -108,7 +90,7 @@ func (manager *CXCallMng) CXCallRelease(gid CXCallGid) {
 }
 
 // CXCallGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXCallMng) CXCallGet(gid CXCallGid) *CXCall {
 	objmodel.GidCheck(int64(gid), CXCallGidTypeTag, "CXCall", len(manager.CXCallMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXCallMng) CXCallLen() int {
 // CXCallCap is the number of slots, retired ones included.
 func (manager *CXCallMng) CXCallCap() int {
 	return len(manager.CXCallMngObjects)
+}
+
+// CXCallMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXCallMng) CXCallMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXCallMngObjects)
+	free := capacity - int(manager.CXCallMngNext) + len(manager.CXCallMngFree)
+	if !manager.CXCallMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXCall, grown)
+	copy(objects, manager.CXCallMngObjects)
+	manager.CXCallMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXCallMngGenerations)
+	manager.CXCallMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXCallMngLive)
+	manager.CXCallMngLive = live
+	return capacity, int(grown)
 }
 
 // CXCallMngTeardown asserts that Len is 0 and drops the arrays, which leaves

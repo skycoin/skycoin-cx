@@ -55,16 +55,28 @@ func TestCXCallMng(t *testing.T) {
 
 func TestCXCallMngGrowth(t *testing.T) {
 	var manager CXCallMng
-	manager.CXCallMngInit(0, true)
-	gids := make([]CXCallGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXCallAlloc()
+	manager.CXCallMngInit(4, true)
+	gids := make([]CXCallGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXCallAlloc())
 		manager.CXCallGet(gids[i]).Line = i + 1
-		if manager.CXCallLen() != i+1 || manager.CXCallCap() < manager.CXCallLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXCallLen(), manager.CXCallCap())
-		}
 	}
-	CXCallMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXCallMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXCallAlloc())
+	manager.CXCallGet(gids[2]).Line = 3
+	if oldCap, newCap := manager.CXCallMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXCallAlloc())
+		manager.CXCallGet(gids[i]).Line = i + 1
+	}
+	if oldCap, newCap := manager.CXCallMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXCallMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXCallGet(gid).Line != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXCallMngGrowth(t *testing.T) {
 	CXCallMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXCallMngTeardown()
 	CXCallMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXCallMng
+	fixed.CXCallMngInit(1, false)
+	gid := fixed.CXCallAlloc()
+	if oldCap, newCap := fixed.CXCallMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXCallRelease(gid)
+	fixed.CXCallMngTeardown()
 }
 
 func TestCXCallMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXCallMngTestAsserts = map[string]struct {
 		manager.CXCallAlloc()
 		manager.CXCallAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXCallMng) {
+		manager.CXCallMngInit(1, true)
+		manager.CXCallAlloc()
+		manager.CXCallAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXCallMng) {
 		manager.CXCallAlloc()
 		manager.CXCallMngGenerations[0] = objmodel.GidGenerationLast - 1

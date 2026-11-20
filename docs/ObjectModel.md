@@ -222,7 +222,7 @@ type CXArgumentMng struct {
 	CXArgumentMngNext        uint32       // first slot never used
 	CXArgumentMngRetired     uint32       // slots retired at GidGenerationLast
 	CXArgumentMngLen         int          // live objects
-	CXArgumentMngGrowable    bool         // grow when full instead of asserting
+	CXArgumentMngGrowable    bool         // the grow boundary may grow it
 }
 
 func (manager *CXArgumentMng) CXArgumentMngInit(capacity int, growable bool)
@@ -231,15 +231,15 @@ func (manager *CXArgumentMng) CXArgumentRelease(gid CXArgumentGid)
 func (manager *CXArgumentMng) CXArgumentGet(gid CXArgumentGid) *CXArgument
 func (manager *CXArgumentMng) CXArgumentLen() int
 func (manager *CXArgumentMng) CXArgumentCap() int
+func (manager *CXArgumentMng) CXArgumentMngGrowBoundary() (int, int)
 func (manager *CXArgumentMng) CXArgumentMngTeardown()
 ```
 
-* `Init` sets the Cap and whether the manager may grow. A manager is used
+* `Init` sets the Cap and whether the grow boundary may grow it. A manager is used
   only after Init, and Init on a manager that holds objects is an assert.
 * `Alloc` takes a free slot, or the next never used one, sets its object to
-  the zero value, marks it live, raises Len by one and returns its Gid. When
-  every slot is used, a growable manager doubles its Cap, from 0 to 1 and
-  never past `GidCapMax`. A manager that cannot grow asserts.
+  the zero value, marks it live, raises Len by one and returns its Gid. It never
+  moves the array. When every slot is used it asserts, see [Growth](#growth).
 * `Release` checks the Gid, sets the object to the zero value so its slices
   and strings can be collected, marks the slot free, raises its generation
   and lowers Len by one. It puts the slot on the free list unless its
@@ -247,6 +247,8 @@ func (manager *CXArgumentMng) CXArgumentMngTeardown()
   retired.
 * `Get` checks the Gid and returns a pointer to the object in its slot. The
   pointer is borrowed, see [Rules](#rules).
+* `MngGrowBoundary` grows a growable manager, see [Growth](#growth), and
+  returns the old and new Cap.
 * `Len` is the number of live objects. `Cap` is the number of slots,
   retired ones included, at most `GidCapMax`.
 * `MngTeardown` asserts that Len is 0 and drops the arrays, which leaves Cap
@@ -256,9 +258,37 @@ An object is filled after Alloc through the pointer Get returns, by its own
 Fon functions or by the code that allocated it. There is no constructor that
 takes field values.
 
-Growing copies the array, so every pointer Get returned before is stale
-after the next Alloc on the same manager. That is why a Get pointer is never
-held across an Alloc.
+### Growth
+
+Alloc never moves the array, so a pointer from Get stays valid across later
+Allocs until the next grow boundary. The array grows only at a grow
+boundary, `CxIrStateManagerGrowBoundary`, which runs where no Get pointer is
+held.
+
+* At a boundary, every growable manager whose free slots, never used or
+  released, are under half of its Cap grows to the next power of two above
+  its Cap, and a warning with the manager's name and its old and new Cap is
+  printed to stderr.
+* Alloc on a full manager between two boundaries asserts. This is an
+  unhandled case for now. The initial Caps in `CxIrStateInit` and the
+  boundaries are set so that compiling every program in `tests/` and
+  `examples/` never reaches it.
+* Storage stays one array per manager, so Get is one index. Chunked storage
+  would keep pointers valid across growth but lose that.
+
+The boundaries are
+
+* in `Preliminarystage`, before each file of its three passes, packages and
+  structs, globals, and pass one,
+* in `ParseSourceStrings`, at its start, after `Preliminarystage`, before
+  each file of pass two and after pass two,
+* at the start of `AddInitFunction`,
+* before `RunCompiled` in `cx` and in the REPL, and at the top of each REPL
+  loop iteration.
+
+A boundary is a statement in a top level loop, between compile stages or
+main loop iterations, never inside a parse, so no Get pointer is live there.
+A pointer is still never stored at rest, see [Rules](#rules).
 
 Len is checked against the slots in O(1) after every Alloc and Release, as
 `Next - len(Free) - Retired`, which is why the manager counts retired slots.
@@ -341,9 +371,10 @@ type CxIrStateManagerLen struct {
   They test one manager on its own.
 * One `CxIrState` holds one program, so `CXProgramMng` has a Cap of 1 and
   cannot grow. `CXCallMng` has the fixed Cap `constants.CALLSTACK_SIZE`,
-  the call stack. Every other manager starts at Cap 0 and grows, as the
-  arena slices it replaces do. A process that compiles several programs,
-  such as the REPL or a test, makes one `CxIrState` for each.
+  the call stack. Every other manager starts at the Cap set in
+  `CxIrStateInit` and grows at a grow boundary, see [Growth](#growth). A
+  process that compiles several programs, such as the REPL or a test, makes
+  one `CxIrState` for each.
 * `*CxIrState` is passed down as a parameter, the way `prgrm *CXProgram` is
   passed today. A value that lives for one call, such as the lexer of one
   parse, may hold it for that call.
@@ -383,7 +414,7 @@ program until the `CXNativeFunction` allocation phase.
    a struct field, a package variable, a map, a slice or a closure that
    outlives the call. It is stored as a Gid. A pointer from Get is borrowed.
    It may live in a local variable or a parameter until the end of the call,
-   and never across an Alloc on the same manager or a Release of that Gid.
+   and never across a grow boundary or a Release of that Gid.
 4. **One owner.** Each object has exactly one owner, the object or the state
    whose teardown releases it. Any other holder keeps a borrowed Gid and does
    not release it. The owners are listed in [Teardown](#teardown).
@@ -478,7 +509,7 @@ Every object model failure is a programming error, class B in
 | Gid is nil, negative, has another type's tag, or an index at or above Cap | `AssertPreconditionTrue` in Get and Release |
 | Gid's generation is not its slot's generation, a stale Gid | `AssertPreconditionTrue` in Get and Release |
 | Release of a slot that is not live, a double release | `AssertPreconditionTrue` in Release |
-| Alloc on a full manager that cannot grow | `AssertPreconditionTrue` in Alloc |
+| Alloc on a full manager, between two grow boundaries | `AssertPreconditionTrue` in Alloc |
 | Init on a manager that holds objects | `AssertPreconditionTrue` in Init |
 | Len is not 0 at teardown | `AssertInvariantTrue` in `MngTeardown` and the teardown test |
 | Len is not `Next - len(Free) - Retired`, the live slot count | `AssertInvariantTrue` in Alloc and Release |
@@ -549,7 +580,8 @@ In phase 4 a field that names an object by an `int` index keeps the index,
 which is the Gid's index bits, `int(objmodel.GidIndex(int64(gid)))`. The
 old getter, such as `GetCXLine`, builds the Gid back from the slot's
 generation and calls Get, so its callers wait for phase 5. A site that
-fills an object takes the Get pointer after its last Alloc on that manager.
+fills an object may take the Get pointer right after its Alloc and keep it
+across other Allocs in the same call.
 
 The objects go through phases 4 and 5 in this order, contained objects
 first, so an object's allocation moves before the objects whose

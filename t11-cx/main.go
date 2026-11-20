@@ -216,6 +216,7 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 		return
 	}
 
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 	err := execute.RunCompiled(actions.AST, 0, cxArgs)
 
 	if err != nil {

@@ -54,6 +54,7 @@ var ErrCompilation = errors.New("compilation error")
 // parser can be embedded in a long running process.
 func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	cxpartialparsing.Program = actions.AST
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 	/*
 		We need to traverse the elements by hierarchy first add all the
@@ -67,6 +68,7 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	}
 
 	actions.AST = cxpartialparsing.Program
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 	if globals.FoundCompileErrors || parseErrors > 0 {
 		return ErrCompilation
@@ -99,6 +101,7 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	*/
 
 	for i, source := range sourceCodeStrings {
+		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 		/*
 			Because of an unkown reason, sometimes some CX programs
@@ -124,6 +127,7 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	}
 
 	profiling.StopProfile("4. passtwo")
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 	if globals.FoundCompileErrors || parseErrors > 0 {
 		return ErrCompilation

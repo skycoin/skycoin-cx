@@ -55,16 +55,28 @@ func TestCXAtomicOperatorMng(t *testing.T) {
 
 func TestCXAtomicOperatorMngGrowth(t *testing.T) {
 	var manager CXAtomicOperatorMng
-	manager.CXAtomicOperatorMngInit(0, true)
-	gids := make([]CXAtomicOperatorGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXAtomicOperatorAlloc()
+	manager.CXAtomicOperatorMngInit(4, true)
+	gids := make([]CXAtomicOperatorGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXAtomicOperatorAlloc())
 		manager.CXAtomicOperatorGet(gids[i]).ThenLines = i + 1
-		if manager.CXAtomicOperatorLen() != i+1 || manager.CXAtomicOperatorCap() < manager.CXAtomicOperatorLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXAtomicOperatorLen(), manager.CXAtomicOperatorCap())
-		}
 	}
-	CXAtomicOperatorMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXAtomicOperatorMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXAtomicOperatorAlloc())
+	manager.CXAtomicOperatorGet(gids[2]).ThenLines = 3
+	if oldCap, newCap := manager.CXAtomicOperatorMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXAtomicOperatorAlloc())
+		manager.CXAtomicOperatorGet(gids[i]).ThenLines = i + 1
+	}
+	if oldCap, newCap := manager.CXAtomicOperatorMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXAtomicOperatorMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXAtomicOperatorGet(gid).ThenLines != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXAtomicOperatorMngGrowth(t *testing.T) {
 	CXAtomicOperatorMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXAtomicOperatorMngTeardown()
 	CXAtomicOperatorMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXAtomicOperatorMng
+	fixed.CXAtomicOperatorMngInit(1, false)
+	gid := fixed.CXAtomicOperatorAlloc()
+	if oldCap, newCap := fixed.CXAtomicOperatorMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXAtomicOperatorRelease(gid)
+	fixed.CXAtomicOperatorMngTeardown()
 }
 
 func TestCXAtomicOperatorMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXAtomicOperatorMngTestAsserts = map[string]struct {
 		manager.CXAtomicOperatorAlloc()
 		manager.CXAtomicOperatorAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXAtomicOperatorMng) {
+		manager.CXAtomicOperatorMngInit(1, true)
+		manager.CXAtomicOperatorAlloc()
+		manager.CXAtomicOperatorAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXAtomicOperatorMng) {
 		manager.CXAtomicOperatorAlloc()
 		manager.CXAtomicOperatorMngGenerations[0] = objmodel.GidGenerationLast - 1

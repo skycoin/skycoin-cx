@@ -19,10 +19,10 @@ type CXLineMng struct {
 	CXLineMngNext        uint32   // first slot never used
 	CXLineMngRetired     uint32   // slots retired at objmodel.GidGenerationLast
 	CXLineMngLen         int      // live objects
-	CXLineMngGrowable    bool     // grow when full instead of asserting
+	CXLineMngGrowable    bool     // the grow boundary may grow it
 }
 
-// CXLineMngInit sets the Cap and whether the manager may grow.
+// CXLineMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXLineMng) CXLineMngInit(capacity int, growable bool) {
 	if manager.CXLineMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineMngInit on a manager holding %d objects", manager.CXLineMngLen))
@@ -38,35 +38,17 @@ func (manager *CXLineMng) CXLineMngInit(capacity int, growable bool) {
 	}
 }
 
-// CXLineAlloc returns the Gid of a new zero CXLine. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXLineAlloc returns the Gid of a new zero CXLine. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXLineMng) CXLineAlloc() CXLineGid {
 	var index uint32
 	if free := len(manager.CXLineMngFree); free > 0 {
 		index = manager.CXLineMngFree[free-1]
 		manager.CXLineMngFree = manager.CXLineMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXLineMngObjects)
-		if int(manager.CXLineMngNext) == capacity {
-			if !manager.CXLineMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXLineMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXLine, grown)
-			copy(objects, manager.CXLineMngObjects)
-			manager.CXLineMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXLineMngGenerations)
-			manager.CXLineMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXLineMngLive)
-			manager.CXLineMngLive = live
+		if capacity := len(manager.CXLineMngObjects); int(manager.CXLineMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXLineMngNext
 		manager.CXLineMngNext++
@@ -108,7 +90,7 @@ func (manager *CXLineMng) CXLineRelease(gid CXLineGid) {
 }
 
 // CXLineGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXLineMng) CXLineGet(gid CXLineGid) *CXLine {
 	objmodel.GidCheck(int64(gid), CXLineGidTypeTag, "CXLine", len(manager.CXLineMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXLineMng) CXLineLen() int {
 // CXLineCap is the number of slots, retired ones included.
 func (manager *CXLineMng) CXLineCap() int {
 	return len(manager.CXLineMngObjects)
+}
+
+// CXLineMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXLineMng) CXLineMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXLineMngObjects)
+	free := capacity - int(manager.CXLineMngNext) + len(manager.CXLineMngFree)
+	if !manager.CXLineMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXLine, grown)
+	copy(objects, manager.CXLineMngObjects)
+	manager.CXLineMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXLineMngGenerations)
+	manager.CXLineMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXLineMngLive)
+	manager.CXLineMngLive = live
+	return capacity, int(grown)
 }
 
 // CXLineMngTeardown asserts that Len is 0 and drops the arrays, which leaves

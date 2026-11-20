@@ -44,6 +44,7 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 	profiling.StartProfile("1. packages/structs")
 	// 1. Identify all the packages and structs
 	for srcI, srcStr := range srcStrs {
+		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 		srcName := srcNames[srcI]
 		profiling.StartProfile(srcName)
 
@@ -134,6 +135,7 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 	//    We also identify packages again, so we know to what
 	//    package we're going to add the variable declaration to.
 	for i, source := range srcStrs {
+		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 		profiling.StartProfile(srcNames[i])
 		// inBlock needs to be 0 to guarantee that we're in the global scope
 		var inBlock int
@@ -298,6 +300,7 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 	profiling.StartProfile("3. cxpartialparsing")
 
 	for i, source := range srcStrs {
+		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 		profiling.StartProfile(srcNames[i])
 		source = source + "\n"
 		if len(srcNames) > 0 {
@@ -315,6 +318,7 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 }
 
 func AddInitFunction(prgrm *ast.CXProgram) error {
+	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
 	mainPkg, err := prgrm.GetPackage(constants.MAIN_PKG)
 	if err != nil {
 		return err

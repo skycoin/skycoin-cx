@@ -19,10 +19,10 @@ type CXFunctionMng struct {
 	CXFunctionMngNext        uint32       // first slot never used
 	CXFunctionMngRetired     uint32       // slots retired at objmodel.GidGenerationLast
 	CXFunctionMngLen         int          // live objects
-	CXFunctionMngGrowable    bool         // grow when full instead of asserting
+	CXFunctionMngGrowable    bool         // the grow boundary may grow it
 }
 
-// CXFunctionMngInit sets the Cap and whether the manager may grow.
+// CXFunctionMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXFunctionMng) CXFunctionMngInit(capacity int, growable bool) {
 	if manager.CXFunctionMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXFunctionMngInit on a manager holding %d objects", manager.CXFunctionMngLen))
@@ -38,35 +38,17 @@ func (manager *CXFunctionMng) CXFunctionMngInit(capacity int, growable bool) {
 	}
 }
 
-// CXFunctionAlloc returns the Gid of a new zero CXFunction. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXFunctionAlloc returns the Gid of a new zero CXFunction. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXFunctionMng) CXFunctionAlloc() CXFunctionGid {
 	var index uint32
 	if free := len(manager.CXFunctionMngFree); free > 0 {
 		index = manager.CXFunctionMngFree[free-1]
 		manager.CXFunctionMngFree = manager.CXFunctionMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXFunctionMngObjects)
-		if int(manager.CXFunctionMngNext) == capacity {
-			if !manager.CXFunctionMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXFunctionAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXFunctionMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXFunction, grown)
-			copy(objects, manager.CXFunctionMngObjects)
-			manager.CXFunctionMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXFunctionMngGenerations)
-			manager.CXFunctionMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXFunctionMngLive)
-			manager.CXFunctionMngLive = live
+		if capacity := len(manager.CXFunctionMngObjects); int(manager.CXFunctionMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXFunctionAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXFunctionMngNext
 		manager.CXFunctionMngNext++
@@ -108,7 +90,7 @@ func (manager *CXFunctionMng) CXFunctionRelease(gid CXFunctionGid) {
 }
 
 // CXFunctionGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXFunctionMng) CXFunctionGet(gid CXFunctionGid) *CXFunction {
 	objmodel.GidCheck(int64(gid), CXFunctionGidTypeTag, "CXFunction", len(manager.CXFunctionMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXFunctionMng) CXFunctionLen() int {
 // CXFunctionCap is the number of slots, retired ones included.
 func (manager *CXFunctionMng) CXFunctionCap() int {
 	return len(manager.CXFunctionMngObjects)
+}
+
+// CXFunctionMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXFunctionMng) CXFunctionMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXFunctionMngObjects)
+	free := capacity - int(manager.CXFunctionMngNext) + len(manager.CXFunctionMngFree)
+	if !manager.CXFunctionMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXFunction, grown)
+	copy(objects, manager.CXFunctionMngObjects)
+	manager.CXFunctionMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXFunctionMngGenerations)
+	manager.CXFunctionMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXFunctionMngLive)
+	manager.CXFunctionMngLive = live
+	return capacity, int(grown)
 }
 
 // CXFunctionMngTeardown asserts that Len is 0 and drops the arrays, which leaves

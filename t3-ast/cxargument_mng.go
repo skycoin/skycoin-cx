@@ -19,10 +19,10 @@ type CXArgumentMng struct {
 	CXArgumentMngNext        uint32       // first slot never used
 	CXArgumentMngRetired     uint32       // slots retired at objmodel.GidGenerationLast
 	CXArgumentMngLen         int          // live objects
-	CXArgumentMngGrowable    bool         // grow when full instead of asserting
+	CXArgumentMngGrowable    bool         // the grow boundary may grow it
 }
 
-// CXArgumentMngInit sets the Cap and whether the manager may grow.
+// CXArgumentMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXArgumentMng) CXArgumentMngInit(capacity int, growable bool) {
 	if manager.CXArgumentMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentMngInit on a manager holding %d objects", manager.CXArgumentMngLen))
@@ -38,35 +38,17 @@ func (manager *CXArgumentMng) CXArgumentMngInit(capacity int, growable bool) {
 	}
 }
 
-// CXArgumentAlloc returns the Gid of a new zero CXArgument. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXArgumentAlloc returns the Gid of a new zero CXArgument. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXArgumentMng) CXArgumentAlloc() CXArgumentGid {
 	var index uint32
 	if free := len(manager.CXArgumentMngFree); free > 0 {
 		index = manager.CXArgumentMngFree[free-1]
 		manager.CXArgumentMngFree = manager.CXArgumentMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXArgumentMngObjects)
-		if int(manager.CXArgumentMngNext) == capacity {
-			if !manager.CXArgumentMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXArgumentMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXArgument, grown)
-			copy(objects, manager.CXArgumentMngObjects)
-			manager.CXArgumentMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXArgumentMngGenerations)
-			manager.CXArgumentMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXArgumentMngLive)
-			manager.CXArgumentMngLive = live
+		if capacity := len(manager.CXArgumentMngObjects); int(manager.CXArgumentMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXArgumentAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXArgumentMngNext
 		manager.CXArgumentMngNext++
@@ -108,7 +90,7 @@ func (manager *CXArgumentMng) CXArgumentRelease(gid CXArgumentGid) {
 }
 
 // CXArgumentGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXArgumentMng) CXArgumentGet(gid CXArgumentGid) *CXArgument {
 	objmodel.GidCheck(int64(gid), CXArgumentGidTypeTag, "CXArgument", len(manager.CXArgumentMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXArgumentMng) CXArgumentLen() int {
 // CXArgumentCap is the number of slots, retired ones included.
 func (manager *CXArgumentMng) CXArgumentCap() int {
 	return len(manager.CXArgumentMngObjects)
+}
+
+// CXArgumentMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXArgumentMng) CXArgumentMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXArgumentMngObjects)
+	free := capacity - int(manager.CXArgumentMngNext) + len(manager.CXArgumentMngFree)
+	if !manager.CXArgumentMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXArgument, grown)
+	copy(objects, manager.CXArgumentMngObjects)
+	manager.CXArgumentMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXArgumentMngGenerations)
+	manager.CXArgumentMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXArgumentMngLive)
+	manager.CXArgumentMngLive = live
+	return capacity, int(grown)
 }
 
 // CXArgumentMngTeardown asserts that Len is 0 and drops the arrays, which leaves

@@ -55,16 +55,28 @@ func TestCXArgumentDebugMng(t *testing.T) {
 
 func TestCXArgumentDebugMngGrowth(t *testing.T) {
 	var manager CXArgumentDebugMng
-	manager.CXArgumentDebugMngInit(0, true)
-	gids := make([]CXArgumentDebugGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXArgumentDebugAlloc()
+	manager.CXArgumentDebugMngInit(4, true)
+	gids := make([]CXArgumentDebugGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXArgumentDebugAlloc())
 		manager.CXArgumentDebugGet(gids[i]).FileLine = i + 1
-		if manager.CXArgumentDebugLen() != i+1 || manager.CXArgumentDebugCap() < manager.CXArgumentDebugLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXArgumentDebugLen(), manager.CXArgumentDebugCap())
-		}
 	}
-	CXArgumentDebugMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXArgumentDebugMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXArgumentDebugAlloc())
+	manager.CXArgumentDebugGet(gids[2]).FileLine = 3
+	if oldCap, newCap := manager.CXArgumentDebugMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXArgumentDebugAlloc())
+		manager.CXArgumentDebugGet(gids[i]).FileLine = i + 1
+	}
+	if oldCap, newCap := manager.CXArgumentDebugMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXArgumentDebugMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if manager.CXArgumentDebugGet(gid).FileLine != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXArgumentDebugMngGrowth(t *testing.T) {
 	CXArgumentDebugMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXArgumentDebugMngTeardown()
 	CXArgumentDebugMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXArgumentDebugMng
+	fixed.CXArgumentDebugMngInit(1, false)
+	gid := fixed.CXArgumentDebugAlloc()
+	if oldCap, newCap := fixed.CXArgumentDebugMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXArgumentDebugRelease(gid)
+	fixed.CXArgumentDebugMngTeardown()
 }
 
 func TestCXArgumentDebugMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXArgumentDebugMngTestAsserts = map[string]struct {
 		manager.CXArgumentDebugAlloc()
 		manager.CXArgumentDebugAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXArgumentDebugMng) {
+		manager.CXArgumentDebugMngInit(1, true)
+		manager.CXArgumentDebugAlloc()
+		manager.CXArgumentDebugAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXArgumentDebugMng) {
 		manager.CXArgumentDebugAlloc()
 		manager.CXArgumentDebugMngGenerations[0] = objmodel.GidGenerationLast - 1

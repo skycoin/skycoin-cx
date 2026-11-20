@@ -19,10 +19,10 @@ type CXNativeFunctionMng struct {
 	CXNativeFunctionMngNext        uint32             // first slot never used
 	CXNativeFunctionMngRetired     uint32             // slots retired at objmodel.GidGenerationLast
 	CXNativeFunctionMngLen         int                // live objects
-	CXNativeFunctionMngGrowable    bool               // grow when full instead of asserting
+	CXNativeFunctionMngGrowable    bool               // the grow boundary may grow it
 }
 
-// CXNativeFunctionMngInit sets the Cap and whether the manager may grow.
+// CXNativeFunctionMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXNativeFunctionMng) CXNativeFunctionMngInit(capacity int, growable bool) {
 	if manager.CXNativeFunctionMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionMngInit on a manager holding %d objects", manager.CXNativeFunctionMngLen))
@@ -38,35 +38,17 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionMngInit(capacity int, growab
 	}
 }
 
-// CXNativeFunctionAlloc returns the Gid of a new zero CXNativeFunction. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXNativeFunctionAlloc returns the Gid of a new zero CXNativeFunction. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXNativeFunctionMng) CXNativeFunctionAlloc() CXNativeFunctionGid {
 	var index uint32
 	if free := len(manager.CXNativeFunctionMngFree); free > 0 {
 		index = manager.CXNativeFunctionMngFree[free-1]
 		manager.CXNativeFunctionMngFree = manager.CXNativeFunctionMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXNativeFunctionMngObjects)
-		if int(manager.CXNativeFunctionMngNext) == capacity {
-			if !manager.CXNativeFunctionMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXNativeFunctionMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXNativeFunction, grown)
-			copy(objects, manager.CXNativeFunctionMngObjects)
-			manager.CXNativeFunctionMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXNativeFunctionMngGenerations)
-			manager.CXNativeFunctionMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXNativeFunctionMngLive)
-			manager.CXNativeFunctionMngLive = live
+		if capacity := len(manager.CXNativeFunctionMngObjects); int(manager.CXNativeFunctionMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXNativeFunctionMngNext
 		manager.CXNativeFunctionMngNext++
@@ -108,7 +90,7 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionRelease(gid CXNativeFunction
 }
 
 // CXNativeFunctionGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXNativeFunctionMng) CXNativeFunctionGet(gid CXNativeFunctionGid) *CXNativeFunction {
 	objmodel.GidCheck(int64(gid), CXNativeFunctionGidTypeTag, "CXNativeFunction", len(manager.CXNativeFunctionMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionLen() int {
 // CXNativeFunctionCap is the number of slots, retired ones included.
 func (manager *CXNativeFunctionMng) CXNativeFunctionCap() int {
 	return len(manager.CXNativeFunctionMngObjects)
+}
+
+// CXNativeFunctionMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXNativeFunctionMng) CXNativeFunctionMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXNativeFunctionMngObjects)
+	free := capacity - int(manager.CXNativeFunctionMngNext) + len(manager.CXNativeFunctionMngFree)
+	if !manager.CXNativeFunctionMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXNativeFunction, grown)
+	copy(objects, manager.CXNativeFunctionMngObjects)
+	manager.CXNativeFunctionMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXNativeFunctionMngGenerations)
+	manager.CXNativeFunctionMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXNativeFunctionMngLive)
+	manager.CXNativeFunctionMngLive = live
+	return capacity, int(grown)
 }
 
 // CXNativeFunctionMngTeardown asserts that Len is 0 and drops the arrays, which leaves

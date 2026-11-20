@@ -19,10 +19,10 @@ type CXAtomicOperatorMng struct {
 	CXAtomicOperatorMngNext        uint32             // first slot never used
 	CXAtomicOperatorMngRetired     uint32             // slots retired at objmodel.GidGenerationLast
 	CXAtomicOperatorMngLen         int                // live objects
-	CXAtomicOperatorMngGrowable    bool               // grow when full instead of asserting
+	CXAtomicOperatorMngGrowable    bool               // the grow boundary may grow it
 }
 
-// CXAtomicOperatorMngInit sets the Cap and whether the manager may grow.
+// CXAtomicOperatorMngInit sets the Cap and whether the grow boundary may grow it.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorMngInit(capacity int, growable bool) {
 	if manager.CXAtomicOperatorMngLen != 0 {
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorMngInit on a manager holding %d objects", manager.CXAtomicOperatorMngLen))
@@ -38,35 +38,17 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorMngInit(capacity int, growab
 	}
 }
 
-// CXAtomicOperatorAlloc returns the Gid of a new zero CXAtomicOperator. A full manager doubles
-// its Cap when it is growable and asserts when it is not.
+// CXAtomicOperatorAlloc returns the Gid of a new zero CXAtomicOperator. It never moves the
+// array, so a Get pointer stays valid until the next grow boundary. A full
+// manager asserts, an unhandled case for now, see docs/ObjectModel.md.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorAlloc() CXAtomicOperatorGid {
 	var index uint32
 	if free := len(manager.CXAtomicOperatorMngFree); free > 0 {
 		index = manager.CXAtomicOperatorMngFree[free-1]
 		manager.CXAtomicOperatorMngFree = manager.CXAtomicOperatorMngFree[:free-1]
 	} else {
-		capacity := len(manager.CXAtomicOperatorMngObjects)
-		if int(manager.CXAtomicOperatorMngNext) == capacity {
-			if !manager.CXAtomicOperatorMngGrowable || uint64(capacity) >= objmodel.GidCapMax {
-				assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorAlloc on a full manager, Cap %d, growable %t", capacity, manager.CXAtomicOperatorMngGrowable))
-			}
-			grown := uint64(2 * capacity)
-			if grown == 0 {
-				grown = 1
-			}
-			if grown > objmodel.GidCapMax {
-				grown = objmodel.GidCapMax
-			}
-			objects := make([]CXAtomicOperator, grown)
-			copy(objects, manager.CXAtomicOperatorMngObjects)
-			manager.CXAtomicOperatorMngObjects = objects
-			generations := make([]uint32, grown)
-			copy(generations, manager.CXAtomicOperatorMngGenerations)
-			manager.CXAtomicOperatorMngGenerations = generations
-			live := make([]bool, grown)
-			copy(live, manager.CXAtomicOperatorMngLive)
-			manager.CXAtomicOperatorMngLive = live
+		if capacity := len(manager.CXAtomicOperatorMngObjects); int(manager.CXAtomicOperatorMngNext) == capacity {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorAlloc on a full manager, Cap %d. Growth between grow boundaries is an unhandled case", capacity))
 		}
 		index = manager.CXAtomicOperatorMngNext
 		manager.CXAtomicOperatorMngNext++
@@ -108,7 +90,7 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorRelease(gid CXAtomicOperator
 }
 
 // CXAtomicOperatorGet returns a borrowed pointer to the object. It is stale after the
-// next Alloc on this manager or a Release of gid.
+// next grow boundary or a Release of gid.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorGet(gid CXAtomicOperatorGid) *CXAtomicOperator {
 	objmodel.GidCheck(int64(gid), CXAtomicOperatorGidTypeTag, "CXAtomicOperator", len(manager.CXAtomicOperatorMngObjects))
 	index := objmodel.GidIndex(int64(gid))
@@ -129,6 +111,34 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorLen() int {
 // CXAtomicOperatorCap is the number of slots, retired ones included.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorCap() int {
 	return len(manager.CXAtomicOperatorMngObjects)
+}
+
+// CXAtomicOperatorMngGrowBoundary grows a growable manager whose free slots are under
+// half of its Cap to the next power of two, and returns the old and new Cap.
+// It moves the array, so it runs only where no Get pointer is held.
+func (manager *CXAtomicOperatorMng) CXAtomicOperatorMngGrowBoundary() (int, int) {
+	capacity := len(manager.CXAtomicOperatorMngObjects)
+	free := capacity - int(manager.CXAtomicOperatorMngNext) + len(manager.CXAtomicOperatorMngFree)
+	if !manager.CXAtomicOperatorMngGrowable || 2*free >= capacity && capacity > 0 || uint64(capacity) >= objmodel.GidCapMax {
+		return capacity, capacity
+	}
+	grown := uint64(1)
+	for grown <= uint64(capacity) {
+		grown *= 2
+	}
+	if grown > objmodel.GidCapMax {
+		grown = objmodel.GidCapMax
+	}
+	objects := make([]CXAtomicOperator, grown)
+	copy(objects, manager.CXAtomicOperatorMngObjects)
+	manager.CXAtomicOperatorMngObjects = objects
+	generations := make([]uint32, grown)
+	copy(generations, manager.CXAtomicOperatorMngGenerations)
+	manager.CXAtomicOperatorMngGenerations = generations
+	live := make([]bool, grown)
+	copy(live, manager.CXAtomicOperatorMngLive)
+	manager.CXAtomicOperatorMngLive = live
+	return capacity, int(grown)
 }
 
 // CXAtomicOperatorMngTeardown asserts that Len is 0 and drops the arrays, which leaves

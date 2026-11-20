@@ -55,16 +55,28 @@ func TestCXProgramMng(t *testing.T) {
 
 func TestCXProgramMngGrowth(t *testing.T) {
 	var manager CXProgramMng
-	manager.CXProgramMngInit(0, true)
-	gids := make([]CXProgramGid, 9)
-	for i := range gids {
-		gids[i] = manager.CXProgramAlloc()
+	manager.CXProgramMngInit(4, true)
+	gids := make([]CXProgramGid, 0, 9)
+	for i := 0; i < 2; i++ {
+		gids = append(gids, manager.CXProgramAlloc())
 		manager.CXProgramGet(gids[i]).Version = int64(i + 1)
-		if manager.CXProgramLen() != i+1 || manager.CXProgramCap() < manager.CXProgramLen() {
-			t.Fatalf("alloc %d: Len %d Cap %d", i, manager.CXProgramLen(), manager.CXProgramCap())
-		}
 	}
-	CXProgramMngTestCheck(t, &manager, "nine allocs", 9, 16)
+	if oldCap, newCap := manager.CXProgramMngGrowBoundary(); oldCap != 4 || newCap != 4 {
+		t.Fatalf("half free: grew from %d to %d, want no growth", oldCap, newCap)
+	}
+	gids = append(gids, manager.CXProgramAlloc())
+	manager.CXProgramGet(gids[2]).Version = int64(3)
+	if oldCap, newCap := manager.CXProgramMngGrowBoundary(); oldCap != 4 || newCap != 8 {
+		t.Fatalf("one free of four: grew from %d to %d, want 4 to 8", oldCap, newCap)
+	}
+	for i := 3; i < 8; i++ {
+		gids = append(gids, manager.CXProgramAlloc())
+		manager.CXProgramGet(gids[i]).Version = int64(i + 1)
+	}
+	if oldCap, newCap := manager.CXProgramMngGrowBoundary(); oldCap != 8 || newCap != 16 {
+		t.Fatalf("full: grew from %d to %d, want 8 to 16", oldCap, newCap)
+	}
+	CXProgramMngTestCheck(t, &manager, "eight allocs", 8, 16)
 	for i, gid := range gids {
 		if int(manager.CXProgramGet(gid).Version) != i+1 {
 			t.Fatalf("object %d lost by growth", i)
@@ -76,6 +88,15 @@ func TestCXProgramMngGrowth(t *testing.T) {
 	CXProgramMngTestCheck(t, &manager, "release all", 0, 16)
 	manager.CXProgramMngTeardown()
 	CXProgramMngTestCheck(t, &manager, "teardown", 0, 0)
+
+	var fixed CXProgramMng
+	fixed.CXProgramMngInit(1, false)
+	gid := fixed.CXProgramAlloc()
+	if oldCap, newCap := fixed.CXProgramMngGrowBoundary(); oldCap != 1 || newCap != 1 {
+		t.Fatalf("fixed manager grew from %d to %d", oldCap, newCap)
+	}
+	fixed.CXProgramRelease(gid)
+	fixed.CXProgramMngTeardown()
 }
 
 func TestCXProgramMngRetirement(t *testing.T) {
@@ -139,6 +160,11 @@ var CXProgramMngTestAsserts = map[string]struct {
 		manager.CXProgramAlloc()
 		manager.CXProgramAlloc()
 	}, "on a full manager"},
+	"alloc full growable": {func(manager *CXProgramMng) {
+		manager.CXProgramMngInit(1, true)
+		manager.CXProgramAlloc()
+		manager.CXProgramAlloc()
+	}, "unhandled case"},
 	"alloc retired full": {func(manager *CXProgramMng) {
 		manager.CXProgramAlloc()
 		manager.CXProgramMngGenerations[0] = objmodel.GidGenerationLast - 1
