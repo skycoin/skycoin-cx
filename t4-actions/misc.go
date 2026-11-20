@@ -102,10 +102,7 @@ func WritePrimaryExprs(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, i
 	expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 	prgrm.CXAtomicOps[expr.Index].Package = ast.CXPackageIndex(pkg.Index)
 
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1056.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, arg)
 	prgrm.CXAtomicOps[expr.Index].AddOutput(prgrm, typeSigIdx)
 
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
@@ -279,10 +276,7 @@ func PrimaryIdentifier(prgrm *ast.CXProgram, ident string) []ast.CXExpression {
 		panic(err)
 	}
 
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1082.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, arg)
 	expression.AddOutput(prgrm, typeSigIdx)
 	expression.Package = ast.CXPackageIndex(pkg.Index)
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.

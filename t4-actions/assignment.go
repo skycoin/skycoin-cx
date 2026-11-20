@@ -154,10 +154,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		aux.PreviouslyDeclared = true
 		aux.Package = lastFromExpression.Package
 
-		auxtypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, aux)
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0523.
-		auxTypeSigIdx := prgrm.AddCXTypeSignatureInArray(auxtypeSig)
+		auxTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, aux)
 
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 		// Now a constructor call, site S0524.
@@ -174,10 +171,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		// Now a constructor call, site S0526.
 		out := ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
 		out.Package = lastFromExpression.Package
-		outTypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0527.
-		outTypeSigIdx := prgrm.AddCXTypeSignatureInArray(outTypeSig)
+		outTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
 
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 		// Now a constructor call, site S0528.
@@ -303,22 +297,12 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0539.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
 		} else if fromExpressionInputTypeSig.Type == ast.TYPE_ATOMIC || fromExpressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0540.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0541.
-			newTypeSig = *fromExpressionInputTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(fromExpressionInputTypeSig)
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0542.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else {
 			panic("type is not known")
 		}
@@ -441,32 +425,15 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0557.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
 		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0558.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0559.
-			newTypeSig = *fromExpressionOutputTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(fromExpressionOutputTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0560.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0561.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0562.
-			newTypeSig = *fromExpressionOutputTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(fromExpressionOutputTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0563.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else {
 			panic("type is not known")
 		}
@@ -513,34 +480,17 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			sym.PreviouslyDeclared = true
 			sym.Offset = outTypeArg.Offset
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0569.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
 		} else if outTypeSig.Type == ast.TYPE_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0570.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0571.
-			newTypeSig = *outTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(outTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0572.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else if outTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			// TODO: recheck if this should be pointer
 			// or the atomic type its pointing to.
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0573.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0574.
-			newTypeSig = *outTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(outTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0575.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else {
 			panic("type is not known")
 		}

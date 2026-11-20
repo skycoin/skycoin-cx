@@ -42,10 +42,7 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 	slcVar.Package = ast.CXPackageIndex(pkg.Index)
 	slcVar.PreviouslyDeclared = true
 
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, slcVar)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0983.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, slcVar)
 	prgrm.CXAtomicOps[slcVarExprAtomicOpIdx].AddOutput(prgrm, typeSigIdx)
 
 	result = append(result, *slcVarExprCXLine, *slcVarExpr)
@@ -91,10 +88,7 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 			symExprAtomicOpIdx := symExpr.Index
 
 			prgrm.CXAtomicOps[symExprAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symOut)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0990.
-			typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, symOut)
 			prgrm.CXAtomicOps[symExprAtomicOpIdx].AddOutput(prgrm, typeSigIdx)
 
 			if exprAtomicOpOperator == nil {
@@ -105,10 +99,7 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = opIdx
 
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs = nil
-				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symInp)
-				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Now an arena insert, site S0992.
-				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, symInp)
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].AddInput(prgrm, typeSigIdx)
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs.Fields = append(prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs.Fields, exprAtomicOp.Outputs.Fields...)
 			} else {
@@ -133,22 +124,12 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 					out.PreviouslyDeclared = true
 					out.Package = ast.CXPackageIndex(pkg.Index)
 
-					typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
-					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-					// Now an arena insert, site S0995.
-					outTypeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+					outTypeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
 				} else if outTypeSig.Type == ast.TYPE_ATOMIC || outTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-					// Now a local object, site S0996.
-					var newTypeSig ast.CXTypeSignature
-					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-					// Now an object copy, site S0997.
-					newTypeSig = *outTypeSig
+					_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(outTypeSig)
 					newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 					newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
-					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-					// Now an arena insert, site S0998.
-					outTypeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+					outTypeSigIdx = newTypeSig.Index
 				} else {
 					panic("type is not known")
 				}
@@ -172,10 +153,7 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = opIdx
 
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs = nil
-				typeSig = ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symInp)
-				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Now an arena insert, site S1001.
-				typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+				typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, symInp)
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].AddInput(prgrm, typeSigIdx)
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].AddInput(prgrm, outTypeSigIdx)
 			}
@@ -214,15 +192,9 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 	}
 
 	symExprAtomicOp.Package = ast.CXPackageIndex(pkg.Index)
-	typeSig = ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symOutput)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1007.
-	typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, symOutput)
 	symExprAtomicOp.AddOutput(prgrm, typeSigIdx)
-	typeSig = ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symInput)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1008.
-	typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, symInput)
 	symExprAtomicOp.AddInput(prgrm, typeSigIdx)
 
 	// marking the output so multidimensional arrays identify the expressions
@@ -506,10 +478,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 	arrVar.Package = ast.CXPackageIndex(pkg.Index)
 	arrVar.PreviouslyDeclared = true
 
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arrVar)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1030.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, arrVar)
 	prgrm.CXAtomicOps[arrVarExprAtomicOpIdx].AddOutput(prgrm, typeSigIdx)
 
 	result = append(result, *arrVarExprCXLine, *arrVarExpr)
@@ -543,20 +512,15 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 			// index is always i32
 			// hence, always an atomic type
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a heap literal, site S1034.
-			indexTypeSignature := &ast.CXTypeSignature{
-				Name:       idxArg.Name,
-				Type:       ast.TYPE_ATOMIC,
-				Meta:       int(idxArg.Type),
-				Offset:     idxArg.Offset, // important for this
-				Package:    idxArg.Package,
-				ArgDetails: idxArg.ArgDetails,
-			}
+			_, indexTypeSignature := prgrm.AllocCXTypeSignature()
+			indexTypeSignature.Name = idxArg.Name
+			indexTypeSignature.Type = ast.TYPE_ATOMIC
+			indexTypeSignature.Meta = int(idxArg.Type)
+			indexTypeSignature.Offset = idxArg.Offset // important for this
+			indexTypeSignature.Package = idxArg.Package
+			indexTypeSignature.ArgDetails = idxArg.ArgDetails
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S1035.
-			indexTypeSignatureIdx := prgrm.AddCXTypeSignatureInArray(indexTypeSignature)
+			indexTypeSignatureIdx := indexTypeSignature.Index
 			endPointsCounter++
 
 			sym.Indexes = append(sym.Indexes, indexTypeSignatureIdx)
@@ -571,10 +535,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 			symExpr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 			symExprAtomicOpIdx := symExpr.Index
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S1038.
-			typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
 			prgrm.CXAtomicOps[symExprAtomicOpIdx].AddOutput(prgrm, typeSigIdx)
 
 			if expressionOperator == nil {
@@ -588,10 +549,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = expression.Operator
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs = expression.Inputs
 
-				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
-				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Now an arena insert, site S1040.
-				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
 				// hack to get the correct lengths below
 				// MakeAtomicOperatorExpression above may have grown CXAtomicOps, so refetch.
 				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -637,16 +595,10 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 	symExprAtomicOpIdx := symExpr.Index
 	prgrm.CXAtomicOps[symExprAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
 
-	typeSig = ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symOutput)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1046.
-	typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, symOutput)
 	prgrm.CXAtomicOps[symExprAtomicOpIdx].AddOutput(prgrm, typeSigIdx)
 
-	typeSig = ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, symInput)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1047.
-	typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, symInput)
 	prgrm.CXAtomicOps[symExprAtomicOpIdx].AddInput(prgrm, typeSigIdx)
 
 	// symOutput.SynonymousTo = symInput.Name
@@ -688,10 +640,7 @@ func StructLiteralFields(prgrm *ast.CXProgram, structName string) ast.CXExpressi
 		panic(err)
 	}
 
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1051.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, arg)
 	expression.AddOutput(prgrm, typeSigIdx)
 
 	expression.Package = ast.CXPackageIndex(pkg.Index)

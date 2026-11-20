@@ -58,10 +58,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	downLines := 0
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0610.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
 	prgrm.CXAtomicOps[upExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[upExpressionIdx].ThenLines = upLines
 	prgrm.CXAtomicOps[upExpressionIdx].ElseLines = downLines
@@ -103,36 +100,19 @@ func IterationExpressions(prgrm *ast.CXProgram,
 			predicate.Package = ast.CXPackageIndex(pkg.Index)
 			predicate.PreviouslyDeclared = true
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, predicate)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0617.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, predicate)
 		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0618.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0619.
-			newTypeSig = *lastCondExpressionOperatorOutputTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(lastCondExpressionOperatorOutputTypeSig)
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
 			newTypeSig.Offset = types.Pointer(0)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0620.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a local object, site S0621.
-			var newTypeSig ast.CXTypeSignature
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an object copy, site S0622.
-			newTypeSig = *lastCondExpressionOperatorOutputTypeSig
+			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(lastCondExpressionOperatorOutputTypeSig)
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
 			newTypeSig.Offset = types.Pointer(0)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0623.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
+			typeSigIdx = newTypeSig.Index
 		} else {
 			panic("type is not known")
 		}
@@ -219,10 +199,7 @@ func trueJmpExpressions(prgrm *ast.CXProgram, opcode int) []ast.CXExpression {
 	expressionIdx := expr.Index
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0627.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
 	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
@@ -323,10 +300,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		predicate.PreviouslyDeclared = true
 		predicate.Package = ast.CXPackageIndex(pkg.Index)
 
-		predicateTypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, predicate)
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0635.
-		predicateTypeSigIdx = prgrm.AddCXTypeSignatureInArray(predicateTypeSig)
+		predicateTypeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, predicate)
 		prgrm.CXAtomicOps[lastCondExpressionIdx].AddOutput(prgrm, predicateTypeSigIdx)
 	}
 	prgrm.CXAtomicOps[ifExpressionIdx].AddInput(prgrm, predicateTypeSigIdx)
@@ -351,10 +325,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	skipLines := len(elseExprs)
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0638.
-	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
 	prgrm.CXAtomicOps[skipExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[skipExpressionIdx].ThenLines = skipLines
 	prgrm.CXAtomicOps[skipExpressionIdx].ElseLines = 0
@@ -514,44 +485,35 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.Package = ast.CXPackageIndex(pkg.Index)
 			out.PreviouslyDeclared = true
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0651.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 			argDetails.FileName = CurrentFile
 			argDetails.FileLine = LineNo
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a heap literal, site S0652.
-			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+			_, typeSig := prgrm.AllocCXTypeSignature()
+			typeSig.ArgDetails = argDetailsGid
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_ATOMIC
 			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0654.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = typeSig.Index
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 			argDetails.FileName = CurrentFile
 			argDetails.FileLine = LineNo
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a heap literal, site S0655.
-			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+			_, typeSig := prgrm.AllocCXTypeSignature()
+			typeSig.ArgDetails = argDetailsGid
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_POINTER_ATOMIC
 			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0657.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = typeSig.Index
 		} else {
 			panic("type is not known")
 		}
@@ -588,44 +550,35 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.Package = ast.CXPackageIndex(pkg.Index)
 			out.PreviouslyDeclared = true
 
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0663.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 			argDetails.FileName = CurrentFile
 			argDetails.FileLine = LineNo
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a heap literal, site S0664.
-			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+			_, typeSig := prgrm.AllocCXTypeSignature()
+			typeSig.ArgDetails = argDetailsGid
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_ATOMIC
 			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0666.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = typeSig.Index
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 			argDetails.FileName = CurrentFile
 			argDetails.FileLine = LineNo
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now a heap literal, site S0667.
-			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+			_, typeSig := prgrm.AllocCXTypeSignature()
+			typeSig.ArgDetails = argDetailsGid
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_POINTER_ATOMIC
 			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
 
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S0669.
-			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			typeSigIdx = typeSig.Index
 		} else {
 			panic("type is not known")
 		}
@@ -774,10 +727,7 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0685.
-				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
-				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Now an arena insert, site S0686.
-				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
 				expression.AddInput(prgrm, typeSigIdx)
 				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 				// Now an object copy, site S0687.
@@ -799,10 +749,7 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 				expression.Package = ast.CXPackageIndex(pkg.Index)
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0690.
-				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
-				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Now an arena insert, site S0691.
-				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
 				expression.AddInput(prgrm, typeSigIdx)
 				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 				// Now an object copy, site S0692.
@@ -919,58 +866,46 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		out.StructType = outParam.StructType
 		out.PreviouslyDeclared = true
 
-		typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0703.
-		typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+		typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now a heap literal, site S0704.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
+		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_ATOMIC
 		newCXTypeSig.Meta = int(fnOutputTypeSig.Type)
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0706.
-		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
+		typeSigIdx = newCXTypeSig.Index
 	} else if fnOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now a heap literal, site S0707.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
+		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_POINTER_ATOMIC
 		newCXTypeSig.Meta = int(fnOutputTypeSig.Type)
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0709.
-		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
+		typeSigIdx = newCXTypeSig.Index
 	} else if fnOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now a heap literal, site S0710.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
+		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
+		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_SLICE_ATOMIC
 		newCXTypeSig.Meta = fnOutputTypeSig.Meta
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0712.
-		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
+		typeSigIdx = newCXTypeSig.Index
 	} else {
 		panic("type is not known")
 	}

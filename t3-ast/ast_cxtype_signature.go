@@ -443,17 +443,16 @@ func (typeSignature *CXTypeSignature) IsInnerReference(prgrm *CXProgram) bool {
 	return false
 }
 
+// fillCXTypeSignatureOfCXArgForStructs fills newCXTypeSignature from the struct
+// field cxArgument. It returns false when the field has no signature type of
+// its own, and the caller makes the signature name the argument.
 // Added _ForStructs for now so it will be separate from others for smooth transition.
 // TODO: Remove _ForStructs
-func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now a value literal, site S0305.
-	newCXTypeSignature := CXTypeSignature{
-		Name:       cxArgument.Name,
-		Package:    cxArgument.Package,
-		PassBy:     cxArgument.PassBy,
-		ArgDetails: cxArgument.ArgDetails,
-	}
+func fillCXTypeSignatureOfCXArgForStructs(prgrm *CXProgram, newCXTypeSignature *CXTypeSignature, cxArgument *CXArgument) bool {
+	newCXTypeSignature.Name = cxArgument.Name
+	newCXTypeSignature.Package = cxArgument.Package
+	newCXTypeSignature.PassBy = cxArgument.PassBy
+	newCXTypeSignature.ArgDetails = cxArgument.ArgDetails
 
 	fieldType := cxArgument.Type
 	if IsTypeAtomic(cxArgument) {
@@ -544,30 +543,19 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else {
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now an arena insert, site S0318.
-		fldIdx := prgrm.AddCXArgInArray(cxArgument)
-
-		// All are TYPE_CXARGUMENT_DEPRECATE for now.
-		// FieldIdx or the CXArg ID is in Meta field.
-		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE
-		newCXTypeSignature.Meta = int(fldIdx)
+		return false
 	}
-
-	newCXTypeSignature.Offset = newCXTypeSignature.GetSize(prgrm, false)
-
-	return &newCXTypeSignature
+	return true
 }
 
-func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now a value literal, site S0319.
-	newCXTypeSignature := CXTypeSignature{
-		Name:       cxArgument.Name,
-		Package:    cxArgument.Package,
-		PassBy:     cxArgument.PassBy,
-		ArgDetails: cxArgument.ArgDetails,
-	}
+// fillCXTypeSignatureOfCXArg fills newCXTypeSignature from cxArgument. It
+// returns false when the argument has no signature type of its own, and the
+// caller makes the signature name the argument.
+func fillCXTypeSignatureOfCXArg(prgrm *CXProgram, newCXTypeSignature *CXTypeSignature, cxArgument *CXArgument) bool {
+	newCXTypeSignature.Name = cxArgument.Name
+	newCXTypeSignature.Package = cxArgument.Package
+	newCXTypeSignature.PassBy = cxArgument.PassBy
+	newCXTypeSignature.ArgDetails = cxArgument.ArgDetails
 
 	if IsTypeAtomic(cxArgument) {
 		// If atomic type. i.e. i8, i16, i32, f32, etc.
@@ -651,16 +639,56 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(structGid)))
 	} else {
+		return false
+	}
+	return true
+}
+
+// AllocCXTypeSignatureOfCXArgForStructs allocates the signature of the struct
+// field cxArgument in the program's CXTypeSignatureMng and returns its slot.
+// A field with no signature type of its own is named by the signature, and a
+// heap field is copied in first.
+func AllocCXTypeSignatureOfCXArgForStructs(prgrm *CXProgram, cxArgument *CXArgument) CXTypeSignatureIndex {
+	_, newCXTypeSignature := prgrm.AllocCXTypeSignature()
+	if !fillCXTypeSignatureOfCXArgForStructs(prgrm, newCXTypeSignature, cxArgument) {
+		// All are TYPE_CXARGUMENT_DEPRECATE for now. The CXArg slot is in Meta.
+		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE
+		newCXTypeSignature.Meta = int(prgrm.cxArgumentSlot(cxArgument, true))
+	}
+
+	newCXTypeSignature.Offset = newCXTypeSignature.GetSize(prgrm, false)
+
+	return newCXTypeSignature.Index
+}
+
+// AllocCXTypeSignatureOfCXArg allocates the signature of cxArgument in the
+// program's CXTypeSignatureMng and returns its slot. An argument with no
+// signature type of its own is named by the signature, and a heap argument
+// that has no slot yet is copied in first.
+func AllocCXTypeSignatureOfCXArg(prgrm *CXProgram, cxArgument *CXArgument) CXTypeSignatureIndex {
+	_, newCXTypeSignature := prgrm.AllocCXTypeSignature()
+	if !fillCXTypeSignatureOfCXArg(prgrm, newCXTypeSignature, cxArgument) {
+		// TYPE_CXARGUMENT_DEPRECATE, the CXArg slot is in Meta.
+		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE
+		newCXTypeSignature.Meta = int(prgrm.cxArgumentSlot(cxArgument, false))
+		newCXTypeSignature.Offset = cxArgument.Offset
+	}
+
+	return newCXTypeSignature.Index
+}
+
+// GetCXTypeSignatureRepresentationOfCXArg builds the signature of cxArgument
+// on the heap, for the callers that still copy it in with
+// AddCXTypeSignatureInArray, the natives, serialization and tests.
+func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now a value literal, site S0319.
+	newCXTypeSignature := CXTypeSignature{}
+	if !fillCXTypeSignatureOfCXArg(prgrm, &newCXTypeSignature, cxArgument) {
 		// TYPE_CXARGUMENT_DEPRECATE
 		// FieldIdx or the CXArg ID is in Meta field.
-		cxArgumentIndex := cxArgument.Index
-		if cxArgument.Index == -1 || cxArgument.Index == 0 {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now an arena insert, site S0332.
-			cxArgumentIndex = int(prgrm.AddCXArgInArray(cxArgument))
-		}
 		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE
-		newCXTypeSignature.Meta = cxArgumentIndex
+		newCXTypeSignature.Meta = int(prgrm.cxArgumentSlot(cxArgument, false))
 		newCXTypeSignature.Offset = cxArgument.Offset
 	}
 

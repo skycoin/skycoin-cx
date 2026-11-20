@@ -96,7 +96,7 @@ func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction 
 	}
 
 	param.Package = fn.Package
-	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
+	newFieldIdx := AllocCXTypeSignatureOfCXArg(prgrm, param)
 
 	if fn.Inputs == nil {
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
@@ -104,9 +104,6 @@ func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction 
 		fn.Inputs = &CXStruct{}
 	}
 
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0138.
-	newFieldIdx := prgrm.AddCXTypeSignatureInArray(newField)
 	fn.Inputs.AddField_TypeSignature(prgrm, newFieldIdx)
 
 	return fn
@@ -152,7 +149,7 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 
 	param.Package = fn.Package
 
-	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
+	newFieldIdx := AllocCXTypeSignatureOfCXArg(prgrm, param)
 
 	if fn.Outputs == nil {
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
@@ -160,9 +157,6 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 		fn.Outputs = &CXStruct{}
 	}
 
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0141.
-	newFieldIdx := prgrm.AddCXTypeSignatureInArray(newField)
 	fn.Outputs.AddField_TypeSignature(prgrm, newFieldIdx)
 
 	return fn

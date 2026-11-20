@@ -280,6 +280,28 @@ func (cxprogram *CXProgram) AddCXTypeSignatureInArray(typeSignature *CXTypeSigna
 	return typeSignature.Index
 }
 
+// AllocCXTypeSignature allocates a type signature in the program's
+// CXTypeSignatureMng, sets its Index to the slot and returns its Gid and the
+// pointer to fill it through.
+func (cxprogram *CXProgram) AllocCXTypeSignature() (CXTypeSignatureGid, *CXTypeSignature) {
+	manager := &cxprogram.CxIrState.CXTypeSignatureMng
+	gid := manager.CXTypeSignatureAlloc()
+	typeSignature := manager.CXTypeSignatureGet(gid)
+	typeSignature.Index = CXTypeSignatureIndex(objmodel.GidIndex(int64(gid)))
+	return gid, typeSignature
+}
+
+// AllocCXTypeSignatureCopy allocates a type signature that copies src, which
+// lives in the manager, and returns it like AllocCXTypeSignature.
+func (cxprogram *CXProgram) AllocCXTypeSignatureCopy(src *CXTypeSignature) (CXTypeSignatureGid, *CXTypeSignature) {
+	manager := &cxprogram.CxIrState.CXTypeSignatureMng
+	gid := manager.CXTypeSignatureAlloc()
+	typeSignature := manager.CXTypeSignatureGet(gid)
+	*typeSignature = *src
+	typeSignature.Index = CXTypeSignatureIndex(objmodel.GidIndex(int64(gid)))
+	return gid, typeSignature
+}
+
 // GetCXTypeSignatureFromArray returns the type signature in slot index of
 // the program's CXTypeSignatureMng, or nil for -1. A type signature is named
 // by its slot index, not its Gid, until phase 5 of CXTypeSignature.
@@ -358,6 +380,43 @@ func (cxprogram *CXProgram) AddCXArgInArray(cxArg *CXArgument) CXArgumentIndex {
 	return CXArgumentIndex(cxArg.Index)
 }
 
+// ReleaseCXArg releases the argument in slot index of the program's
+// CXArgumentMng, the counterpart of GetCXArg.
+func (cxprogram *CXProgram) ReleaseCXArg(index CXArgumentIndex) {
+	manager := &cxprogram.CxIrState.CXArgumentMng
+	gid := objmodel.GidCompose(CXArgumentGidTypeTag, manager.CXArgumentMngGenerations[index], uint32(index))
+	manager.CXArgumentRelease(CXArgumentGid(gid))
+}
+
+// ReleaseCXTypeSignature releases the type signature in slot index of the
+// program's CXTypeSignatureMng, the counterpart of
+// GetCXTypeSignatureFromArray.
+func (cxprogram *CXProgram) ReleaseCXTypeSignature(index CXTypeSignatureIndex) {
+	manager := &cxprogram.CxIrState.CXTypeSignatureMng
+	gid := objmodel.GidCompose(CXTypeSignatureGidTypeTag, manager.CXTypeSignatureMngGenerations[index], uint32(index))
+	manager.CXTypeSignatureRelease(CXTypeSignatureGid(gid))
+}
+
+// cxArgumentManaged reports whether cxArg is the object in its own slot of the
+// program's CXArgumentMng, as opposed to an argument on the heap.
+func (cxprogram *CXProgram) cxArgumentManaged(cxArg *CXArgument) bool {
+	objects := cxprogram.CxIrState.CXArgumentMng.CXArgumentMngObjects
+	return cxArg.Index >= 0 && cxArg.Index < len(objects) && &objects[cxArg.Index] == cxArg
+}
+
+// cxArgumentSlot returns the slot that a type signature names cxArg by. A
+// heap argument is copied in when it has no slot yet, or always when
+// copyHeap is set.
+func (cxprogram *CXProgram) cxArgumentSlot(cxArg *CXArgument, copyHeap bool) CXArgumentIndex {
+	if cxprogram.cxArgumentManaged(cxArg) || !copyHeap && cxArg.Index != -1 && cxArg.Index != 0 {
+		return CXArgumentIndex(cxArg.Index)
+	}
+
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0332.
+	return cxprogram.AddCXArgInArray(cxArg)
+}
+
 func (cxprogram *CXProgram) GetCXArgFromArray(index CXArgumentIndex) *CXArgument {
 	if index == -1 {
 		return nil
@@ -416,21 +475,14 @@ func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgu
 		// Now an arena insert, site S0222.
 		cxArgIdx := cxprogram.AddCXArgInArray(cxArg)
 
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now a heap literal, site S0223.
-		newCXTypeSignature := &CXTypeSignature{
-			Name:       cxArg.Name,
-			Package:    cxArg.Package,
-			Offset:     cxArg.Offset,
-			Type:       TYPE_CXARGUMENT_DEPRECATE,
-			Meta:       int(cxArgIdx),
-			ArgDetails: cxArg.ArgDetails,
-		}
-
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S0224.
-		newCXTypeSignatureIdx := cxprogram.AddCXTypeSignatureInArray(newCXTypeSignature)
-		cxTypeSignaturesIdxs = append(cxTypeSignaturesIdxs, newCXTypeSignatureIdx)
+		_, newCXTypeSignature := cxprogram.AllocCXTypeSignature()
+		newCXTypeSignature.Name = cxArg.Name
+		newCXTypeSignature.Package = cxArg.Package
+		newCXTypeSignature.Offset = cxArg.Offset
+		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE
+		newCXTypeSignature.Meta = int(cxArgIdx)
+		newCXTypeSignature.ArgDetails = cxArg.ArgDetails
+		cxTypeSignaturesIdxs = append(cxTypeSignaturesIdxs, newCXTypeSignature.Index)
 	}
 	return cxTypeSignaturesIdxs
 }

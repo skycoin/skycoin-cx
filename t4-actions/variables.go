@@ -263,10 +263,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		declaration_specifiers.Size = glblArg.Size
 		declaration_specifiers.Package = ast.CXPackageIndex(pkg.Index)
 
-		typeSignature := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, declaration_specifiers)
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Now an arena insert, site S1228.
-		typeSignatureIdx := prgrm.AddCXTypeSignatureInArray(typeSignature)
+		typeSignatureIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, declaration_specifiers)
 		pkg.AddGlobal_TypeSignature(prgrm, typeSignatureIdx)
 
 		// Checking if something is supposed to be initialized
@@ -324,10 +321,7 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1234.
-			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(initOutIdx))
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Now an arena insert, site S1235.
-			initOutTypeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
+			initOutTypeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(initOutIdx))
 		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || initializerExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			initOutTypeSigIdx = initializerExpression.GetOutputs(prgrm)[0]
 		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_STRUCT {
@@ -425,10 +419,7 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1242.
-	localVarTypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(declSpecIdx))
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1243.
-	localVarTypeSigIdx := prgrm.AddCXTypeSignatureInArray(localVarTypeSig)
+	localVarTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(declSpecIdx))
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, localVarTypeSigIdx)
 
 	// Checking if something is supposed to be initialized

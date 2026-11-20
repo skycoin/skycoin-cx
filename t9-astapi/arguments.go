@@ -69,10 +69,7 @@ func AddNativeInputToExpression(cxprogram *cxast.CXProgram, packageName, functio
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1564.
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1565.
-	typeSigIdx := cxprogram.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
 	cxAtomicOp.AddInput(cxprogram, typeSigIdx)
 
 	return nil
@@ -181,10 +178,7 @@ func AddNativeOutputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1569.
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1570.
-	typeSigIdx := cxprogram.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
 	cxAtomicOp.AddOutput(cxprogram, typeSigIdx)
 
 	return nil
@@ -474,10 +468,7 @@ func AddLiteralInputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1583.
-	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(litArg.Index)))
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S1584.
-	typeSigIdx := cxprogram.AddCXTypeSignatureInArray(typeSig)
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(litArg.Index)))
 	cxAtomicOp2.AddInput(cxprogram, typeSigIdx)
 
 	return nil

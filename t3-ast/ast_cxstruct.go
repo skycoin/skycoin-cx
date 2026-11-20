@@ -98,10 +98,7 @@ func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStr
 		}
 	}
 
-	newCXTypeSignature := GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm, cxArgument)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0264.
-	typeSignatureIdx := prgrm.AddCXTypeSignatureInArray(newCXTypeSignature)
+	typeSignatureIdx := AllocCXTypeSignatureOfCXArgForStructs(prgrm, cxArgument)
 	strct.Fields = append(strct.Fields, typeSignatureIdx)
 
 	// TODO: Found out the effect and completely remove this.
@@ -173,10 +170,7 @@ func (strct *CXStruct) AddField_Globals_CXAtomicOps(prgrm *CXProgram, cxArgIdx C
 		}
 	}
 
-	newCXTypeSignature := GetCXTypeSignatureRepresentationOfCXArg(prgrm, cxArgument)
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena insert, site S0269.
-	newCXTypeSignatureIdx := prgrm.AddCXTypeSignatureInArray(newCXTypeSignature)
+	newCXTypeSignatureIdx := AllocCXTypeSignatureOfCXArg(prgrm, cxArgument)
 	strct.Fields = append(strct.Fields, newCXTypeSignatureIdx)
 
 	return strct
