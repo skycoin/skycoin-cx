@@ -355,19 +355,21 @@ type CxIrStateManagerLen struct {
 
 ### Until the program is managed
 
-The compiler passes `prgrm *CXProgram` to almost every function today, and
-stage 4 does not change that. Each program points at its state through
-`CXProgram.CxIrState`, which `MakeProgram`, `Deserialize` and the test
-helpers that build a program set to a new, initialized `CxIrState`. A site
-reaches its manager as `prgrm.CxIrState.<Obj>Mng`, so stage 4 changes no
-signature, and two programs in one process never share a manager.
+The compiler passes `prgrm *CXProgram` to almost every function today,
+and stage 4 does not change that. Each program points at its state
+through `CXProgram.CxIrState`, which `MakeProgram`, `Deserialize`
+and the test helpers that build a program set to a new, initialized
+`CxIrState`. A site reaches its manager as `prgrm.CxIrState.<Obj>Mng`,
+so stage 4 changes no signature except to give a constructor a program,
+and two programs in one process never share a manager.
 
 The field points at the state, not at a managed object, so rule 3 does not
 apply to it. It goes in phase 5 of `CXProgram`, when `state *CxIrState`
 replaces `prgrm *CXProgram` as the parameter and the program becomes the
-one object in `state.CXProgramMng`. A site whose function has no program in
-scope, such as `MakeArgument`, gets one in the phase of the object that
-function makes.
+one object in `state.CXProgramMng`. A constructor that had no program in scope
+takes one, so `MakeArgument`, `MakeField` and `MakeGlobal` take `prgrm`
+first. `Param` passes nil, because the natives it makes are shared by every
+program until the `CXNativeFunction` allocation phase.
 
 ## Rules
 

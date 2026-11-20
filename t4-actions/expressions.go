@@ -99,7 +99,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 			lastCondExpressionOperatorOutputType = lastCondExpressionOperatorOutputArg.Type
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0616.
-			predicate := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(lastCondExpressionOperatorOutputType)
+			predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(lastCondExpressionOperatorOutputType)
 			predicate.Package = ast.CXPackageIndex(pkg.Index)
 			predicate.PreviouslyDeclared = true
 
@@ -288,7 +288,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		// then it's an expression
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0632.
-		predicate := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+		predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 		if conditionExprs[len(conditionExprs)-1].IsMethodCall() {
 			// we'll change this once we have access to method's types in
 			// ProcessMethodCall
@@ -502,7 +502,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0650.
-			out := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &leftExprs[len(leftExprs)-1]))
 			out.Size = lastLeftExpressionOperatorOutputArg.Size
 			out.Type = lastLeftExpressionOperatorOutputArg.Type
@@ -568,7 +568,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0662.
-			out := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &rightExprs[len(rightExprs)-1]))
 			out.Size = lastRightExpressionOperatorOutputArg.Size
 			out.Type = lastRightExpressionOperatorOutputArg.Type
@@ -894,7 +894,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0702.
-		out := ast.MakeArgument(outParam.Name, CurrentFile, LineNo)
+		out := ast.MakeArgument(prgrm, outParam.Name, CurrentFile, LineNo)
 		out.SetType(outParam.Type)
 		out.StructType = outParam.StructType
 		out.PreviouslyDeclared = true

@@ -162,7 +162,7 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0073.
-	arg := MakeArgument(argName, "", -1).SetType(types.STRUCT)
+	arg := MakeArgument(prgrm, argName, "", -1).SetType(types.STRUCT)
 	// arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_STRUCT)
 	arg.Size = strct.GetStructSize(prgrm)
 	arg.StructType = strct
@@ -196,17 +196,19 @@ func Slice(typeCode types.Code) *CXArgument {
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0076.
 func Param(typeCode types.Code) *CXArgument {
+	// Natives are shared by every program, so this argument belongs to none.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0077.
-	arg := MakeArgument("", "", -1).SetType(typeCode)
+	arg := MakeArgument(nil, "", "", -1).SetType(typeCode)
 	// arg.IsLocalDeclaration = true
 	return arg
 }
 
-// MakeArgument ...
+// MakeArgument makes an argument of prgrm. The natives are shared by every
+// program, so Param passes nil.
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0078.
-func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
+func MakeArgument(prgrm *CXProgram, name string, fileName string, fileLine int) *CXArgument {
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0079.
 	return &CXArgument{
@@ -225,7 +227,7 @@ func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
 // MakeField ...
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0081.
-func MakeField(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+func MakeField(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0082.
 	return &CXArgument{
@@ -245,7 +247,7 @@ func MakeField(name string, typeCode types.Code, fileName string, fileLine int) 
 // MakeGlobal ...
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0084.
-func MakeGlobal(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+func MakeGlobal(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
 	size := typeCode.Size()
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0085.

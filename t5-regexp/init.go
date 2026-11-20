@@ -24,7 +24,7 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	regexpStrct := ast.MakeStruct("Regexp")
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1414.
-	regexpArg := ast.MakeArgument("exp", "", 0).SetType(types.STR).SetPackage(regexpPkg)
+	regexpArg := ast.MakeArgument(prgrm, "exp", "", 0).SetType(types.STR).SetPackage(regexpPkg)
 	regexpStrct.AddField(prgrm, regexpArg)
 	regexpPkg.AddStruct(prgrm, regexpStrct)
 

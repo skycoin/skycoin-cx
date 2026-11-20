@@ -340,7 +340,7 @@ direct_declarator:
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1404.
-				arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo)
+				arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = $1
 				arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -362,7 +362,7 @@ id_list:	IDENTIFIER
 		}
 	|	type_specifier
 		{
-			arg := actions.DeclarationSpecifiersBasic(types.Code($1))			 
+			arg := actions.DeclarationSpecifiersBasic(Program, types.Code($1))			 
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1406.
 			$$ = []*ast.CXArgument{arg}
@@ -374,7 +374,7 @@ id_list:	IDENTIFIER
 		}
 	|	id_list COMMA type_specifier
 		{
-			arg := actions.DeclarationSpecifiersBasic(types.Code($3))
+			arg := actions.DeclarationSpecifiersBasic(Program, types.Code($3))
 			$$ = append($1, arg)
 		}
 	;
@@ -395,7 +395,7 @@ declaration_specifiers:
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1407.
-			arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
+			arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now an arena insert, site S1408.
 			arg.Inputs = Program.AddPointerArgsToCXArgsArray($2)
@@ -418,7 +418,7 @@ declaration_specifiers:
                 }
         |       type_specifier
                 {
-			$$ = actions.DeclarationSpecifiersBasic(types.Code($1))
+			$$ = actions.DeclarationSpecifiersBasic(Program, types.Code($1))
                 }
         |       IDENTIFIER
                 {
@@ -426,7 +426,7 @@ declaration_specifiers:
                 }
         |       indexing_literal type_specifier
                 {
-			basic := actions.DeclarationSpecifiersBasic(types.Code($2))
+			basic := actions.DeclarationSpecifiersBasic(Program, types.Code($2))
 			$$ = actions.DeclarationSpecifiers(basic, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
                 }
         |       indexing_literal IDENTIFIER

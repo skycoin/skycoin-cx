@@ -14,6 +14,7 @@ import (
 // - takes in globals from cx/cmd/declaration_extractor
 // - adds globals to AST
 func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDeclaration) error {
+	prgrm := actions.AST
 
 	// Range over global declarations and parse
 	for _, global := range globals {
@@ -57,7 +58,7 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 		// add Global as CX Argument to CX Package
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S1513.
-		globalArg := ast.MakeArgument(global.GlobalVariableName, global.FileID, global.LineNumber)
+		globalArg := ast.MakeArgument(prgrm, global.GlobalVariableName, global.FileID, global.LineNumber)
 		globalArg.Offset = types.InvalidPointer
 		globalArg.Package = ast.CXPackageIndex(pkg.Index)
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -68,7 +69,7 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 
 		var declarationSpecifier *ast.CXArgument
 
-		declarationSpecifier, err = ParseDeclarationSpecifier(globalTokens[2], global.FileID, global.LineNumber, declarationSpecifier)
+		declarationSpecifier, err = ParseDeclarationSpecifier(prgrm, globalTokens[2], global.FileID, global.LineNumber, declarationSpecifier)
 		if err != nil {
 			return err
 		}

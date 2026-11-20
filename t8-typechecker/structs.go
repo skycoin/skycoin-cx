@@ -11,6 +11,7 @@ import (
 // - takes in structs from cx/cmd/declaration_extractor
 // - adds structs to AST
 func ParseStructs(files []*loader.File, structs []declaration_extractor.StructDeclaration) error {
+	prgrm := actions.AST
 
 	// Get Package
 	for _, strct := range structs {
@@ -59,7 +60,7 @@ func ParseStructs(files []*loader.File, structs []declaration_extractor.StructDe
 
 			structFieldLine := src[strctFieldDec.StartOffset : strctFieldDec.StartOffset+strctFieldDec.Length]
 
-			structFieldSpecifier, err := ParseParameterDeclaration(structFieldLine, pkg, strct.FileID, strctFieldDec.LineNumber)
+			structFieldSpecifier, err := ParseParameterDeclaration(prgrm, structFieldLine, pkg, strct.FileID, strctFieldDec.LineNumber)
 			if err != nil {
 				return err
 			}

@@ -192,7 +192,7 @@ func calcFnSize(prgrm *cxast.CXProgram, fn *cxast.CXFunction) types.Pointer {
 func newSlot(prgrm *cxast.CXProgram, fn *cxast.CXFunction, exprPos int, typ types.Code) cxast.CXTypeSignatureIndex {
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0032.
-	arg := cxast.MakeField(strconv.Itoa(exprPos), typ, "", -1).SetType(typ)
+	arg := cxast.MakeField(prgrm, strconv.Itoa(exprPos), typ, "", -1).SetType(typ)
 	arg.Package = fn.Package
 	arg.Offset = slotOffset(prgrm, fn, exprPos)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.

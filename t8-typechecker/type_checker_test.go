@@ -153,7 +153,7 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 			}
 
 			var gotDeclarationSpecifier *ast.CXArgument
-			gotDeclarationSpecifier, gotErr := type_checker.ParseDeclarationSpecifier([]byte(tc.testString), tc.fileName, tc.lineno, gotDeclarationSpecifier)
+			gotDeclarationSpecifier, gotErr := type_checker.ParseDeclarationSpecifier(actions.AST, []byte(tc.testString), tc.fileName, tc.lineno, gotDeclarationSpecifier)
 			gotTypeSignature := ast.GetCXTypeSignatureRepresentationOfCXArg(actions.AST, gotDeclarationSpecifier)
 			gotDeclarationSpecifierFormattedString := ast.GetFormattedType(actions.AST, gotTypeSignature)
 
@@ -278,7 +278,7 @@ func TestTypeChecker_ParseParameterDeclaration(t *testing.T) {
 			}
 
 			var gotParameterDeclaration *ast.CXArgument
-			gotParameterDeclaration, gotErr := type_checker.ParseParameterDeclaration([]byte(tc.testString), pkg, tc.fileName, tc.lineno)
+			gotParameterDeclaration, gotErr := type_checker.ParseParameterDeclaration(actions.AST, []byte(tc.testString), pkg, tc.fileName, tc.lineno)
 			gotParameterDeclarationFormattedName := ast.GetFormattedName(actions.AST, gotParameterDeclaration, false, pkg)
 			gotTypeSignature := ast.GetCXTypeSignatureRepresentationOfCXArg(actions.AST, gotParameterDeclaration)
 			gotParameterDeclarationFormattedType := ast.GetFormattedType(actions.AST, gotTypeSignature)

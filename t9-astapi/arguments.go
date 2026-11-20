@@ -55,7 +55,7 @@ func AddNativeInputToExpression(cxprogram *cxast.CXProgram, packageName, functio
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1561.
-	arg := cxast.MakeField(inputName, inputType, "", -1).SetType(types.Code(inputType))
+	arg := cxast.MakeField(cxprogram, inputName, inputType, "", -1).SetType(types.Code(inputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now an arena insert, site S1562.
@@ -167,7 +167,7 @@ func AddNativeOutputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1566.
-	arg := cxast.MakeField(outputName, outputType, "", -1).SetType(types.Code(outputType))
+	arg := cxast.MakeField(cxprogram, outputName, outputType, "", -1).SetType(types.Code(outputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now an arena insert, site S1567.

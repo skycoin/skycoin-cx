@@ -1389,7 +1389,7 @@ yydefault:
 			if pkg, err := actions.AST.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1476.
-				arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo)
+				arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = yyDollar[1].tok
 				arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -1417,7 +1417,7 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:388
 		{
-			arg := actions.DeclarationSpecifiersBasic(types.Code(yyDollar[1].i))
+			arg := actions.DeclarationSpecifiersBasic(actions.AST, types.Code(yyDollar[1].i))
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1478.
 			yyVAL.arguments = []*ast.CXArgument{arg}
@@ -1433,7 +1433,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:400
 		{
-			arg := actions.DeclarationSpecifiersBasic(types.Code(yyDollar[3].i))
+			arg := actions.DeclarationSpecifiersBasic(actions.AST, types.Code(yyDollar[3].i))
 			yyVAL.arguments = append(yyDollar[1].arguments, arg)
 		}
 	case 37:
@@ -1456,7 +1456,7 @@ yydefault:
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1479.
-			arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
+			arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now an arena insert, site S1480.
@@ -1482,7 +1482,7 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:451
 		{
-			yyVAL.argument = actions.DeclarationSpecifiersBasic(types.Code(yyDollar[1].i))
+			yyVAL.argument = actions.DeclarationSpecifiersBasic(actions.AST, types.Code(yyDollar[1].i))
 		}
 	case 43:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -1494,7 +1494,7 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:459
 		{
-			basic := actions.DeclarationSpecifiersBasic(types.Code(yyDollar[2].i))
+			basic := actions.DeclarationSpecifiersBasic(actions.AST, types.Code(yyDollar[2].i))
 			yyVAL.argument = actions.DeclarationSpecifiers(basic, types.Cast_sint_to_sptr(yyDollar[1].ints), constants.DECL_ARRAY)
 		}
 	case 45:

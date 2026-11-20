@@ -15,7 +15,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 )
 
-func ParseParameterDeclaration(parameterString []byte, pkg *ast.CXPackage, fileName string, lineno int) (*ast.CXArgument, error) {
+func ParseParameterDeclaration(prgrm *ast.CXProgram, parameterString []byte, pkg *ast.CXPackage, fileName string, lineno int) (*ast.CXArgument, error) {
 	var parameterDeclaration *ast.CXArgument
 	reParameterDeclaration := regexp.MustCompile(`(\w+)\s+(.+)`)
 	parameterDeclarationTokens := reParameterDeclaration.FindSubmatch(parameterString)
@@ -28,13 +28,13 @@ func ParseParameterDeclaration(parameterString []byte, pkg *ast.CXPackage, fileN
 	// Set the declarator or the name of the param
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1560.
-	declarator := ast.MakeArgument("", fileName, lineno)
+	declarator := ast.MakeArgument(prgrm, "", fileName, lineno)
 	declarator.SetType(types.UNDEFINED)
 	declarator.Package = ast.CXPackageIndex(pkg.Index)
 	declarator.Name = string(parameterDeclarationTokens[1])
 
 	//Set the decalaration type
-	parameterDeclaration, err := ParseDeclarationSpecifier(parameterDeclarationTokens[2], fileName, lineno, parameterDeclaration)
+	parameterDeclaration, err := ParseDeclarationSpecifier(prgrm, parameterDeclarationTokens[2], fileName, lineno, parameterDeclaration)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func ParseParameterDeclaration(parameterString []byte, pkg *ast.CXPackage, fileN
 	return parameterDeclaration, nil
 }
 
-func ParseDeclarationSpecifier(declarationSpecifierByte []byte, fileName string, lineno int, declarationSpecifier *ast.CXArgument) (*ast.CXArgument, error) {
+func ParseDeclarationSpecifier(prgrm *ast.CXProgram, declarationSpecifierByte []byte, fileName string, lineno int, declarationSpecifier *ast.CXArgument) (*ast.CXArgument, error) {
 	// Base case if all parts are parsed
 	if declarationSpecifierByte == nil || len(declarationSpecifierByte) == 0 {
 		return declarationSpecifier, nil
@@ -71,24 +71,24 @@ func ParseDeclarationSpecifier(declarationSpecifierByte []byte, fileName string,
 
 			// Types like i32, str, aff, etc...
 			if val, ok := TypesMap[string(splitDataType[0])]; ok {
-				newDeclarationSpecifierArg := actions.DeclarationSpecifiersBasic(val)
-				return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+				newDeclarationSpecifierArg := actions.DeclarationSpecifiersBasic(prgrm, val)
+				return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 			}
 
 			// Structs
 			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[0]), "", false, fileName, lineno)
-			return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 
 		// External types
 		if val, ok := TypesMap[string(splitDataType[0])]; ok {
 			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), val.Name(), true, fileName, lineno)
-			return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 
 		// External structs
 		newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), string(splitDataType[0]), true, fileName, lineno)
-		return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+		return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 	}
 
 	if lastByte == ']' {
@@ -109,12 +109,12 @@ func ParseDeclarationSpecifier(declarationSpecifierByte []byte, fileName string,
 
 			declarationSpecifier.Lengths = append(declarationSpecifier.Lengths, types.Pointer(byteToInt))
 			newDeclarationSpecifierArg := actions.DeclarationSpecifiers(declarationSpecifier, declarationSpecifier.Lengths, constants.DECL_ARRAY)
-			return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 
 		// Slices
 		newDeclarationSpecifierArg := actions.DeclarationSpecifiers(declarationSpecifier, []types.Pointer{0}, constants.DECL_SLICE)
-		return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+		return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 	}
 
 	// Pointer
@@ -122,7 +122,7 @@ func ParseDeclarationSpecifier(declarationSpecifierByte []byte, fileName string,
 		newLastIdx := bytes.LastIndex(declarationSpecifierByte, []byte("*"))
 		newDeclarationSpecifierByte := declarationSpecifierByte[:newLastIdx]
 		newDeclarationSpecifierArg := actions.DeclarationSpecifiers(declarationSpecifier, []types.Pointer{0}, constants.DECL_POINTER)
-		return ParseDeclarationSpecifier(newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
+		return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 
 	}
 

@@ -80,12 +80,12 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 		if _, err := osPkg.GetGlobal(actions.AST, constants.OS_ARGS); err != nil {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1618.
-			arg0 := ast.MakeArgument(constants.OS_ARGS, "", -1).SetType(types.UNDEFINED)
+			arg0 := ast.MakeArgument(actions.AST, constants.OS_ARGS, "", -1).SetType(types.UNDEFINED)
 			arg0.Package = ast.CXPackageIndex(osPkg.Index)
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1619.
-			arg1 := ast.MakeArgument(constants.OS_ARGS, "", -1).SetType(types.STR)
+			arg1 := ast.MakeArgument(actions.AST, constants.OS_ARGS, "", -1).SetType(types.STR)
 			arg1 = actions.DeclarationSpecifiers(arg1, []types.Pointer{0}, constants.DECL_BASIC)
 			arg1 = actions.DeclarationSpecifiers(arg1, []types.Pointer{0}, constants.DECL_SLICE)
 			actions.DeclareGlobalInPackage(actions.AST, osPkg, arg0, arg1, nil, false)

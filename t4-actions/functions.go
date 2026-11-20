@@ -565,7 +565,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 
 							// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 							// Now a constructor call, site S0759.
-							out = ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpInputArg.Type)
+							out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpInputArg.Type)
 							out.StructType = inpExprAtomicOpInputArg.StructType
 							out.Size = inpExprAtomicOpInputArg.Size
 							out.Type = inpExprAtomicOpInputArg.Type
@@ -611,7 +611,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 					} else {
 						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 						// Now a constructor call, site S0767.
-						out = ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpOperatorOutputArg.Type)
+						out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpOperatorOutputArg.Type)
 						out.DeclarationSpecifiers = inpExprAtomicOpOperatorOutputArg.DeclarationSpecifiers
 
 						out.StructType = inpExprAtomicOpOperatorOutputArg.StructType
@@ -1860,7 +1860,7 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 	// type `func` with that name.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0873.
-	fnArg := ast.MakeArgument(ident, fn.FileName, fn.FileLine).SetType(types.FUNC)
+	fnArg := ast.MakeArgument(prgrm, ident, fn.FileName, fn.FileLine).SetType(types.FUNC)
 	fnArg.Package = ast.CXPackageIndex(pkg.Index)
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
