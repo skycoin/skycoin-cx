@@ -1,6 +1,7 @@
 package opcodes
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -65,25 +66,7 @@ func assert(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) (
 		panic("type is not known")
 	}
 
-	same = true
-
-	if len(byts1) != len(byts2) {
-		same = false
-		fmt.Println("byts1", byts1)
-		fmt.Println("byts2", byts2)
-	}
-
-	if same {
-		for i, byt := range byts1 {
-			if byt != byts2[i] {
-				same = false
-				fmt.Println("byts1", byts1)
-				fmt.Println("byts2", byts2)
-				break
-			}
-		}
-	}
-
+	same = bytes.Equal(byts1, byts2)
 	message := inputs[2].Get_str(prgrm)
 
 	if !same {

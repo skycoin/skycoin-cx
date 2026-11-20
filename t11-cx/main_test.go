@@ -14,7 +14,7 @@ import (
 
 func TestMain(m *testing.M) {
 	if os.Getenv("CX_TEST_RUN_MAIN") == "1" {
-		os.Args = []string{"cx"}
+		os.Args = append([]string{"cx"}, os.Args[1:]...)
 		main()
 		os.Exit(0)
 	}
