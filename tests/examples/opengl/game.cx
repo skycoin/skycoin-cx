@@ -2,7 +2,7 @@ package main
 
 import "gl"
 import "glfw"
-import "os"
+import "sys/os"
 
 type Sprite struct {
 	x1 f32

@@ -3,7 +3,7 @@ package main
 import "gl"
 import "glfw"
 import "gltext"
-import "os"
+import "sys/os"
 
 var width i32 = 800
 var height i32 = 600

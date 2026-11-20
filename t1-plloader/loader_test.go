@@ -259,7 +259,7 @@ func TestAddNewPackage(t *testing.T) {
 			FilesPath:            TEST_SRC_PATH_VALID,
 			WantNumberOfPackages: 1,
 			WantImportMap: map[string][]string{
-				"main": {"os", "testimport"},
+				"main": {"sys/os", "testimport"},
 			},
 			WantErr: nil,
 		},
@@ -321,7 +321,7 @@ func TestLoadImportPackages(t *testing.T) {
 			FilesPath:            TEST_SRC_PATH_VALID,
 			WantNumberOfPackages: 2,
 			WantImportMap: map[string][]string{
-				"main":       {"os", "testimport"},
+				"main":       {"sys/os", "testimport"},
 				"testimport": {},
 			},
 			WantErr: nil,
@@ -331,7 +331,7 @@ func TestLoadImportPackages(t *testing.T) {
 			FilesPath:            "test_folder/test_import_package_error/",
 			WantNumberOfPackages: 2,
 			WantImportMap: map[string][]string{
-				"main":       {"os", "testimport"},
+				"main":       {"sys/os", "testimport"},
 				"testimport": {"testimport2"},
 			},
 			WantErr: errors.New("package testimport2 not found"),

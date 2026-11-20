@@ -1,6 +1,6 @@
 package main
 import "cx"
-import "os"
+import "sys/os"
 
 func main () {
 	var x i32 = 1

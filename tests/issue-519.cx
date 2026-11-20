@@ -1,6 +1,6 @@
 package main
 
-import "os"
+import "sys/os"
 
 func foo(i i32) (s str) {
 s = "test"

@@ -1,6 +1,6 @@
 package main 
 
-import "time"
+import "sys/time"
 
 //goto keyword isn't implemented 
 

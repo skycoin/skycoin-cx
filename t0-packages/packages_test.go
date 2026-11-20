@@ -8,7 +8,6 @@ func TestCheckImport(t *testing.T) {
 	for path, ok := range map[string]bool{
 		"sys/os":     true,
 		"sys/al":     true,
-		"os":         true,
 		"al":         false,
 		"sys/nosuch": false,
 		"sys/":       false,

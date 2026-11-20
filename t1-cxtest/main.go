@@ -260,6 +260,8 @@ func runTestCases(t *runner.TestRunner) {
 		`test-sys-import-unknown.cx:3 unknown built-in package "sys/nosuchpackage"`)
 	t.RunWant("test-sys-import-missing.cx", types.CX_COMPILATION_ERROR, "built-in package used without its import (skycoin-cx#380)",
 		`test-sys-import-missing.cx:4 built-in package os is used without importing it, add import "sys/os"`)
+	t.RunWant("test-sys-import-bare.cx", types.CX_COMPILATION_ERROR, "built-in package imported without sys/ (skycoin-cx#380)",
+		`test-sys-import-bare.cx:3 built-in package os is imported as "sys/os"`)
 	t.Run("test-unknown-native-function.cx", types.CX_COMPILATION_ERROR, "unknown function in an imported native package")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 

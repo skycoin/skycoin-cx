@@ -1,7 +1,7 @@
 package main
 
 import "http"
-import "os"
+import "sys/os"
 
 func main() {
 	var err str

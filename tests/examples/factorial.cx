@@ -5,7 +5,7 @@
 package main
 
 // this is how we can import different packages in the main package 
-import "time"
+import "sys/time"
 
 // This function calculate the factorial 
 // this program is a recursive. It recalls itself 

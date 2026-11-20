@@ -34,13 +34,13 @@ func loadSource(t *testing.T, name string, files map[string]string) {
 
 func TestTreeSkipsCommentedImport(t *testing.T) {
 	loadSource(t, "TreeComment", map[string]string{
-		"m.cx": "package main\nimport \"os\"\n/*\nimport \"fromcomment\"\n*/\nfunc main() {\n}\n",
+		"m.cx": "package main\nimport \"sys/os\"\n/*\nimport \"fromcomment\"\n*/\nfunc main() {\n}\n",
 	})
 	got, err := GetImportTree("TreeComment")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "main\n`--os\n"; got != want {
+	if want := "main\n`--sys/os\n"; got != want {
 		t.Errorf("GetImportTree:\n got %q\nwant %q", got, want)
 	}
 }

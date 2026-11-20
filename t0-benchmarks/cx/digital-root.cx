@@ -1,6 +1,6 @@
 package main
 
-import "time"
+import "sys/time"
 
 // Function to add each digit form the value
 func Sum(i i32, base i32) (out i32){

@@ -34,27 +34,27 @@ func loadSource(t *testing.T, name string, files map[string]string) {
 
 func TestGraphSkipsCommentedImport(t *testing.T) {
 	loadSource(t, "GraphComment", map[string]string{
-		"m.cx": "package main\nimport \"os\"\n/*\nimport \"fromcomment\"\n*/\nfunc main() {\n}\n",
+		"m.cx": "package main\nimport \"sys/os\"\n/*\nimport \"fromcomment\"\n*/\nfunc main() {\n}\n",
 	})
 	got, err := GetImportGraph("GraphComment")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "id=0, module=main, imports=1,\nid=1, module=os, imports=,\n"; got != want {
+	if want := "id=0, module=main, imports=1,\nid=1, module=sys/os, imports=,\n"; got != want {
 		t.Errorf("GetImportGraph:\n got %q\nwant %q", got, want)
 	}
 }
 
 func TestGraphExternalImportOnce(t *testing.T) {
 	loadSource(t, "GraphExternal", map[string]string{
-		"main.cx": "package main\nimport \"os\"\nimport \"b\"\nfunc main() {\n}\n",
-		"b/b.cx":  "package b\nimport \"os\"\n",
+		"main.cx": "package main\nimport \"sys/os\"\nimport \"b\"\nfunc main() {\n}\n",
+		"b/b.cx":  "package b\nimport \"sys/os\"\n",
 	})
 	got, err := GetImportGraph("GraphExternal")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "id=0, module=main, imports=2,1,\nid=1, module=b, imports=2,\nid=2, module=os, imports=,\n"; got != want {
+	if want := "id=0, module=main, imports=2,1,\nid=1, module=b, imports=2,\nid=2, module=sys/os, imports=,\n"; got != want {
 		t.Errorf("GetImportGraph:\n got %q\nwant %q", got, want)
 	}
 }

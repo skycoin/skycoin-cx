@@ -1225,7 +1225,7 @@ instead of by value.
 
 ```
 package main
-import "time"
+import "sys/time"
 
 func foo (nums [100][100]i32) {
 	// do something with nums
@@ -1255,7 +1255,7 @@ computer the example above takes around 638 milliseconds to run.
 
 ```
 package main
-import "time"
+import "sys/time"
 
 func foo (nums *[100][100]i32) {
 	// do something with nums
@@ -2867,9 +2867,11 @@ func main () {
 
 ## [`time` Package Functions](#table-of-contents)
 
+Built in, import with `import "sys/time"`.
+
 The functions in the `time` package deal with real-time in your
-programs. They are used to measure and stop time. Note that in order
-to use these functions you need to import the `time` package.
+programs. They are used to measure and stop time. Using them without
+the import is a compile error.
 
 ### `time.Sleep`
 ### `time.UnixMilli`
@@ -2879,7 +2881,7 @@ to use these functions you need to import the `time` package.
 
 ```
 package main
-import "time"
+import "sys/time"
 
 func main () {
 	var start i64
@@ -2901,6 +2903,9 @@ func main () {
 
 ## `os` Package Functions
 
+Built in, import with `import "sys/os"`. The `json` functions are built
+in too and are imported with `import "sys/json"`.
+
 The `os` package provides functions that serve as an interface to CX's
 underlaying operating system.
 
@@ -2912,7 +2917,7 @@ underlaying operating system.
 
 ```
 package main
-import "os"
+import "sys/os"
 
 func main () {
 	var wd str

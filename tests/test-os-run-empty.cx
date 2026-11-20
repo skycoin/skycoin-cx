@@ -1,6 +1,6 @@
 package main
 
-import "os"
+import "sys/os"
 
 func main() {
 	var runError i32

@@ -478,7 +478,7 @@ Expected behavior: Compilation Error: `invalid implicit type conversion from i32
 ```
 package main
 
-import "os"
+import "sys/os"
 
 func foo(i i32) (s str) {
 s = "test"

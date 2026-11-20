@@ -1,6 +1,6 @@
 package json
 
-import "json"
+import "sys/json"
 
 // Read next token in json file and checks if it's a delimiter matching the delim value, returns true on success
 func MatchDelim(file i32, delim i32) (success bool) {

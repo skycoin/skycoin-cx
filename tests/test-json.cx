@@ -1,6 +1,6 @@
 package main
 
-import "json"
+import "sys/json"
 
 var debug bool
 func debugOutput(s str) {

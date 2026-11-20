@@ -19,8 +19,8 @@ const SysPrefix = "sys/"
 // bareImport lists the built-in packages that can still be imported without
 // SysPrefix while their callers move to it, #380.
 var bareImport = map[string]bool{
-	"al": true, "gl": true, "glfw": true, "time": true, "os": true, "gltext": true,
-	"cx": true, "json": true, "cipher": true, "tcp": true, "regexp": true,
+	"al": true, "gl": true, "glfw": true, "gltext": true,
+	"cx": true, "cipher": true, "tcp": true, "regexp": true,
 }
 
 // IsDefaultPackage reports whether ident is the name of a built-in package.

@@ -1,6 +1,6 @@
 package main
 import "http"
-import "os"
+import "sys/os"
 
 type coco struct {
 	names [][]str

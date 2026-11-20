@@ -1,6 +1,6 @@
 package main
 
-import "os"
+import "sys/os"
 
 func main() {
 	os.NoSuchFunction("a", 100)

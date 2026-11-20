@@ -1,9 +1,9 @@
 package main
 
 import "args"
-import "os"
+import "sys/os"
 import "cx"
-import "time"
+import "sys/time"
 
 var TEST_NONE   i32 = 0
 var TEST_STABLE i32 = 1

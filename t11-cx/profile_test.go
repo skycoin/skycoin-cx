@@ -14,7 +14,7 @@ func TestStartCPUProfileWritesTheGivenPath(t *testing.T) {
 	dir := t.TempDir()
 	prof := filepath.Join(dir, "run.pprof")
 	file := filepath.Join(dir, "p.cx")
-	src := "package main\n\nimport \"os\"\n\nfunc main() {\n\tStartCPUProfile(" + strconv.Quote(prof) + ", 100)\n\tvar i i32\n\tfor i = 0; i < 100000; i++ {\n\t}\n\tStopCPUProfile(" + strconv.Quote(prof) + ")\n}\n"
+	src := "package main\n\nimport \"sys/os\"\n\nfunc main() {\n\tStartCPUProfile(" + strconv.Quote(prof) + ", 100)\n\tvar i i32\n\tfor i = 0; i < 100000; i++ {\n\t}\n\tStopCPUProfile(" + strconv.Quote(prof) + ")\n}\n"
 	if err := os.WriteFile(file, []byte(src), 0644); err != nil {
 		t.Fatal(err)
 	}
