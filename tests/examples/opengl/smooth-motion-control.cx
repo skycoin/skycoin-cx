@@ -9,8 +9,8 @@ with keyboard polling, and smoothly ramping it's speed up & down
 
 package main
 
-import "gl"
-import "glfw"
+import "sys/gl"
+import "sys/glfw"
 
 
 

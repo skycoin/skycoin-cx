@@ -3,11 +3,10 @@ package packages
 import "testing"
 
 func TestCheckImport(t *testing.T) {
-	bareImport["al"] = false
-	defer func() { bareImport["al"] = true }()
 	for path, ok := range map[string]bool{
 		"sys/os":     true,
 		"sys/al":     true,
+		"gl":         false,
 		"al":         false,
 		"sys/nosuch": false,
 		"sys/":       false,

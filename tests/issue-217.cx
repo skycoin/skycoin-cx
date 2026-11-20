@@ -2,8 +2,8 @@
 
 package main
 
-import "glfw"
-import "gl"
+import "sys/glfw"
+import "sys/gl"
 
 func issue24Func(stride i32, attr []i32, verts []f32)(){
 	printf("l0 %d, l1 %d\n", len(attr), len(verts))

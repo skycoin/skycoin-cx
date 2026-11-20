@@ -16,12 +16,6 @@ var DefaultPackages = []string{
 // SysPrefix is the import path prefix of the built-in packages.
 const SysPrefix = "sys/"
 
-// bareImport lists the built-in packages that can still be imported without
-// SysPrefix while their callers move to it, #380.
-var bareImport = map[string]bool{
-	"al": true, "gl": true, "glfw": true, "gltext": true,
-}
-
 // IsDefaultPackage reports whether ident is the name of a built-in package.
 func IsDefaultPackage(ident string) bool {
 	for _, core := range DefaultPackages {
@@ -47,7 +41,7 @@ func CheckImport(path string) error {
 		}
 		return nil
 	}
-	if IsDefaultPackage(path) && !bareImport[path] {
+	if IsDefaultPackage(path) {
 		return fmt.Errorf("built-in package %s is imported as \"%s%s\"", path, SysPrefix, path)
 	}
 	return nil

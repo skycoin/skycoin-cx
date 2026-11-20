@@ -1,8 +1,8 @@
 // https://github.com/skycoin/cx/issues/208
 
 package main
-import "glfw"
-import "gl"
+import "sys/glfw"
+import "sys/gl"
 func main() {
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)

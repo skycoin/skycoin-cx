@@ -1,8 +1,8 @@
 package main
 
-import "gl"
-import "glfw"
-import "gltext"
+import "sys/gl"
+import "sys/glfw"
+import "sys/gltext"
 
 var width i32 = 400
 var height i32 = 400

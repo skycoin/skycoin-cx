@@ -2933,6 +2933,9 @@ func main () {
 
 ## [`gl` Package Functions](#table-of-contents)
 
+Built in, import with `import "sys/gl"`. The OpenAL functions are
+built in as `sys/al`.
+
 "OpenGL is the premier environment for developing portable,
 interactive 2D and 3D graphics applications. Since its introduction in
 1992, OpenGL has become the industry's most widely used and supported
@@ -3027,6 +3030,8 @@ deployment." This description was extracted from OpenGL's website
 
 ## [`glfw` Package Functions](#table-of-contents)
 
+Built in, import with `import "sys/glfw"`.
+
 "GLFW is an Open Source, multi-platform library for OpenGL, OpenGL ES
 and Vulkan development on the desktop. It provides a simple API for
 creating windows, contexts and surfaces, receiving input and events."
@@ -3052,6 +3057,8 @@ This description was extracted from GLFW's website (https://www.glfw.org/).
 ### `glfw.WindowHint`
 
 ## [`gltext` Package Functions](#table-of-contents)
+
+Built in, import with `import "sys/gltext"`.
 
 "The gltext package offers a simple set of text rendering utilities
 for OpenGL programs. It deals with TrueType and Bitmap (raster)
