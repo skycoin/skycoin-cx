@@ -47,7 +47,7 @@ free one.
 | `CXLine` | `0x08` | `CxIrState.CXLineMng` since #311 | `int`, the slot index |
 | `CXArgument` | `0x09` | `CxIrState.CXArgumentMng` since #326 | `CXArgumentIndex`, the slot index |
 | `CXArgumentDebug` | `0x0A` | `CxIrState.CXArgumentDebugMng` since #306 | `CXArgumentDebugGid` |
-| `CXTypeSignature` | `0x0B` | `CXProgram.CXTypeSignatures` | `CXTypeSignatureIndex` |
+| `CXTypeSignature` | `0x0B` | `CxIrState.CXTypeSignatureMng` since #331 | `CXTypeSignatureIndex`, the slot index |
 | `CXTypeSignature_Array` | `0x0C` | `CxIrState.CXTypeSignature_ArrayMng` since #316 | `int`, the slot index |
 | `CXTypeSignature_Struct` | `0x0D` | `CxIrState.CXTypeSignature_StructMng` since #321 | `int`, the slot index |
 | `CXCall` | `0x0E` | `CXProgram.CallStack` | `types.Pointer` (`CallCounter`) |

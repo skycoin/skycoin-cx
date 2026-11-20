@@ -266,27 +266,35 @@ func (cxprogram *CXProgram) AddCXAtomicOp(CXAtomicOp *CXAtomicOperator) int {
 // ----------------------------------------------------------------
 //
 //	`CXProgram` CXTypeSignatures handling
+
+// AddCXTypeSignatureInArray allocates a type signature in the program's
+// CXTypeSignatureMng and copies typeSignature into it. typeSignature.Index is
+// set to the slot index, which it returns.
 func (cxprogram *CXProgram) AddCXTypeSignatureInArray(typeSignature *CXTypeSignature) CXTypeSignatureIndex {
-	typeSignature.Index = CXTypeSignatureIndex(len(cxprogram.CXTypeSignatures))
+	gid := cxprogram.CxIrState.CXTypeSignatureMng.CXTypeSignatureAlloc()
+	typeSignature.Index = CXTypeSignatureIndex(objmodel.GidIndex(int64(gid)))
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-	// Now an arena append, site S0210.
-	cxprogram.CXTypeSignatures = append(cxprogram.CXTypeSignatures, *typeSignature)
+	// Now an object copy, site S1775.
+	*cxprogram.CxIrState.CXTypeSignatureMng.CXTypeSignatureGet(gid) = *typeSignature
 
 	return typeSignature.Index
 }
 
+// GetCXTypeSignatureFromArray returns the type signature in slot index of
+// the program's CXTypeSignatureMng, or nil for -1. A type signature is named
+// by its slot index, not its Gid, until phase 5 of CXTypeSignature.
 func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureIndex) *CXTypeSignature {
 	if index == -1 {
 		return nil
 	}
 
-	if int(index) > (len(cxprogram.CXTypeSignatures) - 1) {
+	manager := &cxprogram.CxIrState.CXTypeSignatureMng
+	if index < 0 || int(index) >= int(manager.CXTypeSignatureMngNext) {
 		panic(fmt.Errorf("error: CXTypeSignature[%d]: index out of bounds", index))
 	}
 
-	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-	// Now a pointer into an arena, site S0211.
-	return &cxprogram.CXTypeSignatures[index]
+	gid := objmodel.GidCompose(CXTypeSignatureGidTypeTag, manager.CXTypeSignatureMngGenerations[index], uint32(index))
+	return manager.CXTypeSignatureGet(CXTypeSignatureGid(gid))
 }
 
 // ----------------------------------------------------------------
