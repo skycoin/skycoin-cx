@@ -31,6 +31,7 @@
 
 #### Fixed
 
+- Taking the address of a slice, `ps = &s`, panicked the compiler with "type is not known", and so did passing `&s` to a function. Assigning through and from `*ps` now works, and `printf("%v", *ps)` prints the slice (#262)
 - `*p` on a struct pointer kept the pointer type, so `q = *p`, `*p = q` and passing `*p` as a struct were compile errors, and `printf("%v", *p)` printed the address. It is now the struct value (#261)
 - A `test()`, `assert` or `panic` call whose first two arguments differ in type, and an operator on struct values, reported the last line of the function instead of the line of the call (#259)
 - `printf("%v")` printed wrong values for structs, arrays and slices of structs, global arrays, struct fields reached through a field path and a dereferenced array pointer, and panicked on a struct with an array or struct field. Assigning `&array` to an array pointer copied the first element instead of the address (#256, #19)

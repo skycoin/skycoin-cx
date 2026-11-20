@@ -421,7 +421,7 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 		}
 		addr := GetFinalOffset(prgrm, fp, nil, argTypeSig)
 		switch {
-		case argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC && argTypeSig.IsDeref:
+		case (argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC) && argTypeSig.IsDeref:
 			return valueAt(prgrm, addr, elt, dims, printSeparator(dims))
 		case argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC:
 			return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, addr))

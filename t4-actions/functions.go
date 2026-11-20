@@ -1289,49 +1289,18 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		for i, outputIdx := range expression.GetOutputs(prgrm) {
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 
-			// VIOLATION: created outside manager; phase 1.
-			var out *ast.CXArgument = &ast.CXArgument{}
-			if output.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				out = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta))
-			} else if output.Type == ast.TYPE_ATOMIC {
+			// Only a CXArgument can hold a str or aff value, typed signatures are never strings.
+			if output.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 				continue
-			} else if output.Type == ast.TYPE_POINTER_ATOMIC {
-				continue
-			} else if output.Type == ast.TYPE_ARRAY_ATOMIC {
-				continue
-			} else if output.Type == ast.TYPE_POINTER_ARRAY_ATOMIC {
-				continue
-			} else if output.Type == ast.TYPE_SLICE_ATOMIC {
-				continue
-			} else if output.Type == ast.TYPE_STRUCT {
-				continue
-			} else if output.Type == ast.TYPE_POINTER_STRUCT {
-				continue
-			} else {
-				panic("type is not known")
 			}
+			out := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta))
 
 			if len(expression.GetInputs(prgrm)) > i {
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[i])
-				// VIOLATION: created outside manager; phase 1.
-				var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
-				if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-					expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
-				} else if expressionInputTypeSig.Type == ast.TYPE_ATOMIC {
+				if expressionInputTypeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 					continue
-				} else if expressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-					continue
-				} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
-					continue
-				} else if expressionInputTypeSig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC {
-					continue
-				} else if expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
-					continue
-				} else if expressionInputTypeSig.Type == ast.TYPE_STRUCT || expressionInputTypeSig.Type == ast.TYPE_POINTER_STRUCT {
-					continue
-				} else {
-					panic("type is not known")
 				}
+				expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 				out = out.GetAssignmentElement(prgrm)
 				inp := expressionInputArg.GetAssignmentElement(prgrm)
@@ -1570,27 +1539,11 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		for _, inputIdx := range expression.GetInputs(prgrm) {
 			input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 
-			// VIOLATION: created outside manager; phase 1.
-			var inp *ast.CXArgument = &ast.CXArgument{}
-			if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				inp = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
-			} else if input.Type == ast.TYPE_ATOMIC {
-				// Continue since atomic types doesnt include slices.
+			// Only a CXArgument slice needs its PassBy changed here.
+			if input.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 				continue
-			} else if input.Type == ast.TYPE_POINTER_ATOMIC {
-				// Continue since pointer atomic types doesnt include slices.
-				continue
-			} else if input.Type == ast.TYPE_ARRAY_ATOMIC {
-				continue
-			} else if input.Type == ast.TYPE_SLICE_ATOMIC {
-				continue
-			} else if input.Type == ast.TYPE_STRUCT {
-				continue
-			} else if input.Type == ast.TYPE_POINTER_STRUCT {
-				continue
-			} else {
-				panic("type is not known")
 			}
+			inp := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
 
 			assignElt := inp.GetAssignmentElement(prgrm)
 

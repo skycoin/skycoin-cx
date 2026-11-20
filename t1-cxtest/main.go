@@ -205,6 +205,15 @@ func runTestCases(t *runner.TestRunner) {
 		"deref {x: 1, y: 2}\n",
 		"local {x: 3, y: 4}\n",
 	)
+	t.RunWant("test-slice-pointer.cx", types.CX_SUCCESS, "taking, passing and dereferencing the address of a slice (skycoin-cx#262)",
+		"t [4]\n",
+		"deref [4]\n",
+		"grown [4, 5]\n",
+		"assigned [9]\n",
+		"filled [9, 7, 7]\n",
+		"set [4, 5]\n",
+		"global [1]\n",
+	)
 	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
 		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",

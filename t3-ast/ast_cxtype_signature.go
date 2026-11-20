@@ -267,7 +267,7 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 	case TYPE_POINTER_ARRAY_ATOMIC:
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		typeString = types.Code(arrDetails.Meta).Name()
-	case TYPE_SLICE_ATOMIC:
+	case TYPE_SLICE_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		typeString = types.Code(arrDetails.Meta).Name()
 	case TYPE_STRUCT:

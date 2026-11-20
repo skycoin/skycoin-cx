@@ -1,0 +1,42 @@
+package main
+
+func fill(ps *[]i32) {
+	*ps = append(*ps, 7)
+}
+
+func set(ps *[]i32, v []i32) {
+	*ps = v
+}
+
+var gs []i32
+
+func main() {
+	var s []i32
+	s = append(s, 4)
+	var ps *[]i32
+	ps = &s
+	var t []i32
+	t = *ps
+	printf("t %v\n", t)
+	printf("deref %v\n", *ps)
+
+	s = append(s, 5)
+	t = *ps
+	printf("grown %v\n", t)
+
+	var u []i32
+	u = append(u, 9)
+	*ps = u
+	printf("assigned %v\n", s)
+
+	fill(&s)
+	fill(ps)
+	printf("filled %v\n", s)
+	set(&s, t)
+	printf("set %v\n", *ps)
+
+	gs = append(gs, 1)
+	var pg *[]i32
+	pg = &gs
+	printf("global %v\n", *pg)
+}
