@@ -5,7 +5,7 @@ CX App Store will be a downloadable app for windows and mac. Once it is download
 
 - Task Bar Launcher (Rudi has working)
 - Small web-app
-- Server/Redis/Key-value/DHT for packages
+- Server/Key-value/DHT for packages (Redis superseded by bolt or a minimalist key-value store, the smaller the better)
 - All static files run locally. Runs by JSON files in a directory. All offline?
     – based upon apple: jet a list of apps, with a page for each app; and title+text 
 

@@ -87,7 +87,7 @@ Counts are files, not rows.
 | cx | `cmd/packageloader/file_output/` | 10 | keep | `t5-plfileoutput` | Loads files back from the store |
 | cx | `cmd/packageloader/graph/` | 2 | keep | `t2-plgraph` | Import graph output |
 | cx | `cmd/packageloader/loader/` | 17 | keep | `t1-plloader` | v1 loader, used by the type checker |
-| cx | `cmd/packageloader/redis/` | 1 | keep | `t0-plredis` | Redis store for the package loader |
+| cx | `cmd/packageloader/redis/` | 1 | removed (#114) | `t0-plredis` | Redis store, superseded by bolt or a minimalist key-value store |
 | cx | `cmd/packageloader/tree/` | 7 | keep | `t2-pltree` | Import tree output |
 | cx | `cmd/type_checker/` | 24 | keep | `t8-typechecker` | Work in progress type checker, its tests panic upstream too |
 

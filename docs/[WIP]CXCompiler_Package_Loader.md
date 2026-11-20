@@ -36,6 +36,8 @@ source files and create a `File struct` for it.
 ### Objectives
 This allows us to store the packages in our key-value store, and it allows us to store the program in our key-value store, so when we ask for a program, we just give the blake2 hash, and the web server responds with the program. This is how we’re going to package our games, how we’re going to package our CX apps, how we’re going to package our libraries so that they can be put on a key-value store in Redis initially, and eventually distributed peer-to-peer over DHT several years from now when we need to do that.
 
+Note: Redis is superseded. The package store is bolt (t0-plbolt), or a minimalist key-value store if one fits better. The smaller the store, the better. Redis was removed in #114.
+
 
 ---
 Additional milestones:
