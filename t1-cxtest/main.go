@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,11 +11,11 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-cxtestrunner"
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func main() {
-	app := &cli.App{
+	cmd := &cli.Command{
 		Name:  "cxtest",
 		Usage: "cx programs tester",
 		Flags: []cli.Flag{
@@ -45,18 +46,18 @@ func main() {
 				Usage: "Print debug information",
 			},
 		},
-		Action: func(c *cli.Context) error {
+		Action: func(_ context.Context, c *cli.Command) error {
 			return Execute(c)
 		},
 	}
 
-	err := app.Run(os.Args)
+	err := cmd.Run(context.Background(), os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func Execute(c *cli.Context) error {
+func Execute(c *cli.Command) error {
 	cxPath := c.String("cxpath")
 	if cxPath == "" {
 		cxPath = "../bin/cx"
