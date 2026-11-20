@@ -49,3 +49,6 @@ document or check script.
     See [CONTRIBUTING.md](../CONTRIBUTING.md#git-branching-model).
 11. **Changelog.** Every user visible change adds a line under `Unreleased`
     in [CHANGELOG.md](../CHANGELOG.md) with its issue or pull request number.
+12. **Compiler IR.** What the compiler emits, the in-memory program and its
+    serialized form, is described in [IR.md](IR.md). A change to the IR or
+    the serialized form updates it.

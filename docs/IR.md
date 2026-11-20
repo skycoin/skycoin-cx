@@ -1,0 +1,707 @@
+# The CX intermediate representation
+
+This document describes what the CX compiler produces. That is the
+in-memory program the VM executes, a `*ast.CXProgram` from `t3-ast`, and
+the byte form `ast.SerializeCXProgram` writes. Every type, field and
+function named here is in this repository, and the worked example was
+produced by compiling a real program and dumping it.
+
+Opcode numbers are fixed by `constants.OpcodeLifecycleTable`, so the
+numbers quoted below are the same in every build. See [Opcodes](#opcodes).
+
+## Contents
+
+* [Pipeline](#pipeline)
+* [The program](#the-program)
+* [Packages, functions and structs](#packages-functions-and-structs)
+* [Expressions](#expressions)
+* [Arguments and type signatures](#arguments-and-type-signatures)
+* [Memory layout](#memory-layout)
+* [How the VM runs an expression](#how-the-vm-runs-an-expression)
+* [Worked example](#worked-example)
+* [Serialized form](#serialized-form)
+* [Opcodes](#opcodes)
+* [Known oddities](#known-oddities)
+
+## Pipeline
+
+The `cx` command (`t11-cx/main.go`) builds the program in this order.
+
+1. `actions.InitConstants`, `cxos.InitConstants` and `cxfx.InitConstants`
+   fill the constant tables.
+2. `cxinit.MakeProgram` (`t7-init/init.go`) returns an empty
+   `*ast.CXProgram` and stores it in the package variable `actions.AST`.
+   Every later stage writes into `actions.AST`.
+3. `cxinit.RegisterPackages` registers the native packages `cipher`,
+   `cxfx`, `cxos`, `regexp` and `tcp`, then `opcodes.RegisterOpcodes`
+   (`t4-opcodes/opcodes_init.go`) registers the built-in opcodes. Both
+   fill the global tables `ast.Natives`, `ast.OpNames`, `ast.OpCodes` and
+   `ast.OpcodeHandlers`.
+4. `cxparsing.ParseSourceCode` (`t9-cxparsing/cxparsing.go`) reads the
+   files and calls `cxparsing.ParseSourceStrings`, which runs the two
+   passes below.
+5. `cxparsing.AddInitFunction` (`t9-cxparsing/utils.go`) adds the function
+   `*init` (`constants.SYS_INIT_FUNC`) to package `main`. Its body is
+   `CXProgram.SysInitExprs`, the global initializers collected by
+   `actions.DeclareGlobalInPackage`.
+6. `execute.RunCompiled` (`t4-execute/execute.go`) calls
+   `CXProgram.EnsureMinimumHeapSize`, runs `*init`, pushes `main` onto the
+   call stack and runs it.
+
+### Pass 1, declarations
+
+`cxparsing.Preliminarystage` (`t9-cxparsing/utils.go`) first scans every
+file with regular expressions for `package`, `type`, `var` and `import`
+lines. It then calls `cxparsing.Passone` for each file, which calls
+`cxpartialparsing.Parse` (`t5-cxpartialparsing`, generated from
+`cxpartialparsing.y`). The pass 1 grammar only calls
+`actions.DeclarePackage`, `actions.DeclareImport`, `actions.DeclareStruct`,
+`actions.DeclareGlobalInPackage` and the `actions.DeclarationSpecifiers*`
+helpers. After pass 1 the program holds every package, import, struct and
+global, but no function.
+
+### Pass 2, function bodies
+
+`ParseSourceStrings` then calls `cxparsing.Passtwo` for each file, which
+calls `cxparsingcompletor.Parse(cxparsingcompletor.NewLexer(b))`
+(`t8-cxparsingcompletor`, generated from `parsingcompletor.y`). The grammar
+actions call into `t4-actions`. They build expression lists bottom up, for
+example `actions.OperatorExpression`, `actions.PostfixExpressionFunCall`,
+`actions.SelectionExpressions`, `actions.IterationExpressions`,
+`actions.WritePrimaryExprs` and `actions.Assignment`.
+
+A function is finished by `actions.FunctionHeader`, which adds the
+`CXFunction`, and `actions.FunctionDeclaration`
+(`t4-actions/functions.go`), which
+
+* adds the parameters with `FunctionAddParameters`,
+* resolves `goto` targets with `ProcessGoTos`,
+* appends the expressions with `AddExprsToFunction`,
+* gives every parameter and local a frame offset through
+  `ProcessFunctionParameters`, `ProcessExpressionArguments` and
+  `UpdateSymbolsTable`, renaming each local to `<n>:<name>`,
+* type checks each expression (`CheckTypes`, `checkOperatorOperands`) and
+  replaces untyped operators with typed ones in `ProcessTypedOperator`,
+  so `+` on `i32` becomes `i32.add`,
+* sets `CXFunction.LineCount = len(fn.Expressions)` and `CXFunction.Size`
+  to the frame size.
+
+## The program
+
+`ast.CXProgram` (`t3-ast/ast_cxprogram.go`) is the root of the IR.
+
+| Field | Type | Contents |
+| --- | --- | --- |
+| `Stack`, `Data`, `Heap` | `StackSegmentStruct`, `DataSegmentStruct`, `HeapSegmentStruct` | Segment bounds in `Memory`, see [Memory layout](#memory-layout) |
+| `Packages` | `map[string]CXPackageIndex` | Package name to index in `CXPackages` |
+| `ProgramInput` | `[]CXArgumentIndex` | OS arguments |
+| `Memory` | `[]byte` | Stack, data and heap segments |
+| `CallStack` | `[]CXCall` | `constants.CALLSTACK_SIZE` (1000) frames, outside `Memory` |
+| `CallCounter` | `types.Pointer` | Index of the running frame in `CallStack` |
+| `Terminated` | `bool` | Set by `popStack` when `main` returns |
+| `Version` | `string` | `constants.LANGUAGE_REVISION`, see [Serialized form](#serialized-form) |
+| `CurrentPackage` | `CXPackageIndex` | Package being parsed, or the REPL's package |
+| `SysInitExprs` | `[]CXExpression` | Global initializers, the body of `*init` |
+
+The rest of the program lives in flat slices, called arenas here. IR
+objects refer to each other by index into these slices, as integer types
+such as `CXFunctionIndex`.
+
+| Arena | Element | Index type | Getter |
+| --- | --- | --- | --- |
+| `CXPackages` | `CXPackage` | `CXPackageIndex` | `GetPackageFromArray` |
+| `CXFunctions` | `CXFunction` | `CXFunctionIndex` | `GetFunctionFromArray` (nil for -1) |
+| `CXStructs` | `CXStruct` | `CXStructIndex` | direct index |
+| `CXAtomicOps` | `CXAtomicOperator` | `int` | `GetCXAtomicOp` |
+| `CXLines` | `CXLine` | `int` | `GetCXLine` |
+| `CXArgs` | `CXArgument` | `CXArgumentIndex` | `GetCXArg`, `GetCXArgFromArray` |
+| `CXTypeSignatures` | `CXTypeSignature` | `CXTypeSignatureIndex` | `GetCXTypeSignatureFromArray` |
+| `TypeSignatureForArrays` | `CXTypeSignature_Array` | `int` | `GetCXTypeSignatureArrayFromArray` |
+| `TypeSignatureForStructs` | `CXTypeSignature_Struct` | `int` | `GetCXTypeSignatureStructFromArray` |
+
+Several fields still hold Go pointers instead of indexes. Each is marked
+`// VIOLATION: pointer at rest` in the source and is tracked in
+[#8](https://github.com/skycoin/skycoin-cx/issues/8). They are
+`CXPackage.Globals`, `CXFunction.Inputs`, `CXFunction.Outputs`,
+`CXFunction.ListOfPointers`, `CXAtomicOperator.Inputs`,
+`CXAtomicOperator.Outputs`, `CXArgument.StructType`,
+`CXArgument.ArgDetails`, `CXTypeSignature.ArgDetails`,
+`CXTypeSignature_Struct.StructType` and `CXCall.Operator`.
+
+## Packages, functions and structs
+
+`ast.CXPackage` (`t3-ast/ast_cxpackage.go`) has a `Name`, its own `Index`
+in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
+`Functions` (to `CXFunctionIndex`) and `Structs` (to `CXStructIndex`).
+`Globals` is a `*CXStruct` whose `Fields` are the global variables.
+`CurrentFunction` is the function being parsed.
+
+`ast.CXFunction` (`t3-ast/ast_cxfunction.go`) has
+
+* `Index`, `Name` and `Package`,
+* `AtomicOPCode`, the opcode number, 0 for a user function.
+  `CXFunction.IsBuiltIn` is `AtomicOPCode != 0`,
+* `Inputs` and `Outputs`, each a `*CXStruct` whose `Fields` are
+  `CXTypeSignatureIndex` values for the parameters,
+* `Expressions []CXExpression`, the body,
+* `LineCount`, equal to `len(Expressions)`,
+* `Size types.Pointer`, the frame size in bytes, parameters included,
+* `FileName`, `FileLine` and `LocalVariables`, used while compiling,
+* `ListOfPointers []*CXArgument`, the GC roots of the frame.
+
+`CXFunctions` holds more than the user's functions. Every expression that
+calls a native operator gets its own copy of the native, made by
+`CXProgram.AddNativeFunctionInArray` from the `ast.CXNativeFunction` in
+`ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
+`Expressions`.
+
+`ast.CXStruct` (`t3-ast/ast_cxstruct.go`) has `Index`, `Name`, `Package`
+and `Fields []CXTypeSignatureIndex`. The same type is reused as the
+parameter list of a function or operator and as a package's globals.
+
+## Expressions
+
+A function body is a flat `[]CXExpression`. There are no nested blocks.
+Scopes, branches and loops become jumps over this list.
+
+`ast.CXExpression` (`t3-ast/ast_cxexpression.go`) has three fields.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `Type` | `CXOPERATION_TYPE` | `CX_ATOMIC_OPERATOR` (1) or `CX_LINE` (3) |
+| `Index` | `int` | Index into `CXAtomicOps` for `CX_ATOMIC_OPERATOR`, into `CXLines` for `CX_LINE` |
+| `ExpressionType` | `CXEXPR_TYPE` | `CXEXPR_UNUSED` (0), `CXEXPR_METHOD_CALL` (1), `CXEXPR_STRUCT_LITERAL` (2), `CXEXPR_ARRAY_LITERAL` (3), `CXEXPR_SCOPE_NEW` (4), `CXEXPR_SCOPE_DEL` (5) |
+
+`CXOPERATION_TYPE` (`t3-ast/ast_cxoperation.go`) also defines `UNUSED`
+(0) and `CX_ARGUMENT` (2), which no expression uses. `ExpressionType`
+only matters while compiling. `CXEXPR_SCOPE_NEW` and `CXEXPR_SCOPE_DEL`
+open and close a symbol scope in `FunctionDeclaration`.
+
+### Line markers
+
+A `CX_LINE` expression points at an `ast.CXLine`
+(`t3-ast/ast_cxline.go`) with `FileName`, `LineNumber` and `LineStr`.
+`ast.MakeCXLineExpression` creates them. The parser puts one before each
+statement, and error messages use the nearest preceding marker. The VM
+skips them, but they take a slot in `Expressions`, so jump distances
+count them.
+
+### Atomic operators
+
+A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
+(`t3-ast/ast_cxatomicoperator.go`).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `Operator` | `CXFunctionIndex` | What runs, see below |
+| `Inputs`, `Outputs` | `*CXStruct` | `Fields` are the `CXTypeSignatureIndex` of each operand. Read them with `GetInputs(prgrm)` and `GetOutputs(prgrm)` |
+| `Function` | `CXFunctionIndex` | The function this expression belongs to |
+| `Package` | `CXPackageIndex` | The package of that function |
+| `Label` | `string` | `goto` label, empty otherwise |
+| `ThenLines`, `ElseLines` | `int` | Relative jump distances for `jmp`, `goto`, `break` and `continue` |
+
+`Operator` takes one of three forms.
+
+* `-1`. `GetFunctionFromArray` returns nil and the expression is a
+  variable declaration. It has one output and no inputs, and the VM
+  zeroes the output's bytes (`wipeDeclarationMemory`).
+* A `CXFunction` with `AtomicOPCode != 0`. The expression is a native
+  operation and the opcode selects `ast.OpcodeHandlers[AtomicOPCode]`.
+* A `CXFunction` with `AtomicOPCode == 0`. The expression calls that user
+  function.
+
+Inputs are read and outputs written in order. A call `y = f(a, b)` has
+inputs `a, b` and output `y`. An expression whose result goes nowhere has
+no outputs, and nested calls get temporaries named `*tmp_<n>`
+(`constants.LOCAL_PREFIX`).
+
+### Jumps and labels
+
+All control flow uses four opcodes, each with handlers in
+`t4-opcodes/op_misc.go`.
+
+| Opcode | Number | Handler | Effect on `CXCall.Line` before the VM adds 1 |
+| --- | --- | --- | --- |
+| `jmp` | `OP_JMP` = 2 | `opJmp` | `+ ThenLines` if input 0 is true, `+ ElseLines` if false |
+| `goto` | `OP_GOTO` = 13 | `opGoto` | `+ ThenLines` |
+| `break` | `OP_BREAK` = 14 | `opBreak` | `+ ThenLines` |
+| `continue` | `OP_CONTINUE` = 15 | `opContinue` | `+ ThenLines` |
+
+`CXCall.Call` adds 1 to `Line` after every native, so a jump at index `i`
+with distance `n` continues at `i + n + 1`. `n = 0` falls through.
+
+* `if` (`actions.SelectionExpressions`) emits the condition, a `jmp` on
+  its result with `ThenLines = 0` and `ElseLines = len(then) + 2`, the
+  then block, and a `jmp` on a literal `true` with
+  `ThenLines = len(else)` that skips the else block.
+* `for` (`actions.IterationExpressions`) emits a `jmp` at the top that
+  leaves the loop when the condition is false, and a `jmp` on `true` at
+  the bottom with a negative `ThenLines` back to the condition.
+  `break` and `continue` get their distances there too.
+* `goto L` is an `OP_GOTO` expression whose `Label` is `L`, and the
+  statement labelled `L` has the same `Label`. `actions.ProcessGoTos`
+  finds that expression at index `j` and sets `ThenLines = j - i - 1`.
+* `return` (`actions.AddJmpToReturnExpressions`) is an `OP_GOTO` with a
+  generated label `*lbl_<n>` and `ThenLines = types.MAX_INT32`, which
+  moves `Line` past `LineCount` and so returns.
+
+`OP_ABS_JMP` (3, `opAbsJmp`) sets `Line` to `ThenLines` or `ElseLines`
+directly, but the compiler never emits it.
+
+## Arguments and type signatures
+
+An operand is a `CXTypeSignature`. An older form, `CXArgument`, is still
+used for many operands. A type signature can point at one.
+
+### CXTypeSignature
+
+`ast.CXTypeSignature` (`t3-ast/ast_cxtype_signature.go`) has `Index`,
+`Name`, `Offset`, `Type`, `Package`, `PassBy`
+(`constants.PASSBY_VALUE` 0 or `PASSBY_REFERENCE` 1), `IsDeref`, `Meta`
+and `ArgDetails`. `Type` is a `CXTypeSignature_TYPE`, and `Meta` depends
+on it.
+
+| `Type` | Value | `Meta` |
+| --- | --- | --- |
+| `TYPE_ATOMIC` | 1 | A `types.Code`, for example `types.I32` (4) |
+| `TYPE_POINTER_ATOMIC` | 2 | The `types.Code` pointed at |
+| `TYPE_ARRAY_ATOMIC` | 3 | Index into `TypeSignatureForArrays` |
+| `TYPE_POINTER_ARRAY_ATOMIC` | 4 | Index into `TypeSignatureForArrays` |
+| `TYPE_SLICE_ATOMIC` | 5 | Index into `TypeSignatureForArrays` |
+| `TYPE_POINTER_SLICE_ATOMIC` | 6 | Index into `TypeSignatureForArrays` |
+| `TYPE_STRUCT` | 7 | Index into `TypeSignatureForStructs` |
+| `TYPE_POINTER_STRUCT` | 8 | Index into `TypeSignatureForStructs` |
+| `TYPE_ARRAY_STRUCT` to `TYPE_SLICE_POINTER_COMPLEX` | 9 to 18 | Declared, not produced |
+| `TYPE_CXARGUMENT_DEPRECATE` | 19 | Index into `CXArgs` |
+
+`ast.CXTypeSignature_Array` holds `Meta` (the element `types.Code` or a
+`TypeSignatureForStructs` index), `Lengths []types.Pointer` (one entry per
+dimension, 0 for a slice dimension) and `Indexes`, the index operands when
+the signature reads an element. `ast.CXTypeSignature_Struct` holds
+`StructType` and `Fields`, the field access chain.
+
+`ast.GetCXTypeSignatureRepresentationOfCXArg` converts a `CXArgument` to
+the most specific signature it can. Anything it cannot express, such as
+a struct field access, a slice of structs or a function value, becomes
+`TYPE_CXARGUMENT_DEPRECATE`.
+
+### CXArgument
+
+`ast.CXArgument` (`t3-ast/ast_cxargument.go`) is the general operand. The
+fields the VM reads are
+
+* `Type` and `PointerTargetType`, both `types.Code`,
+* `Size` and `Offset`, both `types.Pointer`,
+* `DeclarationSpecifiers []int`, the type built from the left, with
+  `constants.DECL_POINTER` (1), `DECL_DEREF` (2), `DECL_ARRAY` (3),
+  `DECL_SLICE` (4), `DECL_STRUCT` (5), `DECL_INDEXING` (6),
+  `DECL_BASIC` (7) and `DECL_FUNC` (8). For example `[5][]*Point` is
+  built from these,
+* `DereferenceOperations []int`, the accesses applied to the value, with
+  `constants.DEREF_ARRAY` (1), `DEREF_FIELD` (2), `DEREF_POINTER` (3),
+  `DEREF_DEREF` (4) and `DEREF_SLICE` (5),
+* `Lengths`, `Indexes` and `Fields` for arrays, element access and field
+  access,
+* `Inputs` and `Outputs` for a function value,
+* `StructType` and `PassBy`.
+
+`ast.GetFinalOffset` (`t3-ast/mem_offset.go`) turns an operand and a frame
+pointer into an absolute address in `Memory`, applying the dereferences.
+
+### Type codes
+
+`types.Code` (`t0-types/types.go`) numbers the base types. `UNUSED` 0,
+`BOOL` 1, `I8` 2, `I16` 3, `I32` 4, `I64` 5, `UI8` 6, `UI16` 7, `UI32` 8,
+`UI64` 9, `F32` 10, `F64` 11, `POINTER` 12, `STR` 13, `ARRAY` 14,
+`SLICE` 15, `STRUCT` 16, `FUNC` 17, `AFF` 18, `UNDEFINED` 19,
+`IDENTIFIER` 20. `Code.Size` gives the byte size. `POINTER`, `STR`,
+`ARRAY`, `SLICE` and `IDENTIFIER` are `types.POINTER_SIZE` bytes, a
+string being a pointer to a heap or data object.
+
+## Memory layout
+
+`CXProgram.Memory` is one byte slice.
+
+```
+0                    Data.StartsAt          Heap.StartsAt
+|  stack             |  data                |  heap                     |
+   Stack.Size bytes     Data.Size bytes        Heap.Size bytes
+```
+
+`cxinit.MakeProgram` allocates `constants.STACK_SIZE` plus
+`ast.MinHeapSize()` bytes and sets `Stack.Size = constants.STACK_SIZE`,
+`Data.StartsAt = constants.STACK_SIZE` and
+`Heap.Pointer = constants.NULL_HEAP_ADDRESS_OFFSET`. `STACK_SIZE` defaults
+to 1048576 and `INIT_HEAP_SIZE` to 2097152, and `-stack-size`,
+`-heap-initial` and `-heap-max` change them. `Stack.StartsAt` stays 0.
+
+* Stack. Each call gets a frame of `CXFunction.Size` bytes at
+  `CXCall.FramePointer`. Parameters, then outputs, then locals and
+  temporaries get offsets from 0 in declaration order. A local's
+  `Offset` is relative to the frame.
+* Data. `actions.WritePrimary` (`t4-actions/misc.go`) appends every
+  literal and global to the data segment at compile time, grows
+  `Data.Size` and moves `Heap.StartsAt` to `Data.StartsAt + Data.Size`.
+  A literal's `Offset` is absolute.
+* Heap. `ast.AllocateSeq` (`t3-ast/ast_memory.go`) allocates objects.
+  `Heap.Pointer` is relative to `Heap.StartsAt`, and the first
+  `NULL_HEAP_ADDRESS_OFFSET` bytes are the `nil` address. Each object has
+  a header of `types.OBJECT_HEADER_SIZE` bytes (`t0-types/types_object.go`),
+  a 1 byte GC mark, a forwarding address and the object size.
+
+`GetFinalOffset` tells a frame offset from an absolute one by value. An
+offset below `Stack.Size` gets the frame pointer added, anything else is
+used as it is.
+
+### Pointer size
+
+`types.Pointer` is `uint32` and `types.POINTER_SIZE` is 4 in the default
+build (`t0-types/types_ptr32.go`). With `-tags ptr64` it is `uint64` and 8
+(`t0-types/types_ptr64.go`). The pointer size changes the size of every
+pointer, string, slice and array header, the object header, and with them
+every offset after such an operand. `make check` runs the tests in both
+builds.
+
+## How the VM runs an expression
+
+`ast.CXCall` (`t3-ast/ast_cxcall.go`) is a frame with `Operator`
+(`*CXFunction`), `Line` and `FramePointer`. `CXCall.Call` runs
+`Operator.Expressions[Line]`.
+
+1. If `Line >= Operator.LineCount`, `popStack` copies the callee's outputs
+   into the caller's output operands, resets `Stack.Pointer` to the
+   frame pointer and moves the caller to its next line.
+2. A `CX_LINE` expression only increments `Line`.
+3. A declaration zeroes its output and increments `Line`.
+4. A native fills two `[]CXValue` with the operands' type signature,
+   size, final offset and type in `processBuiltInOperators`, calls
+   `OpcodeHandlers[AtomicOPCode]`, and increments `Line`.
+5. A user call (`processNonAtomicOperators`) increments `CallCounter`,
+   sets the new frame at `Stack.Pointer`, adds `Operator.Size` to
+   `Stack.Pointer`, zeroes the frame and copies the inputs into the
+   callee's parameter offsets. A `PASSBY_REFERENCE` input is copied as its
+   address.
+
+## Worked example
+
+This 10 line program was compiled at commit `64bd5701` in the default
+build.
+
+```
+ 1  package main
+ 2  func sum(a i32, b i32) (c i32) {
+ 3  	c = a + b
+ 4  }
+ 5  func main() {
+ 6  	var x i32 = sum(3, 4)
+ 7  	if x > 6 {
+ 8  		i32.print(x)
+ 9  	}
+10  }
+```
+
+`cx -ast` prints the program with `ast.ToString`, which shows names and
+types but not offsets or opcode numbers.
+
+```
+0.- Package: main
+	Functions
+		0.- Function: main () ()
+			0.- Line: 6: var x i32 = sum(3, 4)
+			1.- Declaration: 1:x i32
+			2.- Expression: 1:x i32 = sum(*lit i32, *lit i32)
+			3.- Line: 7: if x > 6 {
+			4.- Expression: *tmp_0 bool = i32.gt(1:x i32, *lit i32)
+			5.- Line: 9: }
+			6.- Expression: jmp(*tmp_0 bool)
+			7.- Line: 8: i32.print
+			8.- Expression: i32.print(1:x i32)
+			9.- Line: 9: }
+			10.- Expression: jmp(*lit bool)
+		1.- Function: sum (1:a i32, 2:b i32) (3:c i32)
+			0.- Line: 3: c = a + b
+			1.- Expression: 3:c i32 = i32.add(1:a i32, 2:b i32)
+```
+
+The listing below came from a throwaway test that runs the same steps as
+`cx` (`InitConstants`, `MakeProgram`, `RegisterPackages`,
+`RegisterOpcodes`, `ParseSourceStrings`, `AddInitFunction`) and walks
+`CXFunction.Expressions`, `CXAtomicOps`, `CXLines` and `CXTypeSignatures`.
+
+Segments after compiling. `Stack.Size` 1048576, `Data.StartsAt` 1048576,
+`Data.Size` 13, `Heap.StartsAt` 1048589, `Heap.Pointer` 4. The data
+segment holds the four literals.
+
+| Address | Bytes | Literal |
+| --- | --- | --- |
+| 1048576 | `03 00 00 00` | `3` |
+| 1048580 | `04 00 00 00` | `4` |
+| 1048584 | `06 00 00 00` | `6` |
+| 1048588 | `01` | `true`, made by `SelectionExpressions` |
+
+`sum` is `CXFunctions[0]`, `Size` 12, `LineCount` 2. Parameters `1:a` at
+frame offset 0 and `2:b` at 4, output `3:c` at 8, all `TYPE_ATOMIC` with
+`Meta` 4 (`i32`).
+
+| # | `Type` | Arena index | Operator | Inputs | Outputs | Then, Else |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | `CX_LINE` | `CXLines[0]` | | line 3 | | |
+| 1 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[3]` | opcode 383 `i32.add` | `1:a` @0, `2:b` @4 | `3:c` @8 | 0, 0 |
+
+`main` is `CXFunctions[1]`, `Size` 5, `LineCount` 11. Local `1:x` (i32)
+is at frame offset 0 and the temporary `*tmp_0` (bool) at 4.
+
+| # | `Type` | Arena index | Operator | Inputs | Outputs | Then, Else |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | `CX_LINE` | `CXLines[2]` | | line 6 | | |
+| 1 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[7]` | -1, declaration | | `1:x` @0 | 0, 0 |
+| 2 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[4]` | user function `CXFunctions[0]` `sum` | literal @1048576, literal @1048580 | `1:x` @0 | 0, 0 |
+| 3 | `CX_LINE` | `CXLines[3]` | | line 7 | | |
+| 4 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[10]` | opcode 389 `i32.gt` | `1:x` @0, literal @1048584 | `*tmp_0` @4 | 0, 0 |
+| 5 | `CX_LINE` | `CXLines[5]` | | line 9 | | |
+| 6 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[13]` | opcode 2 `jmp` | `*tmp_0` @4 | | 0, 4 |
+| 7 | `CX_LINE` | `CXLines[4]` | | line 8 | | |
+| 8 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[11]` | opcode 393 `i32.print` | `1:x` @0 | | 0, 0 |
+| 9 | `CX_LINE` | `CXLines[6]` | | line 9 | | |
+| 10 | `CX_ATOMIC_OPERATOR` | `CXAtomicOps[14]` | opcode 2 `jmp` | literal `true` @1048588 | | 0, 0 |
+
+Every operand here is `TYPE_ATOMIC`. Offsets below 1048576 are frame
+offsets and the others are data addresses.
+
+When `x > 6` is false, the `jmp` at 6 adds `ElseLines` 4 and the VM adds
+1, so `Line` becomes 11, which equals `LineCount`, and `main` returns.
+When it is true, `Line` becomes 7 and the then block runs. The `jmp` at
+10 has an empty else block to skip, so its `ThenLines` is 0.
+
+`sum` and `i32.add` resolve differently although both are called the same
+way. `sum` stays a user function call at index 2, and `+` becomes the
+native `i32.add` in `ProcessTypedOperator`. The arenas end up with 8
+`CXFunctions`, three user functions (`sum`, `main`, `*init`) and five
+per-expression native copies.
+
+## Serialized form
+
+### API
+
+`ast.SerializeCXProgram(prgrm, includeDataMemory, codec)` and
+`ast.Deserialize(b, codec)` are in `t3-ast/serialize.go`.
+
+* With a nil `codec` the output is the encoded program. With
+  `includeDataMemory` true it also carries the data segment,
+  `Memory[Data.StartsAt : Data.StartsAt+Data.Size]`, in
+  `DataSegmentMemory`, otherwise no memory at all.
+* With a non-nil `*lz4codec.Codec` (`t0-lz4codec`) the whole of
+  `CXProgram.Memory` goes in `Memory`, `includeDataMemory` is ignored, and
+  the result is one LZ4 block from `Codec.Compress`. The block does not
+  store the original length, so `Codec.Decompress` relies on the limits
+  set in `lz4codec.Config`. The codec must be initialized by the caller,
+  and `Deserialize` must be given a codec when the bytes were compressed.
+
+`opSerialize` and `opDeserialize` (`t4-opcodes/op_serialize.go`) expose
+both to CX programs.
+
+### Encoding
+
+`encodeCXProgram` fills an `ast.SerializedCXProgram`
+(`t3-ast/serialize_structs.go`) and encodes it with
+`EncodeSerializedCXProgram`, generated by skyencoder into
+`t3-ast/serialized_cx_program_skyencoder.go`. The encoding follows
+`github.com/skycoin/skycoin/src/cipher/encoder`. Integers are
+little-endian `int64`. Strings, byte slices and other slices are a
+`uint32` length followed by the elements. Maps are a `uint32` count
+followed by key and value pairs.
+
+The fields are written in this order.
+
+| Field | Type | Contents |
+| --- | --- | --- |
+| `Index` | `serializedCXProgramIndex` | Ten `int64` section offsets, 80 bytes, always zero (see below) |
+| `Program` | `serializedProgram` | Program fields, starts at byte 80 |
+| `Packages` | `[]serializedPackage` | One per package |
+| `PackagesMap` | `map[string]int64` | Always empty |
+| `Structs` | `[]serializedStruct` | One per struct |
+| `StructsMap` | `map[string]int64` | Always empty |
+| `Functions` | `[]serializedFunction` | One per user function |
+| `FunctionsMap` | `map[string]int64` | Always empty |
+| `Expressions` | `[]serializedExpression` | Every expression of every function |
+| `Arguments` | `[]serializedArgument` | Every operand, parameter, field and global |
+| `Calls` | `[]serializedCall` | The call stack up to `CallCounter` |
+| `Strings` | `[]byte` | Every name, each one encoder serialized (4 byte length and bytes) |
+| `StringsMap` | `map[string]int64` | Always empty |
+| `Integers` | `[]int64` | Shared pool for index lists and lengths |
+| `Memory` | `[]byte` | Whole memory, compressed form only |
+| `DataSegmentMemory` | `[]byte` | Data segment, when `includeDataMemory` is set |
+
+The name maps are only used to look up indexes while encoding.
+`encodeCXProgram` sets them to nil before encoding because Go map order
+is random.
+
+References inside the serialized program are integers. A `...Offset` and
+`...Size` pair names a run of `Integers` that holds indexes into
+`Arguments`, `Expressions` or `Calls`, or a byte offset and encoded size in
+`Strings`. -1 for both means empty. Packages, structs and functions are
+referred to by position in their slices or by package name, never by
+their in-memory arena index.
+
+A `serializedExpression` stores `Type` (`CX_ATOMIC_OPERATOR` or
+`CX_LINE`). A line marker stores `FileName`, `LineNumber` and `LineStr`.
+An operator stores the operator three ways.
+
+| Operator | `IsNative` | `OpCode` | `OperatorOffset` |
+| --- | --- | --- | --- |
+| Declaration | 0 | -1 | -1 |
+| Native | 1 | `AtomicOPCode` | -1 |
+| User function | 0 | -1 | Index into `Functions` |
+
+It also stores `InputsOffset`, `InputsSize`, `OutputsOffset`,
+`OutputsSize`, `LabelOffset`, `LabelSize`, `ThenLines`, `ElseLines`,
+`ExpressionType`, `FunctionOffset` and `PackageName`. Natives are not
+written as functions. `deserializeExpression` rebuilds each one from
+`ast.Natives[OpCode]`. Opcode numbers are fixed, so they mean the same
+in every build, but an opcode from a package that the reading build
+leaves out with a build tag has no entry in `ast.Natives`.
+
+### Language version
+
+`CXProgram.Version` is an `int64`. `cxinit.MakeProgram` sets it to
+`constants.LanguageVersionCurrent` (`t1-constants/constants.go`), now
+2611200001. The format is `yymmddnnnn`, the release date and the release
+number on that day, and `constants.LanguageVersionValid` checks it.
+
+`serializeProgram` writes the version as a decimal string,
+`strconv.FormatInt(prgrm.Version, 10)`, into `Strings` and records it in
+`serializedProgram.VersionOffset` and `VersionSize`. `Deserialize` decodes
+the bytes, reads the version back with `deserializeVersion`, which gives 0
+for a string that is not an integer such as the old revision `"1"`, and
+returns an error unless it equals `LanguageVersionCurrent`. It does this
+before it builds anything. The versions are listed in the
+[Language versions](../LanguageGuide.md#language-versions) section of the
+language guide, and the rule is item 9 of
+[Conventions.md](Conventions.md).
+
+### Determinism
+
+`serializeCXProgramElements` and `initSerialization` walk packages,
+structs, functions and imports through `packagesByName`, `structsByName`,
+`functionsByName` and `importsByName`, which sort by name with
+`sortedKeys`. Together with leaving the maps out, this makes two
+serializations of the same program byte for byte equal
+([#186](https://github.com/skycoin/skycoin-cx/issues/186),
+[#251](https://github.com/skycoin/skycoin-cx/pull/251)).
+`TestSerializeIsDeterministic` in `t10-generator/serialize_order_test.go`
+checks it.
+
+### What is and is not included
+
+Included are packages with imports and globals, structs with fields, user
+functions with parameters, `Size`, `LineCount` and `ListOfPointers`, every
+expression with its line markers, the call stack, the segment bounds
+(`StackSize`, `StackPointer`, `DataSegmentSize`, `DataSegmentStartsAt`,
+`HeapSize`, `HeapStartsAt`, `HeapPointer`), `Terminated`, `CallCounter`,
+`ProgramInput` as `serializedProgram.Inputs`, the current package by name
+and the version.
+
+Not included are
+
+* operands that are not `TYPE_CXARGUMENT_DEPRECATE`.
+  `ConvertIndexTypeSignaturesToPointerArgs` drops them, which today means
+  every `TYPE_ATOMIC` operand
+  ([#12](https://github.com/skycoin/skycoin-cx/issues/12)),
+* `CXArgument.Indexes`, `DereferenceOperations`, `PointerTargetType` and
+  `ArgDetails`. `StructTypeOffset` is written but not read back,
+* `CXTypeSignature` beyond what the conversion to `CXArgument` keeps,
+* the native functions themselves, see the table above,
+* `SysInitExprs`. The `*init` function that holds the same expressions is
+  included,
+* memory, unless `includeDataMemory` is set or a codec is used.
+
+`Deserialize` does not restore `CallStack`, `CallCounter`,
+`Stack.Pointer`, `Terminated` or `ProgramInput` even though they are
+written. It makes a new empty call stack.
+
+`ast.SerializeDebugInfo(prgrm, includeMemory, wholeMemory)` encodes the
+program without compression and returns a `SerializedDataSize` with the
+size of each section, computed from the offsets in `Index`.
+
+## Opcodes
+
+This document does not list the opcodes. The list is
+`constants.OpcodeLifecycleTable` in
+[t1-constants/opcodes.go](../t1-constants/opcodes.go), mirrored in
+[opcodes.csv](opcodes.csv). Each row is an `OpcodeLifecycle` with
+`Number`, `Name`, `VersionAdded`, `VersionDeprecated` and
+`VersionReassignable`. The numbering and lifecycle rules are items 7 and
+8 of [Conventions.md](Conventions.md).
+
+* The named opcodes are the `OP_*` constants in the same file, from
+  `OP_IDENTITY` (1) to `OP_BOOL_NOT` (133). `END_OF_NAMED_OPCODES` (134)
+  and the `START_OF_*` and `END_OF_*` markers bound ranges and are not
+  opcodes.
+* Every other opcode is registered by name through
+  `opcodes.RegisterFunction` or `opcodes.RegisterOperator`, in
+  [t4-opcodes/opcodes_init.go](../t4-opcodes/opcodes_init.go) and the
+  `RegisterPackage` functions of `t5-cipher`, `t5-cxos`, `t5-regexp`,
+  `t5-tcp` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
+  `constants.OpcodeLifecycleLiveByName`.
+* `opcodes.RegisterOpCode` asserts that the number is a live row with that
+  name, then fills `ast.OpcodeHandlers`, `ast.OpNames`, `ast.OpCodes` and
+  `ast.Natives`. A deprecated row gets no handler and leaves a gap.
+* The typed operators are also reachable through `ast.Operators` by
+  `ast.GetTypedOperatorOffset(typeCode, opcode)`, which is how
+  `ProcessTypedOperator` turns `add` (82) into `i32.add` (383).
+
+Before [#297](https://github.com/skycoin/skycoin-cx/pull/297) the
+numbers above `END_OF_NAMED_OPCODES` came from registration order and
+moved with build tags
+([#296](https://github.com/skycoin/skycoin-cx/issues/296)).
+
+## Known oddities
+
+* A serialized program loses its operands.
+  `ConvertIndexTypeSignaturesToPointerArgs` keeps only
+  `TYPE_CXARGUMENT_DEPRECATE`, so every `TYPE_ATOMIC` input and output is
+  dropped. In the worked example every expression is written with
+  `InputsSize` and `OutputsSize` -1
+  ([#12](https://github.com/skycoin/skycoin-cx/issues/12)).
+* `Deserialize` panics on any program with a variable declaration,
+  because the declaration's operator is read back as a nil user function
+  ([#292](https://github.com/skycoin/skycoin-cx/issues/292)).
+* Nothing writes `SerializedCXProgram.Index`, so the first 80 bytes of
+  every serialized program are zero and `SerializeDebugInfo` reports all
+  bytes as `Memory`
+  ([#293](https://github.com/skycoin/skycoin-cx/issues/293)).
+* The serialized program does not record `types.POINTER_SIZE`, so a
+  `ptr64` build loads a default build's program and the other way round
+  ([#295](https://github.com/skycoin/skycoin-cx/issues/295)).
+* A user function named like a named opcode, for example `add`, is never
+  called. The call compiles to the built-in
+  ([#294](https://github.com/skycoin/skycoin-cx/issues/294)).
+* Serialization used to depend on map order and could move functions
+  between packages on a round trip. It is now sorted by name
+  ([#186](https://github.com/skycoin/skycoin-cx/issues/186),
+  [#250](https://github.com/skycoin/skycoin-cx/issues/250)).
+* Native operators were described by shared `CXArgument` values, and
+  `GetCXTypeSignatureRepresentationOfCXArg` wrote one program's indexes
+  into them, which broke the next REPL program
+  ([#174](https://github.com/skycoin/skycoin-cx/issues/174), closed).
+  Each expression still gets its own copy of the native function in
+  `CXFunctions`.
+* Pointers to slices are only partly modelled. There is
+  `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, and
+  dereferencing or appending through one gives wrong results or no error
+  ([#49](https://github.com/skycoin/skycoin-cx/issues/49),
+  [#52](https://github.com/skycoin/skycoin-cx/issues/52),
+  [#267](https://github.com/skycoin/skycoin-cx/issues/267)).
+* `GetFinalOffset` decides whether an offset is in the frame by comparing
+  it with `Stack.Size`, not by a flag on the operand.
+* The line marker before the `jmp` of an `if` carries the line of the
+  closing brace, line 9 in the worked example, because
+  `SelectionExpressions` runs when the whole statement is reduced.
+* `ast.ToString` walks `CXProgram.Packages` and `CXPackage.Functions` as
+  maps, so `cx -ast` prints functions in a different order from run to
+  run.
+* `CX_ARGUMENT`, the `TYPE_ARRAY_STRUCT` to `TYPE_SLICE_POINTER_COMPLEX`
+  signatures and `OP_ABS_JMP` are defined but never produced by the
+  compiler.
+* Several fields still hold Go pointers instead of arena indexes
+  ([#8](https://github.com/skycoin/skycoin-cx/issues/8)).

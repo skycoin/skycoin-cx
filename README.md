@@ -160,6 +160,7 @@ The docs also provide a high level [overview](docs/overview.md) of the language.
 
 Guide for CX compiler development:
 * [Compiler Development](docs/CompilerDevelopment.md)
+* [The compiler IR and serialized form](docs/IR.md)
 
 How to write a CX library that wraps a Go library:
 * [Wrapping Go libraries](docs/Wrappinggolanglibraries.md)
