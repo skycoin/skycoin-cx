@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/skycoin/skycoin-cx/t0-packages"
 	"github.com/skycoin/skycoin-cx/t0-plbolt"
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-plloader"
@@ -546,5 +547,27 @@ func TestLoadCXProgramCommentedImport(t *testing.T) {
 	}
 	if err := loader.LoadCXProgram("commentimport", sourceCodes); err != nil {
 		t.Errorf("an import inside a comment was read as an import: %v", err)
+	}
+}
+
+func TestLoadCXProgramBuiltinImports(t *testing.T) {
+	for _, name := range packages.DefaultPackages {
+		t.Run(name, func(t *testing.T) {
+			src := filepath.Join(t.TempDir(), "src")
+			if err := os.Mkdir(src, 0755); err != nil {
+				t.Fatal(err)
+			}
+			content := "package main\nimport \"" + name + "\"\nfunc main() {\n}\n"
+			if err := os.WriteFile(filepath.Join(src, "m.cx"), []byte(content), 0644); err != nil {
+				t.Fatal(err)
+			}
+			_, sourceCodes, _, err := util.ParseArgsForCX([]string{src}, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := loader.LoadCXProgram("builtin_"+name, sourceCodes); err != nil {
+				t.Errorf("import of the built in package %s: %v", name, err)
+			}
+		})
 	}
 }

@@ -13,12 +13,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Add; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-plbolt"   // thin: only Add; no depth gain
 	"golang.org/x/crypto/blake2b"
 )
-
-// NOTE: a hand kept copy of the default packages in t0-packages. See #95.
-var builtinPackages = []string{"al", "gl", "glfw", "time", "os", "gltext", "cx", "json", "cipher", "tcp"}
 
 // VIOLATION: state outside State. Owner: t1-plloader; moves to PackageFileMng in phase 1.
 // NOTE: written but never read, and keyed by base file name, so files in different
@@ -144,12 +142,12 @@ func addNewPackage(packageListStruct *PackageList, packageName string, fileMap m
 
 	// Checks if package is found in the directory
 	files, ok := fileMap[packageName]
-	if !ok && !Contains(builtinPackages, packageName) {
+	if !ok && !packages.IsDefaultPackage(packageName) {
 		return fmt.Errorf("package %s not found", packageName)
 	}
 
 	// Skip if the import is a built-in package
-	if Contains(builtinPackages, packageName) {
+	if packages.IsDefaultPackage(packageName) {
 		return nil
 	}
 
