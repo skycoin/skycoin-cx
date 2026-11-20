@@ -26,6 +26,7 @@ func loadSource(t *testing.T, name string, files map[string]string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closeFiles(t, sourceCodes)
 	if err := loader.LoadCXProgram(name, sourceCodes); err != nil {
 		t.Fatal(err)
 	}
@@ -56,4 +57,14 @@ func TestGraphExternalImportOnce(t *testing.T) {
 	if want := "id=0, module=main, imports=2,1,\nid=1, module=b, imports=2,\nid=2, module=os, imports=,\n"; got != want {
 		t.Errorf("GetImportGraph:\n got %q\nwant %q", got, want)
 	}
+}
+
+// closeFiles closes the source files when the test ends, before its temporary
+// directory is removed, which Windows refuses while a file is open.
+func closeFiles(t *testing.T, files []*os.File) {
+	t.Cleanup(func() {
+		for _, file := range files {
+			file.Close()
+		}
+	})
 }

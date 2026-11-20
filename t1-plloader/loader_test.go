@@ -167,6 +167,7 @@ func TestCreateFileMap(t *testing.T) {
 			if perr != nil {
 				t.Fatal(perr)
 			}
+			closeFiles(t, sourceCodes)
 			gotFileMap, gotErr := loader.CreateFileMap(sourceCodes)
 			for wantKey, wantValue := range testcase.WantFileMap {
 				gotValue, ok := gotFileMap[wantKey]
@@ -276,6 +277,7 @@ func TestAddNewPackage(t *testing.T) {
 			if perr != nil {
 				t.Fatal(perr)
 			}
+			closeFiles(t, sourceCodes)
 			fileMap, err := loader.CreateFileMap(sourceCodes)
 			if err != nil {
 				t.Error(err)
@@ -342,6 +344,7 @@ func TestLoadImportPackages(t *testing.T) {
 			if perr != nil {
 				t.Fatal(perr)
 			}
+			closeFiles(t, sourceCodes)
 			fileMap, err := loader.CreateFileMap(sourceCodes)
 			if err != nil {
 				t.Error(err)
@@ -469,6 +472,7 @@ func TestLoadCXProgram(t *testing.T) {
 			if perr != nil {
 				t.Fatal(perr)
 			}
+			closeFiles(t, sourceCodes)
 			err := loader.LoadCXProgram("test", sourceCodes)
 			if testcase.WantErr {
 				if err == nil {
@@ -505,6 +509,7 @@ func TestLoadCXProgramImportLoop(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closeFiles(t, sourceCodes)
 	if err := loader.LoadCXProgram("loop", sourceCodes); err == nil {
 		t.Error("want a dependency loop error, got nil")
 	}
@@ -545,6 +550,7 @@ func TestLoadCXProgramCommentedImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closeFiles(t, sourceCodes)
 	if err := loader.LoadCXProgram("commentimport", sourceCodes); err != nil {
 		t.Errorf("an import inside a comment was read as an import: %v", err)
 	}
@@ -565,6 +571,7 @@ func TestLoadCXProgramBuiltinImports(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			closeFiles(t, sourceCodes)
 			if err := loader.LoadCXProgram("builtin_"+name, sourceCodes); err != nil {
 				t.Errorf("import of the built in package %s: %v", name, err)
 			}
@@ -592,6 +599,7 @@ func TestLoadCXProgramSameFileNames(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closeFiles(t, sourceCodes)
 	if err := loader.LoadCXProgram("samenames", sourceCodes); err != nil {
 		t.Fatal(err)
 	}
@@ -629,4 +637,14 @@ func TestLoadCXProgramSameFileNames(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("stored files:\n got %q\nwant %q", got, want)
 	}
+}
+
+// closeFiles closes the source files when the test ends, before its temporary
+// directory is removed, which Windows refuses while a file is open.
+func closeFiles(t *testing.T, files []*os.File) {
+	t.Cleanup(func() {
+		for _, file := range files {
+			file.Close()
+		}
+	})
 }

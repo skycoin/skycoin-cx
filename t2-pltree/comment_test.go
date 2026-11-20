@@ -26,6 +26,7 @@ func loadSource(t *testing.T, name string, files map[string]string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closeFiles(t, sourceCodes)
 	if err := loader.LoadCXProgram(name, sourceCodes); err != nil {
 		t.Fatal(err)
 	}
@@ -42,4 +43,14 @@ func TestTreeSkipsCommentedImport(t *testing.T) {
 	if want := "main\n`--os\n"; got != want {
 		t.Errorf("GetImportTree:\n got %q\nwant %q", got, want)
 	}
+}
+
+// closeFiles closes the source files when the test ends, before its temporary
+// directory is removed, which Windows refuses while a file is open.
+func closeFiles(t *testing.T, files []*os.File) {
+	t.Cleanup(func() {
+		for _, file := range files {
+			file.Close()
+		}
+	})
 }
