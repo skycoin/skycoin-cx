@@ -2,15 +2,12 @@ package profiling
 
 import (
 	"fmt"
-	"github.com/skycoin/skycoin-cx/t0-util" // thin: only CXCreateFile; no depth gain
 	"os"
 	"runtime"
 	"runtime/pprof"
 	"time"
-)
 
-var (
-// profile         *os.File
+	"github.com/skycoin/skycoin-cx/t0-util" // thin: only CXCreateFile; no depth gain
 )
 
 // VIOLATION: state outside State. Owner: t1-profiling; moves to ConfigMng in phase 2.
@@ -21,6 +18,10 @@ var DebugProfileRate int
 
 // VIOLATION: state outside State. Owner: t1-profiling; moves to ProfileMng in phase 1.
 var profiles = make(map[string]int64)
+
+// VIOLATION: state outside State. Owner: t1-profiling; moves to ProfileMng in phase 1.
+// pprof runs one CPU profile at a time, this stops it.
+var stopCPU func() error
 
 func StartProfile(name string) {
 	if DebugProfile {
@@ -36,50 +37,70 @@ func StopProfile(name string) {
 	}
 }
 
-func StartCPUProfile(name string) *os.File {
-	if DebugProfile {
-		f, err := util.CXCreateFile(fmt.Sprintf("%s_%s_cpu.pprof", os.Args[0], name))
-		if err != nil {
-			fmt.Println("Failed to create CPU profile: ", err)
-		}
-		if DebugProfileRate != 100 { // test against default value to avoid warning
-			runtime.SetCPUProfileRate(DebugProfileRate)
-		}
-		if err := pprof.StartCPUProfile(f); err != nil {
-			fmt.Println("Failed to start CPU profile: ", err)
-		}
-		return f
+// StartCPUProfile writes a CPU profile to <argv0>_<name>_cpu.pprof at
+// profRate samples per second. A rate of 0 does nothing. The returned
+// function stops the profile and closes the file.
+func StartCPUProfile(name string, profRate int) (stop func() error, err error) {
+	if profRate == 0 {
+		return func() error { return nil }, nil
 	}
+
+	f, err := util.CXCreateFile(fmt.Sprintf("%s_%s_cpu.pprof", os.Args[0], name))
+	if err != nil {
+		return nil, fmt.Errorf("create CPU profile: %w", err)
+	}
+
+	// test against default value to avoid warning
+	if profRate != 100 {
+		runtime.SetCPUProfileRate(profRate)
+	}
+
+	if err := pprof.StartCPUProfile(f); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("start CPU profile: %w", err)
+	}
+
+	stopped := false
+	stop = func() error {
+		if stopped {
+			return nil
+		}
+		stopped = true
+		stopCPU = nil
+		pprof.StopCPUProfile()
+		return f.Close()
+	}
+	stopCPU = stop
+	return stop, nil
+}
+
+// DumpMemProfile writes a heap profile to <argv0>_<name>_mem.pprof.
+func DumpMemProfile(name string) (err error) {
+	f, err := util.CXCreateFile(fmt.Sprintf("%s_%s_mem.pprof", os.Args[0], name))
+	if err != nil {
+		return fmt.Errorf("create MEM profile: %w", err)
+	}
+
+	defer func() {
+		if closeErr := f.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+
+	runtime.GC()
+	if err = pprof.WriteHeapProfile(f); err != nil {
+		return fmt.Errorf("write MEM profile: %w", err)
+	}
+
 	return nil
 }
 
-func StopCPUProfile(f *os.File) {
-	if DebugProfile {
-		if f != nil {
-			defer f.Close()
-		}
-		defer pprof.StopCPUProfile()
-	}
-}
-
-func DumpMEMProfile(name string) {
-	if DebugProfile {
-		f, err := util.CXCreateFile(fmt.Sprintf("%s_%s_mem.pprof", os.Args[0], name))
-		if err != nil {
-			fmt.Println("Failed to create MEM profile: ", err)
-		}
-		defer f.Close()
-		runtime.GC()
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			fmt.Println("Failed to write MEM profile: ", err)
-		}
-	}
-}
-
+// CleanupAndExit stops a running CPU profile and exits with exitCode.
 func CleanupAndExit(exitCode int) {
-	// TODO: BUG?: We are never initializing the global variable `profile`.
-	// Is it okay to simply send nil?
-	// StopCPUProfile(profile)
-	StopCPUProfile(nil)
+	if stopCPU != nil {
+		if err := stopCPU(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 	os.Exit(exitCode)
 }

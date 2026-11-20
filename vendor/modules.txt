@@ -42,9 +42,6 @@ github.com/pierrec/lz4/internal/xxh32
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
-# github.com/sirupsen/logrus v1.10.2
-## explicit; go 1.23
-github.com/sirupsen/logrus
 # github.com/skycoin/encodertest v0.0.0-20190217072920-14c2e31898b9
 ## explicit
 github.com/skycoin/encodertest

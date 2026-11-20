@@ -9,7 +9,6 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/madelynnblue/go-dsp v1.0.0
 	github.com/pierrec/lz4 v2.6.1+incompatible
-	github.com/sirupsen/logrus v1.10.2
 	github.com/skycoin/encodertest v0.0.0-20190217072920-14c2e31898b9
 	github.com/skycoin/gltext v0.0.0-20200425002731-afdd8ff94e14
 	github.com/skycoin/skycoin v0.28.8-0.20261117145039-38b3036d50d8

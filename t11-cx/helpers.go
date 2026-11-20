@@ -27,10 +27,24 @@ import (
 
 func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File) bool {
 
-	profile := profiling.StartCPUProfile("parse")
-	defer profiling.StopCPUProfile(profile)
+	stopCPUProfile, err := profiling.StartCPUProfile("parse", profiling.DebugProfileRate)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		stopCPUProfile = func() error { return nil }
+	}
+	defer func() {
+		if err := stopCPUProfile(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 
-	defer profiling.DumpMEMProfile("parse")
+	if profiling.DebugProfile {
+		defer func() {
+			if err := profiling.DumpMemProfile("parse"); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+		}()
+	}
 
 	profiling.StartProfile("parse")
 	defer profiling.StopProfile("parse")
@@ -52,7 +66,7 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 	repl.ReplTargetFn = constants.MAIN_FUNC
 
 	// Adding *init function that initializes all the global variables.
-	err := cxparsering.AddInitFunction(actions.AST)
+	err = cxparsering.AddInitFunction(actions.AST)
 	if err != nil {
 		panic(fmt.Sprintf("error initializing function: %v", err))
 	}
@@ -60,11 +74,7 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 	actions.LineNo = 0
 
 	if globals.FoundCompileErrors {
-		//cleanupAndExit(cxcore.CX_COMPILATION_ERROR)
-		profiling.StopCPUProfile(profile)
-		exitCode := types.CX_COMPILATION_ERROR
-		os.Exit(exitCode)
-
+		profiling.CleanupAndExit(types.CX_COMPILATION_ERROR)
 	}
 
 	return true
