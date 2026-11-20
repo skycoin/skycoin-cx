@@ -1,4 +1,0 @@
-package testimport2
-
-import "testimport1"
-import "testimport3"

@@ -7,7 +7,7 @@ import (
 )
 
 func TestGraph(t *testing.T) {
-	const want = "id=0, module=main, imports=4,2,1,\nid=1, module=testimport1, imports=5,\nid=2, module=testimport2, imports=1,3,\nid=3, module=testimport3, imports=1,\nid=4, module=os, imports=,\nid=5, module=gl, imports=,\n"
+	const want = "id=0, module=main, imports=4,1,2,\nid=1, module=testimport2, imports=2,3,\nid=2, module=testimport1, imports=5,\nid=3, module=testimport3, imports=2,\nid=4, module=os, imports=,\nid=5, module=gl, imports=,\n"
 	_, sourceCodes, _, perr := loader.ParseArgsForCX([]string{"test_tree"}, true)
 	if perr != nil {
 		t.Fatal(perr)

@@ -27,6 +27,9 @@ func (pl *PackageList) appendPackage(newPackage *Package) error {
 	if err != nil {
 		return err
 	}
+	if Contains(pl.Packages, fmt.Sprintf("%x", hash[:])) {
+		return nil
+	}
 	pl.Packages = append(pl.Packages, fmt.Sprintf("%x", hash[:]))
 	err = newPackage.saveToDatabase(hash)
 	if err != nil {

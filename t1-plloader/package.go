@@ -13,7 +13,9 @@ import (
 
 type Package struct {
 	PackageName string
-	Files       []string
+	// NOTE: raw hash bytes in a string do not survive the JSON encoding. See #93.
+	Blake2Hash string
+	Files      []string
 }
 
 func (p Package) MarshalBinary() ([]byte, error) {
