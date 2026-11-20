@@ -8,6 +8,7 @@ import (
 
 	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t1-profiling" // thin: only CleanupAndExit, StartProfile, StopProfile; no depth gain
 	"github.com/skycoin/skycoin-cx/t2-globals"   // thin: only FoundCompileErrors, SRCPATH; no depth gain
@@ -167,8 +168,11 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 					pkgName := match[len(match)-1]
 					// Checking if `pkgName` already exists and if it's not a standard library package.
 					if _, err := cxpartialparsing.Program.GetPackage(pkgName); err != nil && !cxpackages.IsDefaultPackage(pkgName) {
-						// _, sourceCode, srcNames := ParseArgsForCX([]string{fmt.Sprintf("%s%s", SRCPATH, pkgName)}, false)
-						_, sourceCode, fileNames := ast.ParseArgsForCX([]string{filepath.Join(globals.SRCPATH, pkgName)}, false)
+						_, sourceCode, fileNames, err := util.ParseArgsForCX([]string{filepath.Join(globals.SRCPATH, pkgName)}, false)
+						if err != nil {
+							println(err.Error())
+							return parseErrors + 1
+						}
 						ParseSourceCode(sourceCode, fileNames)
 					}
 				}

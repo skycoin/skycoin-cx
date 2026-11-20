@@ -3,15 +3,12 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t0-util" // thin: only CXOpenFile, CXStatFile; no depth gain
 	"github.com/skycoin/skycoin-cx/t1-constants"
 )
 
@@ -706,121 +703,6 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 	}
 
 	return getNonCollectionValue(prgrm, fp, arg, elt, typ)
-}
-
-// filePathWalkDir scans all the files in a directory. It will automatically
-// scan each sub-directories in the directory. Code obtained from manigandand's
-// post in https://stackoverflow.com/questions/14668850/list-directory-in-go.
-func filePathWalkDir(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			files = append(files, path)
-		}
-		return err
-	})
-	return files, err
-}
-
-// ioReadDir reads the directory named by dirname and returns a list of
-// directory entries sorted by filename. Code obtained from manigandand's
-// post in https://stackoverflow.com/questions/14668850/list-directory-in-go.
-func ioReadDir(root string) ([]string, error) {
-	var files []string
-	fileInfo, err := ioutil.ReadDir(root)
-	if err != nil {
-		return files, err
-	}
-
-	for _, file := range fileInfo {
-		files = append(files, fmt.Sprintf("%s/%s", root, file.Name()))
-	}
-	return files, nil
-}
-
-// ParseArgsForCX parses the arguments and returns:
-//   - []arguments
-//   - []file pointers	open files
-//   - []sting		filenames
-func ParseArgsForCX(args []string, alsoSubdirs bool) (cxArgs []string, sourceCode []*os.File, fileNames []string) {
-	skip := false // flag for skipping arg
-
-	for _, arg := range args {
-
-		// skip arg if skip flag is specified
-		if skip {
-			skip = false
-			continue
-		}
-
-		// cli flags are either "--key=value" or "-key value"
-		// we have to skip both cases
-		if len(arg) > 1 && arg[0] == '-' {
-			if !strings.Contains(arg, "=") {
-				skip = true
-			}
-			continue
-		}
-
-		// cli cx flags are prefixed with "++"
-		if len(arg) > 2 && arg[:2] == "++" {
-			cxArgs = append(cxArgs, arg)
-			continue
-		}
-
-		fi, err := util.CXStatFile(arg)
-		if err != nil {
-			println(fmt.Sprintf("%s: source file or library not found", arg))
-			os.Exit(types.CX_COMPILATION_ERROR)
-		}
-
-		switch mode := fi.Mode(); {
-		case mode.IsDir():
-			var fileList []string
-			var err error
-
-			// Checking if we want to check all subdirectories.
-			if alsoSubdirs {
-				fileList, err = filePathWalkDir(arg)
-			} else {
-				fileList, err = ioReadDir(arg)
-				// fileList, err = filePathWalkDir(arg)
-			}
-
-			if err != nil {
-				panic(err)
-			}
-
-			for _, path := range fileList {
-				file, err := util.CXOpenFile(path)
-
-				if err != nil {
-					println(fmt.Sprintf("%s: source file or library not found", arg))
-					os.Exit(types.CX_COMPILATION_ERROR)
-				}
-
-				fiName := file.Name()
-				fiNameLen := len(fiName)
-
-				if fiNameLen > 2 && fiName[fiNameLen-3:] == ".cx" {
-					// only loading .cx files
-					sourceCode = append(sourceCode, file)
-					fileNames = append(fileNames, fiName)
-				}
-			}
-		case mode.IsRegular():
-			file, err := util.CXOpenFile(arg)
-
-			if err != nil {
-				panic(err)
-			}
-
-			fileNames = append(fileNames, file.Name())
-			sourceCode = append(sourceCode, file)
-		}
-	}
-
-	return cxArgs, sourceCode, fileNames
 }
 
 // getFormattedDerefs is an auxiliary function for `GetFormattedName`. This

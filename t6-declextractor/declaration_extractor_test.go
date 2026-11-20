@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/skycoin/skycoin-cx/t1-plloader"     // thin: tests use only LoadCXProgram, ParseArgsForCX; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-util"
+	"github.com/skycoin/skycoin-cx/t1-plloader"     // thin: tests use only LoadCXProgram; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-plfileoutput" // thin: tests use only GetImportFiles; tests only, could move the test to t5-plfileoutput, tier 6 to 2
 	"github.com/skycoin/skycoin-cx/t6-declextractor"
 )
@@ -1430,7 +1431,7 @@ func TestDeclarationExtractor_ExtractAllDeclarations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 
-			_, sourceCodes, _, perr := loader.ParseArgsForCX([]string{tc.testDir}, true)
+			_, sourceCodes, _, perr := util.ParseArgsForCX([]string{tc.testDir}, true)
 			if perr != nil {
 				t.Fatal(perr)
 			}

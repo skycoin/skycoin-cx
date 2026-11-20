@@ -153,7 +153,11 @@ func Run(args []string) {
 	}
 
 	// options, file pointers, filenames
-	cxArgs, sourceCode, fileNames := ast.ParseArgsForCX(commandLine.Args(), true)
+	cxArgs, sourceCode, fileNames, err := util.ParseArgsForCX(commandLine.Args(), true)
+	if err != nil {
+		println(err.Error())
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
 
 	// Propagate some options out to other packages.
 	parsingcompletor.DebugLexer = options.debugLexer

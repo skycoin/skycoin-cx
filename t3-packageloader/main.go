@@ -6,8 +6,9 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/skycoin/skycoin-cx/t0-plbolt"    // thin: only Init; no depth gain
-	"github.com/skycoin/skycoin-cx/t1-plloader"  // thin: only LoadCXProgram, ParseArgsForCX; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Init; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-util"
+	"github.com/skycoin/skycoin-cx/t1-plloader"  // thin: only LoadCXProgram; no depth gain
 	"github.com/skycoin/skycoin-cx/t2-plencoder" // thin: only SavePackagesToDisk; no depth gain
 	"github.com/skycoin/skycoin-cx/t2-plgraph"   // thin: only GetImportGraph; no depth gain
 	"github.com/skycoin/skycoin-cx/t2-pltree"    // thin: only GetImportTree; no depth gain
@@ -69,7 +70,7 @@ func main() {
 	path := filepath.Clean(*pathFlag)
 
 	if *loadFlag {
-		_, sourceCodes, _, err := loader.ParseArgsForCX([]string{path}, true)
+		_, sourceCodes, _, err := util.ParseArgsForCX([]string{path}, true)
 		if err != nil {
 			log.Fatal(err)
 		}
