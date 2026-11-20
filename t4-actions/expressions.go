@@ -68,6 +68,10 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 	lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)) < 1 {
+		if len(lastCondExpressionOperatorOutputs) == 0 {
+			println(ast.CompilationError(CurrentFile, LineNo), "loop condition has no value")
+			os.Exit(constants.CX_COMPILATION_ERROR)
+		}
 		lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
 
 		var lastCondExpressionOperatorOutputType types.Code

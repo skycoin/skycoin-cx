@@ -1048,27 +1048,35 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 	}
 }
 
-func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) {
+func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine, builtIn bool) {
 	// checking if number of inputs is not the same as the required number of inputs
-	if len(expression.GetInputs(prgrm)) != len(expressionOperatorInputs) {
-		// VIOLATION: created outside manager; phase 1.
-		expressionOperatorInputArg := &ast.CXArgument{}
-		if len(expressionOperatorInputs) > 0 {
-			expressionTypeSigIdx := expressionOperatorInputs[len(expressionOperatorInputs)-1]
-			expressionTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionTypeSigIdx)
-			if expressionTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				expressionOperatorInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionTypeSig.Meta))
+	if len(expression.GetInputs(prgrm)) == len(expressionOperatorInputs) {
+		return
+	}
+
+	// built-ins without declared inputs, such as break and goto, take a label
+	if builtIn && len(expressionOperatorInputs) == 0 {
+		return
+	}
+
+	// if the last input is of type undefined then it might be a variadic function, such as printf
+	if len(expressionOperatorInputs) > 0 {
+		lastTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorInputs[len(expressionOperatorInputs)-1])
+		switch lastTypeSig.Type {
+		case ast.TYPE_CXARGUMENT_DEPRECATE:
+			if prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastTypeSig.Meta)).Type == types.UNDEFINED {
+				return
+			}
+		case ast.TYPE_ATOMIC:
+			if types.Code(lastTypeSig.Meta) == types.UNDEFINED {
+				return
 			}
 		}
-
-		if !(len(expressionOperatorInputs) > 0 && expressionOperatorInputArg.Type != types.UNDEFINED) {
-			// if the last input is of type cxcore.TYPE_UNDEFINED then it might be a variadic function, such as printf
-		} else {
-			// then we need to be strict in the number of inputs
-			println(ast.CompilationError(exprCXLine.FileName, exprCXLine.LineNumber), fmt.Sprintf("operator '%s' expects %d input/s, but %d input argument\n were provided", opName, len(expressionOperatorInputs), len(expression.GetInputs(prgrm))))
-			os.Exit(constants.CX_COMPILATION_ERROR)
-		}
 	}
+
+	// then we need to be strict in the number of inputs
+	println(ast.CompilationError(exprCXLine.FileName, exprCXLine.LineNumber), fmt.Sprintf("operator '%s' expects %d input/s, but %d input argument\n were provided", opName, len(expressionOperatorInputs), len(expression.GetInputs(prgrm))))
+	os.Exit(constants.CX_COMPILATION_ERROR)
 }
 
 func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) {
@@ -1094,7 +1102,7 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
 		// checking if number of inputs is not the same as the required number of inputs
-		checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine)
+		checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn())
 		// checking if number of outputs is not the same as the required number of outputs
 		checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine)
 	}

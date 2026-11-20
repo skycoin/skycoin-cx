@@ -1,0 +1,10 @@
+// https://github.com/skycoin/cx/issues/39
+
+package main
+
+func cat() {
+}
+
+func main() {
+	cat(1)
+}

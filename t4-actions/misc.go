@@ -63,7 +63,7 @@ func WritePrimary(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, isSlic
 		var i types.Pointer
 		// First we need to fill the remaining free bytes in
 		// the current `prgrm.Memory` slice.
-		for i = types.Pointer(0); i < memSize-prgrm.Data.Size+prgrm.Data.StartsAt; i++ {
+		for i = types.Pointer(0); i < memSize-(prgrm.Data.Size+prgrm.Data.StartsAt); i++ {
 			prgrm.Memory[prgrm.Data.Size+prgrm.Data.StartsAt+i] = byts[i]
 		}
 		// Then we append the bytes that didn't fit.

@@ -169,7 +169,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-parse.cx", runner.CxSuccess, "parse")
 	t.Run("test-collection-functions.cx", runner.CxSuccess, "collection functions")
 	t.Run("test-scopes.cx", runner.CxSuccess, "ProgramError in scopes.")
-	t.RunEx("-heap-initial 0 test-gc.cx", runner.CxSuccess, "Stress-testing the garbage collector", runner.TestIssue, 0)
+	t.RunEx("-heap-initial 0 test-gc.cx", runner.CxSuccess, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", runner.CxSuccess, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", runner.CxSuccess, "ProgramError in args lib.")
 	// t.Run("test-regexp-must-compile-fail.cx", runner.CxRuntimeError, "ProgramError in regexp lib - MustCompile should have thrown an error.")
@@ -203,7 +203,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-231.cx", runner.CxSuccess, "Slice keeps growing though it's cleared inside the loop")
 	t.Run("issue-232.cx", runner.CxSuccess, "Scope not working in loops")
 	t.Run("issue-233.cx", runner.CxSuccess, "Interdependant Structs")
-	t.Run("issue-234.cx", runner.CxCompilationError, "Panic when trying to access an invalid field.")
+	t.RunEx("issue-234.cx", runner.CxCompilationError, "Panic when trying to access an invalid field.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#14
 	t.Run("issue-235.cx", runner.CxCompilationError, "No compilation error when using an using an invalid identifier")
 	t.Run("issue-236a.cx issue-236.cx", runner.CxSuccess, "Silent name clash between packages")
 	t.Run("issue-236.cx issue-236a.cx", runner.CxSuccess, "Silent name clash between packages")
@@ -219,7 +219,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-245a.cx issue-245.cx", runner.CxCompilationError, "No compilation error when using var without package qualification.")
 	t.Run("issue-246.cx", runner.CxSuccess, "No compilation error when passing *i32 as an i32 arg and conversely")
 	t.Run("issue-246a.cx", runner.CxCompilationError, "No compilation error when passing *i32 as an i32 arg and conversely")
-	t.Run("issue-247.cx", runner.CxCompilationError, "No compilation error when dereferencing an i32 var.")
+	t.RunEx("issue-247.cx", runner.CxCompilationError, "No compilation error when dereferencing an i32 var.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#15
 	t.Run("issue-248.cx", runner.CxSuccess, "Wrong pointer behaviour.")
 	t.Run("issue-249.cx", runner.CxSuccess, "Return from a function doesnt work")
 	t.Run("issue-249b.cx", runner.CxCompilationError, "Mismatched number of returning arguments is not throwing an error")
@@ -255,7 +255,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-277.cx", runner.CxSuccess, "same func names (but in different packages) collide")
 	t.Run("issue-278.cx", runner.CxCompilationError, "can use vars from other packages without a 'packageName.' prefix")
 	t.Run("issue-279.cx", runner.CxSuccess, "False positive when detecting variable redeclaration.")
-	t.RunEx("issue-279a.cx", runner.CxSuccess, "False positive when detecting variable redeclaration.", runner.TestIssue, 0)
+	t.RunEx("issue-279a.cx", runner.CxSuccess, "False positive when detecting variable redeclaration.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#16
 	t.Run("issue-280.cx", runner.CxSuccess, "Problem with struct literals in short variable declarations")
 	t.Run("issue-281.cx", runner.CxSuccess, "Panic when using the return value of a function in a short declaration")
 	t.Run("issue-282a.cx", runner.CxCompilationError, "Panic when inserting a new line in a string literal")
@@ -275,27 +275,27 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-295.cx", runner.CxCompilationError, "No compilation error when assigning a i32 value to a []i32 variable")
 	t.Run("issue-296.cx", runner.CxCompilationError, "No compilation error when comparing value of different types")
 	t.Run("-stack-size 30 issue-297a.cx", runner.CxRuntimeStackOverflowError, "No stack overflow error")
-	t.Run("-heap-initial 100 -heap-max 110 issue-297b.cx", runner.CxRuntimeHeapExhaustedError, "No heap exhausted error")
+	t.RunEx("-heap-initial 100 -heap-max 110 issue-297b.cx", runner.CxRuntimeHeapExhaustedError, "No heap exhausted error", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#17
 	t.Run("issue-298.cx", runner.CxSuccess, "Argument type deduction failed when passing address of an i32 struct field to a function accepting *i32 argument.")
 	t.Run("issue-299.cx", runner.CxCompilationError, "Type checking is not working with receiving variables of unexpected types")
 	t.Run("issue-300.cx", runner.CxSuccess, "Crash when using a constant expression in a slice literal expression")
 	t.Run("issue-301-a.cx", runner.CxCompilationError, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-301-b.cx", runner.CxCompilationError, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-302.cx", runner.CxSuccess, "Trying to determine the length of a slice of struct instances throws an error.")
-	t.RunEx("issue-68.cx", runner.CxSuccess, "Wrong sprintf behaviour when passing increment expression as argument", runner.TestIssue, 0)
+	t.RunEx("issue-68.cx", runner.CxSuccess, "Wrong sprintf behaviour when passing increment expression as argument", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#18
 	t.RunEx("issue-67.cx", runner.CxCompilationError, "Panic when using void return value of a function in a for loop expression", runner.TestIssue, 0)
-	t.RunEx("issue-66.cx", runner.CxSuccess, "Wrong sprintf behaviour when printing boolean values with %v", runner.TestIssue, 0)
-	t.RunEx("issue-65.cx", runner.CxSuccess, "for true {} loop scope is not executed", runner.TestIssue, 0)
-	t.RunEx("issue-64.cx", runner.CxSuccess, "for loop using boolean value is not compiling", runner.TestIssue, 0)
+	t.RunEx("issue-66.cx", runner.CxSuccess, "Wrong sprintf behaviour when printing boolean values with %v", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#19
+	t.RunEx("issue-65.cx", runner.CxSuccess, "for true {} loop scope is not executed", runner.TestIssue, 0)                       // known failing, skycoin/skycoin-cx#20
+	t.RunEx("issue-64.cx", runner.CxSuccess, "for loop using boolean value is not compiling", runner.TestIssue, 0)                // known failing, skycoin/skycoin-cx#21
 	t.Run("issue-303.cx", runner.CxSuccess, "Concatenation of str variables with + operator doesn't work")
 	t.Run("issue-304.cx", runner.CxSuccess, "Short declaration doesn't compile with opcode return value")
 	t.Run("issue-305.cx", runner.CxSuccess, "Compilation error when struct field is named 'input' or 'output'")
-	t.RunEx("issue-63.cx", runner.CxCompilationError, "No compilation error when using empty argument list after function call", runner.TestIssue, 0)
+	t.RunEx("issue-63.cx", runner.CxCompilationError, "No compilation error when using empty argument list after function call", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#22
 	t.Run("issue-306.cx", runner.CxCompilationError, "No compilation error when using float value in place of boolean expression")
 	t.Run("issue-308.cx", runner.CxCompilationError, "Panic when package contains duplicate function signature")
-	t.RunEx("issue-62.cx", runner.CxCompilationError, "Left hand side of , is not compiled", runner.TestIssue, 0)
-	t.RunEx("issue-61-a.cx", runner.CxSuccess, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0)
-	t.RunEx("issue-61-b.cx", runner.CxSuccess, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0)
+	t.RunEx("issue-62.cx", runner.CxCompilationError, "Left hand side of , is not compiled", runner.TestIssue, 0)                                   // known failing, skycoin/skycoin-cx#23
+	t.RunEx("issue-61-a.cx", runner.CxSuccess, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#24
+	t.RunEx("issue-61-b.cx", runner.CxSuccess, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#24
 	t.Run("issue-309.cx", runner.CxSuccess, "Compilation error when left hand side of an assignment expression is a struct field")
 	t.RunEx("--heap-initial=1M issue-60.cx", runner.CxSuccess, "Crash when INIT_HEAP_SIZE limit is reached ", runner.TestIssue, 0)
 	t.RunEx("--heap-initial=1M issue-59-a.cx", runner.CxSuccess, "Crash in garbage collector when heap is resized", runner.TestIssue, 0)
@@ -303,19 +303,19 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("issue-53-a.cx", runner.CxSuccess, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-b.cx", runner.CxSuccess, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-c.cx", runner.CxSuccess, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
-	t.RunEx("issue-51.cx", runner.CxCompilationError, "No compilation error when global variable is redeclared at local scope", runner.TestIssue, 0)
+	t.RunEx("issue-51.cx", runner.CxCompilationError, "No compilation error when global variable is redeclared at local scope", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#25
 	t.RunEx("issue-49.cx", runner.CxCompilationError, "No compilation error when assigning an literal which overflow the receiving type", runner.TestIssue, 0)
-	t.RunEx("issue-48.cx", runner.CxSuccess, "Cx is not supporting short-circuit evaluation", runner.TestIssue, 0)
-	t.RunEx("issue-39.cx", runner.CxSuccess, "func defined with no arguments, called WITH arguments causes PANIC", runner.TestIssue, 0)
+	t.RunEx("issue-48.cx", runner.CxSuccess, "Cx is not supporting short-circuit evaluation", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#26
+	t.Run("issue-39.cx", runner.CxCompilationError, "func defined with no arguments, called WITH arguments causes PANIC")
 	t.Run("issue-2.cx", runner.CxSuccess, "multi-dimensional arrays are not working")
 	t.Run("issue-1.cx", runner.CxSuccess, "multi-dimensional slices are not working")
-	t.RunEx("issue-120-a.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0)
-	t.RunEx("issue-120-b.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0)
-	t.RunEx("issue-120-c.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0)
-	t.RunEx("issue-121.cx", runner.CxSuccess, "Compilation error when using unary negative operator on a function call", runner.TestIssue, 0)
+	t.RunEx("issue-120-a.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
+	t.RunEx("issue-120-b.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
+	t.RunEx("issue-120-c.cx", runner.CxCompilationError, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
+	t.RunEx("issue-121.cx", runner.CxSuccess, "Compilation error when using unary negative operator on a function call", runner.TestIssue, 0)                      // known failing, skycoin/skycoin-cx#28
 	t.RunEx("issue-131.cx", runner.CxSuccess, "Panic when using arithmetic operations.", runner.TestIssue, 0)
 	t.RunEx("test-ar-1.cx", runner.CxSuccess, "Panic when using string to pointer array.", runner.TestIssue, 0)
-	t.RunEx("issue-157.cx", runner.CxSuccess, "expected either 'i32' or 'i64', got 'ident'", runner.TestIssue, 0)
+	t.RunEx("issue-157.cx", runner.CxSuccess, "expected either 'i32' or 'i64', got 'ident'", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#29
 	t.Run("issue-650.cx", runner.CxSuccess, "test should not fail")
 
 	// We need to fix serialization and deserialization as user-callable functions

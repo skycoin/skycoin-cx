@@ -3,6 +3,10 @@ package parsingcompletor
 import (
 	"fmt"
 	"io"
+	"os"
+
+	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t3-ast"
 
 	"github.com/skycoin/skycoin-cx/t4-actions"
 )
@@ -47,7 +51,12 @@ func (yylex *Lexer) Next() int {
 func NewLexer(rdr io.Reader) *Lexer {
 	lx := &Lexer{}
 	lx.init(rdr, func(l, c int, msg string) {
-		panic(fmt.Sprintf("[%d:%d] %s\n", l, c, msg))
+		// The REPL recovers this panic and keeps going.
+		if ast.InREPL {
+			panic(fmt.Sprintf("[%d:%d] %s\n", l, c, msg))
+		}
+		println(ast.CompilationError(actions.CurrentFile, l), msg)
+		os.Exit(constants.CX_COMPILATION_ERROR)
 	})
 	return lx
 }

@@ -135,6 +135,10 @@ func Run(args []string) {
 		}
 	}
 
+	if options.stackSize != "" {
+		constants.STACK_SIZE = parseMemoryString(options.stackSize)
+	}
+
 	/*
 		options.minHeapFreeRatio checks for flags string "--min-heap-free"
 		$cx --min-heap-free
