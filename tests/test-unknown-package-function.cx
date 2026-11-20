@@ -1,0 +1,7 @@
+package main
+
+func main() {
+	var b bool = str.nosuchfn("a", "b")
+	bool.print(b)
+	str.nosuchfn("c")
+}
