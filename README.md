@@ -47,16 +47,16 @@ fails on a `recover(` call outside `vendor/`, and the sites that still break
 the rule are listed in `recover-allowlist.txt`, which only shrinks. See
 [docs/ErrorHandling.md](docs/ErrorHandling.md).
 
-State lives in one place. One State object holds every manager, and no
-state lives anywhere else, so there are no mutable package level variables.
-Each object type has an `<Obj>Def` file, a 64 bit generational index
-`<Obj>Gid` and an `<Obj>Mng` manager that holds the array of objects.
-Objects are created and returned only through their manager. A pointer kept
-at rest, in a struct field or a global, is a Gid instead. A pointer local to
-a function may stay. Work goes through the packages by tier, lowest first.
-Code that still breaks the rule is marked `// VIOLATION: state outside
-State`, `// VIOLATION: pointer at rest` or `// VIOLATION: created outside
-manager`, and the marks only go away. See skycoin/skycoin-cx#9.
+State lives in one place. One `CxIrState` holds a manager for each IR
+object type, and no state lives anywhere else, so there are no mutable
+package level variables. Each object type has a Def file, an `<Obj>Mng`
+manager that holds the array of objects, and an `<Obj>Gid` 64 bit
+generational index. Objects are allocated and released only through their
+manager, and a pointer kept at rest is a Gid instead. See
+[docs/ObjectModel.md](docs/ObjectModel.md). Code that still breaks the rule
+is marked `// OBJMODEL:` with its target and issue, or `// VIOLATION: state
+outside State` for package state that is not an IR object, and the marks
+only go away.
 
 
 ## Install

@@ -52,3 +52,10 @@ document or check script.
 12. **Compiler IR.** What the compiler emits, the in-memory program and its
     serialized form, is described in [IR.md](IR.md). A change to the IR or
     the serialized form updates it.
+13. **Object model.** Every IR object type has a Def file, an `<Obj>Mng`
+    manager that is the only place objects are allocated and released, and
+    an `<Obj>Gid` generational index. One `CxIrState` owns every manager,
+    no pointer to an object is kept at rest, and every manager's Len is 0
+    after teardown. Files are named `<obj>_def.go`, `<obj>_mng.go`,
+    `<obj>_gid.go`, `<obj>_fon.go` and `<obj>_fof.go`. See
+    [ObjectModel.md](ObjectModel.md).

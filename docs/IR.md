@@ -120,8 +120,9 @@ such as `CXFunctionIndex`.
 | `TypeSignatureForStructs` | `CXTypeSignature_Struct` | `int` | `GetCXTypeSignatureStructFromArray` |
 
 Several fields still hold Go pointers instead of indexes. Each is marked
-`// VIOLATION: pointer at rest` in the source and is tracked in
-[#8](https://github.com/skycoin/skycoin-cx/issues/8). They are
+in the source and becomes a generational index under the object model in
+[ObjectModel.md](ObjectModel.md), tracked in
+[#299](https://github.com/skycoin/skycoin-cx/issues/299). They are
 `CXPackage.Globals`, `CXFunction.Inputs`, `CXFunction.Outputs`,
 `CXFunction.ListOfPointers`, `CXAtomicOperator.Inputs`,
 `CXAtomicOperator.Outputs`, `CXArgument.StructType`,
@@ -703,5 +704,7 @@ moved with build tags
 * `CX_ARGUMENT`, the `TYPE_ARRAY_STRUCT` to `TYPE_SLICE_POINTER_COMPLEX`
   signatures and `OP_ABS_JMP` are defined but never produced by the
   compiler.
-* Several fields still hold Go pointers instead of arena indexes
-  ([#8](https://github.com/skycoin/skycoin-cx/issues/8)).
+* Several fields still hold Go pointers instead of arena indexes, and the
+  getters return pointers into arenas that `append` can move. See
+  [ObjectModel.md](ObjectModel.md)
+  ([#299](https://github.com/skycoin/skycoin-cx/issues/299)).

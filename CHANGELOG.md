@@ -11,6 +11,7 @@
 
 #### Added
 
+- `docs/ObjectModel.md`, the object model standard for the compiler IR. Def, Mng and Gid files per object type, the generational index layout, one `CxIrState` owning every manager, no pointers at rest, and every manager empty at teardown. `docs/objectmodel-sites.csv` lists every site still to migrate, and `BenchmarkCompile` in `t11-cx` is the compile speed baseline (#299)
 - `docs/IR.md`, what the compiler emits. It describes the in-memory program the VM runs, its arenas, expressions, operands and memory layout, a compiled example, and the serialized form
 - `str.equal_by_value`, `str.equal_by_pointer` and `str.compare_by_value` (#184)
 - Serialized programs carry the language version `constants.LanguageVersionCurrent`, the integer yymmddnnnn, in `CXProgram.Version`, and `Deserialize` rejects a program from another version (#183, #197, #296)
