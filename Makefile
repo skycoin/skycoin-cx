@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-tests test test-all test-go vet check-tiers check-inits check build-parser clean help
+.PHONY: build build-gui build-debug build-tests test test-all test-go vet vet-gui check-tiers check-inits check build-parser clean help
 
 CXEXE := cx
 ifeq ($(OS),Windows_NT)
@@ -32,9 +32,11 @@ test-all: build-tests ## Run all non-GUI CX program tests, including known issue
 test-go: ## Run the Go unit tests
 	go test ./...
 
-vet: ## go vet with default, ptr64 and cxfx tags
+vet: ## go vet with default and ptr64 tags
 	go vet ./...
 	go vet -tags ptr64 ./t0-types ./t3-ast
+
+vet-gui: ## go vet with the cxfx tag (needs cgo and X11/GL/OpenAL headers)
 	go vet -tags cxfx ./t6-cxfx ./t7-init ./t11-cx
 
 check-tiers: ## Check that packages only import lower tiers and sit at <dir>/<file>.go
