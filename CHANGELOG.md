@@ -30,6 +30,7 @@
 
 #### Changed
 
+- Every program has its own `CxIrState`, reached through `CXProgram.CxIrState` until phase 5 of `CXProgram`. `MakeProgram` and `Deserialize` make and initialize it, see "Until the program is managed" in `docs/ObjectModel.md`. The `CXArgumentDebug` allocation sites stay as they are until its Gid phase, because the object is shared through a pointer field (#299, #306)
 - Each IR struct of `t3-ast` lives in its own `<obj>_def.go`, for example `cxargument_def.go`, as the object model asks. `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer`, which nothing used, are removed (#299)
 - Every site the object model will change, 1628 in all, carries a two line `// OBJMODEL:` comment with its target manager call or Gid, its phase, its issue and its id in `docs/objectmodel-sites.csv`. The `// VIOLATION:` comments for IR objects are gone (#299)
 - `t3-ast/tostring.go` prints struct values through one helper and reads atomic values through one switch, and the array and pointer array branches of `GetPrintableValue` are one. The output is unchanged (#238)

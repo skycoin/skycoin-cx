@@ -8,8 +8,8 @@ import (
 )
 
 // CxIrState holds one manager of each IR object type and is the only owner of
-// every IR object, see docs/ObjectModel.md. Nothing uses it yet, #299 stage 4
-// moves the allocation sites onto it.
+// every IR object, see docs/ObjectModel.md. Until phase 5 of CXProgram a
+// program reaches its state through CXProgram.CxIrState.
 type CxIrState struct {
 	CXProgramMng              CXProgramMng
 	CXPackageMng              CXPackageMng

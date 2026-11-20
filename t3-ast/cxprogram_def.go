@@ -46,6 +46,10 @@ type CXProgram struct {
 	TypeSignatureForStructs []CXTypeSignature_Struct
 	// Then reference the package of function by CxFunction id
 
+	// CxIrState owns this program's IR objects. The program reaches it here until
+	// phase 5 of CXProgram passes the state itself, see docs/ObjectModel.md.
+	CxIrState *CxIrState
+
 	// For Initializers
 	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
 	// Now objects held by value, site S0187.

@@ -1369,7 +1369,8 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 	}
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a heap literal, site S0462.
-	prgrm := &CXProgram{}
+	prgrm := &CXProgram{CxIrState: &CxIrState{}}
+	prgrm.CxIrState.CxIrStateInit()
 	var s SerializedCXProgram
 	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
 		return nil, err

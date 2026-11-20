@@ -23,7 +23,9 @@ func newTestProgram() *ast.CXProgram {
 		Stack:     ast.StackSegmentStruct{Size: constants.STACK_SIZE},
 		Data:      ast.DataSegmentStruct{StartsAt: constants.STACK_SIZE},
 		Heap:      ast.HeapSegmentStruct{StartsAt: constants.STACK_SIZE, Size: ast.MinHeapSize(), Pointer: constants.NULL_HEAP_ADDRESS_OFFSET},
+		CxIrState: &ast.CxIrState{},
 	}
+	prgrm.CxIrState.CxIrStateInit()
 	types.Allocator = ast.AllocateSeq
 	RegisterPackage(prgrm)
 	return prgrm

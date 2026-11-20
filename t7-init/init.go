@@ -30,6 +30,8 @@ func RegisterPackages(prgrm *ast.CXProgram) {
 // Now a constructor, site S1460.
 func MakeProgram() *ast.CXProgram {
 	minHeapSize := ast.MinHeapSize()
+	state := &ast.CxIrState{}
+	state.CxIrStateInit()
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a heap literal, site S1461.
 	newPrgrm := &ast.CXProgram{
@@ -54,8 +56,9 @@ func MakeProgram() *ast.CXProgram {
 		},
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 		// Now a slice of objects, site S1464.
-		CXArgs:  make([]ast.CXArgument, 0),
-		Version: constants.LanguageVersionCurrent,
+		CXArgs:    make([]ast.CXArgument, 0),
+		Version:   constants.LanguageVersionCurrent,
+		CxIrState: state,
 	}
 
 	return newPrgrm

@@ -185,7 +185,7 @@ S0183,CXTypeSignature,get-call,t3-ast/ast_cxpackage.go,281,CXPackage.AddGlobal,p
 S0184,CXTypeSignature,get-call,t3-ast/ast_cxpackage.go,295,CXPackage.AddGlobal_TypeSignature,prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0185,CXTypeSignature,get-call,t3-ast/ast_cxpackage.go,300,CXPackage.AddGlobal_TypeSignature,prgrm.GetCXTypeSignatureFromArray(fieldIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0186,CXCall,value-field,t3-ast/cxprogram_def.go,28,type CXProgram,CXProgram.CallStack []CXCall,[]CXCallGid or CXCallGid,5-gid,367,CXCall phase 4-alloc
-S0187,CXExpression,value-field,t3-ast/cxprogram_def.go,52,type CXProgram,CXProgram.SysInitExprs []CXExpression,[]CXExpressionGid or CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
+S0187,CXExpression,value-field,t3-ast/cxprogram_def.go,56,type CXProgram,CXProgram.SysInitExprs []CXExpression,[]CXExpressionGid or CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
 S0188,CXPackage,arena-add,t3-ast/ast_cxprogram.go,39,CXProgram.AddPackage,cxprogram.AddPackageInArray(mod),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0189,CXPackage,arena-append,t3-ast/ast_cxprogram.go,52,CXProgram.AddPackageInArray,"append(cxprogram.CXPackages, *pkg)",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0190,CXPackage,get-addr-arena,t3-ast/ast_cxprogram.go,64,CXProgram.GetPackageFromArray,&cxprogram.CXPackages[index],state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
@@ -460,9 +460,9 @@ S0458,CXAtomicOperator,arena-add,t3-ast/serialize.go,1260,deserializeExpression,
 S0459,CXFunction,alloc-copy,t3-ast/serialize.go,1288,deserializeFunction,prgrm.CXFunctions[fn.Index] = *fn,state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0460,CXCall,make-slice,t3-ast/serialize.go,1327,initDeserialization,"make([]CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
 S0461,CXProgram,ctor-def,t3-ast/serialize.go,1363,Deserialize,func Deserialize,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S0462,CXProgram,alloc-literal-heap,t3-ast/serialize.go,1372,Deserialize,&CXProgram{},state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S0463,CXPackage,make-slice,t3-ast/serialize.go,1390,packagesByName,"make([]*CXPackage, 0, len(prgrm.Packages))",state.CXPackageMng (manager storage) or []CXPackageGid,4-alloc,361,CXPackage phase 2-mng
-S0464,CXPackage,get-call,t3-ast/serialize.go,1394,packagesByName,prgrm.GetPackageFromArray(prgrm.Packages[name]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
+S0462,CXProgram,alloc-literal-heap,t3-ast/serialize.go,1372,Deserialize,&CXProgram{CxIrState: &CxIrState{}},state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
+S0463,CXPackage,make-slice,t3-ast/serialize.go,1391,packagesByName,"make([]*CXPackage, 0, len(prgrm.Packages))",state.CXPackageMng (manager storage) or []CXPackageGid,4-alloc,361,CXPackage phase 2-mng
+S0464,CXPackage,get-call,t3-ast/serialize.go,1395,packagesByName,prgrm.GetPackageFromArray(prgrm.Packages[name]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0465,CXTypeSignature,get-call,t3-ast/stack.go,33,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0466,CXPackage,get-call,t3-ast/stack.go,40,CXProgram.PrintStack,cxprogram.GetPackageFromArray(input.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0467,CXTypeSignature,get-call,t3-ast/stack.go,51,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(outputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
@@ -1418,13 +1418,13 @@ S1416,CXArgument,ctor-call,t5-regexp/init.go,36,RegisterPackage,"ast.MakeStructP
 S1417,CXArgument,ctor-call,t5-regexp/init.go,39,RegisterPackage,"ast.MakeStructParameter(prgrm, ""regexp"", ""Regexp"", ""r"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1418,CXProgram,alloc-literal-heap,t5-regexp/op_regexp_test.go,16,newTestProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex), CurrentPackage: -1, CallSta...",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1419,CXCall,make-slice,t5-regexp/op_regexp_test.go,21,newTestProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
-S1420,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,36,strValue,&ast.CXTypeSignature{Offset: offset},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1421,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,44,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 100},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1422,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,48,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1423,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,51,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 400},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1424,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,71,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1425,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,74,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1426,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,91,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1420,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,38,strValue,&ast.CXTypeSignature{Offset: offset},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1421,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,46,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 100},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1422,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,50,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1423,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,53,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 400},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1424,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,73,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1425,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,76,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1426,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,93,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1427,CXPackage,ctor-call,t5-tcp/init.go,12,RegisterPackage,"ast.MakePackage(""tcp"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1428,CXPackage,arena-add,t5-tcp/init.go,15,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1429,CXPackage,get-call,t5-tcp/init.go,18,RegisterPackage,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
@@ -1459,10 +1459,10 @@ S1457,CXArgument,ctor-call,t6-cxfx/init.go,289,RegisterPackage,ast.Slice(types.I
 S1458,CXArgument,ctor-call,t6-cxfx/init.go,294,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1459,CXArgument,ctor-call,t6-cxfx/init.go,298,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1460,CXProgram,ctor-def,t7-init/init.go,31,MakeProgram,func MakeProgram,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S1461,CXProgram,alloc-literal-heap,t7-init/init.go,35,MakeProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex, 0), CXFunctions: make([]ast....",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S1462,CXFunction,make-slice,t7-init/init.go,39,MakeProgram,"make([]ast.CXFunction, 0)",state.CXFunctionMng (manager storage) or []CXFunctionGid,4-alloc,351,CXFunction phase 2-mng
-S1463,CXCall,make-slice,t7-init/init.go,43,MakeProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
-S1464,CXArgument,make-slice,t7-init/init.go,57,MakeProgram,"make([]ast.CXArgument, 0)",state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
+S1461,CXProgram,alloc-literal-heap,t7-init/init.go,37,MakeProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex, 0), CXFunctions: make([]ast....",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
+S1462,CXFunction,make-slice,t7-init/init.go,41,MakeProgram,"make([]ast.CXFunction, 0)",state.CXFunctionMng (manager storage) or []CXFunctionGid,4-alloc,351,CXFunction phase 2-mng
+S1463,CXCall,make-slice,t7-init/init.go,45,MakeProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
+S1464,CXArgument,make-slice,t7-init/init.go,59,MakeProgram,"make([]ast.CXArgument, 0)",state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1465,CXProgram,ctor-call,t7-init/opcodes_test.go,16,TestRegisteredOpcodesMatchLifecycleTable,MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1466,CXProgram,ctor-call,t8-cxparsingcompletor/init.go,24,InitCXCore,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1467,CXProgram,drop,t8-cxparsingcompletor/init.go,24,InitCXCore,actions.AST = cxinit.MakeProgram(),state.CXProgramMng.CXProgramRelease(gid),4-alloc,371,CXProgram phase 2-mng

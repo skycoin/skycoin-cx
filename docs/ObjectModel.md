@@ -353,6 +353,22 @@ type CxIrStateManagerLen struct {
   them into `CxIrState` is part of the `CXNativeFunction` allocation
   phase.
 
+### Until the program is managed
+
+The compiler passes `prgrm *CXProgram` to almost every function today, and
+stage 4 does not change that. Each program points at its state through
+`CXProgram.CxIrState`, which `MakeProgram`, `Deserialize` and the test
+helpers that build a program set to a new, initialized `CxIrState`. A site
+reaches its manager as `prgrm.CxIrState.<Obj>Mng`, so stage 4 changes no
+signature, and two programs in one process never share a manager.
+
+The field points at the state, not at a managed object, so rule 3 does not
+apply to it. It goes in phase 5 of `CXProgram`, when `state *CxIrState`
+replaces `prgrm *CXProgram` as the parameter and the program becomes the
+one object in `state.CXProgramMng`. A site whose function has no program in
+scope, such as `MakeArgument`, gets one in the phase of the object that
+function makes.
+
 ## Rules
 
 1. **Every object is held by its manager.** Nothing else owns an object of a
@@ -539,6 +555,11 @@ constructors create it.
 | 4 | `CXAtomicOperator` (16, 91), `CXExpression` (119, 9) | 135 | 100 |
 | 5 | `CXFunction` (45, 89), `CXNativeFunction` (6, 0) | 51 | 89 |
 | 6 | `CXPackage` (49, 90), `CXCall` (9, 1), `CXProgram` (57, 2) | 115 | 93 |
+
+`CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
+the object in `ArgDetails`, a pointer field that a `CXArgument` and its
+`CXTypeSignature` share and write through, so it cannot move into the manager
+before that field is a `CXArgumentDebugGid` (#306, #307).
 
 
 
