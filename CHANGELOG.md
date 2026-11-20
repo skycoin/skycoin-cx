@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- `os.Run` with an empty command returned `OS_RUN_START_FAILED` instead of `OS_RUN_EMPTY_CMD`. It split the command on single spaces, so two spaces passed an empty argument and quotes were passed through. It now splits on runs of spaces and tabs, and single or double quotes group a word (#118)
 - Every `regexp.Compile`, `regexp.MustCompile` and `Regexp.Find` call added an argument to the program, so a loop grew it without bound. A failed `regexp.Compile` stored a nil `Regexp`, and `Find` on it was a Go nil dereference. It is now a `CX_RUNTIME_ERROR` (#120)
 - Running with an op limit (`RunCompiled` with `maxOps` above 0) printed a step trace into the program's output, grew the program, and could stop an unfinished program as terminated. The limit now only counts operations, and the tracer is removed (#110)
 - Some compile errors and runtime errors reported line 0, because identifier and number tokens lost their line in the lexer (#217)

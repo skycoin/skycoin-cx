@@ -5,6 +5,7 @@ package cxos
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -797,19 +798,19 @@ func opOsRun(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) 
 
 	command := inputs[0].Get_str(prgrm)
 	dir := inputs[3].Get_str(prgrm)
-	args := strings.Split(command, " ")
-	if len(args) <= 0 {
+	args, err := splitCommand(command)
+	if err != nil || len(args) == 0 {
 		runError = OS_RUN_EMPTY_CMD
+		if err != nil {
+			runError = OS_RUN_START_FAILED
+		}
+		outputs[0].Set_i32(prgrm, runError)
+		outputs[1].Set_i32(prgrm, 0)
+		outputs[2].Set_str(prgrm, "")
+		return
 	}
 
-	name := args[0]
-	if len(args) > 1 {
-		args = args[1:]
-	} else {
-		args = []string{}
-	}
-
-	cmd := exec.Command(name, args...)
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -861,4 +862,43 @@ func opOsRun(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) 
 	outputs[0].Set_i32(prgrm, runError)
 	outputs[1].Set_i32(prgrm, cmdError)
 	outputs[2].Set_str(prgrm, string(stdOutBytes))
+}
+
+// splitCommand splits an os.Run command into words at spaces and tabs.
+// Single or double quotes group a word. Backslashes are literal, so
+// Windows paths need no escaping.
+func splitCommand(command string) ([]string, error) {
+	var args []string
+	var word strings.Builder
+	inWord := false
+	var quote rune
+	for _, c := range command {
+		switch {
+		case quote != 0:
+			if c == quote {
+				quote = 0
+			} else {
+				word.WriteRune(c)
+			}
+		case c == '\'' || c == '"':
+			quote = c
+			inWord = true
+		case c == ' ' || c == '\t' || c == '\n' || c == '\r':
+			if inWord {
+				args = append(args, word.String())
+				word.Reset()
+				inWord = false
+			}
+		default:
+			word.WriteRune(c)
+			inWord = true
+		}
+	}
+	if quote != 0 {
+		return nil, fmt.Errorf("unterminated %c quote", quote)
+	}
+	if inWord {
+		args = append(args, word.String())
+	}
+	return args, nil
 }

@@ -182,6 +182,7 @@ func runTestCases(t *runner.TestRunner) {
 	)
 	t.Run("test-pointer-equality.cx", types.CX_SUCCESS, "pointer == and != compare addresses (skycoin-cx#183)")
 	t.Run("test-os-getwd.cx", types.CX_SUCCESS, "os.GetWorkingDirectory (skycoin-cx#117)")
+	t.Run("test-os-run-empty.cx", types.CX_SUCCESS, "os.Run with an empty command returns OS_RUN_EMPTY_CMD")
 	t.Run("test-cx-constants.cx", types.CX_SUCCESS, "cx package constants (skycoin-cx#84)")
 	t.Run("test-tcp.cx", types.CX_SUCCESS, "tcp package (skycoin-cx#115)")
 	t.Run("test-utils.cx test-pointers.cx", types.CX_SUCCESS, "pointers")

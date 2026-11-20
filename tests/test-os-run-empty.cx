@@ -1,0 +1,13 @@
+package main
+
+import "os"
+
+func main() {
+	var runError i32
+	var cmdError i32
+	var out str
+	runError, cmdError, out = os.Run("", 1024, 2000, "")
+	test(runError, 1, "empty command is not OS_RUN_EMPTY_CMD")
+	runError, cmdError, out = os.Run("   ", 1024, 2000, "")
+	test(runError, 1, "blank command is not OS_RUN_EMPTY_CMD")
+}
