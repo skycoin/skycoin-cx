@@ -459,9 +459,10 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterFunction(prgrm, "f64.min", opF64Min, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64))
 	RegisterFunction(prgrm, "f64.rand", opF64Rand, nil, Out(ast.ConstCxArg_F64))
 
-	RegisterOperator(prgrm, "str.eq", opStrEq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_EQUAL)
-	RegisterOperator(prgrm, "str.uneq", opStrUneq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_UNEQUAL)
-	RegisterOperator(prgrm, "str.concat", opStrConcat, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_STR), types.STR, constants.OP_ADD)
+	RegisterFunction(prgrm, "str.concat", opStrConcat, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_STR))
+	RegisterFunction(prgrm, "str.equal_by_value", opStrEqualByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
+	RegisterFunction(prgrm, "str.equal_by_pointer", opStrEqualByPointer, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
+	RegisterFunction(prgrm, "str.compare_by_value", opStrCompareByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
 	RegisterFunction(prgrm, "str.i8", opStrToI8, In(ast.ConstCxArg_STR), Out(ast.ConstCXArg_I8))
 	RegisterFunction(prgrm, "str.i16", opStrToI16, In(ast.ConstCxArg_STR), Out(ast.ConstCxArg_I16))
 	RegisterFunction(prgrm, "str.i32", opStrToI32, In(ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
@@ -478,6 +479,9 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterFunction(prgrm, "str.lastindex", opStrLastIndex, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
 	RegisterFunction(prgrm, "str.trimspace", opStrTrimSpace, In(ast.ConstCxArg_STR), Out(ast.ConstCxArg_STR))
 
+	RegisterOperator(prgrm, "ptr.eq", opPtrEq, In(ast.ConstCxArg_PTR, ast.ConstCxArg_PTR), Out(ast.ConstCxArg_BOOL), types.POINTER, constants.OP_EQUAL)
+	RegisterOperator(prgrm, "ptr.uneq", opPtrUneq, In(ast.ConstCxArg_PTR, ast.ConstCxArg_PTR), Out(ast.ConstCxArg_BOOL), types.POINTER, constants.OP_UNEQUAL)
+
 	RegisterFunction(prgrm, "panicIf", opPanicIf, In(ast.ConstCxArg_BOOL, ast.ConstCxArg_STR), nil)
 	RegisterFunction(prgrm, "panicIfNot", opPanicIfNot, In(ast.ConstCxArg_BOOL, ast.ConstCxArg_STR), nil)
 	RegisterFunction(prgrm, "strerror", opStrError, In(ast.ConstCxArg_I32), Out(ast.ConstCxArg_STR))
@@ -491,13 +495,4 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 
 	//RegisterOpCode(prgrm,OP_EVOLVE_EVOLVE, "evolve.evolve", opEvolve, In(Slice(TYPE_AFF), Slice(TYPE_AFF), Slice(TYPE_F64), Slice(TYPE_F64), ConstCxArg_I32, ConstCxArg_I32, ConstCxArg_I32, ConstCxArg_F64), nil)
 	//RegisterOpCode(prgrm,OP_EVOLVE_EVOLVE, "evolve.evolve", opEvolve, In(Slice(TYPE_AFF), Slice(TYPE_AFF), Slice(TYPE_AFF), Slice(TYPE_AFF), Slice(TYPE_AFF), ConstCxArg_I32, ConstCxArg_I32, ConstCxArg_I32, ConstCxArg_F64), nil)
-
-	// Registered last so the opcode numbers stored in serialized programs do not shift.
-	RegisterOperator(prgrm, "str.lt", opStrLt, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_LT)
-	RegisterOperator(prgrm, "str.lteq", opStrLteq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_LTEQ)
-	RegisterOperator(prgrm, "str.gt", opStrGt, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_GT)
-	RegisterOperator(prgrm, "str.gteq", opStrGteq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_GTEQ)
-	RegisterFunction(prgrm, "str.equal_by_value", opStrEqualByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
-	RegisterFunction(prgrm, "str.equal_by_pointer", opStrEqualByPointer, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
-	RegisterFunction(prgrm, "str.compare_by_value", opStrCompareByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
 }

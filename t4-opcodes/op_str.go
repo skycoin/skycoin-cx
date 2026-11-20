@@ -89,36 +89,6 @@ func opStrToF64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 	outputs[0].Set_f64(prgrm, float64(outV0))
 }
 
-func opStrEq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) == inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
-func opStrUneq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) != inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
-func opStrLt(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) < inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
-func opStrLteq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) <= inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
-func opStrGt(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) > inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
-func opStrGteq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0 := inputs[0].Get_str(prgrm) >= inputs[1].Get_str(prgrm)
-	outputs[0].Set_bool(prgrm, outV0)
-}
-
 func opStrPrint(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	fmt.Println(inputs[0].Get_str(prgrm))
 }

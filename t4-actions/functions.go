@@ -241,6 +241,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 
 		CheckTypes(prgrm, fn.Expressions, i)
 		CheckUndValidTypes(prgrm, &expr)
+		checkOperatorOperands(prgrm, fn.Expressions, i)
 		ProcessTypedOperator(prgrm, &expr)
 		if expr.IsScopeDel() {
 			symbolsData.symbolsIndex = (symbolsData.symbolsIndex)[:len(symbolsData.symbolsIndex)-1]
@@ -269,14 +270,7 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		return
 	}
 	if ast.IsOperator(expressionOperator.AtomicOPCode) {
-		expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
-
-		var atomicType types.Code
-		if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-			atomicType = prgrm.CXArgs[expressionInputTypeSig.Meta].GetType(prgrm)
-		} else {
-			atomicType = expressionInputTypeSig.GetType(prgrm)
-		}
+		atomicType := operatorOperandType(prgrm, expression.GetInputs(prgrm)[0])
 
 		typedOp := ast.GetTypedOperator(atomicType, expressionOperator.AtomicOPCode)
 		if typedOp == nil {
@@ -286,6 +280,108 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		expressionOperator.AtomicOPCode = typedOp.AtomicOPCode
 
 	}
+}
+
+// operatorOperandType returns the type an operator dispatches on for one
+// operand. A pointer that is not dereferenced dispatches as types.POINTER.
+func operatorOperandType(prgrm *ast.CXProgram, sigIdx ast.CXTypeSignatureIndex) types.Code {
+	sig := prgrm.GetCXTypeSignatureFromArray(sigIdx)
+	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		if sig.Type == ast.TYPE_POINTER_ATOMIC {
+			return types.POINTER
+		}
+		return sig.GetType(prgrm)
+	}
+
+	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+	if declaredAsPointer(arg.GetAssignmentElement(prgrm).DeclarationSpecifiers) {
+		return types.POINTER
+	}
+	return arg.GetType(prgrm)
+}
+
+// declaredAsPointer reports whether the outermost declaration specifier left
+// after dereferences and indexing is a pointer.
+func declaredAsPointer(specs []int) bool {
+	var stack []int
+	for _, spec := range specs {
+		switch spec {
+		case constants.DECL_DEREF, constants.DECL_INDEXING:
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+		default:
+			stack = append(stack, spec)
+		}
+	}
+	return len(stack) > 0 && stack[len(stack)-1] == constants.DECL_POINTER
+}
+
+var operatorSymbols = map[int]string{
+	constants.OP_EQUAL:    "==",
+	constants.OP_UNEQUAL:  "!=",
+	constants.OP_LT:       "<",
+	constants.OP_GT:       ">",
+	constants.OP_LTEQ:     "<=",
+	constants.OP_GTEQ:     ">=",
+	constants.OP_BITAND:   "&",
+	constants.OP_BITOR:    "|",
+	constants.OP_BITXOR:   "^",
+	constants.OP_BITCLEAR: "&^",
+	constants.OP_BITSHL:   "<<",
+	constants.OP_BITSHR:   ">>",
+	constants.OP_MUL:      "*",
+	constants.OP_DIV:      "/",
+	constants.OP_MOD:      "%",
+	constants.OP_ADD:      "+",
+	constants.OP_SUB:      "-",
+	constants.OP_NEG:      "-",
+}
+
+// checkOperatorOperands rejects the operators that language revision 1
+// removed: every operator on str, and ordering on pointers.
+func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, currIndex)
+	if err != nil {
+		panic(err)
+	}
+	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	if expressionOperator == nil || !ast.IsOperator(expressionOperator.AtomicOPCode) || len(expression.GetInputs(prgrm)) == 0 {
+		return
+	}
+
+	opCode := expressionOperator.AtomicOPCode
+	sym := operatorSymbols[opCode]
+	var msg string
+	switch operatorOperandType(prgrm, expression.GetInputs(prgrm)[0]) {
+	case types.STR:
+		switch opCode {
+		case constants.OP_EQUAL, constants.OP_UNEQUAL:
+			msg = fmt.Sprintf("str %s str is not allowed, use str.equal_by_value or str.equal_by_pointer", sym)
+		case constants.OP_LT, constants.OP_GT, constants.OP_LTEQ, constants.OP_GTEQ:
+			msg = fmt.Sprintf("str %s str is not allowed, use str.compare_by_value", sym)
+		case constants.OP_ADD:
+			msg = "str + str is not allowed, use str.concat"
+		default:
+			msg = fmt.Sprintf("operator %s is not allowed on str, strings have no arithmetic operators", sym)
+		}
+	case types.POINTER:
+		switch opCode {
+		case constants.OP_LT, constants.OP_GT, constants.OP_LTEQ, constants.OP_GTEQ:
+			msg = fmt.Sprintf("pointer %s pointer is not allowed, pointers support only == and !=", sym)
+		}
+	}
+	if msg == "" {
+		return
+	}
+
+	file, line := CurrentFile, LineNo
+	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != nil && sig.ArgDetails.FileLine > 0 {
+		file, line = sig.ArgDetails.FileName, sig.ArgDetails.FileLine
+	} else if exprCXLine, err := prgrm.GetPreviousCXLine(exprs, currIndex); err == nil && exprCXLine.LineNumber > 0 {
+		file, line = exprCXLine.FileName, exprCXLine.LineNumber
+	}
+	println(ast.CompilationError(file, line), msg)
 }
 
 // FunctionCall completes the array of expressions for postfix function call.

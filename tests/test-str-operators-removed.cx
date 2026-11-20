@@ -1,0 +1,34 @@
+// Language revision 1 removed every built-in operator on str.
+// https://github.com/skycoin/skycoin-cx/issues/183
+
+package main
+
+func main() {
+	var a str
+	var b str
+	var c bool
+	var s str
+	a = "a"
+	b = "b"
+	c = a == b
+	c = a != b
+	c = a < b
+	c = a > b
+	c = a <= b
+	c = a >= b
+	s = a + b
+	s = a - b
+	s = a * b
+	s = a / b
+	s = a % b
+	s = a & b
+	s = a | b
+	s = a ^ b
+	s = a &^ b
+	s = a << b
+	s = a >> b
+	s = -a
+	a += b
+	bool.print(c)
+	str.print(s)
+}

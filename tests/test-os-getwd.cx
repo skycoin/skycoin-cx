@@ -7,7 +7,7 @@ import "os"
 func main() {
 	var wd str
 	wd = os.GetWorkingDirectory()
-	test(wd != "", true, "working directory is empty")
+	test(str.equal_by_value(wd, ""), false, "working directory is empty")
 
 	var handle i32
 	handle = os.Open(str.concat(wd, "testdata/json/test-0.json"))

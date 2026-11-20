@@ -1,0 +1,19 @@
+// Language revision 1 removed <, >, <= and >= on pointers.
+// https://github.com/skycoin/skycoin-cx/issues/183
+
+package main
+
+func main() {
+	var a i32
+	var b i32
+	var p *i32
+	var q *i32
+	var c bool
+	p = &a
+	q = &b
+	c = p < q
+	c = p > q
+	c = p <= q
+	c = p >= q
+	bool.print(c)
+}

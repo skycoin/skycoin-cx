@@ -1,0 +1,45 @@
+// Pointers keep == and != in language revision 1, and compare addresses.
+// https://github.com/skycoin/skycoin-cx/issues/183
+
+package main
+
+func main() {
+	var a i32
+	var b i32
+	a = 5
+	b = 5
+	var p *i32
+	var q *i32
+	var r *i32
+	p = &a
+	q = &b
+	r = p
+	test(p == q, false, "*i32 == distinct")
+	test(p == r, true, "*i32 == same")
+	test(p != q, true, "*i32 != distinct")
+	test(p != r, false, "*i32 != same")
+	test(*p == *q, true, "dereferenced values compare as i32")
+	test(*p < 6, true, "dereferenced values keep ordering")
+
+	var c i64
+	var d i64
+	var m *i64
+	var n *i64
+	m = &c
+	n = &d
+	test(m == n, false, "*i64 == distinct")
+	test(m == m, true, "*i64 == same")
+
+	var x str
+	var y str
+	x = "same"
+	y = "same"
+	var s *str
+	var t *str
+	s = &x
+	t = &y
+	test(s == t, false, "*str == distinct")
+	test(s != t, true, "*str != distinct")
+	test(s == s, true, "*str == same")
+	test(str.equal_by_value(*s, *t), true, "dereferenced str compares by value")
+}

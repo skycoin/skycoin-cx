@@ -69,7 +69,7 @@ func main()() {
 		var matchStrB bool
 		panic(args.Str("++strb=", "strb", &strB, &matchStrB), true, "valid str argument")
 		panic(matchStrB, true, "strb must match")
-		panic(str.eq(strB, ""), true, "str values must match")
+		panic(str.equal_by_value(strB, ""), true, "str values must match")
 	}
 
 	{
@@ -77,7 +77,7 @@ func main()() {
 		var matchStrC bool
 		panic(args.Str("++strc=args", "strc", &strC, &matchStrC), true, "valid str argument")
 		panic(matchStrC, true, "strc must match")
-		panic(str.eq(strC, "args"), true, "str values must match")
+		panic(str.equal_by_value(strC, "args"), true, "str values must match")
 	}
 
 	{
@@ -151,7 +151,7 @@ func main()() {
 		panic(args.StrSlice("++c[]str=,", "c[]str", &strSC, &matchSC), true, "valid []str argument")
 		panic(matchSC, true, "c[]str must match")
 		panic(len(strSC), 1, "len must be 1")
-		panic(str.eq(strSC[0], ""), true, "[]str don't match")
+		panic(str.equal_by_value(strSC[0], ""), true, "[]str don't match")
 	}
 
 	{
@@ -160,8 +160,8 @@ func main()() {
 		panic(args.StrSlice("++d[]str=,,", "d[]str", &strSD, &matchSD), true, "valid []str argument")
 		panic(matchSD, true, "d[]str must match")
 		panic(len(strSD), 2, "len must be 2")
-		panic(str.eq(strSD[0], ""), true, "[]str don't match")
-		panic(str.eq(strSD[1], ""), true, "[]str don't match")
+		panic(str.equal_by_value(strSD[0], ""), true, "[]str don't match")
+		panic(str.equal_by_value(strSD[1], ""), true, "[]str don't match")
 	}
 
 	{
@@ -170,10 +170,10 @@ func main()() {
 		panic(args.StrSlice("++e[]str=,arg0,arg1,arg2", "e[]str", &strSE, &matchSE), true, "valid []str argument")
 		panic(matchSE, true, "e[]str must match")
 		panic(len(strSE), 4, "len must be 4")
-		panic(str.eq(strSE[0], ""), true, "[]str don't match")
-		panic(str.eq(strSE[1], "arg0"), true, "[]str don't match")
-		panic(str.eq(strSE[2], "arg1"), true, "[]str don't match")
-		panic(str.eq(strSE[3], "arg2"), true, "[]str don't match")
+		panic(str.equal_by_value(strSE[0], ""), true, "[]str don't match")
+		panic(str.equal_by_value(strSE[1], "arg0"), true, "[]str don't match")
+		panic(str.equal_by_value(strSE[2], "arg1"), true, "[]str don't match")
+		panic(str.equal_by_value(strSE[3], "arg2"), true, "[]str don't match")
 	}
 
 	{
@@ -182,9 +182,9 @@ func main()() {
 		panic(args.StrSlice("++f[]str=arg0,arg1,arg2,", "f[]str", &strSF, &matchSF), true, "valid []str argument")
 		panic(matchSF, true, "f[]str must match")
 		panic(len(strSF), 3, "len must be 3")
-		panic(str.eq(strSF[0], "arg0"), true, "[]str don't match")
-		panic(str.eq(strSF[1], "arg1"), true, "[]str don't match")
-		panic(str.eq(strSF[2], "arg2"), true, "[]str don't match")
+		panic(str.equal_by_value(strSF[0], "arg0"), true, "[]str don't match")
+		panic(str.equal_by_value(strSF[1], "arg1"), true, "[]str don't match")
+		panic(str.equal_by_value(strSF[2], "arg2"), true, "[]str don't match")
 	}
 
 	{
@@ -193,9 +193,9 @@ func main()() {
 		panic(args.StrSlice("++g[]str=arg0,arg1,arg2", "g[]str", &strSG, &matchSG), true, "valid []str argument")
 		panic(matchSG, true, "g[]str must match")
 		panic(len(strSG), 3, "len must be 3")
-		panic(str.eq(strSG[0], "arg0"), true, "[]str don't match")
-		panic(str.eq(strSG[1], "arg1"), true, "[]str don't match")
-		panic(str.eq(strSG[2], "arg2"), true, "[]str don't match")
+		panic(str.equal_by_value(strSG[0], "arg0"), true, "[]str don't match")
+		panic(str.equal_by_value(strSG[1], "arg1"), true, "[]str don't match")
+		panic(str.equal_by_value(strSG[2], "arg2"), true, "[]str don't match")
 	}
 
 	{

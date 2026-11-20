@@ -34,7 +34,16 @@ func (t *TestRunner) Run(args string, exitCode int, desc string) {
 	t.RunEx(args, exitCode, desc, TestStable, t.cfg.DefaultTimeout)
 }
 
+// RunWant is Run that also requires each of want to appear in the output.
+func (t *TestRunner) RunWant(args string, exitCode int, desc string, want ...string) {
+	t.runEx(args, exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
+}
+
 func (t *TestRunner) RunEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration) {
+	t.runEx(args, exitCode, desc, filter, timeout, nil)
+}
+
+func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration, want []string) {
 	if timeout == 0 {
 		timeout = t.cfg.DefaultTimeout
 	}
@@ -90,6 +99,16 @@ func (t *TestRunner) RunEx(args string, exitCode int, desc string, filter Bits, 
 				padding(t), t.TestCount, string(out), string(stderr))
 		}
 		return
+	}
+
+	for _, w := range want {
+		if !strings.Contains(string(out), w) && !strings.Contains(string(stderr), w) {
+			if Has(t.cfg.LogMask, LogFail) {
+				fmt.Printf("#%s%d | FAILED  | %s | '%s' | output does not contain %q\n",
+					padding(t), t.TestCount, timing, args, w)
+			}
+			return
+		}
 	}
 
 	if Has(t.cfg.LogMask, LogSuccess) {

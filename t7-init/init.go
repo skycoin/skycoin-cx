@@ -45,7 +45,8 @@ func MakeProgram() *ast.CXProgram {
 			Size:    minHeapSize,
 			Pointer: constants.NULL_HEAP_ADDRESS_OFFSET, // We can start adding objects to the heap after the NULL (nil) bytes.
 		},
-		CXArgs: make([]ast.CXArgument, 0),
+		CXArgs:  make([]ast.CXArgument, 0),
+		Version: constants.LANGUAGE_REVISION,
 	}
 
 	return newPrgrm

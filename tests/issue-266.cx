@@ -7,15 +7,15 @@ func main () {
 beginning:
 	cmd = "P"
 
-	if cmd == "C" {
+	if str.equal_by_value(cmd, "C") {
 		goto cat
 	}
 
-	if cmd == "D" {
+	if str.equal_by_value(cmd, "D") {
 		goto dog
 	}
 
-	if cmd == "P" {
+	if str.equal_by_value(cmd, "P") {
 		goto pigeon
 	}
 

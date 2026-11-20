@@ -150,8 +150,36 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-control-flow.cx", runner.CxSuccess, "control floow")
 	t.Run("test-utils.cx test-struct.cx", runner.CxSuccess, "struct")
 	t.Run("test-str.cx", runner.CxSuccess, "str")
-	t.Run("test-str-compare.cx", runner.CxSuccess, "str ordering operators (skycoin-cx#87)")
+	t.Run("test-str-compare.cx", runner.CxSuccess, "str ordering with str.compare_by_value (skycoin-cx#87, #183)")
 	t.Run("test-str-functions.cx", runner.CxSuccess, "str comparison functions (skycoin-cx#183)")
+	t.RunWant("test-str-operators-removed.cx", runner.CxCompilationError, "every operator on str is a compile error (skycoin-cx#183)",
+		"test-str-operators-removed.cx:13 str == str is not allowed, use str.equal_by_value or str.equal_by_pointer",
+		"test-str-operators-removed.cx:14 str != str is not allowed, use str.equal_by_value or str.equal_by_pointer",
+		"test-str-operators-removed.cx:15 str < str is not allowed, use str.compare_by_value",
+		"test-str-operators-removed.cx:16 str > str is not allowed, use str.compare_by_value",
+		"test-str-operators-removed.cx:17 str <= str is not allowed, use str.compare_by_value",
+		"test-str-operators-removed.cx:18 str >= str is not allowed, use str.compare_by_value",
+		"test-str-operators-removed.cx:19 str + str is not allowed, use str.concat",
+		"test-str-operators-removed.cx:20 operator - is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:21 operator * is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:22 operator / is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:23 operator % is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:24 operator & is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:25 operator | is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:26 operator ^ is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:27 operator &^ is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:28 operator << is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:29 operator >> is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:30 operator - is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:31 str + str is not allowed, use str.concat",
+	)
+	t.RunWant("test-pointer-ordering-removed.cx", runner.CxCompilationError, "pointer ordering is a compile error (skycoin-cx#183)",
+		"test-pointer-ordering-removed.cx:14 pointer < pointer is not allowed, pointers support only == and !=",
+		"test-pointer-ordering-removed.cx:15 pointer > pointer is not allowed, pointers support only == and !=",
+		"test-pointer-ordering-removed.cx:16 pointer <= pointer is not allowed, pointers support only == and !=",
+		"test-pointer-ordering-removed.cx:17 pointer >= pointer is not allowed, pointers support only == and !=",
+	)
+	t.Run("test-pointer-equality.cx", runner.CxSuccess, "pointer == and != compare addresses (skycoin-cx#183)")
 	t.Run("test-os-getwd.cx", runner.CxSuccess, "os.GetWorkingDirectory (skycoin-cx#117)")
 	t.Run("test-cx-constants.cx", runner.CxSuccess, "cx package constants (skycoin-cx#84)")
 	t.Run("test-tcp.cx", runner.CxSuccess, "tcp package (skycoin-cx#115)")

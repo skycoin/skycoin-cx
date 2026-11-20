@@ -35,7 +35,7 @@ func testSliceStr(a []str, b []str, msg str) {
 	//printSliceStr("b", b)
 	if assert(len(a), len(b), msg) {
 		for i := 0; i < len(a); i++ {
-			if a[i] != b[i] {
+			if bool.not(str.equal_by_value(a[i], b[i])) {
 				test(false, true, msg)
 			}
 		}

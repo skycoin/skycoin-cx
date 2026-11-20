@@ -43,34 +43,22 @@ func testSTRFunctions () () {
 	test(gStr, "Global", "global strings error")
 	test(lStr, "Local", "local strings error")
 
-	// test(str.lt("foo", "bar"), false, "str.lt() error")
-	// test(str.lt("bar", "foo"), true, "str.lt() error")
+	test(str.compare_by_value("foo", "bar"), 1, "str.compare_by_value() error")
+	test(str.compare_by_value("bar", "foo"), -1, "str.compare_by_value() error")
 
-	//test(str.gt("foo", "bar"), true, "str.gt() error")
-	//test(str.gt("bar", "foo"), false, "str.gt() error")
-
-	//test(str.eq("foo", "foo"), true, "str.eq() error")
-	//test(str.eq("foo", "bar"), false, "str.eq() error")
-
-	//test(str.uneq("foo", "foo"), false, "str.uneq() error")
-	//test(str.uneq("foo", "bar"), true, "str.uneq() error")
-
-	//test(str.lteq("foo", "bar"), false, "str.lteq() error")
-	//test(str.lteq("bar", "foo"), true, "str.lteq() error")
-
-	//test(str.lteq("foo", "bar"), true, "str.gteq() error")
-	//test(str.lteq("bar", "foo"), false, "str.gteq() error")
+	test(str.equal_by_value("foo", "foo"), true, "str.equal_by_value() error")
+	test(str.equal_by_value("foo", "bar"), false, "str.equal_by_value() error")
 
 	test(len("Foo bar"), 7, "len() error")
 
 	test(str.concat("Hello ", "World"), "Hello World", "str.concat() error")
 
 	var concStr str
-	concStr = "Hello, " + "world!"
+	concStr = str.concat("Hello, ", "world!")
 	test(concStr, "Hello, world!", "")
 
-	test("meow " + "woof", "meow woof", "")
-	test("meow " + "woof " + "tweet", "meow woof tweet", "")
+	test(str.concat("meow ", "woof"), "meow woof", "")
+	test(str.concat(str.concat("meow ", "woof "), "tweet"), "meow woof tweet", "")
 
 	// Just testing that the parser is able to recognize escaped double quotes.
 	test("\"hello\"", "\"hello\"", "")

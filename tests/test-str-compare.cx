@@ -1,28 +1,25 @@
-// https://github.com/skycoin/skycoin-cx/issues/87
+// Language revision 1 replaced the str ordering operators with
+// str.compare_by_value. https://github.com/skycoin/skycoin-cx/issues/183
 
 package main
 
 func main() {
-	test("b" > "a", true, "b > a")
-	test("a" > "b", false, "a > b")
-	test("a" > "a", false, "a > a")
-	test("a" >= "a", true, "a >= a")
-	test("a" >= "b", false, "a >= b")
-	test("a" < "b", true, "a < b")
-	test("b" < "a", false, "b < a")
-	test("a" < "a", false, "a < a")
-	test("a" <= "a", true, "a <= a")
-	test("b" <= "a", false, "b <= a")
+	test(str.compare_by_value("b", "a") > 0, true, "b > a")
+	test(str.compare_by_value("a", "b") > 0, false, "a > b")
+	test(str.compare_by_value("a", "a") > 0, false, "a > a")
+	test(str.compare_by_value("a", "a") >= 0, true, "a >= a")
+	test(str.compare_by_value("a", "b") >= 0, false, "a >= b")
+	test(str.compare_by_value("a", "b") < 0, true, "a < b")
+	test(str.compare_by_value("b", "a") < 0, false, "b < a")
+	test(str.compare_by_value("a", "a") < 0, false, "a < a")
+	test(str.compare_by_value("a", "a") <= 0, true, "a <= a")
+	test(str.compare_by_value("b", "a") <= 0, false, "b <= a")
 
 	var x str
 	var y str
 	x = "apple"
 	y = "banana"
-	test(x < y, true, "apple < banana")
-	test(y > x, true, "banana > apple")
-	test(str.lt(x, y), true, "str.lt")
-	test(str.gt(x, y), false, "str.gt")
-	test(str.gt(x, x), false, "str.gt equal")
-	test(str.gteq(x, x), true, "str.gteq")
-	test(str.lteq(y, x), false, "str.lteq")
+	test(str.compare_by_value(x, y), -1, "apple before banana")
+	test(str.compare_by_value(y, x), 1, "banana after apple")
+	test(str.compare_by_value(x, x), 0, "apple equals apple")
 }

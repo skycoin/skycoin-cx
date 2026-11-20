@@ -15,6 +15,10 @@ const STDLIB_PKG = "stdlib"
 const OS_PKG = "os"
 const OS_ARGS = "Args"
 
+// LANGUAGE_REVISION is stored in serialized programs as CXProgram.Version.
+// Bump it when a revision changes opcode numbers, see LanguageGuide.md.
+const LANGUAGE_REVISION = "1"
+
 const NON_ASSIGN_PREFIX = "nonAssign"
 const LOCAL_PREFIX = "*tmp"
 const LABEL_PREFIX = "*lbl"

@@ -133,3 +133,11 @@ func opNop(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	// No Operation
 	// Do Nothing
 }
+
+func opPtrEq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_bool(prgrm, inputs[0].Get_ptr(prgrm) == inputs[1].Get_ptr(prgrm))
+}
+
+func opPtrUneq(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_bool(prgrm, inputs[0].Get_ptr(prgrm) != inputs[1].Get_ptr(prgrm))
+}

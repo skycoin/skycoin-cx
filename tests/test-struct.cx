@@ -38,7 +38,7 @@ func main() {
 	// test(mytest.byt, mytest.anotherStruct.byt, "Struct in a Struct byte properties error")
 
 	test(mytest.string, "Foo bar", "error")
-	test(("Foo bar" == mytest.string), true, "Struct str properties error")
+	test(str.equal_by_value("Foo bar", mytest.string), true, "Struct str properties error")
 	// test((mytest.anotherStruct.string == mytest.string), true, "Struct in a Struct str properties error")
 }
 

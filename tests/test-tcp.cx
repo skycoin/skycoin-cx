@@ -19,11 +19,11 @@ func main() {
 	tcp.Close()
 
 	err = tcp.Dial("tcp", "127.0.0.1:47115")
-	test(err != "", true, "dial after close must fail")
+	test(str.equal_by_value(err, ""), false, "dial after close must fail")
 
 	err = tcp.Accept("", "")
-	test(err != "", true, "accept after close must fail")
+	test(str.equal_by_value(err, ""), false, "accept after close must fail")
 
 	err = tcp.Listen("nosuchnet", "127.0.0.1:47115")
-	test(err != "", true, "listen on a bad network must fail")
+	test(str.equal_by_value(err, ""), false, "listen on a bad network must fail")
 }

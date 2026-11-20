@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"fmt"
+
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -1253,6 +1255,9 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 	var s SerializedCXProgram
 	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
 		return nil, err
+	}
+	if v := deserializeString(s.Program.VersionOffset, s.Program.VersionSize, &s); v != constants.LANGUAGE_REVISION {
+		return nil, fmt.Errorf("serialized program is language revision %q, this CX implements revision %s, recompile it from source", v, constants.LANGUAGE_REVISION)
 	}
 	initDeserialization(prgrm, &s)
 

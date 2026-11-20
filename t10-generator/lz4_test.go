@@ -134,3 +134,28 @@ func TestSerializeCodecMisuse(t *testing.T) {
 		}
 	}
 }
+
+// A program serialized under another language revision has different opcode
+// numbers, so deserializing it must fail. See #183.
+func TestDeserializeRejectsOtherRevision(t *testing.T) {
+	prgrm := generateSampleProgramFromCXEvolves(t, false)
+	b, err := cxast.SerializeCXProgram(prgrm, false, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := cxast.Deserialize(b, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Version != prgrm.Version {
+		t.Fatalf("got revision %q, want %q", got.Version, prgrm.Version)
+	}
+
+	prgrm.Version = ""
+	if b, err = cxast.SerializeCXProgram(prgrm, false, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cxast.Deserialize(b, nil); err == nil {
+		t.Fatal("want an error for a program from another revision")
+	}
+}
