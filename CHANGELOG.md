@@ -4,14 +4,16 @@
 
 #### Language
 
-- Language revision 1, see the Language revisions section of LanguageGuide.md (#183)
+- Language version 2611200001, formerly revision 1, see the Language versions section of LanguageGuide.md (#183, #296)
+- Opcode numbers are fixed in `constants.OpcodeLifecycleTable` and `docs/opcodes.csv`. Every opcode keeps the number it had before #197, deleted opcodes leave gaps that are not reused before their reassignable version, `ptr.eq` and `ptr.uneq` are 589 and 590, and the cxfx opcodes are 591 to 791 whatever the build tags (#296)
 - Strings have no built-in operators. `==`, `!=`, `<`, `>`, `<=`, `>=`, `+` and every other arithmetic or bitwise operator on `str` is a compile error that names the function to use (#183, #197)
 - `<`, `>`, `<=` and `>=` on pointers are compile errors. Pointer `==` and `!=` compare addresses, and now work for every pointer type instead of only `*i32` (#183, #197)
 
 #### Added
 
 - `str.equal_by_value`, `str.equal_by_pointer` and `str.compare_by_value` (#184)
-- Serialized programs carry the language revision in `CXProgram.Version`, and `Deserialize` rejects a program from another revision (#183, #197)
+- Serialized programs carry the language version `constants.LanguageVersionCurrent`, the integer yymmddnnnn, in `CXProgram.Version`, and `Deserialize` rejects a program from another version (#183, #197, #296)
+- `docs/Conventions.md`, every repository rule in one list, linked from the README (#296)
 - `docs/ErrorHandling.md`, the two-class error policy: path, file and network failures return the error struct of their own module, with failure and operation codes from that module's code range, every other failure is an assert that crashes, and nothing recovers. `t0-cx-core-assert` holds the asserts, and `make check-recovers` fails on a new `recover(` call (#270)
 
 #### Removed
@@ -20,7 +22,7 @@
 - `loader.FileHashMap` and `loader.PackageHashMap`, which were written but never read. FileHashMap was keyed by base file name, so files of the same name in different packages overwrote each other (#94)
 - `ast.Debug`, `ast.CopyProgramState`, `ast.GetSerializedStackSize`, `ast.GetSerializedDataSize` and `CXProgram.PrintAllObjects`, which nothing called (#162)
 - The `t4-assert` package, which nothing imported (#107)
-- The `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and `str.gteq` opcodes. Opcodes registered after them are renumbered, so serialized programs from before revision 1 must be recompiled (#183, #197)
+- The `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and `str.gteq` opcodes, deprecated in version 2611200001. Their numbers stay empty, and serialized programs from before that version must be recompiled (#183, #197, #296)
 
 #### Changed
 
@@ -32,6 +34,7 @@
 
 #### Fixed
 
+- The f64 `%` operator was registered under the name `f32.mod`, so calling `f32.mod` by name ran the f64 handler. It is `f64.mod` now (#296)
 - Taking the address of a slice, `ps = &s`, panicked the compiler with "type is not known", and so did passing `&s` to a function. Assigning through and from `*ps` now works, and `printf("%v", *ps)` prints the slice (#262)
 - `*p` on a struct pointer kept the pointer type, so `q = *p`, `*p = q` and passing `*p` as a struct were compile errors, and `printf("%v", *p)` printed the address. It is now the struct value (#261)
 - A `test()`, `assert` or `panic` call whose first two arguments differ in type, and an operator on struct values, reported the last line of the function instead of the line of the call (#259)

@@ -9,6 +9,9 @@ language, with a very strict type system and a syntax
 similar to Golang's. CX provides a new programming paradigm based on
 the concept of affordances.
 
+The rules of this repository are listed in
+[docs/Conventions.md](docs/Conventions.md).
+
 ## Repository layout
 
 Every Go package, binaries included, sits one level below the root as

@@ -3,7 +3,6 @@ package opcodes
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
-	"github.com/skycoin/skycoin-cx/t2-globals" // thin: only OpCodeSystemCounter; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -96,7 +95,7 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 
 	// TODO: Rename to CASTING_OPS ?
 	// TODO: Remove START_PARSE_OPS/END_PARSE_OPS, somehow we need to now start/end of these operator : used in isParseOp
-	constants.START_PARSE_OPS = globals.OpCodeSystemCounter - 1
+	constants.START_PARSE_OPS = OpcodeNumber("i8.str") - 1
 	RegisterFunction(prgrm, "i8.str", opI8ToStr, In(ast.ConstCXArg_I8), Out(ast.ConstCxArg_STR))
 	RegisterFunction(prgrm, "i8.i16", opI8ToI16, In(ast.ConstCXArg_I8), Out(ast.ConstCxArg_I16))
 	RegisterFunction(prgrm, "i8.i32", opI8ToI32, In(ast.ConstCXArg_I8), Out(ast.ConstCxArg_I32))
@@ -208,7 +207,7 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterFunction(prgrm, "f64.f32", opF64ToF32, In(ast.ConstCxArg_F64), Out(ast.ConstCxArg_F32))
 	// TODO: Rename to CASTING_OPS ?
 	// TODO: Remove START_PARSE_OPS/END_PARSE_OPS, somehow we need to now start/end of these operator : used in isParseOp
-	constants.END_PARSE_OPS = globals.OpCodeSystemCounter
+	constants.END_PARSE_OPS = OpcodeNumber("f64.f32") + 1
 
 	RegisterOperator(prgrm, "i8.eq", opI8Eq, In(ast.ConstCXArg_I8, ast.ConstCXArg_I8), Out(ast.ConstCxArg_BOOL), types.I8, constants.OP_EQUAL)
 	RegisterOperator(prgrm, "i8.uneq", opI8Uneq, In(ast.ConstCXArg_I8, ast.ConstCXArg_I8), Out(ast.ConstCxArg_BOOL), types.I8, constants.OP_UNEQUAL)
@@ -438,7 +437,7 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterOperator(prgrm, "f64.neg", opF64Neg, In(ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64), types.F64, constants.OP_NEG)
 	RegisterOperator(prgrm, "f64.mul", opF64Mul, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64), types.F64, constants.OP_MUL)
 	RegisterOperator(prgrm, "f64.div", opF64Div, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64), types.F64, constants.OP_DIV)
-	RegisterOperator(prgrm, "f32.mod", opF64Mod, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64), types.F64, constants.OP_MOD)
+	RegisterOperator(prgrm, "f64.mod", opF64Mod, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_F64), types.F64, constants.OP_MOD)
 	RegisterOperator(prgrm, "f64.gt", opF64Gt, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_BOOL), types.F64, constants.OP_GT)
 	RegisterOperator(prgrm, "f64.gteq", opF64Gteq, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_BOOL), types.F64, constants.OP_GTEQ)
 	RegisterOperator(prgrm, "f64.lt", opF64Lt, In(ast.ConstCxArg_F64, ast.ConstCxArg_F64), Out(ast.ConstCxArg_BOOL), types.F64, constants.OP_LT)

@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -585,7 +586,7 @@ func serializeProgram(prgrm *CXProgram, s *SerializedCXProgram) {
 	sPrgrm.HeapStartsAt = int64(prgrm.Heap.StartsAt)
 
 	sPrgrm.Terminated = serializeBoolean(prgrm.Terminated)
-	sPrgrm.VersionOffset, sPrgrm.VersionSize = serializeString(prgrm.Version, s)
+	sPrgrm.VersionOffset, sPrgrm.VersionSize = serializeString(strconv.FormatInt(prgrm.Version, 10), s)
 }
 
 // serializeCXProgramElements is used serializing CX program's
@@ -1191,7 +1192,7 @@ func initDeserialization(prgrm *CXProgram, s *SerializedCXProgram) {
 	prgrm.Data.Size = types.Cast_i64_to_ptr(s.Program.DataSegmentSize)
 	prgrm.Data.StartsAt = types.Cast_i64_to_ptr(s.Program.DataSegmentStartsAt)
 	prgrm.Heap.Size = types.Cast_i64_to_ptr(s.Program.HeapSize)
-	prgrm.Version = deserializeString(s.Program.VersionOffset, s.Program.VersionSize, s)
+	prgrm.Version = deserializeVersion(s)
 
 	// This means reinstantiate memory and add DataSegmentMemory
 	if len(s.DataSegmentMemory) > 0 && len(s.Memory) == 0 {
@@ -1204,6 +1205,16 @@ func initDeserialization(prgrm *CXProgram, s *SerializedCXProgram) {
 		}
 	}
 	deserializePackages(s, prgrm)
+}
+
+// deserializeVersion returns the stored language version, 0 when it is not
+// an integer, as in programs from before language versions.
+func deserializeVersion(s *SerializedCXProgram) int64 {
+	v, err := strconv.ParseInt(deserializeString(s.Program.VersionOffset, s.Program.VersionSize, s), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return v
 }
 
 // Deserialize deserializes a serialized CX program back to its golang struct representation.
@@ -1221,8 +1232,8 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
 		return nil, err
 	}
-	if v := deserializeString(s.Program.VersionOffset, s.Program.VersionSize, &s); v != constants.LANGUAGE_REVISION {
-		return nil, fmt.Errorf("serialized program is language revision %q, this CX implements revision %s, recompile it from source", v, constants.LANGUAGE_REVISION)
+	if v := deserializeVersion(&s); v != constants.LanguageVersionCurrent {
+		return nil, fmt.Errorf("serialized program is language version %d, this CX implements version %d, recompile it from source", v, constants.LanguageVersionCurrent)
 	}
 	initDeserialization(prgrm, &s)
 

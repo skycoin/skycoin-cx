@@ -57,7 +57,7 @@
   * [`gl` Package Functions](#gl-package-functions)
   * [`glfw` Package Functions](#glfw-package-functions)
   * [`gltext` Package Functions](#gltext-package-functions)
-* [Language revisions](#language-revisions)
+* [Language versions](#language-versions)
 
 # [Syntax](#table-of-contents)
 
@@ -600,7 +600,7 @@ func main () {
 
 The code above shows another example, one where we use an expression
 as its predicate, rather than a literal `true` or `false`. It is worth
-mentioning that strings have no `==` operator, see [Language revisions](#language-revisions).
+mentioning that strings have no `==` operator, see [Language versions](#language-versions).
 
 
 ```
@@ -1908,7 +1908,7 @@ Note: the preceding functions only work with arguments of type
 *bool*, *byte*, *i32*, *i64*, *f32*, *f64* or a pointer. Two pointers
 are equal when they hold the same address. Strings are compared with
 `str.equal_by_value` or `str.equal_by_pointer`, see
-[Language revisions](#language-revisions).
+[Language versions](#language-versions).
 
 #### Example
 
@@ -1934,7 +1934,7 @@ func main () {
 Note: the preceding function only works with arguments of type *byte*,
 *bool*, *i32*, *i64*, *f32* or *f64*. Pointers cannot be ordered.
 Strings are ordered with `str.compare_by_value`, which returns -1, 0
-or 1, see [Language revisions](#language-revisions).
+or 1, see [Language versions](#language-versions).
 
 #### Example
 
@@ -2419,7 +2419,7 @@ func main () {
 string object, which is true after an assignment such as `y = x` but
 false for two strings built separately. `str.compare_by_value` returns
 -1, 0 or 1 by byte order. These are the only way to compare strings,
-see [Language revisions](#language-revisions).
+see [Language versions](#language-versions).
 
 #### Example
 
@@ -3065,14 +3065,40 @@ windows. Different fonts can be used by loading font files using `gltext.LoadTru
 ### `gltext.NextRune (str, str, i32) (i32, i32, i32, i32, i32, i32, i32)`
 ### `gltext.Printf`
 ### `gltext.Texture`
-# [Language revisions](#table-of-contents)
+# [Language versions](#table-of-contents)
 
-A language revision is a change to what CX source may say. The current
-revision is stored in every serialized program, and a program
-serialized under another revision is rejected when it is loaded, so it
-must be compiled again from source.
+A language version is a change to what CX source may say or to the opcode
+numbers a compiled program uses. A version is the integer `yymmddnnnn`, the
+release date and the release number on that day, so `2611200001` is
+2026-11-20 release 0001. The current version is
+`constants.LanguageVersionCurrent`. It is stored in every serialized
+program, and a program serialized under another version is rejected when
+it is loaded, so it must be compiled again from source.
 
-## Revision 1, 2026-11-20
+## Opcode numbers
+
+Every opcode has a fixed number, listed in number order in
+`t1-constants/opcodes.go` and in `docs/opcodes.csv`. The number never
+depends on registration order or build tags. A new opcode takes the next
+number after the highest in the table.
+
+Each row records three versions. Added is the version the number was
+assigned, 0 for opcodes older than language versions. Deprecated is the
+version the opcode was removed, 0 while it is live. Reassignable is the
+first version in which the number may be given to a new opcode, 0 while
+it is live. A deprecated opcode keeps its row and leaves a gap, nothing
+registers a handler on its number, and the number is not reused before
+its reassignable version.
+
+Reassignable is the deprecated version plus one year, same month and day,
+release 0001. Deprecated `2611200001` is reassignable from `2711200001`. A
+29 February deprecation moves to 1 March. `t1-constants/opcodes_history.go`
+lists every lifecycle event in version order. See
+[docs/Conventions.md](docs/Conventions.md).
+
+## Version 2611200001, 2026-11-20
+
+This was called revision 1 before versions were integers.
 
 Strings have no built-in operators. `==`, `!=`, `<`, `>`, `<=`, `>=`,
 `+` and every other arithmetic or bitwise operator on `str` operands is
@@ -3085,12 +3111,15 @@ a compile error that names the function to use instead.
   ordering operators.
 * `str.concat(a, b)` replaces `+`.
 
-The opcodes `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and
-`str.gteq` are removed, so they cannot be called by name either.
+The opcodes `str.eq` (559), `str.uneq` (560), `str.lt` (582), `str.lteq`
+(583), `str.gt` (584) and `str.gteq` (585) are deprecated, so they cannot
+be called by name either. Their numbers stay empty and are reassignable
+from version `2711200001`. Every other opcode keeps the number it had
+before, `ptr.eq` and `ptr.uneq` are new as 589 and 590, and the cxfx
+package opcodes moved to fixed numbers 591 to 791.
 
 Pointers keep `==` and `!=`, which compare addresses, but `<`, `>`, `<=`
 and `>=` on pointers are compile errors.
 
-Removing the string opcodes renumbered the opcodes registered after
-them. Serialized programs from before revision 1 must be recompiled.
-See [skycoin-cx#183](https://github.com/skycoin/skycoin-cx/issues/183).
+Serialized programs from before this version must be recompiled. See
+[skycoin-cx#183](https://github.com/skycoin/skycoin-cx/issues/183).
