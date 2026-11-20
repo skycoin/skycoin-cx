@@ -2,6 +2,21 @@
 
 ### Unreleased
 
+#### Language
+
+- Language revision 1, see the Language revisions section of LanguageGuide.md (#183)
+- Strings have no built-in operators. `==`, `!=`, `<`, `>`, `<=`, `>=`, `+` and every other arithmetic or bitwise operator on `str` is a compile error that names the function to use (#183, #197)
+- `<`, `>`, `<=` and `>=` on pointers are compile errors. Pointer `==` and `!=` compare addresses, and now work for every pointer type instead of only `*i32` (#183, #197)
+
+#### Added
+
+- `str.equal_by_value`, `str.equal_by_pointer` and `str.compare_by_value` (#184)
+- Serialized programs carry the language revision in `CXProgram.Version`, and `Deserialize` rejects a program from another revision (#183, #197)
+
+#### Removed
+
+- The `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and `str.gteq` opcodes. Opcodes registered after them are renumbered, so serialized programs from before revision 1 must be recompiled (#183, #197)
+
 #### Changed
 
 - The v2 package loader, tree and CLI replace v1 under the v1 paths, and `t1-plloader2`, `t2-pltree2` and `t3-packageloader2` are removed (#181)

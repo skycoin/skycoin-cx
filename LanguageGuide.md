@@ -57,6 +57,7 @@
   * [`gl` Package Functions](#gl-package-functions)
   * [`glfw` Package Functions](#glfw-package-functions)
   * [`gltext` Package Functions](#gltext-package-functions)
+* [Language revisions](#language-revisions)
 
 # [Syntax](#table-of-contents)
 
@@ -591,7 +592,7 @@ can cancel the program's execution by hitting `Ctrl-C`.
 package main
 
 func main () {
-	for str.eq("hi", "hi") {
+	for str.equal_by_value("hi", "hi") {
 		str.print("hi")
 	}
 }
@@ -599,7 +600,7 @@ func main () {
 
 The code above shows another example, one where we use an expression
 as its predicate, rather than a literal `true` or `false`. It is worth
-mentioning that you can replace `str.eq("hi", "hi")` by `"hi" == "hi"`.
+mentioning that strings have no `==` operator, see [Language revisions](#language-revisions).
 
 
 ```
@@ -739,7 +740,7 @@ internally interpreted by the affordance system.
 package main
 
 func exprPredicate (expr Expression) (res bool) {
-	if expr.Operator == "i32.add" {
+	if str.equal_by_value(expr.Operator, "i32.add") {
 		res = true
 	}
 }
@@ -1749,7 +1750,7 @@ func (monster Monster) draw () {
 }
 
 func (player Player) attack (cmd str, monster *Monster) {
-	if bool.or(cmd == "M", cmd == "m") {
+	if bool.or(str.equal_by_value(cmd, "M"), str.equal_by_value(cmd, "m")) {
 		var dmg i32
 		dmg = i32.rand(1, 4)
 		(*monster).HP = (*monster).HP - dmg
@@ -1818,7 +1819,7 @@ func main () {
 		var cmd str
 		cmd = read()
 
-		if cmd == "E" || cmd == "e" {
+		if str.equal_by_value(cmd, "E") || str.equal_by_value(cmd, "e") {
 			return
 		}
 
@@ -1851,15 +1852,15 @@ beginning:
 	var cmd str
 	cmd = read()
 
-	if cmd == "C" || cmd == "c" {
+	if str.equal_by_value(cmd, "C") || str.equal_by_value(cmd, "c") {
 		goto cat
 	}
 
-	if cmd == "D" || cmd == "d" {
+	if str.equal_by_value(cmd, "D") || str.equal_by_value(cmd, "d") {
 		goto dog
 	}
 
-	if cmd == "P" || cmd == "p" {
+	if str.equal_by_value(cmd, "P") || str.equal_by_value(cmd, "p") {
 		goto pigeon
 	}
 
@@ -1904,7 +1905,10 @@ below, we list the compatible types for the corresponding functions.
 ### `uneq`
 
 Note: the preceding functions only work with arguments of type
-*bool*, *byte*, *str*, *i32*, *i64*, *f32* or *f64*.
+*bool*, *byte*, *i32*, *i64*, *f32*, *f64* or a pointer. Two pointers
+are equal when they hold the same address. Strings are compared with
+`str.equal_by_value` or `str.equal_by_pointer`, see
+[Language revisions](#language-revisions).
 
 #### Example
 
@@ -1915,8 +1919,10 @@ func main () {
 	bool.print(eq(5, 5))
 	bool.print(5 == 5) // alternative
 
-	bool.print(uneq("hihi", "byebye"))
-	bool.print("hihi" != "byebye") // alternative
+	bool.print(uneq(3L, 4L))
+	bool.print(3L != 4L) // alternative
+
+	bool.print(str.equal_by_value("hihi", "byebye"))
 }
 ```
 
@@ -1926,7 +1932,9 @@ func main () {
 ### `gteq`
 
 Note: the preceding function only works with arguments of type *byte*,
-*bool*, *str*, *i32*, *i64*, *f32* or *f64*.
+*bool*, *i32*, *i64*, *f32* or *f64*. Pointers cannot be ordered.
+Strings are ordered with `str.compare_by_value`, which returns -1, 0
+or 1, see [Language revisions](#language-revisions).
 
 #### Example
 
@@ -1937,8 +1945,7 @@ func main () {
 	bool.print(lt(3B, 4B))
 	bool.print(3B < 4B) // alternative
 
-	bool.print(gt("hello", "hi!"))
-	bool.print("hello" > "hi!") // alternative
+	bool.print(str.compare_by_value("hello", "hi!") > 0)
 
 	bool.print(lteq(5.3D, 5.3D))
 	bool.print(5.3D <= 5.3D) // alternative
@@ -2148,7 +2155,7 @@ func main () {
 		printf("What's the password, kid? ")
 		password = read()
 
-		if password == "123" {
+		if str.equal_by_value(password, "123") {
 			str.print("Welcome back.")
 			return
 		} else {
@@ -2400,6 +2407,33 @@ package main
 
 func main () {
 	str.print(str.concat("Hello, ", "World!"))
+}
+```
+
+### `str.equal_by_value (str, str) (bool)`
+### `str.equal_by_pointer (str, str) (bool)`
+### `str.compare_by_value (str, str) (i32)`
+
+`str.equal_by_value` reports whether two strings hold the same bytes.
+`str.equal_by_pointer` reports whether both values refer to the same
+string object, which is true after an assignment such as `y = x` but
+false for two strings built separately. `str.compare_by_value` returns
+-1, 0 or 1 by byte order. These are the only way to compare strings,
+see [Language revisions](#language-revisions).
+
+#### Example
+
+```
+package main
+
+func main () {
+	var x str
+	var y str
+	x = "apple"
+	y = x
+	bool.print(str.equal_by_value(x, str.concat("app", "le"))) // true
+	bool.print(str.equal_by_pointer(x, y))                      // true
+	i32.print(str.compare_by_value(x, "banana"))                // -1
 }
 ```
 
@@ -3031,3 +3065,32 @@ windows. Different fonts can be used by loading font files using `gltext.LoadTru
 ### `gltext.NextRune (str, str, i32) (i32, i32, i32, i32, i32, i32, i32)`
 ### `gltext.Printf`
 ### `gltext.Texture`
+# [Language revisions](#table-of-contents)
+
+A language revision is a change to what CX source may say. The current
+revision is stored in every serialized program, and a program
+serialized under another revision is rejected when it is loaded, so it
+must be compiled again from source.
+
+## Revision 1, 2026-11-20
+
+Strings have no built-in operators. `==`, `!=`, `<`, `>`, `<=`, `>=`,
+`+` and every other arithmetic or bitwise operator on `str` operands is
+a compile error that names the function to use instead.
+
+* `str.equal_by_value(a, b)` compares bytes.
+* `str.equal_by_pointer(a, b)` reports whether both are the same string
+  object.
+* `str.compare_by_value(a, b)` returns -1, 0 or 1 and replaces the
+  ordering operators.
+* `str.concat(a, b)` replaces `+`.
+
+The opcodes `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and
+`str.gteq` are removed, so they cannot be called by name either.
+
+Pointers keep `==` and `!=`, which compare addresses, but `<`, `>`, `<=`
+and `>=` on pointers are compile errors.
+
+Removing the string opcodes renumbered the opcodes registered after
+them. Serialized programs from before revision 1 must be recompiled.
+See [skycoin-cx#183](https://github.com/skycoin/skycoin-cx/issues/183).
