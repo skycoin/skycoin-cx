@@ -1,5 +1,95 @@
 # Changelog
 
+### Unreleased
+
+#### Changed
+
+- The v2 package loader, tree and CLI replace v1 under the v1 paths, and `t1-plloader2`, `t2-pltree2` and `t3-packageloader2` are removed (#181)
+
+#### Fixed
+
+- The package loader silently dropped a file whose package did not match its directory. It now reports the mismatch (#181)
+
+### skycoin-cx, 2026-11-17 to 2026-11-20
+
+skycoin/skycoin-cx was created on 2026-11-17 by merging cx, cx-chains,
+cx-tracker, cx-playground, cx-gui-helper, cx-benchmark, cx-games and
+cx-game into one repository, starting from skycoin/cx develop 0c08a443.
+Commits without a pull request are cited by hash. Everything below this
+section is skycoin/cx history.
+
+#### Language
+
+- String `<`, `>`, `<=` and `>=` work. The four operators were never registered, and `>` computed `>=` (#163)
+- Calls to functions with no inputs, or with atomic typed inputs, now get the argument count check they skipped (#34)
+- The constant `cx.RUNTIME_NOT_IMPLEMENTED` resolves. It was registered as `cx.RUNTIME_NOT_INPLEMENTED` (#169)
+
+#### Added
+
+- `ParseSourceStrings` parses source held in memory and returns a compile error instead of exiting, so the parser can be embedded, for example by the playground server (a7be6405)
+- The CX unit test library `lib/utest`, moved in from cx-games (5eab2468)
+- The CX and Go benchmarks from cx-benchmark, now in `t0-benchmarks` (06b8c9a6, #1)
+- `CLEANUP.md`, listing every path of the merged CX repositories with its action (cef93cad)
+- CI runs `make check` on Linux, macOS and Windows, plus a GUI vet job using the new `make vet-gui` (#37)
+- The tier rule. `check-tiers.sh` checks that a package only imports lower tiers and sits at `<dir>/<file>.go` (#1)
+- The init rule. `check-inits.sh` fails on `func init()` outside package main (#10, #85)
+- The interface rule. `make check-ifaces` fails when an interface embeds another interface (#82)
+- The State rule, with a VIOLATION comment at every package var, pointer at rest and object creation outside a manager (#11)
+
+#### Changed
+
+- Packages now set up from explicit `Init` calls that `t11-cx` makes in order after parsing flags, so `--heap-initial` sizes the program. `MakeProgram` only returns a new program (#10, #85)
+- The 32 bit pointer build is the default and `ptr64` opts in. `cipher`, `cxos` and `regexp` are built by default with `nocipher`, `nocxos` and `noregexp` to opt out. `cxfx` stays opt in (09408949, #37)
+- The package loader returns wrapped errors instead of dropping them or exiting, and `ParseArgsForCX` gains an error return (#70)
+- The package loader checks its arguments at entry, and `t3-packageloader` requires exactly one action and `-name` (#76)
+- Bolt is the only package store. The database argument is gone from `LoadCXProgram`, `SavePackagesToDisk`, `SaveFilesToDisk`, `GetImportTree`, `GetImportGraph` and `GetImportFiles` (#114)
+- `t0-plbolt` uses `go.etcd.io/bbolt` in place of the archived `boltdb/bolt`, and dependencies are updated and vendored (b91dc227, #61)
+- The random program generator works on type signatures (#53)
+- The module is renamed to skycoin-cx and every package is a top level `t<N>-<name>` directory, where N is one more than the highest tier it imports. `cmd/cx` is now `t11-cx` (09408949, #1)
+- `main` is the only long-lived branch. CI, the README badge and the contributing guide moved from develop to main (#69)
+- The README describes skycoin-cx, with install and build steps, test targets, status and history, and spelling fixes (#2, #62)
+- The parsers are generated with `golang.org/x/tools/cmd/goyacc`, a go.mod tool (09408949)
+- The packageloader2 copies of bolt, encoder, file output and graph are shared with packageloader (09408949)
+- `make check` passes. Go tests that still fail are commented out with their cause and issue (#33, #53)
+- Failing CX program tests are tagged as known issues #13 to #29 (#34)
+- Package loader oddities carry NOTE comments pointing at their issues, and unclear local names are renamed (#142)
+- `t7-cxmobile` is marked as not compiling, see #35 (#36)
+- The docs note that bolt supersedes redis (#180)
+
+#### Removed
+
+- Redis support in the package loader, including `t0-plredis`, the `-redis` flag of `t3-packageloader` and the CI redis server (#79, #114)
+- The modernc goyacc copy in `cmd/goyacc`, which did not build (09408949)
+
+#### Fixed
+
+- `cx` with no arguments starts the REPL instead of exiting silently (#168)
+- `cx` matches subcommands exactly, so `cx conversions.cx` runs the program instead of printing the version (#4)
+- `cx` no longer panics at startup under js/wasm (#3)
+- `-stack-size` was never applied (#34)
+- Lexer errors and a void call used as a `for` condition panicked instead of reporting an error (#34)
+- A precedence bug in `WritePrimary` wrote past the end of memory (#34)
+- `os.GetWorkingDirectory` always returned an empty string (#164)
+- `tcp.Dial` and `tcp.Listen` ignored their arguments, closed what they opened and crashed when the dial or listen failed (#171)
+- REPL output over 64 KiB blocked until Eval timed out, and errors left stdout pointing at a pipe (#166)
+- Stepping a program with `RunCompiled` panicked after returning from a call on the caller's last line (#172)
+- LZ4 compression panicked on input it could not shrink, and program deserialization ignored decode errors (#173)
+- `ExtractAllDeclarations` hung on a file with a bad package line (#165)
+- The random program generator panicked on every run (#53)
+- The package loader hung on an import loop, and the tree printer overflowed the stack on a cycle (#76)
+- Package loader paths panicked on a file with no directory or a short `-path` and depended on the working directory (#72)
+- The package loader tests crashed under `-race` with `boltdb/bolt` (#61)
+- The CX test runner ran tests when any tag was enabled, passed a program that exited 0 when an error was expected, and never timed out (#34)
+- The test runner was given a relative cx path, so 44 tests failed (bdab488b)
+- The build failed without `-tags ptr32` (09408949)
+- The Go Ackermann benchmark computed the wrong function (#167)
+- The struct serialization benchmark wrote its output with mode 01204 instead of 0644 (#170)
+
+#### Security
+
+- `SavePackagesToDisk` refuses stored file names that are not a single path element, so a database entry cannot write outside the save directory (#72)
+- CI actions are pinned to commit SHAs (#37)
+
 ### v0.8.0
 * Additions
   * Preperation for CX 1.0 Milestone
