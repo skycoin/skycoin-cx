@@ -21,18 +21,6 @@ func (cxet CXEXPR_TYPE) String() string {
 	return [...]string{"Unused", "MethodCall", "StructLiteral", "ArrayLiteral", "ScopeNew", "ScopeDel"}[int(cxet)]
 }
 
-// CXExpression is used represent a CX expression.
-//
-// All statements in CX are expressions, including for loops and other control
-// flow.
-type CXExpression struct {
-	ExpressionType CXEXPR_TYPE
-
-	// For new CX AST Format
-	Index int
-	Type  CXOPERATION_TYPE
-}
-
 // IsMethodCall checks if expression type is method call
 func (cxe CXExpression) IsMethodCall() bool {
 	return cxe.ExpressionType == CXEXPR_METHOD_CALL

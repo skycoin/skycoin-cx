@@ -28,6 +28,7 @@
 
 #### Changed
 
+- Each IR struct of `t3-ast` lives in its own `<obj>_def.go`, for example `cxargument_def.go`, as the object model asks. `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer`, which nothing used, are removed (#299)
 - Every site the object model will change, 1628 in all, carries a two line `// OBJMODEL:` comment with its target manager call or Gid, its phase, its issue and its id in `docs/objectmodel-sites.csv`. The `// VIOLATION:` comments for IR objects are gone (#299)
 - `t3-ast/tostring.go` prints struct values through one helper and reads atomic values through one switch, and the array and pointer array branches of `GetPrintableValue` are one. The output is unchanged (#238)
 - `loader.ReadProgram` reads a stored program with its packages and files. The graph, tree, encoder and file output use it instead of four copies of the same database walk, and `encoder.SaveFilesToDisk` takes a `loader.StoredPackage` (#92)

@@ -7,56 +7,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 )
 
-// CXProgram is used to represent a full CX program.
-//
-// It is the root data structure for the declarations of all functions,
-// variables and data structures.
-type CXProgram struct {
-	// Metadata
-	//Remove Path //moved to cx/globals
-	//Path string // Path to the CX project in the filesystem
-
-	Stack StackSegmentStruct
-	Data  DataSegmentStruct
-	Heap  HeapSegmentStruct
-
-	// Contents
-	Packages map[string]CXPackageIndex // Packages in a CX program
-
-	// Runtime information
-	ProgramInput []CXArgumentIndex // OS input arguments
-	//ProgramOutput []*CXArgument // outputs to the OS
-	Memory []byte // Used when running the program
-
-	// OBJMODEL: []CXCallGid or CXCallGid, phase 5 #367.
-	// Now objects held by value, site S0186.
-	CallStack   []CXCall      // Collection of function calls. Call stack is not in CX Memory.
-	CallCounter types.Pointer // What function call is the currently being executed in the CallStack
-	Terminated  bool          // Utility field for the runtime. Indicates if a CX program has already finished or not.
-	Version     int64         // Language version, constants.LanguageVersionCurrent when built.
-
-	// Used by the REPL and cxgo
-	CurrentPackage CXPackageIndex // Represents the currently active package in the REPL or when parsing a CX file.
-	ProgramError   error
-
-	// For new CX AST arrays
-	CXAtomicOps             []CXAtomicOperator
-	CXArgs                  []CXArgument
-	CXLines                 []CXLine
-	CXPackages              []CXPackage
-	CXFunctions             []CXFunction
-	CXStructs               []CXStruct
-	CXTypeSignatures        []CXTypeSignature
-	TypeSignatureForArrays  []CXTypeSignature_Array
-	TypeSignatureForStructs []CXTypeSignature_Struct
-	// Then reference the package of function by CxFunction id
-
-	// For Initializers
-	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
-	// Now objects held by value, site S0187.
-	SysInitExprs []CXExpression
-}
-
 type StackSegmentStruct struct {
 	Size     types.Pointer // This field stores the size of a CX program's stack
 	StartsAt types.Pointer // Offset at which the stack segment starts in a CX program's memory

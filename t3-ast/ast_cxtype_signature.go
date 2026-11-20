@@ -38,58 +38,6 @@ const (
 	TYPE_CXARGUMENT_DEPRECATE
 )
 
-type CXTypeSignature struct {
-	Index CXTypeSignatureIndex
-	// NameStringID int
-	Name    string // temporary
-	Offset  types.Pointer
-	Type    CXTypeSignature_TYPE
-	Package CXPackageIndex
-
-	PassBy  int  // pass by value or reference
-	IsDeref bool // true if it is dereferencing a pointer, array or slice
-
-	// if type is complex, meta is complex id
-	// if type is struct, meta is CXTypeSignature_Struct id
-	// if type is array, meta is CXTypeSignature_Array id
-	// if type is atomic, meta is the atomic type
-	Meta int
-
-	// OBJMODEL: CXArgumentDebugGid, phase 5 #307.
-	// Now a pointer at rest, site S0271.
-	ArgDetails *CXArgumentDebug // Contains file name and file line
-}
-
-type CXTypeSignature_Array struct {
-	// if atomic type, Meta is the atomic type
-	// if struct array or slice type, Meta
-	//  is CXTypeSignature_Struct id
-	Meta int
-
-	// length of the array
-	// 1-dimensional array [x]
-	// 2-dimensional array [x y]
-	// 3-dimensional array [x y z]
-	Lengths []types.Pointer
-
-	// Index of the element which
-	// we want to access.
-	Indexes []CXTypeSignatureIndex
-}
-
-type CXTypeSignature_Struct struct {
-	// Fields stores what fields are being accessed from the
-	// `CXArgument` and in what order. Whenever a `DEREF_FIELD` in
-	// `DereferenceOperations` is found, we consume a field from
-	// `Field` to determine the new offset to the desired
-	// value.
-	Fields []CXArgumentIndex
-
-	// OBJMODEL: CXStructGid, phase 5 #337.
-	// Now a pointer at rest, site S0272.
-	StructType *CXStruct
-}
-
 // ----------------------------------------------------------------
 //                             `CXTypeSignature` Handlers
 

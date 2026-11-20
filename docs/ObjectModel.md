@@ -65,8 +65,8 @@ Not managed, with the reason.
   `GetFinalOffset` only.
 * The `serialized*` structs in `t3-ast/serialize_structs.go` are the byte
   form. They hold offsets, not objects.
-* `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer` are unused
-  and are removed in the Def phase of `CXArgument`.
+* `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer` were
+  unused and were removed with the Def files.
 
 ## Files
 

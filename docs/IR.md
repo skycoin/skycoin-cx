@@ -88,7 +88,7 @@ A function is finished by `actions.FunctionHeader`, which adds the
 
 ## The program
 
-`ast.CXProgram` (`t3-ast/ast_cxprogram.go`) is the root of the IR.
+`ast.CXProgram` (`t3-ast/cxprogram_def.go`) is the root of the IR.
 
 | Field | Type | Contents |
 | --- | --- | --- |
@@ -131,13 +131,13 @@ in the source and becomes a generational index under the object model in
 
 ## Packages, functions and structs
 
-`ast.CXPackage` (`t3-ast/ast_cxpackage.go`) has a `Name`, its own `Index`
+`ast.CXPackage` (`t3-ast/cxpackage_def.go`) has a `Name`, its own `Index`
 in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 `Functions` (to `CXFunctionIndex`) and `Structs` (to `CXStructIndex`).
 `Globals` is a `*CXStruct` whose `Fields` are the global variables.
 `CurrentFunction` is the function being parsed.
 
-`ast.CXFunction` (`t3-ast/ast_cxfunction.go`) has
+`ast.CXFunction` (`t3-ast/cxfunction_def.go`) has
 
 * `Index`, `Name` and `Package`,
 * `AtomicOPCode`, the opcode number, 0 for a user function.
@@ -156,7 +156,7 @@ calls a native operator gets its own copy of the native, made by
 `ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
 `Expressions`.
 
-`ast.CXStruct` (`t3-ast/ast_cxstruct.go`) has `Index`, `Name`, `Package`
+`ast.CXStruct` (`t3-ast/cxstruct_def.go`) has `Index`, `Name`, `Package`
 and `Fields []CXTypeSignatureIndex`. The same type is reused as the
 parameter list of a function or operator and as a package's globals.
 
@@ -165,7 +165,7 @@ parameter list of a function or operator and as a package's globals.
 A function body is a flat `[]CXExpression`. There are no nested blocks.
 Scopes, branches and loops become jumps over this list.
 
-`ast.CXExpression` (`t3-ast/ast_cxexpression.go`) has three fields.
+`ast.CXExpression` (`t3-ast/cxexpression_def.go`) has three fields.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -181,7 +181,7 @@ open and close a symbol scope in `FunctionDeclaration`.
 ### Line markers
 
 A `CX_LINE` expression points at an `ast.CXLine`
-(`t3-ast/ast_cxline.go`) with `FileName`, `LineNumber` and `LineStr`.
+(`t3-ast/cxline_def.go`) with `FileName`, `LineNumber` and `LineStr`.
 `ast.MakeCXLineExpression` creates them. The parser puts one before each
 statement, and error messages use the nearest preceding marker. The VM
 skips them, but they take a slot in `Expressions`, so jump distances
@@ -190,7 +190,7 @@ count them.
 ### Atomic operators
 
 A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
-(`t3-ast/ast_cxatomicoperator.go`).
+(`t3-ast/cxatomicoperator_def.go`).
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -256,7 +256,7 @@ used for many operands. A type signature can point at one.
 
 ### CXTypeSignature
 
-`ast.CXTypeSignature` (`t3-ast/ast_cxtype_signature.go`) has `Index`,
+`ast.CXTypeSignature` (`t3-ast/cxtypesignature_def.go`) has `Index`,
 `Name`, `Offset`, `Type`, `Package`, `PassBy`
 (`constants.PASSBY_VALUE` 0 or `PASSBY_REFERENCE` 1), `IsDeref`, `Meta`
 and `ArgDetails`. `Type` is a `CXTypeSignature_TYPE`, and `Meta` depends
@@ -288,7 +288,7 @@ a struct field access, a slice of structs or a function value, becomes
 
 ### CXArgument
 
-`ast.CXArgument` (`t3-ast/ast_cxargument.go`) is the general operand. The
+`ast.CXArgument` (`t3-ast/cxargument_def.go`) is the general operand. The
 fields the VM reads are
 
 * `Type` and `PointerTargetType`, both `types.Code`,
@@ -365,7 +365,7 @@ builds.
 
 ## How the VM runs an expression
 
-`ast.CXCall` (`t3-ast/ast_cxcall.go`) is a frame with `Operator`
+`ast.CXCall` (`t3-ast/cxcall_def.go`) is a frame with `Operator`
 (`*CXFunction`), `Line` and `FramePointer`. `CXCall.Call` runs
 `Operator.Expressions[Line]`.
 
