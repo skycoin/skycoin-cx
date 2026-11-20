@@ -187,6 +187,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-utils.cx test-pointers.cx", types.CX_SUCCESS, "pointers")
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
+	t.Run("test-slices-of-slices-literal.cx", types.CX_SUCCESS, "slice of slices literal with two inner literals")
 
 	t.Run("--cxpath test-workspace test-workspace-a.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-b.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a nested library, taking that workspace as the new relative path.")

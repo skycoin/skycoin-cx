@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- A slice of slices literal with exactly two inner literals, such as `[][]i32{[]i32{0, 1}, []i32{2, 3}}`, left the second inner slice empty (#216)
 - `str.substr` with a negative, reversed or too large range gave a raw Go slice panic. It now fails with `CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE` (#179)
 - Calling a function that does not exist in a built in package, such as `str.nosuchfn`, reported the error and then panicked. It now stops with the compile error (#177)
 - CX programs can call the `regexp` package. Using a package type without importing the package is now a compile error, not a compiler panic, and a runtime error in a function with a struct local no longer panics while printing the stack (#188)

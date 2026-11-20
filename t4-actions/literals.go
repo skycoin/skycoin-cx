@@ -115,6 +115,12 @@ func SliceLiteralExpression(prgrm *ast.CXProgram, typeCode types.Code, exprs []a
 					panic("type is not known")
 				}
 
+				// MakeAtomicOperatorExpression above may have grown CXAtomicOps, so refetch.
+				exprAtomicOp, err = prgrm.GetCXAtomicOp(expr.Index)
+				if err != nil {
+					panic(err)
+				}
+
 				exprAtomicOp.Outputs = nil
 
 				exprAtomicOp.AddOutput(prgrm, outTypeSigIdx)
@@ -434,6 +440,11 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, sym)
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 				// hack to get the correct lengths below
+				// MakeAtomicOperatorExpression above may have grown CXAtomicOps, so refetch.
+				expression, err = prgrm.GetCXAtomicOp(expr.Index)
+				if err != nil {
+					panic(err)
+				}
 				expression.AddOutput(prgrm, typeSigIdx)
 			}
 			result = append(result, *symExprCXLine, *symExpr)
