@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"runtime"
+	"runtime/debug"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -91,10 +91,6 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 		"test-slices.cx":                                    8,
 		"examples/testing-pointers-to-arrays-of-structs.cx": 6,
 	}
-	// One more on Windows, measured by the windows-latest CI job.
-	if runtime.GOOS == "windows" {
-		ceilings["examples/hello-world.cx"] = 10
-	}
 	for _, programPath := range compileBenchmarkPrograms {
 		if programPath == "test-gc.cx" {
 			continue
@@ -168,6 +164,9 @@ func BenchmarkRun(b *testing.B) {
 // allocations per run (#407).
 func TestRunAllocs(t *testing.T) {
 	const runs = 3
+	// A collection during a run adds allocations that vary with timing, for
+	// example by emptying sync.Pool caches. #407 asks for no GC during a run.
+	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 	initProgram()
 	for _, p := range runBenchPrograms(t) {
 		t.Run(p.name, func(t *testing.T) {
