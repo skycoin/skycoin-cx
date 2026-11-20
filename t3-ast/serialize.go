@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin/src/cipher/encoder"
@@ -508,7 +509,7 @@ func serializeFunctionIntegers(prgrm *CXProgram, fn *CXFunction, s *SerializedCX
 // container for our serialized cx program.
 // Program memory is also added here to our container
 // if memory is to be included.
-func initSerialization(prgrm *CXProgram, s *SerializedCXProgram, includeDataMemory, useCompression bool) {
+func initSerialization(prgrm *CXProgram, s *SerializedCXProgram, includeDataMemory, wholeMemory bool) {
 	s.PackagesMap = make(map[string]int64)
 	s.StructsMap = make(map[string]int64)
 	s.FunctionsMap = make(map[string]int64)
@@ -517,9 +518,9 @@ func initSerialization(prgrm *CXProgram, s *SerializedCXProgram, includeDataMemo
 	s.Calls = make([]serializedCall, prgrm.CallCounter)
 	s.Packages = make([]serializedPackage, len(prgrm.Packages))
 
-	// If use compression, whole memory will be included
-	// If not and if includeDataMemory, only data segment memory will be included
-	if useCompression {
+	// Compressed serialization passes wholeMemory and stores all memory.
+	// Otherwise includeDataMemory stores only the data segment.
+	if wholeMemory {
 		s.Memory = prgrm.Memory
 	} else if includeDataMemory && len(prgrm.Memory) != 0 {
 		s.DataSegmentMemory = prgrm.Memory[prgrm.Data.StartsAt : prgrm.Data.StartsAt+prgrm.Data.Size]
@@ -758,9 +759,21 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 // SerializeCXProgram translates cx program to slice of bytes that we can save.
 // These slice of bytes can then be deserialize in the future and
 // be translated back to cx program.
-func SerializeCXProgram(prgrm *CXProgram, includeDataMemory, useCompression bool) (b []byte) {
+// A nil codec leaves the bytes uncompressed. A non-nil codec must be
+// initialized, and the bytes then include the whole memory and are compressed.
+func SerializeCXProgram(prgrm *CXProgram, includeDataMemory bool, codec *lz4codec.Codec) ([]byte, error) {
+	b, err := encodeCXProgram(prgrm, includeDataMemory, codec != nil)
+	if err != nil || codec == nil {
+		return b, err
+	}
+	return compressCopy(codec, b)
+}
+
+// encodeCXProgram serializes prgrm without compression. wholeMemory is what
+// compressed serialization stores, see initSerialization.
+func encodeCXProgram(prgrm *CXProgram, includeDataMemory, wholeMemory bool) ([]byte, error) {
 	s := SerializedCXProgram{}
-	initSerialization(prgrm, &s, includeDataMemory, useCompression)
+	initSerialization(prgrm, &s, includeDataMemory, wholeMemory)
 
 	// serialize cx program's packages,
 	// structs, functions, etc.
@@ -770,27 +783,39 @@ func SerializeCXProgram(prgrm *CXProgram, includeDataMemory, useCompression bool
 	serializeProgram(prgrm, &s)
 
 	// serializing everything
-	b, err := EncodeSerializedCXProgram(&s)
-	if err != nil {
-		panic(err)
-	}
-
-	if useCompression {
-		// Compress using LZ4
-		CompressBytesLZ4(&b)
-	}
-	return b
+	return EncodeSerializedCXProgram(&s)
 }
 
-// SerializeDebugInfo prints the name of the serialized segment and byte size.
-func SerializeDebugInfo(prgrm *CXProgram, includeMemory, useCompression bool) SerializedDataSize {
+// compressCopy compresses b with codec and copies the result out of the
+// codec's buffer.
+func compressCopy(codec *lz4codec.Codec, b []byte) ([]byte, error) {
+	out, err := codec.Compress(b)
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(nil), out...), nil
+}
+
+// decompressCopy decompresses b with codec and copies the result out of the
+// codec's buffer.
+func decompressCopy(codec *lz4codec.Codec, b []byte) ([]byte, error) {
+	out, err := codec.Decompress(b)
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(nil), out...), nil
+}
+
+// SerializeDebugInfo returns the byte size of each serialized segment.
+// wholeMemory gives the sizes of the bytes that compressed serialization
+// compresses.
+func SerializeDebugInfo(prgrm *CXProgram, includeMemory, wholeMemory bool) (SerializedDataSize, error) {
 	idxSize := encoder.Size(serializedCXProgramIndex{})
 	var s SerializedCXProgram
 
-	bytes := SerializeCXProgram(prgrm, includeMemory, useCompression)
-	if useCompression {
-		// The index and section offsets refer to the uncompressed bytes.
-		UncompressBytesLZ4(&bytes)
+	bytes, err := encodeCXProgram(prgrm, includeMemory, wholeMemory)
+	if err != nil {
+		return SerializedDataSize{}, err
 	}
 	deserializeRaw(bytes, 0, types.Cast_ui64_to_ptr(idxSize), &s.Index)
 
@@ -807,7 +832,7 @@ func SerializeDebugInfo(prgrm *CXProgram, includeMemory, useCompression bool) Se
 		Memory:      len(bytes[s.Index.MemoryOffset:]),
 	}
 
-	return *data
+	return *data, nil
 }
 
 func deserializeString(off int64, size int64, s *SerializedCXProgram) string {
@@ -1215,22 +1240,23 @@ func initDeserialization(prgrm *CXProgram, s *SerializedCXProgram) {
 }
 
 // Deserialize deserializes a serialized CX program back to its golang struct representation.
+// A nil codec reads b as uncompressed. A non-nil codec must be initialized.
 // VIOLATION: created outside manager; phase 1.
-func Deserialize(b []byte, useCompression bool) (prgrm *CXProgram) {
-	prgrm = &CXProgram{}
-	var s SerializedCXProgram
-
-	if useCompression {
-		// Uncompress using LZ4
-		UncompressBytesLZ4(&b)
+func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
+	if codec != nil {
+		var err error
+		if b, err = decompressCopy(codec, b); err != nil {
+			return nil, err
+		}
 	}
-
+	prgrm := &CXProgram{}
+	var s SerializedCXProgram
 	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
-		panic(err)
+		return nil, err
 	}
 	initDeserialization(prgrm, &s)
 
-	return prgrm
+	return prgrm, nil
 }
 
 // CopyProgramState copies the program state from `prgrm1` to `prgrm2`.

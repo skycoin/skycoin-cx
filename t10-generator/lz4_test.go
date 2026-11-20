@@ -2,85 +2,81 @@ package generator_test
 
 import (
 	"bytes"
-	"math/rand"
-	"runtime"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"os"
 	"testing"
 
-	"github.com/pierrec/lz4"
-
+	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	cxast "github.com/skycoin/skycoin-cx/t3-ast"
 )
 
-// Input that LZ4 cannot shrink used to panic with "data not compressible".
-// See #80.
-func TestCompression_LZ4Incompressible(t *testing.T) {
-	random := make([]byte, 4096)
-	rand.New(rand.NewSource(1)).Read(random)
-
-	for name, data := range map[string][]byte{
-		"empty":  {},
-		"short":  []byte("abc"),
-		"random": random,
-	} {
-		t.Run(name, func(t *testing.T) {
-			b := append([]byte(nil), data...)
-			cxast.CompressBytesLZ4(&b)
-			cxast.UncompressBytesLZ4(&b)
-			if !bytes.Equal(b, data) {
-				t.Fatalf("round trip changed the data: got %d bytes, want %d", len(b), len(data))
-			}
-		})
+// newProgramCodec sizes a codec for the sample programs, whose whole memory
+// is about 3 MiB.
+func newProgramCodec(t *testing.T) *lz4codec.Codec {
+	t.Helper()
+	c := &lz4codec.Codec{}
+	if err := c.Init(lz4codec.Config{MaxInput: 8 << 20, MaxOutput: 8 << 20}); err != nil {
+		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		if err := c.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	return c
 }
 
-// Decompression used to allocate 1000 times the compressed size. See #80.
-func TestCompression_LZ4UncompressAllocation(t *testing.T) {
-	data := make([]byte, 1<<20)
-	rand.New(rand.NewSource(2)).Read(data)
-	b := make([]byte, lz4.CompressBlockBound(len(data)))
-	n, err := lz4.CompressBlock(data, b, nil)
+// testdata/program.lz4 is SerializeCXProgram output from before the codec
+// existed. Program serialization is not deterministic, so the check is that
+// the codec maps those bytes to the same plain bytes and back to the same
+// compressed bytes.
+func TestCompression_LZ4ProgramGolden(t *testing.T) {
+	const sum = "5483f24fe2bdb73e2df1284734418950fb1410c3ddd104f8aa6b56c36d6f35bf"
+	c := newProgramCodec(t)
+	want, err := os.ReadFile("testdata/program.lz4")
 	if err != nil {
 		t.Fatal(err)
 	}
-	b = b[:n]
-
-	var before, after runtime.MemStats
-	runtime.ReadMemStats(&before)
-	cxast.UncompressBytesLZ4(&b)
-	runtime.ReadMemStats(&after)
-
-	if !bytes.Equal(b, data) {
-		t.Fatal("round trip changed the data")
+	plain, err := c.Decompress(want)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if got := after.TotalAlloc - before.TotalAlloc; got > 16*uint64(len(data)) {
-		t.Fatalf("allocated %d bytes to decompress %d", got, len(data))
+	if h := sha256.Sum256(plain); hex.EncodeToString(h[:]) != sum {
+		t.Fatal("decompressed bytes differ from the old output")
 	}
-}
-
-// Compressed bytes are a valid LZ4 block for any decoder. See #80.
-func TestCompression_LZ4HighRatio(t *testing.T) {
-	data := make([]byte, 1<<20)
-	b := append([]byte(nil), data...)
-	cxast.CompressBytesLZ4(&b)
-	out := make([]byte, len(data))
-	n, err := lz4.UncompressBlock(b, out)
-	if err != nil || n != len(data) {
-		t.Fatalf("lz4.UncompressBlock: n %d, err %v", n, err)
+	plain = append([]byte(nil), plain...)
+	got, err := c.Compress(plain)
+	if err != nil {
+		t.Fatal(err)
 	}
-	cxast.UncompressBytesLZ4(&b)
-	if !bytes.Equal(b, data) {
-		t.Fatal("round trip changed the data")
+	if !bytes.Equal(got, want) {
+		t.Fatal("compressed bytes differ from the old output")
 	}
 }
 
 // SerializeDebugInfo used to read the section offsets out of the LZ4 output.
 // See #80.
 func TestSerializeDebugInfoCompressed(t *testing.T) {
+	c := newProgramCodec(t)
 	prgrm := generateSampleProgramFromCXEvolves(t, false)
-	plain := cxast.SerializeCXProgram(prgrm, false, true)
-	cxast.UncompressBytesLZ4(&plain)
+	b, err := cxast.SerializeCXProgram(prgrm, false, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain, err := c.Decompress(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plain) < len(prgrm.Memory) {
+		t.Fatalf("%d plain bytes do not hold %d bytes of memory", len(plain), len(prgrm.Memory))
+	}
 
-	info := cxast.SerializeDebugInfo(prgrm, false, true)
+	info, err := cxast.SerializeDebugInfo(prgrm, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
 	sum := info.Program + info.Calls + info.Packages + info.Structs + info.Functions +
 		info.Expressions + info.Arguments + info.Integers + info.Strings + info.Memory
 	if sum == 0 || sum > len(plain) {
@@ -90,18 +86,51 @@ func TestSerializeDebugInfoCompressed(t *testing.T) {
 
 // Deserialize ignored the decoder error. See #80.
 func TestDeserializeCompressed(t *testing.T) {
+	c := newProgramCodec(t)
 	prgrm := generateSampleProgramFromCXEvolves(t, false)
-	b := cxast.SerializeCXProgram(prgrm, false, true)
-	got := cxast.Deserialize(b, true)
+	b, err := cxast.SerializeCXProgram(prgrm, false, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := cxast.Deserialize(b, c)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(got.Packages) != len(prgrm.Packages) {
 		t.Fatalf("got %d packages, want %d", len(got.Packages), len(prgrm.Packages))
 	}
 
-	defer func() {
-		if recover() == nil {
-			t.Fatal("want a panic for truncated input")
+	short, err := cxast.SerializeCXProgram(prgrm, false, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cxast.Deserialize(short[:8], nil); err == nil {
+		t.Fatal("want an error for truncated input")
+	}
+}
+
+// A codec that is not initialized or is closed is an error, not a panic.
+func TestSerializeCodecMisuse(t *testing.T) {
+	prgrm := generateSampleProgramFromCXEvolves(t, false)
+	closed := &lz4codec.Codec{}
+	if err := closed.Init(lz4codec.Config{MaxInput: 1, MaxOutput: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := closed.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for name, tc := range map[string]struct {
+		c    *lz4codec.Codec
+		want error
+	}{
+		"before Init": {&lz4codec.Codec{}, lz4codec.ErrNotInitialized},
+		"after Close": {closed, lz4codec.ErrClosed},
+	} {
+		if _, err := cxast.SerializeCXProgram(prgrm, false, tc.c); !errors.Is(err, tc.want) {
+			t.Errorf("%s: SerializeCXProgram: got %v, want %v", name, err, tc.want)
 		}
-	}()
-	short := cxast.SerializeCXProgram(prgrm, false, false)
-	cxast.Deserialize(short[:8], false)
+		if _, err := cxast.Deserialize([]byte{0}, tc.c); !errors.Is(err, tc.want) {
+			t.Errorf("%s: Deserialize: got %v, want %v", name, err, tc.want)
+		}
+	}
 }

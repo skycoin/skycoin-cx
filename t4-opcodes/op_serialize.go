@@ -6,9 +6,13 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// opSerialize writes the program uncompressed, so it needs no codec.
 func opSerialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	var slcOff types.Pointer
-	byts := ast.SerializeCXProgram(prgrm, true, false)
+	byts, err := ast.SerializeCXProgram(prgrm, true, nil)
+	if err != nil {
+		panic(err)
+	}
 	for _, b := range byts {
 		slcOff = ast.WriteToSlice(prgrm, slcOff, []byte{b})
 	}
@@ -22,5 +26,7 @@ func opDeserialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	_l := prgrm.Memory[off+types.OBJECT_HEADER_SIZE : off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE]
 	l := types.Read_ptr(_l, 4) // TODO:PTR remove hardcode 4
 
-	ast.Deserialize(prgrm.Memory[off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE:off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE+l], false) // BUG : should be l * elt.TotalSize ?
+	if _, err := ast.Deserialize(prgrm.Memory[off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE:off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE+l], nil); err != nil { // BUG : should be l * elt.TotalSize ?
+		panic(err)
+	}
 }

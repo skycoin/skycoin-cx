@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	// "reflect" // only used by the FAILING tests below
-	"strings"
 	"testing"
 	// "time" // only used by the FAILING tests below
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	cxgenerator "github.com/skycoin/skycoin-cx/t10-generator"
-	"github.com/skycoin/skycoin-cx/t3-ast"
 	cxast "github.com/skycoin/skycoin-cx/t3-ast"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"                           // thin: tests use only MakeProgram, RegisterPackages; no depth gain
 	cxparsingcompletor "github.com/skycoin/skycoin-cx/t8-cxparsingcompletor" // thin: tests use only InitCXCore; no depth gain
@@ -84,41 +82,6 @@ import (
 // 		})
 // 	}
 // }
-
-func TestCompression_LZ4(t *testing.T) {
-	tests := []struct {
-		scenario string
-		data     []byte
-	}{
-		{
-			scenario: "Valid data",
-			data:     []byte(strings.Repeat("HelloWorld", 100)),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.scenario, func(t *testing.T) {
-			originalLen := len(tc.data)
-			t.Logf("Original length of data: %v\n", originalLen)
-
-			ast.CompressBytesLZ4(&tc.data)
-			compressedLen := len(tc.data)
-			t.Logf("Compressed length of data: %v\n", compressedLen)
-
-			ast.UncompressBytesLZ4(&tc.data)
-			unCompressedLen := len(tc.data)
-			t.Logf("Uncompressed length of data: %v\n", unCompressedLen)
-
-			if compressedLen > originalLen {
-				t.Errorf("want compressed length to be less than original length, got %v", compressedLen)
-			}
-
-			if originalLen != unCompressedLen {
-				t.Errorf("want uncompressed length %v, got %v", originalLen, unCompressedLen)
-			}
-		})
-	}
-}
 
 func generateSampleProgramFromCXEvolves(t *testing.T, withLiteral bool) *cxast.CXProgram {
 	var cxProgram *cxast.CXProgram

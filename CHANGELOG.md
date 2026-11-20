@@ -5,6 +5,7 @@
 #### Changed
 
 - The v2 package loader, tree and CLI replace v1 under the v1 paths, and `t1-plloader2`, `t2-pltree2` and `t3-packageloader2` are removed (#181)
+- LZ4 state lives in `lz4codec.Codec` (`t0-lz4codec`), which the caller initializes with explicit size limits, passes to `SerializeCXProgram` and `Deserialize`, and closes. Using it before Init or after Close returns an error. The serialized bytes are unchanged (#190)
 
 #### Fixed
 
