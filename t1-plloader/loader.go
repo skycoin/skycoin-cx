@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Add; no depth gain
@@ -200,17 +201,44 @@ func getImports(file *os.File) (imports []string, err error) {
 	return imports, nil
 }
 
-// NOTE: finds only self imports and loops of two packages, a -> b -> c -> a passes.
-// See #97.
-func checkForDependencyLoop(importMap map[string][]string) (err error) {
-	for packageName := range importMap {
-		for _, importName := range importMap[packageName] {
-			if importName == packageName {
-				return errors.New("Module " + packageName + " imports itself")
+// checkForDependencyLoop walks the imports depth first in name order and
+// reports the first loop it finds.
+func checkForDependencyLoop(importMap map[string][]string) error {
+	names := make([]string, 0, len(importMap))
+	for name := range importMap {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	done := make(map[string]bool)
+	var path []string
+	var visit func(name string) error
+	visit = func(name string) error {
+		for i, onPath := range path {
+			if onPath != name {
+				continue
 			}
-			if Contains(importMap[importName], packageName) {
-				return errors.New("Dependency loop between modules " + packageName + " and " + importName)
+			if i == len(path)-1 {
+				return errors.New("Module " + name + " imports itself")
 			}
+			return errors.New("Dependency loop between modules " + strings.Join(append(path[i:len(path):len(path)], name), " -> "))
+		}
+		if done[name] {
+			return nil
+		}
+		path = append(path, name)
+		for _, importName := range importMap[name] {
+			if err := visit(importName); err != nil {
+				return err
+			}
+		}
+		path = path[:len(path)-1]
+		done[name] = true
+		return nil
+	}
+	for _, name := range names {
+		if err := visit(name); err != nil {
+			return err
 		}
 	}
 	return nil

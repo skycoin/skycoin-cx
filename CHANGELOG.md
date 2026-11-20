@@ -26,6 +26,7 @@
 
 #### Fixed
 
+- The package loader found only self imports and loops of two packages, so a -> b -> c -> a loaded. It now walks the imports depth first and names the whole loop (#97)
 - The package loader stored `Blake2Hash` as raw bytes in a JSON string, so it read back changed. It is now hex encoded, which changes stored data (#93)
 - The structser benchmark wrote 0-byte files and timed empty output, because its structs had only unexported fields, which the encoder skips (#178)
 - The `t0-util` file helpers joined the working dir three different ways, so with one set `CXCreateFile` doubled it and the others dropped the separator. All six now use `filepath.Join` (#89)

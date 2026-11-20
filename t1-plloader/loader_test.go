@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt"
@@ -403,7 +402,27 @@ func TestCheckForDependencyLoop(t *testing.T) {
 				"main":       {"testimport"},
 				"testimport": {"main"},
 			},
-			WantErr: errors.New("Dependency loop between modules main and testimport"),
+			WantErr: errors.New("Dependency loop between modules main -> testimport -> main"),
+		},
+		{
+			Scenario: "Test with a program that contains a loop of three modules",
+			ImportMap: map[string][]string{
+				"main": {"a"},
+				"a":    {"b"},
+				"b":    {"c"},
+				"c":    {"a"},
+			},
+			WantErr: errors.New("Dependency loop between modules a -> b -> c -> a"),
+		},
+		{
+			Scenario: "Testing a diamond, which is not a loop",
+			ImportMap: map[string][]string{
+				"main": {"a", "b"},
+				"a":    {"c"},
+				"b":    {"c"},
+				"c":    {"os"},
+			},
+			WantErr: nil,
 		},
 	}
 
@@ -417,8 +436,7 @@ func TestCheckForDependencyLoop(t *testing.T) {
 			}
 
 			if gotErr != nil && testcase.WantErr != nil {
-				if gotErr.Error() != testcase.WantErr.Error() &&
-					!(strings.Contains(gotErr.Error(), "between") && strings.Contains(testcase.WantErr.Error(), "between")) {
+				if gotErr.Error() != testcase.WantErr.Error() {
 					t.Errorf("want error %v, got %v", testcase.WantErr, gotErr)
 				}
 			}
