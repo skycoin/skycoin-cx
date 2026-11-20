@@ -39,7 +39,7 @@ func GetArgSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	for _, decl := range arg.DeclarationSpecifiers {
 		switch decl {
 		case constants.DECL_ARRAY:
-			return arg.Size * TotalLength(arg.Lengths)
+			return arg.Size * types.TotalLength(arg.Lengths)
 		case constants.DECL_POINTER:
 			return arg.Size
 		case constants.DECL_SLICE:
@@ -69,7 +69,7 @@ func GetNativeSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	for _, decl := range arg.DeclarationSpecifiers {
 		switch decl {
 		case constants.DECL_ARRAY:
-			return arg.Size * TotalLength(arg.Lengths)
+			return arg.Size * types.TotalLength(arg.Lengths)
 		case constants.DECL_POINTER:
 			return arg.Size
 		case constants.DECL_SLICE:

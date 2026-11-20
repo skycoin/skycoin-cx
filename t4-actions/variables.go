@@ -82,7 +82,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		case constants.DECL_POINTER, constants.DECL_SLICE:
 			totalSize = types.POINTER_SIZE
 		case constants.DECL_ARRAY:
-			totalSize = declaration_specifiers.Size * TotalLength(declaration_specifiers.Lengths)
+			totalSize = declaration_specifiers.Size * types.TotalLength(declaration_specifiers.Lengths)
 		}
 	}
 

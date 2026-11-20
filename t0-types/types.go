@@ -440,3 +440,13 @@ func WriteSlice_byte(memory []byte, offset Pointer, byts []byte) {
 		memory[offset+c] = byts[c]
 	}
 }
+
+// TotalLength returns the number of elements in an array with the given lengths.
+func TotalLength(lengths []Pointer) Pointer {
+	total := Pointer(1)
+	for _, i := range lengths {
+		total *= i
+	}
+
+	return total
+}

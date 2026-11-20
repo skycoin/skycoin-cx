@@ -101,15 +101,6 @@ func WritePrimaryExprs(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, i
 	return []ast.CXExpression{*expr}
 }
 
-func TotalLength(lengths []types.Pointer) types.Pointer {
-	total := types.Pointer(1)
-	for _, i := range lengths {
-		total *= i
-	}
-
-	return total
-}
-
 func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile string, lineNo int) {
 	// Argument type
 	argStrct := ast.MakeStruct("Argument")

@@ -182,7 +182,7 @@ func (typeSignature *CXTypeSignature) GetArrayLength(prgrm *CXProgram) types.Poi
 	switch typeSignature.Type {
 	case TYPE_ARRAY_ATOMIC:
 		typeSignatureForArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
-		return TotalLength(typeSignatureForArray.Lengths)
+		return types.TotalLength(typeSignatureForArray.Lengths)
 	}
 
 	return 0
@@ -193,7 +193,7 @@ func (typeSignature *CXTypeSignature) GetArraySize(prgrm *CXProgram) types.Point
 	case TYPE_ARRAY_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC:
 		typeSignatureForArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		arrType := types.Code(typeSignatureForArray.Meta)
-		return TotalLength(typeSignatureForArray.Lengths) * arrType.Size()
+		return types.TotalLength(typeSignatureForArray.Lengths) * arrType.Size()
 	}
 
 	return 0
