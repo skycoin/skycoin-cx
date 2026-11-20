@@ -627,36 +627,6 @@ func (cxprogram *CXProgram) GetFramePointer() int {
 // ----------------------------------------------------------------
 //                             `CXProgram` Debugging
 
-// PrintAllObjects prints all objects in a program
-func (cxprogram *CXProgram) PrintAllObjects() {
-	fp := types.Pointer(0)
-
-	for c := types.Pointer(0); c <= cxprogram.CallCounter; c++ {
-		op := cxprogram.CallStack[c].Operator
-		for _, ptr := range op.ListOfPointers {
-			heapOffset := types.Read_ptr(cxprogram.Memory, fp+ptr.Offset)
-
-			var byts []byte
-
-			if ptr.StructType != nil {
-				// then it's a pointer to a struct
-				// use CustomStruct to match the fields against the bytes
-				// for _, fld := range ptr.Fields {
-
-				// }
-
-				byts = types.Get_obj_data(cxprogram.Memory, heapOffset, ptr.StructType.GetStructSize(cxprogram))
-			}
-
-			fmt.Println("declarat", ptr.DeclarationSpecifiers)
-
-			fmt.Println("obj", ptr.Name, ptr.StructType, cxprogram.Memory[heapOffset:heapOffset+op.Size], byts)
-		}
-
-		fp += op.Size
-	}
-}
-
 // PrintProgram prints the abstract syntax tree of a CX program in a
 // human-readable format.
 func (cxprogram *CXProgram) PrintProgram() {

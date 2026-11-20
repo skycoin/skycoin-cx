@@ -15,6 +15,7 @@
 
 #### Removed
 
+- `ast.Debug`, `ast.CopyProgramState`, `ast.GetSerializedStackSize`, `ast.GetSerializedDataSize` and `CXProgram.PrintAllObjects`, which nothing called (#162)
 - The `t4-assert` package, which nothing imported (#107)
 - The `str.eq`, `str.uneq`, `str.lt`, `str.lteq`, `str.gt` and `str.gteq` opcodes. Opcodes registered after them are renumbered, so serialized programs from before revision 1 must be recompiled (#183, #197)
 
