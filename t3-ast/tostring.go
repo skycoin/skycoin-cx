@@ -266,156 +266,88 @@ func getNonCollectionValue(prgrm *CXProgram, fp types.Pointer, arg, elt *CXArgum
 	if arg.IsSlice() {
 		return fmt.Sprintf("%v", types.GetSlice_byte(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil), GetArgSize(prgrm, elt)))
 	}
-	switch typ {
-	case "bool":
-		return fmt.Sprintf("%v", types.Read_bool(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "str":
-		return fmt.Sprintf("%v", types.Read_str(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "i8":
-		return fmt.Sprintf("%v", types.Read_i8(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "i16":
-		return fmt.Sprintf("%v", types.Read_i16(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "i32":
-		return fmt.Sprintf("%v", types.Read_i32(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "i64":
-		return fmt.Sprintf("%v", types.Read_i64(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "ui8":
-		return fmt.Sprintf("%v", types.Read_ui8(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "ui16":
-		return fmt.Sprintf("%v", types.Read_ui16(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "ui32":
-		return fmt.Sprintf("%v", types.Read_ui32(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "ui64":
-		return fmt.Sprintf("%v", types.Read_ui64(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "f32":
-		return fmt.Sprintf("%v", types.Read_f32(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	case "f64":
-		return fmt.Sprintf("%v", types.Read_f64(prgrm.Memory, GetFinalOffset(prgrm, fp, elt, nil)))
-	default:
-		// then it's a struct
-		var val string
-		val = "{"
-		// for _, fld := range elt.StructType.Fields {
-		lFlds := len(elt.StructType.Fields)
-		off := types.Pointer(0)
-		for c := 0; c < lFlds; c++ {
-			typeSignatureIdx := elt.StructType.Fields[c]
-			typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
-			var fldTotalSize types.Pointer
-			if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
-				fldIdx := typeSignature.Meta
-				fldTotalSize = GetArgSize(prgrm, &prgrm.CXArgs[fldIdx])
-			} else if typeSignature.Type == TYPE_ATOMIC || typeSignature.Type == TYPE_POINTER_ATOMIC {
-				fldTotalSize = types.Code(typeSignature.Meta).Size()
-			} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
-				fldTotalSize = typeSignature.GetSize(prgrm, false)
-			} else {
-				panic("type is not known")
-			}
-
-			if c == lFlds-1 {
-				val += fmt.Sprintf("%s: %s", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
-			} else {
-				val += fmt.Sprintf("%s: %s, ", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
-			}
-			off += fldTotalSize
-		}
-		val += "}"
+	if val, ok := readAtomic(prgrm.Memory, typ, GetFinalOffset(prgrm, fp, elt, nil)); ok {
 		return val
 	}
+	return structValue(prgrm, fp, arg, elt)
+}
+
+// structValue prints the fields of the struct elt as {name: value, ...}.
+func structValue(prgrm *CXProgram, fp types.Pointer, arg, elt *CXArgument) string {
+	val := "{"
+	lFlds := len(elt.StructType.Fields)
+	off := types.Pointer(0)
+	for c := 0; c < lFlds; c++ {
+		typeSignatureIdx := elt.StructType.Fields[c]
+		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
+		var fldTotalSize types.Pointer
+		if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
+			fldIdx := typeSignature.Meta
+			fldTotalSize = GetArgSize(prgrm, &prgrm.CXArgs[fldIdx])
+		} else if typeSignature.Type == TYPE_ATOMIC || typeSignature.Type == TYPE_POINTER_ATOMIC {
+			fldTotalSize = types.Code(typeSignature.Meta).Size()
+		} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
+			fldTotalSize = typeSignature.GetSize(prgrm, false)
+		} else {
+			panic("type is not known")
+		}
+
+		if c == lFlds-1 {
+			val += fmt.Sprintf("%s: %s", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
+		} else {
+			val += fmt.Sprintf("%s: %s, ", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
+		}
+		off += fldTotalSize
+	}
+	return val + "}"
 }
 
 func readValue(prgrm *CXProgram, typ string, offset types.Pointer) string {
+	val, _ := readAtomic(prgrm.Memory, typ, offset)
+	return val
+}
+
+// readAtomic reads a value of the atomic type named typ at offset in memory.
+// It returns false when typ is not an atomic type.
+func readAtomic(memory []byte, typ string, offset types.Pointer) (string, bool) {
 	switch typ {
 	case "bool":
-		return fmt.Sprintf("%v", types.Read_bool(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_bool(memory, offset)), true
 	case "str":
-		return fmt.Sprintf("%v", types.Read_str(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_str(memory, offset)), true
 	case "i8":
-		return fmt.Sprintf("%v", types.Read_i8(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_i8(memory, offset)), true
 	case "i16":
-		return fmt.Sprintf("%v", types.Read_i16(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_i16(memory, offset)), true
 	case "i32":
-		return fmt.Sprintf("%v", types.Read_i32(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_i32(memory, offset)), true
 	case "i64":
-		return fmt.Sprintf("%v", types.Read_i64(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_i64(memory, offset)), true
 	case "ui8":
-		return fmt.Sprintf("%v", types.Read_ui8(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_ui8(memory, offset)), true
 	case "ui16":
-		return fmt.Sprintf("%v", types.Read_ui16(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_ui16(memory, offset)), true
 	case "ui32":
-		return fmt.Sprintf("%v", types.Read_ui32(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_ui32(memory, offset)), true
 	case "ui64":
-		return fmt.Sprintf("%v", types.Read_ui64(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_ui64(memory, offset)), true
 	case "f32":
-		return fmt.Sprintf("%v", types.Read_f32(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_f32(memory, offset)), true
 	case "f64":
-		return fmt.Sprintf("%v", types.Read_f64(prgrm.Memory, offset))
+		return fmt.Sprintf("%v", types.Read_f64(memory, offset)), true
 	}
-
-	return ""
+	return "", false
 }
 
 // ReadSliceElements ...
 func ReadSliceElements(prgrm *CXProgram, fp types.Pointer, arg, elt *CXArgument, sliceData []byte, size types.Pointer, typ string) string {
-	switch typ {
-	case "bool":
-		return fmt.Sprintf("%v", types.Read_bool(sliceData, 0))
-	case "str":
+	if typ == "str" {
 		return fmt.Sprintf("%v", types.Read_str(prgrm.Memory, types.Read_ptr(sliceData, 0)))
-	case "i8":
-		return fmt.Sprintf("%v", types.Read_i8(sliceData, 0))
-	case "i16":
-		return fmt.Sprintf("%v", types.Read_i16(sliceData, 0))
-	case "i32":
-		return fmt.Sprintf("%v", types.Read_i32(sliceData, 0))
-	case "i64":
-		return fmt.Sprintf("%v", types.Read_i64(sliceData, 0))
-	case "ui8":
-		return fmt.Sprintf("%v", types.Read_ui8(sliceData, 0))
-	case "ui16":
-		return fmt.Sprintf("%v", types.Read_ui16(sliceData, 0))
-	case "ui32":
-		return fmt.Sprintf("%v", types.Read_ui32(sliceData, 0))
-	case "ui64":
-		return fmt.Sprintf("%v", types.Read_ui64(sliceData, 0))
-	case "f32":
-		return fmt.Sprintf("%v", types.Read_f32(sliceData, 0))
-	case "f64":
-		return fmt.Sprintf("%v", types.Read_f64(sliceData, 0))
-	default:
-		// then it's a struct
-		var val string
-		val = "{"
-		// for _, fld := range elt.StructType.Fields {
-		lFlds := len(elt.StructType.Fields)
-		off := types.Pointer(0)
-		for c := 0; c < lFlds; c++ {
-			typeSignatureIdx := elt.StructType.Fields[c]
-			typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
-
-			var fldTotalSize types.Pointer
-			if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
-				fldIdx := typeSignature.Meta
-				fldTotalSize = GetArgSize(prgrm, &prgrm.CXArgs[fldIdx])
-			} else if typeSignature.Type == TYPE_ATOMIC || typeSignature.Type == TYPE_POINTER_ATOMIC {
-				fldTotalSize = types.Code(typeSignature.Meta).Size()
-			} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
-				fldTotalSize = typeSignature.GetSize(prgrm, false)
-			} else {
-				panic("type is not known")
-			}
-
-			if c == lFlds-1 {
-				val += fmt.Sprintf("%s: %s", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
-			} else {
-				val += fmt.Sprintf("%s: %s, ", typeSignature.Name, GetPrintableValue(prgrm, fp+arg.Offset+off, typeSignature))
-			}
-			off += fldTotalSize
-		}
-		val += "}"
+	}
+	if val, ok := readAtomic(sliceData, typ, 0); ok {
 		return val
 	}
+	return structValue(prgrm, fp, arg, elt)
 }
 
 func arrayPrinter(c types.Pointer, arrayLengths []types.Pointer, closeStr, openStr string) string {
@@ -526,7 +458,7 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 	} else if argTypeSig.Type == TYPE_POINTER_ATOMIC {
 		// TODO: improve this
 		return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig)))
-	} else if argTypeSig.Type == TYPE_ARRAY_ATOMIC {
+	} else if argTypeSig.Type == TYPE_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC {
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 		var val string
 
@@ -569,49 +501,6 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 			return val
 		}
 
-	} else if argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC {
-		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
-		var val string
-
-		typ := types.Code(arrDetails.Meta).Name()
-		if len(arrDetails.Lengths) == 1 {
-			val += "["
-
-			// for Arrays
-			for c := types.Pointer(0); c < arrDetails.Lengths[0]; c++ {
-				val += readValue(prgrm, typ, GetFinalOffset(prgrm, fp+(c*types.Code(arrDetails.Meta).Size()), nil, argTypeSig))
-
-				if c != arrDetails.Lengths[0]-1 {
-					val += ", "
-				}
-			}
-
-			val += "]"
-
-			return val
-		} else {
-			val = ""
-
-			finalSize := types.Pointer(1)
-			for _, l := range arrDetails.Lengths {
-				finalSize *= l
-				val += "["
-			}
-
-			// adding first element because of formatting reasons
-			val += readValue(prgrm, typ, GetFinalOffset(prgrm, fp, nil, argTypeSig))
-
-			for c := types.Pointer(1); c < finalSize; c++ {
-				val += arrayPrinter(c, arrDetails.Lengths, "", "")
-				val += readValue(prgrm, typ, GetFinalOffset(prgrm, fp+(c*types.Code(arrDetails.Meta).Size()), nil, argTypeSig))
-			}
-
-			for range arrDetails.Lengths {
-				val += "]"
-			}
-
-			return val
-		}
 	} else if argTypeSig.Type == TYPE_SLICE_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC {
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 		var val string
