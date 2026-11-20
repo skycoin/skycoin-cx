@@ -603,34 +603,14 @@ func TestLoadCXProgramSameFileNames(t *testing.T) {
 	if err := loader.LoadCXProgram("samenames", sourceCodes); err != nil {
 		t.Fatal(err)
 	}
-	listBytes, err := bolt.Get("samenames")
+	stored, err := loader.ReadProgram("samenames")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var list loader.PackageList
-	if err := list.UnmarshalBinary(listBytes); err != nil {
-		t.Fatal(err)
-	}
 	got := map[string]string{}
-	for _, packageKey := range list.Packages {
-		packageBytes, err := bolt.Get(packageKey)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var pkg loader.Package
-		if err := pkg.UnmarshalBinary(packageBytes); err != nil {
-			t.Fatal(err)
-		}
-		for _, fileKey := range pkg.Files {
-			fileBytes, err := bolt.Get(fileKey)
-			if err != nil {
-				t.Fatal(err)
-			}
-			var file loader.File
-			if err := file.UnmarshalBinary(fileBytes); err != nil {
-				t.Fatal(err)
-			}
-			got[pkg.PackageName] = file.FileName + ": " + string(file.Content)
+	for _, pkg := range stored {
+		for _, file := range pkg.Files {
+			got[pkg.Package.PackageName] = file.FileName + ": " + string(file.Content)
 		}
 	}
 	want := map[string]string{"main": "x.cx: " + files["x.cx"], "a": "x.cx: " + files["a/x.cx"], "b": "x.cx: " + files["b/x.cx"]}
@@ -647,4 +627,42 @@ func closeFiles(t *testing.T, files []*os.File) {
 			file.Close()
 		}
 	})
+}
+
+func TestReadProgram(t *testing.T) {
+	_, sourceCodes, _, err := util.ParseArgsForCX([]string{TEST_SRC_PATH_VALID}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closeFiles(t, sourceCodes)
+	if err := loader.LoadCXProgram("readprogram", sourceCodes); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := loader.ReadProgram("readprogram")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string][]string{}
+	for _, pkg := range stored {
+		if len(pkg.Files) != len(pkg.Package.Files) {
+			t.Errorf("package %s: %d files read, %d keys stored", pkg.Package.PackageName, len(pkg.Files), len(pkg.Package.Files))
+		}
+		for _, file := range pkg.Files {
+			content, err := os.ReadFile(filepath.Join(TEST_SRC_PATH_VALID, map[string]string{"main": "", "testimport": "testimport"}[pkg.Package.PackageName], file.FileName))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(content) != string(file.Content) {
+				t.Errorf("file %s: content differs from the source", file.FileName)
+			}
+			got[pkg.Package.PackageName] = append(got[pkg.Package.PackageName], file.FileName)
+		}
+	}
+	want := map[string][]string{"main": {"testfile2.cx", "testfile.cx"}, "testimport": {"testimport.cx"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+	if _, err := loader.ReadProgram("readprogram-missing"); err == nil {
+		t.Error("ReadProgram of a missing program: want an error, got nil")
+	}
 }
