@@ -1,5 +1,6 @@
 //go:build os && mobile
 
+// Does not compile and no make target or CI job builds it, see #35.
 package cxcore
 
 import (

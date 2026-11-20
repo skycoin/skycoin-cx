@@ -1,5 +1,6 @@
 //go:build cxfx && android
 
+// Does not compile and no make target or CI job builds it, see #35.
 package main
 
 import (
