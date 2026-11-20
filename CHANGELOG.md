@@ -31,6 +31,7 @@
 
 #### Fixed
 
+- `StartCPUProfile(path, rate)` in CX wrote `<argv0>_<path>_cpu.pprof` next to the cx executable instead of `path`. It now writes the path it is given (#118)
 - A failing `test()`, `assert` or `panic` printed the raw bytes of both values to stdout before its message. Only the message is printed now (#239)
 - A call to a function that does not exist in an imported package, such as `os.NoSuchFunction`, printed "struct not found" and the program still ran and exited 0. It is now a compile error naming the identifier and its line, and cx exits 1 (#221)
 - `cx.POINTER_SIZE` used the pointer size as its constant code, so it overwrote `cx.ASSERT` (4) or, with ptr64, `cx.RUNTIME_INVALID_ARGUMENT` (8). It now has its own code after the exit codes (#193)

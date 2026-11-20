@@ -41,11 +41,16 @@ func StopProfile(name string) {
 // profRate samples per second. A rate of 0 does nothing. The returned
 // function stops the profile and closes the file.
 func StartCPUProfile(name string, profRate int) (stop func() error, err error) {
+	return StartCPUProfileFile(fmt.Sprintf("%s_%s_cpu.pprof", os.Args[0], name), profRate)
+}
+
+// StartCPUProfileFile is StartCPUProfile writing to path.
+func StartCPUProfileFile(path string, profRate int) (stop func() error, err error) {
 	if profRate == 0 {
 		return func() error { return nil }, nil
 	}
 
-	f, err := util.CXCreateFile(fmt.Sprintf("%s_%s_cpu.pprof", os.Args[0], name))
+	f, err := util.CXCreateFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("create CPU profile: %w", err)
 	}
