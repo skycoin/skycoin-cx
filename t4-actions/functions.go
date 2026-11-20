@@ -2283,6 +2283,14 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		symTypeSignature.Offset = argTypeSignature.Offset
 		symTypeSignature.PassBy = sym.PassBy
 
+		if argTypeSignature.Type == ast.TYPE_POINTER_STRUCT && len(sym.Fields) == 0 {
+			for _, decl := range sym.DeclarationSpecifiers {
+				if decl == constants.DECL_DEREF {
+					symTypeSignature.IsDeref = true
+				}
+			}
+		}
+
 		if len(sym.Fields) > 0 {
 			elt := sym.GetAssignmentElement(prgrm)
 

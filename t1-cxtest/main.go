@@ -201,6 +201,10 @@ func runTestCases(t *runner.TestRunner) {
 		"ss [[8] [8]]\n",
 		"a[1] 2\n",
 	)
+	t.RunWant("test-struct-pointer-deref.cx", types.CX_SUCCESS, "*p on a struct pointer is the struct value (skycoin-cx#261)",
+		"deref {x: 1, y: 2}\n",
+		"local {x: 3, y: 4}\n",
+	)
 	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
 		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",

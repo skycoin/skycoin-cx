@@ -1,0 +1,45 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func swap(p Point) (out Point) {
+	out.x = p.y
+	out.y = p.x
+}
+
+var gp Point
+
+func main() {
+	gp.x = 1
+	gp.y = 2
+	var pp *Point
+	pp = &gp
+	var q Point
+	q = *pp
+	test(q.x, 1, "q.x")
+	test(q.y, 2, "q.y")
+	printf("deref %v\n", *pp)
+
+	var lp Point
+	lp.x = 3
+	lp.y = 4
+	var lpp *Point
+	lpp = &lp
+	var r Point
+	r = swap(*lpp)
+	test(r.x, 4, "r.x")
+	test(r.y, 3, "r.y")
+	printf("local %v\n", *lpp)
+
+	q.x = 9
+	test(gp.x, 1, "copy does not alias")
+	pp.x = 7
+	test(gp.x, 7, "field through pointer")
+	test(q.x, 9, "copy kept")
+	*pp = q
+	test(gp.x, 9, "assign through pointer")
+	test(gp.y, 2, "assign through pointer y")
+}
