@@ -2,7 +2,7 @@
 
 # CX Programming Language
  
-[![Build Status](https://travis-ci.com/skycoin/cx.svg?branch=develop)](https://travis-ci.com/skycoin/cx) [![Build status](https://ci.appveyor.com/api/projects/status/y04pofhhfmpw8vef/branch/master?svg=true)](https://ci.appveyor.com/project/skycoin/cx/branch/master)
+[![check](https://github.com/skycoin/skycoin-cx/actions/workflows/check.yml/badge.svg?branch=develop)](https://github.com/skycoin/skycoin-cx/actions/workflows/check.yml)
 
 CX is a general purpose, interpreted and compiled programming
 language, with a very strict type system and a syntax
@@ -40,169 +40,99 @@ State`, `// VIOLATION: pointer at rest` or `// VIOLATION: created outside
 manager`, and the marks only go away. See skycoin/skycoin-cx#9.
 
 
-Table of Contents
+## Install
 
-   * [CX Programming Language](#cx-programming-language-1)
-   * [Installation](#installation)
-      * [Binary Releases](#binary-releases)  
-      * [Compiling from Source](#compiling-from-source)
-         * [Compiling CX on Linux](#compiling-on-linux)
-         * [Compiling CX on MacOS](#compiling-on-macos)
-         * [Compiling CX on Windows](#compiling-on-windows)
-      * [Updating CX](#updating-cx)
-   * [Resources and libraries](#resources-and-libraries)
-
-# CX Programming Language
-
-CX is a general purpose, interpreted and compiled programming
-language, with a very strict type system and a syntax
-similar to Golang's. CX provides a new programming paradigm based on
-the concept of affordances, where the user can ask the programming
-language at runtime what can be done with a CX object (functions,
-expressions, packages, etc.), and interactively or automatically choose
-one of the affordances to be applied. This paradigm has the main objective
-of providing an additional security layer for decentralized,
-blockchain-based applications, but can also be used for general
-purpose programming. 
-
-## Installation
-
-CX requires Go 1.26 or newer. `make build` (or `go build -o bin/cx ./t11-cx`) builds the language with cipher, os and regexp support; `make build-gui` adds the cxfx GL package, which needs cgo and X11/GL headers.
-
-### Binary Releases
-
-You can find binary releases for most major systems on the [release page](https://github.com/skycoin/cx/releases). 
-
-### Compiling on Linux
-
-If you are using an `apt` compatible system, install the dependencies with:
-
-```
-sudo apt-get update
-
-sudo apt-get install -y glade xvfb libxinerama-dev libxcursor-dev libxrandr-dev libgl1-mesa-dev libxi-dev libperl-dev libcairo2-dev libpango1.0-dev libglib2.0-dev libopenal-dev libxxf86vm-dev make
-```
-
-If you have not set up Go on your machine, follow this [guide](https://www.tecmint.com/install-go-in-ubuntu/) to install and set up Go.
-
-Download CX's repository with git:
+CX needs Go 1.27 or newer and `make`. On Windows use Git Bash or MSYS2, so
+`make` and the check scripts have a shell.
 
 ```
 git clone https://github.com/skycoin/skycoin-cx
-```
-
-Get required Go dependencies with:
-
-```
-go get -u golang.org/x/mobile/cmd/gomobile
-go get golang.org/x/mobile/gl 
-```
-
-Navigate to CX's repository.
-
-Build CX's binary and install by running:
-
-```
-make build
-make test
-```
-
-Add the CX binary path to your operating system's `$PATH`. For example, in Linux:
-
-```
-export PATH=$PATH:$HOME/skycoin-cx/bin
-```
-
-You should test your installation by running:
-
-```
-make test
-```
-
-### Compiling on MacOS
-
-If you have not set up Go on your machine, follow this [guide](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos) to install and set up Go.
-
-If you do not have `git` installed, install it with:
-
-```
-brew install git
-```
-
-Download CX's repository with git:
-
-```
-git clone https://github.com/skycoin/skycoin-cx
-```
-
-Navigate to CX's repository.
-
-Build CX's binary and install by running:
-
-```
+cd skycoin-cx
 make build
 ```
 
-Add the CX binary path to your operating system's `$PATH`. For example:
+This puts the `cx` binary in `bin/`. Add that directory to your `PATH` if you
+want to run `cx` from anywhere. To update, `git pull` and `make build` again.
+
+## Build
+
+`make build` builds cx with the cipher, os and regexp packages. Leave any of
+them out with `TAGS=nocipher`, `TAGS=nocxos` or `TAGS=noregexp`, and
+`TAGS=ptr64` switches the VM to 64 bit pointers.
+
+`make build-gui` adds the `gl`, `glfw` and `al` packages (cxfx). It needs cgo
+and the GL, X11 and OpenAL headers. On Debian or Ubuntu:
 
 ```
-export PATH=$PATH:$HOME/skycoin-cx/bin
+sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev
+make build-gui
 ```
 
-You should test your installation by running:
+## Hello world
 
 ```
-make test
+package main
+
+func main() {
+	str.print("Hello World!")
+}
 ```
 
-### Compiling on Windows
+Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
+`tests/examples`, and the OpenGL ones in `tests/examples/opengl` need
+`make build-gui`.
 
-Compiling CX on Windows requires a recent version of Git to be installed. 
+## Tests
 
-Pacman is a utility which manages software packages.   
+- `make check` runs the tier and init checks, `go vet`, the Go tests and the
+  stable CX program tests. CI runs it on Linux, macOS and Windows.
+- `make test` runs only the stable CX program tests.
+- `make test-all` also runs the tests for known issues. These are expected to
+  fail, and each one names its issue in `t1-cxtest/main.go`.
+- `make vet-gui` vets the cxfx build.
 
-To install pacman, download [MSYS2](https://www.msys2.org) and run the installer.
+The package loader tests use redis on `localhost:6379` when it is running and
+skip those cases when it is not.
 
-When the installation is complete, click `Run MSYS2 now`.
+## Status
 
-If MSYS2 has already been installed, run it through the start menu.
+Works:
 
-You can run a full system upgrade and install required dependencies with: 
+- `make check` passes on Linux, macOS and Windows.
+- 175 stable CX program tests pass. `make test-all` passes 182 and fails the
+  20 known issue tests.
+- The cxfx build compiles and `tests/examples/opengl/triangle.cx` draws its
+  triangle under Xvfb on Linux. Other GUI programs have not been checked.
 
-```
-pacman -Syu git mingw-w64-x86_64-openal base-devel mingw-w64-x86_64-toolchain
+Known broken:
 
-if [ ! -a /mingw64/lib/libOpenAL32.a ]; then ln -s /mingw64/lib/libopenal.a /mingw64/lib/libOpenAL32.a; fi
+- 20 CX program tests fail, among them `for true {}`
+  ([#20](https://github.com/skycoin/skycoin-cx/issues/20)), no short circuit
+  evaluation ([#26](https://github.com/skycoin/skycoin-cx/issues/26)) and
+  `-heap-max` not enforced
+  ([#17](https://github.com/skycoin/skycoin-cx/issues/17)). Issues #13 to #29
+  cover them all.
+- The GUI tests `issue-208`, `issue-216` and `issue-252` only work against a
+  cxfx build and are commented out
+  ([#30](https://github.com/skycoin/skycoin-cx/issues/30),
+  [#31](https://github.com/skycoin/skycoin-cx/issues/31),
+  [#32](https://github.com/skycoin/skycoin-cx/issues/32)).
+- `t7-cxmobile` does not compile
+  ([#35](https://github.com/skycoin/skycoin-cx/issues/35)).
+- Older language bugs carried over from skycoin/cx are tracked from
+  [#38](https://github.com/skycoin/skycoin-cx/issues/38) on, for example
+  `break` leaving every loop
+  ([#39](https://github.com/skycoin/skycoin-cx/issues/39)).
 
-if [ ! -a /mingw64/lib/libOpenAL32.dll.a ]; then ln -s /mingw64/lib/libopenal.dll.a /mingw64/lib/libOpenAL32.dll.a; fi
-```
+See the [open issues](https://github.com/skycoin/skycoin-cx/issues) for the
+full list.
 
-You can compile CX by running: 
+## History
 
-```
-cx-setup.bat
-```
-
-Test your installation by running:
-
-```
-cx lib/args.cx tests/main.cx ++wdir=tests ++disable-tests=issue
-```
-
-## Updating CX
-
-You can update your CX installation by running, in the repository:
-
-```
-git pull
-make build
-```
-
-Or on Windows:
-
-```
-cx-setup.bat
-```
+This repository merges [skycoin/cx](https://github.com/skycoin/cx), which saw
+its last activity in 2023, with the CX playground repositories, in November
+2026. Development continues here. Open issues from skycoin/cx that still apply
+were filed again here with a link to the original.
 
 ## Resources and libraries
 
