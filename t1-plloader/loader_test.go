@@ -538,3 +538,13 @@ func TestBlake2HashSurvivesRoundTrip(t *testing.T) {
 		t.Errorf("Blake2Hash = %q, want the hex hash of the content %q", got.Blake2Hash, want)
 	}
 }
+
+func TestLoadCXProgramCommentedImport(t *testing.T) {
+	_, sourceCodes, _, err := util.ParseArgsForCX([]string{"test_folder/test_comment_import/src"}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := loader.LoadCXProgram("commentimport", sourceCodes); err != nil {
+		t.Errorf("an import inside a comment was read as an import: %v", err)
+	}
+}

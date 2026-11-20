@@ -173,30 +173,17 @@ func addNewPackage(packageListStruct *PackageList, packageName string, fileMap m
 	return packageListStruct.appendPackage(&packageStruct)
 }
 
-func getImports(file *os.File) (imports []string, err error) {
+func getImports(file *os.File) ([]string, error) {
 	if file == nil {
 		return nil, errors.New("get imports: nil file")
 	}
-	openFile, err := os.Open(file.Name())
+	content, err := os.ReadFile(file.Name())
 	if err != nil {
-		return imports, err
-	}
-	defer openFile.Close()
-
-	scanner := bufio.NewScanner(openFile)
-
-	for scanner.Scan() {
-		line := strings.Fields(scanner.Text())
-		if len(line) == 0 || line[0] != "import" {
-			continue
-		}
-		if len(line) < 2 || len(line[1]) < 2 || line[1][0] != '"' || line[1][len(line[1])-1] != '"' {
-			return nil, fmt.Errorf("%s: malformed import line %q", file.Name(), scanner.Text())
-		}
-		imports = append(imports, line[1][1:len(line[1])-1])
-	}
-	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("%s: read: %w", file.Name(), err)
+	}
+	imports, err := Imports(content)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", file.Name(), err)
 	}
 	return imports, nil
 }

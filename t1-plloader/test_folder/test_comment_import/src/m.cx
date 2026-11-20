@@ -1,0 +1,11 @@
+package main
+
+/*
+import "fromcomment"
+*/
+// import "skipped"
+//import "linecomment"
+
+func main() {
+	str.print("x import y")
+}

@@ -1,11 +1,9 @@
 package graph
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Get; no depth gain
 	"github.com/skycoin/skycoin-cx/t1-plloader"
@@ -50,41 +48,14 @@ func GetImportGraph(programName string) (output string, err error) {
 				return output, fmt.Errorf("decode file %s: %w", fileKey, err)
 			}
 
-			scanner := bufio.NewScanner(strings.NewReader(string(fileStruct.Content)))
-			scanner.Split(bufio.ScanWords)
-
-			wordBefore := ""
-			for scanner.Scan() {
-				if scanner.Text() != "import" {
-					wordBefore = scanner.Text()
-					continue
-				}
-				if wordBefore == "//" {
-					wordBefore = scanner.Text()
-					continue
-				}
-				// NOTE: unreachable, the word is always "import" here. The scan also takes
-				// "import" in block comments and strings as an import. See #98.
-				if scanner.Text() == "var" || scanner.Text() == "const" || scanner.Text() == "type" || scanner.Text() == "func" {
-					break
-				}
-				if !scanner.Scan() {
-					break
-				}
-				tok := scanner.Text()
-				if len(tok) < 2 || tok[0] != '"' || tok[len(tok)-1] != '"' {
-					// "import" not followed by a quoted path, so not an import statement.
-					wordBefore = tok
-					continue
-				}
-				importString := tok[1 : len(tok)-1]
+			fileImports, err := loader.Imports(fileStruct.Content)
+			if err != nil {
+				return output, fmt.Errorf("file %s: %w", fileStruct.FileName, err)
+			}
+			for _, importString := range fileImports {
 				if !loader.Contains(imports, importString) {
 					imports = append(imports, importString)
 				}
-				wordBefore = scanner.Text()
-			}
-			if err := scanner.Err(); err != nil {
-				return output, fmt.Errorf("file %s: scan: %w", fileStruct.FileName, err)
 			}
 		}
 		indexList = append(indexList, packageStruct.PackageName)

@@ -27,6 +27,7 @@
 
 #### Fixed
 
+- The package loader, `-graph` and `-tree` took `import` inside a block comment as an import, so the loader rejected a valid program. One scanner, `loader.Imports`, now skips comments and string literals for all three (#98)
 - The package loader found only self imports and loops of two packages, so a -> b -> c -> a loaded. It now walks the imports depth first and names the whole loop (#97)
 - The package loader stored `Blake2Hash` as raw bytes in a JSON string, so it read back changed. It is now hex encoded, which changes stored data (#93)
 - The structser benchmark wrote 0-byte files and timed empty output, because its structs had only unexported fields, which the encoder skips (#178)
