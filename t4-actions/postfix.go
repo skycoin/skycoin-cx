@@ -96,9 +96,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			newTypeSigSlice.Lengths = sliceLengths
 			newTypeSigSliceIdx := int(objmodel.GidIndex(int64(newTypeSigSliceGid)))
 
-			// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-			// Also state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331. Site S1106 S1107.
-			newTypeSig := ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: prevExprCXLine.FileName, FileLine: prevExprCXLine.LineNumber - 1}}
+			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+			argDetails.FileName = prevExprCXLine.FileName
+			argDetails.FileLine = prevExprCXLine.LineNumber - 1
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now a value literal, site S1107.
+			newTypeSig := ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			newTypeSig.Name = genName
 			newTypeSig.Package = prevExpressionOperatorOutputTypeSig.Package
 			newTypeSig.Type = prevExpressionOperatorOutputTypeSig.Type
@@ -115,9 +119,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			inpNewTypeSigSlice.Lengths = sliceLengths
 			inpNewTypeSigSliceIdx := int(objmodel.GidIndex(int64(inpNewTypeSigSliceGid)))
 
-			// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-			// Also state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331. Site S1111 S1112.
-			inpNewTypeSig := ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: prevExprCXLine.FileName, FileLine: prevExprCXLine.LineNumber - 1}}
+			inpArgDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			inpArgDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(inpArgDetailsGid)
+			inpArgDetails.FileName = prevExprCXLine.FileName
+			inpArgDetails.FileLine = prevExprCXLine.LineNumber - 1
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now a value literal, site S1112.
+			inpNewTypeSig := ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			inpNewTypeSig.Name = genName
 			inpNewTypeSig.Package = prevExpressionOperatorOutputTypeSig.Package
 			inpNewTypeSig.Type = prevExpressionOperatorOutputTypeSig.Type
@@ -188,9 +196,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		elt.DeclarationSpecifiers = append(elt.DeclarationSpecifiers, constants.DECL_INDEXING)
 	} else if prevExpressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 		prevExpressionOutputTypeSig.IsDeref = true
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S1121 S1122.
-		prevExpressionOutputArg = &ast.CXArgument{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+		// Now a heap literal, site S1121.
+		prevExpressionOutputArg = &ast.CXArgument{ArgDetails: argDetailsGid}
 	} else {
 		panic("type is not known")
 	}
@@ -264,9 +276,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				// Now an arena insert, site S1132.
 				typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 			} else if postExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+				argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+				argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+				argDetails.FileName = CurrentFile
+				argDetails.FileLine = LineNo
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S1133 S1134.
-				newTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+				// Now a heap literal, site S1133.
+				newTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 				newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 				newTypeSig.Package = prgrm.CXAtomicOps[postExpressionIdx].Package
 				newTypeSig.Type = postExpressionOperatorOutputTypeSig.Type
@@ -276,9 +292,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				// Now an arena insert, site S1135.
 				typeSigIdx = prgrm.AddCXTypeSignatureInArray(newTypeSig)
 			} else if postExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+				argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+				argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+				argDetails.FileName = CurrentFile
+				argDetails.FileLine = LineNo
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-				// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S1136 S1137.
-				newTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+				// Now a heap literal, site S1136.
+				newTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 				newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 				newTypeSig.Package = prgrm.CXAtomicOps[postExpressionIdx].Package
 				newTypeSig.Type = postExpressionOperatorOutputTypeSig.Type
@@ -881,8 +901,8 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			lastExpressionOutputArg.StructType = strct
 		} else {
 			file, line := CurrentFile, LineNo
-			if details := leftExprOutputTypeSig.ArgDetails; details != nil {
-				file, line = details.FileName, details.FileLine
+			if details := leftExprOutputTypeSig.ArgDetails; details != ast.CXArgumentDebugGidNil {
+				file, line = ast.CXArgumentDebugFileLine(prgrm, details)
 			}
 			if msg, renamed := renamedOpcodeMessage(imp.Name + "." + ident); renamed {
 				println(ast.CompilationError(file, line), msg)
@@ -894,7 +914,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	} else {
 		// then left is not a package name
 		if cxpackages.IsDefaultPackage(leftExprOutputTypeSig.Name) {
-			println(ast.CompilationError(leftExprOutputTypeSig.ArgDetails.FileName, leftExprOutputTypeSig.ArgDetails.FileLine),
+			println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, leftExprOutputTypeSig.ArgDetails)),
 				fmt.Sprintf("built-in package %s is used without importing it, add import \"%s%s\"",
 					leftExprOutputTypeSig.Name, cxpackages.SysPrefix, leftExprOutputTypeSig.Name))
 			os.Exit(types.CX_COMPILATION_ERROR)

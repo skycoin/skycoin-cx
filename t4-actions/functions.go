@@ -418,8 +418,10 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	file, line := exprLine(prgrm, exprs, currIndex)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0742.
-	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != nil && sig.ArgDetails.FileLine > 0 {
-		file, line = sig.ArgDetails.FileName, sig.ArgDetails.FileLine
+	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != ast.CXArgumentDebugGidNil {
+		if sigFile, sigLine := ast.CXArgumentDebugFileLine(prgrm, sig.ArgDetails); sigLine > 0 {
+			file, line = sigFile, sigLine
+		}
 	}
 	println(ast.CompilationError(file, line), msg)
 }
@@ -579,9 +581,13 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							// Now an arena insert, site S0760.
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC {
+							argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+							argDetails.FileName = CurrentFile
+							argDetails.FileLine = inpExprCXLine.LineNumber
 							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-							// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0761 S0762.
-							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
+							// Now a heap literal, site S0761.
+							outTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_ATOMIC
 							outTypeSig.Meta = inpExprAtomicOpInputTypeSig.Meta
@@ -592,9 +598,13 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							// Now an arena insert, site S0763.
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(outTypeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+							argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+							argDetails.FileName = CurrentFile
+							argDetails.FileLine = inpExprCXLine.LineNumber
 							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-							// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0764 S0765.
-							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
+							// Now a heap literal, site S0764.
+							outTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_POINTER_ATOMIC
 							outTypeSig.Meta = inpExprAtomicOpInputTypeSig.Meta
@@ -966,7 +976,7 @@ func checkIndexType(prgrm *ast.CXProgram, idxIdx ast.CXTypeSignatureIndex) {
 
 	idxType = ast.GetFormattedType(prgrm, idxTypeSig)
 	if idxType != "i32" && idxType != "i64" {
-		println(ast.CompilationError(idxTypeSig.ArgDetails.FileName, idxTypeSig.ArgDetails.FileLine), fmt.Sprintf("wrong index type; expected either 'i32' or 'i64', got '%s'", idxType))
+		println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, idxTypeSig.ArgDetails)), fmt.Sprintf("wrong index type; expected either 'i32' or 'i64', got '%s'", idxType))
 	}
 }
 
@@ -1178,7 +1188,7 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 
 		_, found := (symbolsData.symbolsIndex)[lastIdx][symPkg.Name+"."+typeSig.Name]
 		if found {
-			println(ast.CompilationError(typeSig.ArgDetails.FileName, typeSig.ArgDetails.FileLine), fmt.Sprintf("'%s' redeclared", typeSig.Name))
+			println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, typeSig.ArgDetails)), fmt.Sprintf("'%s' redeclared", typeSig.Name))
 		}
 	}
 }
@@ -1284,12 +1294,12 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			}
 
 			if isInputs {
-				println(ast.CompilationError(receivedTypeSig.ArgDetails.FileName, receivedTypeSig.ArgDetails.FileLine), fmt.Sprintf("function '%s' expected input argument of type '%s'; '%s' was provided", opName, expectedType, receivedType))
+				println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, receivedTypeSig.ArgDetails)), fmt.Sprintf("function '%s' expected input argument of type '%s'; '%s' was provided", opName, expectedType, receivedType))
 			} else {
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 				// Now an arena getter, site S0822.
 				expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
-				println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("function '%s' expected receiving variable of type '%s'; '%s' was provided", opName, expectedType, receivedType))
+				println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, expressionOutputTypeSig.ArgDetails)), fmt.Sprintf("function '%s' expected receiving variable of type '%s'; '%s' was provided", opName, expectedType, receivedType))
 
 			}
 
@@ -1329,7 +1339,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			// We use `isInputs` to only print the error once.
 			// Otherwise we'd print the error twice: once for the input and again for the output
 			if inpType != outType && isInputs {
-				println(ast.CompilationError(expressionInputTypeSig.ArgDetails.FileName, expressionInputTypeSig.ArgDetails.FileLine), fmt.Sprintf("cannot assign value of type '%s' to identifier '%s' of type '%s'", inpType, expressionOutputTypeSigName, outType))
+				println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, expressionInputTypeSig.ArgDetails)), fmt.Sprintf("cannot assign value of type '%s' to identifier '%s' of type '%s'", inpType, expressionOutputTypeSigName, outType))
 			}
 
 		}
@@ -1461,9 +1471,9 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 				if exprs[currIndex].IsStructLiteral() {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S0835.
-					println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided", prgrm.GetCXArgFromArray(expressionOutputArg.Fields[0]).Name, expressionOutputArg.StructType.Name, expectedType, receivedType))
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, expressionOutputTypeSig.ArgDetails)), fmt.Sprintf("field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided", prgrm.GetCXArgFromArray(expressionOutputArg.Fields[0]).Name, expressionOutputArg.StructType.Name, expectedType, receivedType))
 				} else {
-					println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("trying to assign argument of type '%s' to symbol '%s' of type '%s'", receivedType, expressionOutputTypeSig.Name, expectedType))
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, expressionOutputTypeSig.ArgDetails)), fmt.Sprintf("trying to assign argument of type '%s' to symbol '%s' of type '%s'", receivedType, expressionOutputTypeSig.Name, expectedType))
 				}
 			}
 
@@ -1928,7 +1938,7 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 
 		// then it wasn't found in any scope
 		if err != nil && shouldAlreadyExist {
-			println(ast.CompilationError(typeSig.ArgDetails.FileName, typeSig.ArgDetails.FileLine), "identifier '"+typeSig.Name+"' does not exist")
+			println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, typeSig.ArgDetails)), "identifier '"+typeSig.Name+"' does not exist")
 		}
 
 		// then it was already added in the innermost scope
@@ -2097,7 +2107,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 				strct := argOut.StructType
 				if strct == nil {
-					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutType))
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, argOutTypeSignature.ArgDetails)), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutType))
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
@@ -2141,7 +2151,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 			argOutTypeSignature, err := lookupSymbol(prgrm, outPkg.Name, prgrm.CXArgs[outIdx].Name, symbolsData)
 			if err != nil {
-				println(ast.CompilationError(prgrm.CXArgs[outIdx].ArgDetails.FileName, prgrm.CXArgs[outIdx].ArgDetails.FileLine), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
+				println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, prgrm.CXArgs[outIdx].ArgDetails)), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
 				os.Exit(types.CX_COMPILATION_ERROR)
 			}
 			// then we found an output
@@ -2202,7 +2212,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 		argOutTypeSignature, err := lookupSymbol(prgrm, outPkg.Name, prgrm.CXArgs[outIdx].Name, symbolsData)
 		if err != nil {
-			println(ast.CompilationError(prgrm.CXArgs[outIdx].ArgDetails.FileName, prgrm.CXArgs[outIdx].ArgDetails.FileLine), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
+			println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, prgrm.CXArgs[outIdx].ArgDetails)), fmt.Sprintf("identifier '%s' does not exist", prgrm.CXArgs[outIdx].Name))
 			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 
@@ -2219,7 +2229,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				strct := argOut.StructType
 
 				if strct == nil {
-					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOut.Type.Name()))
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, argOutTypeSignature.ArgDetails)), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOut.Type.Name()))
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
@@ -2276,7 +2286,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 				if strct == nil {
 					// TODO: add proper println for error
-					println(ast.CompilationError(argOutTypeSignature.ArgDetails.FileName, argOutTypeSignature.ArgDetails.FileLine), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutTypeSignature.GetTypeString(prgrm)))
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, argOutTypeSignature.ArgDetails)), fmt.Sprintf("illegal method call or field access on identifier '%s' of primitive type '%s'", argOutTypeSignature.Name, argOutTypeSignature.GetTypeString(prgrm)))
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
@@ -2528,12 +2538,12 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 			// also we could be removing
 			switch spec {
 			case constants.DECL_INDEXING:
-				println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indexing")
+				println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indexing")
 			case constants.DECL_DEREF:
 				if declSpec[len(declSpec)-1] == constants.DECL_POINTER {
 					declSpec = declSpec[:len(declSpec)-1]
 				} else {
-					println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indirection")
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indirection")
 				}
 
 			}
@@ -2686,13 +2696,13 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 					if declSpec[len(declSpec)-1] == constants.DECL_ARRAY || declSpec[len(declSpec)-1] == constants.DECL_SLICE {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indexing")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indexing")
 					}
 				case constants.DECL_DEREF:
 					if declSpec[len(declSpec)-1] == constants.DECL_POINTER {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indirection")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indirection")
 					}
 				default:
 					declSpec = append(declSpec, elt.DeclarationSpecifiers[c])
@@ -2739,7 +2749,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	sym.Offset = arg.Offset
 	sym.Type = arg.Type
 
-	if sym.ArgDetails.FileLine != arg.ArgDetails.FileLine {
+	_, symLine := ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)
+	_, argLine := ast.CXArgumentDebugFileLine(prgrm, arg.ArgDetails)
+	if symLine != argLine {
 		// FIXME Maybe we can unify this later.
 		if len(sym.Fields) > 0 {
 			elt := sym.GetAssignmentElement(prgrm)
@@ -2751,13 +2763,13 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 					if declSpec[len(declSpec)-1] == constants.DECL_ARRAY || declSpec[len(declSpec)-1] == constants.DECL_SLICE {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indexing")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indexing")
 					}
 				case constants.DECL_DEREF:
 					if declSpec[len(declSpec)-1] == constants.DECL_POINTER {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indirection")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indirection")
 					}
 				default:
 					declSpec = append(declSpec, elt.DeclarationSpecifiers[c])
@@ -2780,16 +2792,16 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 					if declSpec[len(declSpec)-1] == constants.DECL_ARRAY || declSpec[len(declSpec)-1] == constants.DECL_SLICE {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indexing")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indexing")
 					}
 				case constants.DECL_DEREF:
 					if declSpec[len(declSpec)-1] == constants.DECL_POINTER {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
-						println(ast.CompilationError(sym.ArgDetails.FileName, sym.ArgDetails.FileLine), "invalid indirection")
+						println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)), "invalid indirection")
 					}
 				case constants.DECL_POINTER:
-					if sym.ArgDetails.FileLine != arg.ArgDetails.FileLine {
+					if symLine != argLine {
 						// This function is also called so it assigns offset and other fields to signature parameters
 						//
 						declSpec = append(declSpec, constants.DECL_POINTER)
@@ -2919,7 +2931,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 	if len(symFields) > 0 {
 		if argStructType == nil || len(argStructType.Fields) == 0 {
-			println(ast.CompilationError(symTypeSignature.ArgDetails.FileName, symTypeSignature.ArgDetails.FileLine), fmt.Sprintf("'%s' has no fields", symTypeSignature.Name))
+			println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, symTypeSignature.ArgDetails)), fmt.Sprintf("'%s' has no fields", symTypeSignature.Name))
 			return
 		}
 
@@ -2971,7 +2983,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 						field.Type = methodOutputTypeSig.GetType(prgrm)
 					}
 				} else {
-					println(ast.CompilationError(field.ArgDetails.FileName, field.ArgDetails.FileLine), err.Error())
+					println(ast.CompilationError(ast.CXArgumentDebugFileLine(prgrm, field.ArgDetails)), err.Error())
 				}
 			}
 		}

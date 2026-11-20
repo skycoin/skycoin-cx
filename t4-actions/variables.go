@@ -243,7 +243,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 
 		declaration_specifiers.Name = declarator.Name
-		declaration_specifiers.ArgDetails.FileLine = declarator.ArgDetails.FileLine
+		_, declaratorLine := ast.CXArgumentDebugFileLine(prgrm, declarator.ArgDetails)
+		prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declaration_specifiers.ArgDetails).FileLine = declaratorLine
 		declaration_specifiers.Offset = glblArg.Offset
 		declaration_specifiers.Size = glblArg.Size
 		declaration_specifiers.Package = ast.CXPackageIndex(pkg.Index)
@@ -398,7 +399,8 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	declarationSpecifiers.Name = declarator.Name
-	declarationSpecifiers.ArgDetails.FileLine = declarator.ArgDetails.FileLine
+	_, declaratorLine := ast.CXArgumentDebugFileLine(prgrm, declarator.ArgDetails)
+	prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declarationSpecifiers.ArgDetails).FileLine = declaratorLine
 	declarationSpecifiers.Package = ast.CXPackageIndex(pkg.Index)
 	declarationSpecifiers.PreviouslyDeclared = true
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.

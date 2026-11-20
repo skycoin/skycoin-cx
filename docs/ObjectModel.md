@@ -46,7 +46,7 @@ free one.
 | `CXAtomicOperator` | `0x07` | `CXProgram.CXAtomicOps` | `int` |
 | `CXLine` | `0x08` | `CxIrState.CXLineMng` since #311 | `int`, the slot index |
 | `CXArgument` | `0x09` | `CXProgram.CXArgs` | `CXArgumentIndex` |
-| `CXArgumentDebug` | `0x0A` | none, heap | `*CXArgumentDebug` |
+| `CXArgumentDebug` | `0x0A` | `CxIrState.CXArgumentDebugMng` since #306 | `CXArgumentDebugGid` |
 | `CXTypeSignature` | `0x0B` | `CXProgram.CXTypeSignatures` | `CXTypeSignatureIndex` |
 | `CXTypeSignature_Array` | `0x0C` | `CxIrState.CXTypeSignature_ArrayMng` since #316 | `int`, the slot index |
 | `CXTypeSignature_Struct` | `0x0D` | `CxIrState.CXTypeSignature_StructMng` since #321 | `int`, the slot index |
@@ -567,7 +567,10 @@ constructors create it.
 `CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
 the object in `ArgDetails`, a pointer field that a `CXArgument` and its
 `CXTypeSignature` share and write through, so it cannot move into the manager
-before that field is a `CXArgumentDebugGid` (#306, #307).
+before that field is a `CXArgumentDebugGid` (#306, #307). A native parameter
+made by `Param` or `MakeStructParameter` belongs to no program, so its
+`ArgDetails` is `CXArgumentDebugGidNil`, and `CXArgumentDebugFileLine`
+reads it as file "" and line -1, as before.
 
 
 

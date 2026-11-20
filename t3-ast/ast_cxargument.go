@@ -160,9 +160,10 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 		panic(err)
 	}
 
+	// Natives are shared by every program, so this argument belongs to none.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0073.
-	arg := MakeArgument(prgrm, argName, "", -1).SetType(types.STRUCT)
+	arg := MakeArgument(nil, argName, "", -1).SetType(types.STRUCT)
 	// arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_STRUCT)
 	arg.Size = strct.GetStructSize(prgrm)
 	arg.StructType = strct
@@ -205,21 +206,18 @@ func Param(typeCode types.Code) *CXArgument {
 }
 
 // MakeArgument makes an argument of prgrm. The natives are shared by every
-// program, so Param passes nil.
+// program, so Param and MakeStructParameter pass nil and the argument gets
+// no debug record.
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0078.
 func MakeArgument(prgrm *CXProgram, name string, fileName string, fileLine int) *CXArgument {
+	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0079.
 	return &CXArgument{
-		Name:    name,
-		Package: -1,
-		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-		// Now a heap literal, site S0080.
-		ArgDetails: &CXArgumentDebug{
-			FileName: fileName,
-			FileLine: fileLine,
-		},
+		Name:       name,
+		Package:    -1,
+		ArgDetails: argDetailsGid,
 	}
 
 }
@@ -228,19 +226,14 @@ func MakeArgument(prgrm *CXProgram, name string, fileName string, fileLine int) 
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0081.
 func MakeField(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0082.
 	return &CXArgument{
-		Name:    name,
-		Package: -1,
-		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-		// Now a heap literal, site S0083.
-		ArgDetails: &CXArgumentDebug{
-			FileName: fileName,
-			FileLine: fileLine,
-		},
-
-		Type: typeCode,
+		Name:       name,
+		Package:    -1,
+		ArgDetails: argDetailsGid,
+		Type:       typeCode,
 	}
 }
 
@@ -248,21 +241,17 @@ func MakeField(prgrm *CXProgram, name string, typeCode types.Code, fileName stri
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0084.
 func MakeGlobal(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
 	size := typeCode.Size()
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0085.
 	global := &CXArgument{
-		Name:    name,
-		Package: -1,
-		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-		// Now a heap literal, site S0086.
-		ArgDetails: &CXArgumentDebug{
-			FileName: fileName,
-			FileLine: fileLine,
-		},
-		Type:   typeCode,
-		Size:   size,
-		Offset: globals.HeapOffset,
+		Name:       name,
+		Package:    -1,
+		ArgDetails: argDetailsGid,
+		Type:       typeCode,
+		Size:       size,
+		Offset:     globals.HeapOffset,
 	}
 	globals.HeapOffset += size
 	return global
@@ -356,4 +345,28 @@ func IsTypePointerStruct(arg *CXArgument) bool {
 	}
 
 	return isThereDeclPointer && !IsThereDeclSlice && !arg.IsSlice() && len(arg.Lengths) == 0 && arg.StructType != nil && len(arg.DeclarationSpecifiers) >= 1 && arg.DeclarationSpecifiers[0] == constants.DECL_STRUCT
+}
+
+// argumentDebugAlloc allocates the debug record of an argument in prgrm's
+// CXArgumentDebugMng. A nil prgrm, for a native, gets CXArgumentDebugGidNil.
+func argumentDebugAlloc(prgrm *CXProgram, fileName string, fileLine int) CXArgumentDebugGid {
+	if prgrm == nil {
+		return CXArgumentDebugGidNil
+	}
+	manager := &prgrm.CxIrState.CXArgumentDebugMng
+	gid := manager.CXArgumentDebugAlloc()
+	details := manager.CXArgumentDebugGet(gid)
+	details.FileName = fileName
+	details.FileLine = fileLine
+	return gid
+}
+
+// CXArgumentDebugFileLine returns the file name and line that gid names in
+// prgrm. A native parameter has none and gets "" and -1, as Param gave it.
+func CXArgumentDebugFileLine(prgrm *CXProgram, gid CXArgumentDebugGid) (string, int) {
+	if gid == CXArgumentDebugGidNil {
+		return "", -1
+	}
+	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(gid)
+	return details.FileName, details.FileLine
 }

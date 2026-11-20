@@ -90,9 +90,9 @@ type CXArgument struct {
 
 	PassBy int // pass by value or reference
 
-	// OBJMODEL: CXArgumentDebugGid, phase 5 #307.
-	// Now a pointer at rest, site S0066.
-	ArgDetails *CXArgumentDebug
+	// ArgDetails names the file and line the argument comes from. A native
+	// parameter has none, CXArgumentDebugGidNil.
+	ArgDetails CXArgumentDebugGid
 
 	// OBJMODEL: CXStructGid, phase 5 #337.
 	// Now a pointer at rest, site S0067.

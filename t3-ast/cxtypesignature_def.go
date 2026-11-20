@@ -19,7 +19,5 @@ type CXTypeSignature struct {
 	// if type is atomic, meta is the atomic type
 	Meta int
 
-	// OBJMODEL: CXArgumentDebugGid, phase 5 #307.
-	// Now a pointer at rest, site S0271.
-	ArgDetails *CXArgumentDebug // Contains file name and file line
+	ArgDetails CXArgumentDebugGid // file name and line, shared with the CXArgument it was made from
 }

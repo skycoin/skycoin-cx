@@ -1054,9 +1054,7 @@ func deserializeArgument(sArg *serializedArgument, s *SerializedCXProgram, prgrm
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a local object, site S0435.
 	var arg CXArgument
-	// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
-	// Now a heap literal, site S0436.
-	arg.ArgDetails = &CXArgumentDebug{}
+	arg.ArgDetails = prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 	arg.Name = deserializeString(sArg.NameOffset, sArg.NameSize, s)
 	arg.Type = types.Code(sArg.Type)
 

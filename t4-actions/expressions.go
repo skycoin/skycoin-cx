@@ -515,9 +515,13 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			// Now an arena insert, site S0651.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+			argDetails.FileName = CurrentFile
+			argDetails.FileLine = LineNo
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0652 S0653.
-			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+			// Now a heap literal, site S0652.
+			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_ATOMIC
@@ -528,9 +532,13 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			// Now an arena insert, site S0654.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+			argDetails.FileName = CurrentFile
+			argDetails.FileLine = LineNo
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0655 S0656.
-			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+			// Now a heap literal, site S0655.
+			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_POINTER_ATOMIC
@@ -581,9 +589,13 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			// Now an arena insert, site S0663.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+			argDetails.FileName = CurrentFile
+			argDetails.FileLine = LineNo
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0664 S0665.
-			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+			// Now a heap literal, site S0664.
+			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_ATOMIC
@@ -594,9 +606,13 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			// Now an arena insert, site S0666.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+			argDetails.FileName = CurrentFile
+			argDetails.FileLine = LineNo
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0667 S0668.
-			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+			// Now a heap literal, site S0667.
+			typeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
 			typeSig.Type = ast.TYPE_POINTER_ATOMIC
@@ -904,9 +920,13 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		// Now an arena insert, site S0703.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0704 S0705.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+		// Now a heap literal, site S0704.
+		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_ATOMIC
@@ -916,9 +936,13 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		// Now an arena insert, site S0706.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0707 S0708.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+		// Now a heap literal, site S0707.
+		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_POINTER_ATOMIC
@@ -928,9 +952,13 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		// Now an arena insert, site S0709.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
-		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0710 S0711.
-		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+		// Now a heap literal, site S0710.
+		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: argDetailsGid}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_SLICE_ATOMIC

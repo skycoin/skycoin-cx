@@ -285,9 +285,13 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 				} else if cxAtomicOpOutputTypeSig.Type == ast.TYPE_ATOMIC {
 					// TODO: give proper change when we implement type_structs
 					// Looks like we have to convert the arg to type cx arg deprecate again
+					argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+					argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+					argDetails.FileName = CurrentFile
+					argDetails.FileLine = LineNo
 					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S1013 S1014.
-					newCXArg := &ast.CXArgument{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+					// Now a heap literal, site S1013.
+					newCXArg := &ast.CXArgument{ArgDetails: argDetailsGid}
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					newCXArg.Package = ast.CXPackageIndex(pkg.Index)
 					newCXArg.Offset = cxAtomicOpOutputTypeSig.Offset
@@ -316,9 +320,13 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 				} else if cxAtomicOpOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 					// TODO: give proper change when we implement type_structs
 					// Looks like we have to convert the arg to type cx arg deprecate again
+					argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+					argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+					argDetails.FileName = CurrentFile
+					argDetails.FileLine = LineNo
 					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S1018 S1019.
-					newCXArg := &ast.CXArgument{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
+					// Now a heap literal, site S1018.
+					newCXArg := &ast.CXArgument{ArgDetails: argDetailsGid}
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					newCXArg.Package = ast.CXPackageIndex(pkg.Index)
 					newCXArg.Offset = cxAtomicOpOutputTypeSig.Offset

@@ -752,7 +752,7 @@ func getFormattedType_CXArg(prgrm *CXProgram, arg *CXArgument) string {
 					// Now an arena getter, site S0510.
 					pkg, err := prgrm.GetPackageFromArray(arg.Package)
 					if err != nil {
-						println(CompilationError(elt.ArgDetails.FileName, elt.ArgDetails.FileLine), err.Error())
+						println(CompilationError(CXArgumentDebugFileLine(prgrm, elt.ArgDetails)), err.Error())
 						os.Exit(types.CX_COMPILATION_ERROR)
 					}
 
