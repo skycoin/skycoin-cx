@@ -21,7 +21,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"             // thin: only MakeProgram, RegisterPackages; no depth gain
 	cxgo "github.com/skycoin/skycoin-cx/t8-cxparsingcompletor" // thin: only DebugLexer, Tokenize; no depth gain
-	cxparsering "github.com/skycoin/skycoin-cx/t9-cxparsing"   // thin: only AddInitFunction, ParseSourceCode; no depth gain
 	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"     // thin: only AddInitFunction, ParseSourceCode; no depth gain
 )
 
@@ -66,7 +65,7 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 	repl.ReplTargetFn = constants.MAIN_FUNC
 
 	// Adding *init function that initializes all the global variables.
-	err = cxparsering.AddInitFunction(actions.AST)
+	err = cxparsing.AddInitFunction(actions.AST)
 	if err != nil {
 		panic(fmt.Sprintf("error initializing function: %v", err))
 	}
