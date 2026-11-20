@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -393,7 +394,7 @@ func serializePackageImports(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXPr
 	}
 	imps := make([]int64, l)
 	count := 0
-	for _, impIdx := range pkg.Imports {
+	for _, impIdx := range importsByName(pkg) {
 		impPkg, err := prgrm.GetPackageFromArray(impIdx)
 		if err != nil {
 			panic(err)
@@ -531,11 +532,7 @@ func initSerialization(prgrm *CXProgram, s *SerializedCXProgram, includeDataMemo
 	var numStrcts int
 	var numFns int
 
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		numStrcts += len(pkg.Structs)
 		numFns += len(pkg.Functions)
@@ -598,34 +595,22 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	var strctCounter int64
 
 	// indexing packages and serializing their names
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		indexPackage(pkg, s)
 		serializePackageName(pkg, s)
 	}
 	// we first needed to populate references to all packages
 	// now we add the imports' references
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		serializePackageImports(prgrm, pkg, s)
 	}
 
 	// structs
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
-		for _, strctIdx := range pkg.Structs {
+		for _, strctIdx := range structsByName(pkg) {
 			strct := &prgrm.CXStructs[strctIdx]
 			indexStruct(prgrm, strct, s)
 			serializeStructName(prgrm, strct, s)
@@ -635,36 +620,24 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	}
 	// we first needed to populate references to all structs
 	// now we add fields
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
-		for _, strctIdx := range pkg.Structs {
+		for _, strctIdx := range structsByName(pkg) {
 			strct := &prgrm.CXStructs[strctIdx]
 			serializeStructArguments(prgrm, strct, s)
 		}
 	}
 
 	// globals
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		serializePackageGlobals(prgrm, pkg, s)
 	}
 
 	// functions
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
-		for _, fnIdx := range pkg.Functions {
+		for _, fnIdx := range functionsByName(pkg) {
 			fn := prgrm.GetFunctionFromArray(fnIdx)
 
 			indexFunction(prgrm, fn, s)
@@ -676,11 +649,7 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	}
 
 	// package elements' offsets and sizes
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		if pkgOff, found := s.PackagesMap[pkg.Name]; found {
 			sPkg := &s.Packages[pkgOff]
@@ -711,23 +680,15 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 
 	// package integers
 	// we needed the references to all functions and structs first
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
 		serializePackageIntegers(prgrm, pkg, s)
 	}
 
 	// expressions
-	for _, pkgIdx := range prgrm.Packages {
-		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
-		if err != nil {
-			panic(err)
-		}
+	for _, pkg := range packagesByName(prgrm) {
 
-		for _, fnIdx := range pkg.Functions {
+		for _, fnIdx := range functionsByName(pkg) {
 			fn := prgrm.GetFunctionFromArray(fnIdx)
 
 			fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
@@ -783,6 +744,10 @@ func encodeCXProgram(prgrm *CXProgram, includeDataMemory, wholeMemory bool) ([]b
 
 	// serialize cx program's program
 	serializeProgram(prgrm, &s)
+
+	// The name maps only index the slices while serializing. The generated
+	// encoder writes a map in range order, so leave them out of the bytes.
+	s.PackagesMap, s.StructsMap, s.FunctionsMap, s.StringsMap = nil, nil, nil, nil
 
 	// serializing everything
 	return EncodeSerializedCXProgram(&s)
@@ -1262,4 +1227,51 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 	initDeserialization(prgrm, &s)
 
 	return prgrm, nil
+}
+
+// packagesByName returns the program's packages in name order. The serialized
+// offsets depend on every walk using the same order, so all of them use this.
+func packagesByName(prgrm *CXProgram) []*CXPackage {
+	pkgs := make([]*CXPackage, 0, len(prgrm.Packages))
+	for _, name := range sortedKeys(prgrm.Packages) {
+		pkg, err := prgrm.GetPackageFromArray(prgrm.Packages[name])
+		if err != nil {
+			panic(err)
+		}
+		pkgs = append(pkgs, pkg)
+	}
+	return pkgs
+}
+
+func structsByName(pkg *CXPackage) []CXStructIndex {
+	idxs := make([]CXStructIndex, 0, len(pkg.Structs))
+	for _, name := range sortedKeys(pkg.Structs) {
+		idxs = append(idxs, pkg.Structs[name])
+	}
+	return idxs
+}
+
+func functionsByName(pkg *CXPackage) []CXFunctionIndex {
+	idxs := make([]CXFunctionIndex, 0, len(pkg.Functions))
+	for _, name := range sortedKeys(pkg.Functions) {
+		idxs = append(idxs, pkg.Functions[name])
+	}
+	return idxs
+}
+
+func importsByName(pkg *CXPackage) []CXPackageIndex {
+	idxs := make([]CXPackageIndex, 0, len(pkg.Imports))
+	for _, name := range sortedKeys(pkg.Imports) {
+		idxs = append(idxs, pkg.Imports[name])
+	}
+	return idxs
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }

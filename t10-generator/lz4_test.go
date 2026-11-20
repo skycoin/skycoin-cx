@@ -29,7 +29,7 @@ func newProgramCodec(t *testing.T) *lz4codec.Codec {
 }
 
 // testdata/program.lz4 is SerializeCXProgram output from before the codec
-// existed. Program serialization is not deterministic, so the check is that
+// existed. Serialization has changed since, so the check is that
 // the codec maps those bytes to the same plain bytes and back to the same
 // compressed bytes.
 func TestCompression_LZ4ProgramGolden(t *testing.T) {

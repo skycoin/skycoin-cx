@@ -30,6 +30,7 @@
 
 #### Fixed
 
+- `SerializeCXProgram` gave different bytes for the same program on each call, and a round trip could move functions and structs to another package. Packages, structs, functions and imports are now walked in name order, and the scratch name maps are left out of the bytes (#186, #250)
 - `packageloader` ignored a stray positional argument and rejected extra ones only by counting flags. Any positional argument is now an error (#102)
 - `packageloader -graph` listed an external import such as `os` once for every package that imported it, each time under a new id. It now gets one id (#105)
 - The package loader kept its own list of built in packages, which lacked `regexp`, so a program importing it failed to load with "package regexp not found". It now uses the `t0-packages` list the compiler uses (#95)
