@@ -694,8 +694,11 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 			lastExpressionOutputArg.StructType = strct
 		} else {
-			// panic(err)
-			fmt.Println(err)
+			file, line := CurrentFile, LineNo
+			if details := leftExprOutputTypeSig.ArgDetails; details != nil {
+				file, line = details.FileName, details.FileLine
+			}
+			println(ast.CompilationError(file, line), fmt.Sprintf("identifier '%s.%s' does not exist", imp.Name, ident))
 			return nil
 		}
 	} else {

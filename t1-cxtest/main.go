@@ -221,6 +221,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-regexp-find-failed-compile.cx", types.CX_RUNTIME_ERROR, "Find on a Regexp that did not compile")
 	t.Run("test-regexp-find-loop.cx", types.CX_SUCCESS, "Find in a loop")
 	t.Run("test-unknown-package-function.cx", types.CX_COMPILATION_ERROR, "unknown function in a built in package")
+	t.Run("test-unknown-native-function.cx", types.CX_COMPILATION_ERROR, "unknown function in an imported native package")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 
 	// issues

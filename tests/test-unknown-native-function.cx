@@ -1,0 +1,11 @@
+package main
+
+import "os"
+
+func main() {
+	os.NoSuchFunction("a", 100)
+	i32.print(7)
+	var x i32
+	x = os.NoSuchEither(1)
+	i32.print(x)
+}
