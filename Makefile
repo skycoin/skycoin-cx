@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check build-parser clean help
+.PHONY: build build-gui build-debug build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check build-parser clean help
 
 CXEXE := cx
 EXE :=
@@ -55,7 +55,10 @@ check-inits: ## Check that no package outside main has func init(), see init-all
 check-ifaces: ## Check that no interface embeds another interface, see iface-allowlist.txt
 	./check-ifaces.sh
 
-check: check-tiers check-inits check-ifaces vet test-go test test-ptr64 ## tier, init and interface checks, vet, Go tests and CX program tests (default and ptr64)
+check-recovers: ## Check that no non-vendor code calls recover(, see recover-allowlist.txt
+	./check-recovers.sh
+
+check: check-tiers check-inits check-ifaces check-recovers vet test-go test test-ptr64 ## tier, init, interface and recover checks, vet, Go tests and CX program tests (default and ptr64)
 
 build-parser: ## Regenerate the CX parsers from the .y grammars
 	go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y

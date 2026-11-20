@@ -34,6 +34,16 @@ the methods instead. `make check-ifaces` runs `t0-ifacecheck` and fails on an
 embedded interface. The ones that still break the rule are listed in
 `iface-allowlist.txt`, which only shrinks.
 
+Two classes of error, no recovery. A failure of a path, a file, the network
+or anything else outside the program returns its module's error struct
+pointer, nil on success, never the Go `error` interface. Every other failure,
+a precondition, invariant or postcondition violation, a mathematical
+violation or an impossible state, is a strict assert from `t0-cx-core-assert`
+that crashes the process. No code calls `recover`. `make check-recovers`
+fails on a `recover(` call outside `vendor/`, and the sites that still break
+the rule are listed in `recover-allowlist.txt`, which only shrinks. See
+[docs/ErrorHandling.md](docs/ErrorHandling.md).
+
 State lives in one place. One State object holds every manager, and no
 state lives anywhere else, so there are no mutable package level variables.
 Each object type has an `<Obj>Def` file, a 64 bit generational index
@@ -90,7 +100,7 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 
 ## Tests
 
-- `make check` runs the tier, init and interface checks, `go vet`, the Go
+- `make check` runs the tier, init, interface and recover checks, `go vet`, the Go
   tests and the stable CX program tests. CI runs it on Linux, macOS and Windows.
 - `make test` runs only the stable CX program tests.
 - `make test-all` also runs the tests for known issues. These are expected to

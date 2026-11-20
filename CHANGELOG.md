@@ -12,6 +12,7 @@
 
 - `str.equal_by_value`, `str.equal_by_pointer` and `str.compare_by_value` (#184)
 - Serialized programs carry the language revision in `CXProgram.Version`, and `Deserialize` rejects a program from another revision (#183, #197)
+- `docs/ErrorHandling.md`, the two-class error policy: path, file and network failures return a module error struct, every other failure is an assert that crashes, and nothing recovers. `t0-cx-core-assert` holds the asserts, and `make check-recovers` fails on a new `recover(` call (#270)
 
 #### Removed
 
