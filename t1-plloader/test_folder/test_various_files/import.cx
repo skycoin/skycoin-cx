@@ -1,5 +1,5 @@
 package main
 
 // import "sys/os"
-import "cx"
+import "sys/cx"
 // import "log"

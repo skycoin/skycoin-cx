@@ -1,5 +1,5 @@
 package main
-import "tcp"
+import "sys/tcp"
 
 func main() () {
 

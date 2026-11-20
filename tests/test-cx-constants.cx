@@ -2,7 +2,7 @@
 
 package main
 
-import "cx"
+import "sys/cx"
 
 func main() {
 	test(strerror(cx.RUNTIME_NOT_IMPLEMENTED), "CX_RUNTIME_NOT_IMPLEMENTED", "cx.RUNTIME_NOT_IMPLEMENTED")

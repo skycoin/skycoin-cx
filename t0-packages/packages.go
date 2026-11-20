@@ -20,7 +20,6 @@ const SysPrefix = "sys/"
 // SysPrefix while their callers move to it, #380.
 var bareImport = map[string]bool{
 	"al": true, "gl": true, "glfw": true, "gltext": true,
-	"cx": true, "cipher": true, "tcp": true, "regexp": true,
 }
 
 // IsDefaultPackage reports whether ident is the name of a built-in package.

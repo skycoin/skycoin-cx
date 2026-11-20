@@ -2,7 +2,7 @@ package main
 
 import "args"
 import "sys/os"
-import "cx"
+import "sys/cx"
 import "sys/time"
 
 var TEST_NONE   i32 = 0

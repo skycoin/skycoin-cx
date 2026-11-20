@@ -1,5 +1,5 @@
 package main
-import "regexp"
+import "sys/regexp"
 
 func main() {
 	// `regexp.Regexp` stores information about the regular expressions you want to run.

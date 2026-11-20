@@ -1,6 +1,6 @@
 // https://github.com/skycoin/cx/issues/53
 
-import "cx"
+import "sys/cx"
 
 package main
 

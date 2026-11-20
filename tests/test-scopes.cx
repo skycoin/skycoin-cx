@@ -1,5 +1,5 @@
 package main
-import "cx"
+import "sys/cx"
 import "sys/os"
 
 func main () {
