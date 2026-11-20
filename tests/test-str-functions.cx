@@ -1,0 +1,25 @@
+// Language revision 1, https://github.com/skycoin/skycoin-cx/issues/183
+
+package main
+
+func main() {
+	var x str
+	var y str
+	var z str
+	x = "apple"
+	y = x
+	z = str.concat("app", "le")
+
+	test(str.equal_by_value(x, z), true, "equal_by_value same bytes")
+	test(str.equal_by_value(x, "banana"), false, "equal_by_value different bytes")
+	test(str.equal_by_value("", ""), true, "equal_by_value empty")
+
+	test(str.equal_by_pointer(x, y), true, "equal_by_pointer after assignment")
+	test(str.equal_by_pointer(x, z), false, "equal_by_pointer distinct objects")
+
+	test(str.compare_by_value("a", "b"), -1, "compare_by_value a b")
+	test(str.compare_by_value("b", "a"), 1, "compare_by_value b a")
+	test(str.compare_by_value(x, z), 0, "compare_by_value equal")
+	test(str.compare_by_value("ab", "a"), 1, "compare_by_value prefix")
+	test(str.compare_by_value("", "a"), -1, "compare_by_value empty")
+}

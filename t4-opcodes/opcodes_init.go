@@ -497,4 +497,7 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterOperator(prgrm, "str.lteq", opStrLteq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_LTEQ)
 	RegisterOperator(prgrm, "str.gt", opStrGt, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_GT)
 	RegisterOperator(prgrm, "str.gteq", opStrGteq, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL), types.STR, constants.OP_GTEQ)
+	RegisterFunction(prgrm, "str.equal_by_value", opStrEqualByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
+	RegisterFunction(prgrm, "str.equal_by_pointer", opStrEqualByPointer, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_BOOL))
+	RegisterFunction(prgrm, "str.compare_by_value", opStrCompareByValue, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
 }
