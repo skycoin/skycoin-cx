@@ -30,7 +30,7 @@ func compileBenchmarkObjectCount() int {
 	program := actions.AST
 	return len(program.CXPackages) + len(program.CXFunctions) + len(program.CXStructs) +
 		len(program.CXAtomicOps) + program.CxIrState.CXLineMng.CXLineLen() + len(program.CXArgs) +
-		len(program.CXTypeSignatures) + len(program.TypeSignatureForArrays) +
+		len(program.CXTypeSignatures) + program.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayLen() +
 		len(program.TypeSignatureForStructs)
 }
 

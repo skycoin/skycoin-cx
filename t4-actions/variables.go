@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin-cx/t2-globals" // thin: only FoundCompileErrors; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
@@ -132,18 +133,13 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypeArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_ARRAY_ATOMIC
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a heap literal, site S1216.
-			typeSignatureForArray := &ast.CXTypeSignature_Array{
-				Meta:    int(declaration_specifiers.Type),
-				Lengths: declaration_specifiers.Lengths,
-				Indexes: declaration_specifiers.Indexes,
-			}
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1217.
-			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+			arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+			typeSignatureForArray.Meta = int(declaration_specifiers.Type)
+			typeSignatureForArray.Lengths = declaration_specifiers.Lengths
+			typeSignatureForArray.Indexes = declaration_specifiers.Indexes
 
-			glbl.Meta = typeSignatureForArrayIdx
+			glbl.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 
 			glbl.PassBy = declaration_specifiers.PassBy
 
@@ -153,18 +149,12 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypePointerArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_POINTER_ARRAY_ATOMIC
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a heap literal, site S1218.
-			typeSignatureForArray := &ast.CXTypeSignature_Array{
-				Meta:    int(declaration_specifiers.Type),
-				Lengths: declaration_specifiers.Lengths,
-				Indexes: declaration_specifiers.Indexes,
-			}
-
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1219.
-			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
-			glbl.Meta = typeSignatureForArrayIdx
+			arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+			typeSignatureForArray.Meta = int(declaration_specifiers.Type)
+			typeSignatureForArray.Lengths = declaration_specifiers.Lengths
+			typeSignatureForArray.Indexes = declaration_specifiers.Indexes
+			glbl.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
@@ -175,18 +165,12 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_SLICE_ATOMIC
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a heap literal, site S1220.
-			typeSignatureForArray := &ast.CXTypeSignature_Array{
-				Meta:    int(declaration_specifiers.Type),
-				Lengths: declaration_specifiers.Lengths,
-				Indexes: declaration_specifiers.Indexes,
-			}
-
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1221.
-			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
-			glbl.Meta = typeSignatureForArrayIdx
+			arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+			typeSignatureForArray.Meta = int(declaration_specifiers.Type)
+			typeSignatureForArray.Lengths = declaration_specifiers.Lengths
+			typeSignatureForArray.Indexes = declaration_specifiers.Indexes
+			glbl.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {
@@ -197,18 +181,12 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_POINTER_SLICE_ATOMIC
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a heap literal, site S1222.
-			typeSignatureForArray := &ast.CXTypeSignature_Array{
-				Meta:    int(declaration_specifiers.Type),
-				Lengths: declaration_specifiers.Lengths,
-				Indexes: declaration_specifiers.Indexes,
-			}
-
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1223.
-			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
-			glbl.Meta = typeSignatureForArrayIdx
+			arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+			typeSignatureForArray.Meta = int(declaration_specifiers.Type)
+			typeSignatureForArray.Lengths = declaration_specifiers.Lengths
+			typeSignatureForArray.Indexes = declaration_specifiers.Indexes
+			glbl.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 			glbl.PassBy = declaration_specifiers.PassBy
 
 			if !glbl.Offset.IsValid() {

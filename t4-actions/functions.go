@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -2541,16 +2542,15 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && (len(sym.DeclarationSpecifiers) > 0 || len(sym.DereferenceOperations) > 0) && argTypeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0944.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an object copy, site S0945.
-		newArrDetails := *arrDetails
+		newArrDetails := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		newArrDetails.Meta = arrDetails.Meta
+		newArrDetails.Lengths = arrDetails.Lengths
 		newArrDetails.Indexes = sym.Indexes
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0946.
-		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
+		newArrDetailsIdx := int(objmodel.GidIndex(int64(arrayGid)))
 
 		symTypeSignature.Name = argTypeSignature.Name
 		symTypeSignature.Package = argTypeSignature.Package
@@ -2561,17 +2561,15 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && (len(sym.DeclarationSpecifiers) > 0 || len(sym.DereferenceOperations) > 0) && argTypeSignature.Type == ast.TYPE_POINTER_ARRAY_ATOMIC {
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0947.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
-
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an object copy, site S0948.
-		newArrDetails := *arrDetails
+		newArrDetails := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		newArrDetails.Meta = arrDetails.Meta
+		newArrDetails.Lengths = arrDetails.Lengths
 		newArrDetails.Indexes = sym.Indexes
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0949.
-		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
+		newArrDetailsIdx := int(objmodel.GidIndex(int64(arrayGid)))
 
 		symTypeSignature.Name = argTypeSignature.Name
 		symTypeSignature.Package = argTypeSignature.Package
@@ -2588,17 +2586,15 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_SLICE_ATOMIC {
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0950.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
-
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an object copy, site S0951.
-		newArrDetails := *arrDetails
+		newArrDetails := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		newArrDetails.Meta = arrDetails.Meta
+		newArrDetails.Lengths = arrDetails.Lengths
 		newArrDetails.Indexes = sym.Indexes
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0952.
-		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
+		newArrDetailsIdx := int(objmodel.GidIndex(int64(arrayGid)))
 
 		symTypeSignature.Name = argTypeSignature.Name
 		symTypeSignature.Package = argTypeSignature.Package
@@ -2623,17 +2619,15 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0953.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
-
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an object copy, site S0954.
-		newArrDetails := *arrDetails
+		newArrDetails := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		newArrDetails.Meta = arrDetails.Meta
+		newArrDetails.Lengths = arrDetails.Lengths
 		newArrDetails.Indexes = sym.Indexes
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0955.
-		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
+		newArrDetailsIdx := int(objmodel.GidIndex(int64(arrayGid)))
 
 		symTypeSignature.Name = argTypeSignature.Name
 		symTypeSignature.Package = argTypeSignature.Package

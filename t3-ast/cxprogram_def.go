@@ -41,7 +41,6 @@ type CXProgram struct {
 	CXFunctions             []CXFunction
 	CXStructs               []CXStruct
 	CXTypeSignatures        []CXTypeSignature
-	TypeSignatureForArrays  []CXTypeSignature_Array
 	TypeSignatureForStructs []CXTypeSignature_Struct
 	// Then reference the package of function by CxFunction id
 

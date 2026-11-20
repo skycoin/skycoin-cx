@@ -3,6 +3,7 @@ package ast
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
 // CXTypeSignature_TYPE enum contains CXTypeSignature types.
@@ -477,71 +478,51 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0306.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(fieldType),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0307.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(fieldType)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 
 	} else if IsTypePointerArrayAtomic(cxArgument) {
 		// If pointer array atomic type, i.e. *[5]i32, *[2]f64, etc.
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0308.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(fieldType),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0309.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(fieldType)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 
 	} else if IsTypeSliceAtomic(cxArgument) {
 		// If slice atomic type, i.e. []i32, []f64, etc.
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0310.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0311.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypePointerSliceAtomic(cxArgument) {
 		// If pointer slice atomic type, i.e. *[]i32, *[]f64, etc.
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0312.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0313.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypeStruct(cxArgument) {
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
@@ -618,69 +599,49 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If simple array atomic type, i.e. [5]i32, [2]f64, etc.
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0320.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0321.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypePointerArrayAtomic(cxArgument) {
 		// If pointer array atomic type, i.e. *[5]i32, *[2]f64, etc.
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0322.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0323.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypeSliceAtomic(cxArgument) {
 		// If slice atomic type, i.e. []i32, []f64, etc.
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0324.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0325.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypePointerSliceAtomic(cxArgument) {
 		// If pointer slice atomic type, i.e. *[]i32, *[]f64, etc.
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now a heap literal, site S0326.
-		typeSignatureForArray := &CXTypeSignature_Array{
-			Meta:    int(cxArgument.Type),
-			Lengths: cxArgument.Lengths,
-			Indexes: cxArgument.Indexes,
-		}
-		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-		// Now an arena insert, site S0327.
-		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
+		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+		typeSignatureForArray := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(arrayGid)
+		typeSignatureForArray.Meta = int(cxArgument.Type)
+		typeSignatureForArray.Lengths = cxArgument.Lengths
+		typeSignatureForArray.Indexes = cxArgument.Indexes
 
-		newCXTypeSignature.Meta = typeSignatureForArrayIdx
+		newCXTypeSignature.Meta = int(objmodel.GidIndex(int64(arrayGid)))
 	} else if IsTypeStruct(cxArgument) {
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT

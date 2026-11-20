@@ -7,6 +7,7 @@ import (
 	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -86,15 +87,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 			// Now an arena getter, site S1103.
 			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(prevExpressionOperatorOutputTypeSig.Meta)
+			sliceMeta, sliceLengths := sliceDetails.Meta, sliceDetails.Lengths
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a value literal, site S1104.
-			newTypeSigSlice := ast.CXTypeSignature_Array{}
-			newTypeSigSlice.Meta = sliceDetails.Meta
-			newTypeSigSlice.Lengths = sliceDetails.Lengths
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1105.
-			newTypeSigSliceIdx := prgrm.AddCXTypeSignatureArrayInArray(&newTypeSigSlice)
+			newTypeSigSliceGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			newTypeSigSlice := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(newTypeSigSliceGid)
+			newTypeSigSlice.Meta = sliceMeta
+			newTypeSigSlice.Lengths = sliceLengths
+			newTypeSigSliceIdx := int(objmodel.GidIndex(int64(newTypeSigSliceGid)))
 
 			// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
 			// Also state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331. Site S1106 S1107.
@@ -109,14 +108,11 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			outNewTypeSigIdx := prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 			prgrm.CXAtomicOps[prevExpressionIdx].AddOutput(prgrm, outNewTypeSigIdx)
 
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now a value literal, site S1109.
-			inpNewTypeSigSlice := ast.CXTypeSignature_Array{}
-			inpNewTypeSigSlice.Meta = sliceDetails.Meta
-			inpNewTypeSigSlice.Lengths = sliceDetails.Lengths
-			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-			// Now an arena insert, site S1110.
-			inpNewTypeSigSliceIdx := prgrm.AddCXTypeSignatureArrayInArray(&inpNewTypeSigSlice)
+			inpNewTypeSigSliceGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
+			inpNewTypeSigSlice := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(inpNewTypeSigSliceGid)
+			inpNewTypeSigSlice.Meta = sliceMeta
+			inpNewTypeSigSlice.Lengths = sliceLengths
+			inpNewTypeSigSliceIdx := int(objmodel.GidIndex(int64(inpNewTypeSigSliceGid)))
 
 			// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
 			// Also state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331. Site S1111 S1112.

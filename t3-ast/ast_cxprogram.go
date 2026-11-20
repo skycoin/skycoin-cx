@@ -295,26 +295,23 @@ func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureInd
 // ----------------------------------------------------------------
 //
 //	`CXProgram` TypeSignature_Array handling
-func (cxprogram *CXProgram) AddCXTypeSignatureArrayInArray(typeSignatureArray *CXTypeSignature_Array) int {
-	// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
-	// Now an arena append, site S0212.
-	cxprogram.TypeSignatureForArrays = append(cxprogram.TypeSignatureForArrays, *typeSignatureArray)
 
-	return len(cxprogram.TypeSignatureForArrays) - 1
-}
-
+// GetCXTypeSignatureArrayFromArray returns the array signature in slot index
+// of the program's CXTypeSignature_ArrayMng, or nil for -1. A type signature's
+// Meta keeps the slot index, not the Gid, until phase 5 of
+// CXTypeSignature_Array.
 func (cxprogram *CXProgram) GetCXTypeSignatureArrayFromArray(index int) *CXTypeSignature_Array {
 	if index == -1 {
 		return nil
 	}
 
-	if int(index) > (len(cxprogram.TypeSignatureForArrays) - 1) {
+	manager := &cxprogram.CxIrState.CXTypeSignature_ArrayMng
+	if index < 0 || index >= int(manager.CXTypeSignature_ArrayMngNext) {
 		panic(fmt.Errorf("error: TypeSignatureForArrays[%d]: index out of bounds", index))
 	}
 
-	// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
-	// Now a pointer into an arena, site S0213.
-	return &cxprogram.TypeSignatureForArrays[index]
+	gid := objmodel.GidCompose(CXTypeSignature_ArrayGidTypeTag, manager.CXTypeSignature_ArrayMngGenerations[index], uint32(index))
+	return manager.CXTypeSignature_ArrayGet(CXTypeSignature_ArrayGid(gid))
 }
 
 // ----------------------------------------------------------------
