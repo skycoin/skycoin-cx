@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- The REPL `Eval` ran a program that failed to compile and returned whatever it printed. It now returns `compilation error` (#189)
 - The REPL leaked operator state from one `Eval` into the next, so an unrelated second program failed to type check (#174)
 - Slices of slices were wrong with ptr64 builds, and `append(s, a, b, c)` wrote `a` three times. `make check` now also runs the CX tests with a ptr64 build (#176)
 - The package loader silently dropped a file whose package did not match its directory. It now reports the mismatch (#181)

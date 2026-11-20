@@ -95,3 +95,14 @@ func TestEvalNoStateBetweenPrograms(t *testing.T) {
 		t.Fatalf("Eval(b) after Eval(a): got %q, compile output %q", out, errs.String())
 	}
 }
+
+// A program that fails to compile used to run anyway. See #189.
+func TestEvalCompileErrorDoesNotRun(t *testing.T) {
+	bad := "package main\nfunc main() {\n\tvar x i32 = \"s\"\n\ti32.print(x)\n}\n"
+	if out := eval(t, bad); out != "compilation error" {
+		t.Fatalf("Eval(bad): got %q, want %q", out, "compilation error")
+	}
+	if out := eval(t, hello); out != "hi\n" {
+		t.Fatalf("Eval after a compile error: got %q, want %q", out, "hi\n")
+	}
+}
