@@ -43,3 +43,17 @@ func TestGraphSkipsCommentedImport(t *testing.T) {
 		t.Errorf("GetImportGraph:\n got %q\nwant %q", got, want)
 	}
 }
+
+func TestGraphExternalImportOnce(t *testing.T) {
+	loadSource(t, "GraphExternal", map[string]string{
+		"main.cx": "package main\nimport \"os\"\nimport \"b\"\nfunc main() {\n}\n",
+		"b/b.cx":  "package b\nimport \"os\"\n",
+	})
+	got, err := GetImportGraph("GraphExternal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "id=0, module=main, imports=2,1,\nid=1, module=b, imports=2,\nid=2, module=os, imports=,\n"; got != want {
+		t.Errorf("GetImportGraph:\n got %q\nwant %q", got, want)
+	}
+}

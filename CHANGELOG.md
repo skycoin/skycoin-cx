@@ -28,6 +28,7 @@
 
 #### Fixed
 
+- `packageloader -graph` listed an external import such as `os` once for every package that imported it, each time under a new id. It now gets one id (#105)
 - The package loader kept its own list of built in packages, which lacked `regexp`, so a program importing it failed to load with "package regexp not found". It now uses the `t0-packages` list the compiler uses (#95)
 - The package loader, `-graph` and `-tree` took `import` inside a block comment as an import, so the loader rejected a valid program. One scanner, `loader.Imports`, now skips comments and string literals for all three (#98)
 - The package loader found only self imports and loops of two packages, so a -> b -> c -> a loaded. It now walks the imports depth first and names the whole loop (#97)

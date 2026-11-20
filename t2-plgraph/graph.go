@@ -63,7 +63,6 @@ func GetImportGraph(programName string) (output string, err error) {
 		importMap[packageStruct.PackageName] = imports
 	}
 	var otherImports []string
-	var otherImportIndex = len(indexList)
 	for i, module := range indexList {
 		output += "id=" + strconv.Itoa(i) + ", "
 		output += "module=" + module + ", "
@@ -72,11 +71,9 @@ func GetImportGraph(programName string) (output string, err error) {
 		for _, importString := range imports {
 			importIndex, ok := importIndexMap[importString]
 			if !ok {
-				importIDs += strconv.Itoa(otherImportIndex) + ","
-				// NOTE: an external import gets a new id every time it is seen. See #105.
-				otherImports = append(otherImports, "id="+strconv.Itoa(otherImportIndex)+", module="+importString+", imports=,\n")
-				otherImportIndex++
-				continue
+				importIndex = len(indexList) + len(otherImports)
+				importIndexMap[importString] = importIndex
+				otherImports = append(otherImports, "id="+strconv.Itoa(importIndex)+", module="+importString+", imports=,\n")
 			}
 			importIDs += strconv.Itoa(importIndex) + ","
 		}
