@@ -545,7 +545,7 @@ func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgu
 // ----------------------------------------------------------------
 //                             `CXProgram` Getters
 
-func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator, *CXArgument, *CXLine, error) {
+func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator, *CXLine, error) {
 	switch expr.Type {
 	case CX_ATOMIC_OPERATOR:
 		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -553,38 +553,36 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 		cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0226 S0227.
-			return &CXAtomicOperator{}, &CXArgument{}, nil, err
+			// Now a heap literal, site S0226.
+			return &CXAtomicOperator{}, nil, err
 		}
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0229.
-		return cxAtomicOp, &CXArgument{}, nil, nil
+		return cxAtomicOp, nil, nil
 	case CX_LINE:
 		// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
 		// Now an arena getter, site S0231.
 		cxLine, err := cxprogram.GetCXLine(expr.Index)
 		if err != nil {
 			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0232 S0233.
-			return &CXAtomicOperator{}, &CXArgument{}, nil, err
+			// Now a heap literal, site S0232.
+			return &CXAtomicOperator{}, nil, err
 		}
 
 		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-		// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0235 S0236.
-		return &CXAtomicOperator{}, &CXArgument{}, cxLine, nil
+		// Now a heap literal, site S0235.
+		return &CXAtomicOperator{}, cxLine, nil
 		// case CX_ARGUMENT:
 	}
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-	// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0237 S0238.
-	return &CXAtomicOperator{}, &CXArgument{}, nil, fmt.Errorf("operation type is not found.")
+	// Now a heap literal, site S0237.
+	return &CXAtomicOperator{}, nil, fmt.Errorf("operation type is not found.")
 }
 
 func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex int) (*CXLine, error) {
 	for i := currIndex; i >= 0; i-- {
 		if exprs[i].Type == CX_LINE {
-			_, _, cxLine, err := cxprogram.GetOperation(&exprs[i])
+			_, cxLine, err := cxprogram.GetOperation(&exprs[i])
 			if err != nil {
 				// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
 				// Now a heap literal, site S0240.

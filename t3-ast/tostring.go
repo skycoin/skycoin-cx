@@ -281,21 +281,21 @@ func SignatureStringOfFunction(prgrm *CXProgram, pkg *CXPackage, f *CXFunction) 
 		f.Name, ins.String(), outs.String())
 }
 
-// valueAt prints the value of type elt with dimensions dims at addr. A zero
+// valueAt prints the value of type typ with dimensions dims at addr. A zero
 // dimension is a slice, which holds a pointer to its object.
-func valueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument, dims []types.Pointer, sep string) string {
+func valueAt(prgrm *CXProgram, addr types.Pointer, typ types.Code, size types.Pointer, structType *CXStruct, dims []types.Pointer, sep string) string {
 	if len(dims) == 0 {
-		if elt.IsPointer() {
+		if typ == types.POINTER {
 			return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, addr))
 		}
-		if elt.StructType != nil {
-			return structAt(prgrm, addr, elt.StructType)
+		if structType != nil {
+			return structAt(prgrm, addr, structType)
 		}
-		val, _ := readAtomic(prgrm.Memory, elt.Type.Name(), addr)
+		val, _ := readAtomic(prgrm.Memory, typ.Name(), addr)
 		return val
 	}
 
-	stride := elt.Size
+	stride := size
 	for i := len(dims) - 1; i > 0; i-- {
 		if dims[i] == 0 {
 			stride = types.POINTER_SIZE
@@ -305,20 +305,20 @@ func valueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument, dims []types
 	}
 
 	if dims[0] != 0 {
-		return elementsAt(prgrm, addr, dims[0], stride, elt, dims[1:], sep)
+		return elementsAt(prgrm, addr, dims[0], stride, typ, size, structType, dims[1:], sep)
 	}
 	sliceOffset := types.Read_ptr(prgrm.Memory, addr)
-	return elementsAt(prgrm, sliceOffset+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE, GetSliceLen(prgrm, sliceOffset), stride, elt, dims[1:], sep)
+	return elementsAt(prgrm, sliceOffset+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE, GetSliceLen(prgrm, sliceOffset), stride, typ, size, structType, dims[1:], sep)
 }
 
 // elementsAt prints the n elements of size stride that start at addr.
-func elementsAt(prgrm *CXProgram, addr, n, stride types.Pointer, elt *CXArgument, dims []types.Pointer, sep string) string {
+func elementsAt(prgrm *CXProgram, addr, n, stride types.Pointer, typ types.Code, size types.Pointer, structType *CXStruct, dims []types.Pointer, sep string) string {
 	val := "["
 	for c := types.Pointer(0); c < n; c++ {
 		if c > 0 {
 			val += sep
 		}
-		val += valueAt(prgrm, addr+c*stride, elt, dims, sep)
+		val += valueAt(prgrm, addr+c*stride, typ, size, structType, dims, sep)
 	}
 	return val + "]"
 }
@@ -350,10 +350,8 @@ func typeSignatureAt(prgrm *CXProgram, addr types.Pointer, typeSig *CXTypeSignat
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0488.
 		arr := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0489.
-		elt := &CXArgument{Type: types.Code(arr.Meta), Size: types.Code(arr.Meta).Size()}
-		return valueAt(prgrm, addr, elt, arr.Lengths, printSeparator(arr.Lengths))
+		eltType := types.Code(arr.Meta)
+		return valueAt(prgrm, addr, eltType, eltType.Size(), nil, arr.Lengths, printSeparator(arr.Lengths))
 	case TYPE_STRUCT:
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 		// Now an arena getter, site S0490.
@@ -362,7 +360,7 @@ func typeSignatureAt(prgrm *CXProgram, addr types.Pointer, typeSig *CXTypeSignat
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0491.
 		elt := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSig.Meta))
-		return valueAt(prgrm, addr, elt, elt.Lengths, printSeparator(elt.Lengths))
+		return valueAt(prgrm, addr, elt.Type, elt.Size, elt.StructType, elt.Lengths, printSeparator(elt.Lengths))
 	}
 	// Pointers print their address.
 	return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, addr))
@@ -412,14 +410,11 @@ func readAtomic(memory []byte, typ string, offset types.Pointer) (string, bool) 
 // argValueAt prints the value that elt, the last element of an argument's
 // field path, names at addr after its indexes and dereferences.
 func argValueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument) string {
+	typ := elt.Type
 	if elt.IsPointer() {
 		for _, op := range elt.DereferenceOperations {
 			if op == constants.DEREF_POINTER {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now an object copy, site S0492.
-				target := *elt
-				target.Type = elt.PointerTargetType
-				elt = &target
+				typ = elt.PointerTargetType
 				break
 			}
 		}
@@ -428,7 +423,7 @@ func argValueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument) string {
 	if len(elt.Indexes) <= len(dims) {
 		dims = dims[len(elt.Indexes):]
 	}
-	return valueAt(prgrm, addr, elt, dims, printSeparator(dims))
+	return valueAt(prgrm, addr, typ, elt.Size, elt.StructType, dims, printSeparator(dims))
 }
 
 // GetPrintableValue prints the value of argTypeSig in the frame at fp.
@@ -452,9 +447,7 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0494.
 		arr := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0495.
-		elt := &CXArgument{Type: types.Code(arr.Meta), Size: types.Code(arr.Meta).Size()}
+		eltType := types.Code(arr.Meta)
 		dims := arr.Lengths
 		if len(arr.Indexes) <= len(dims) {
 			dims = dims[len(arr.Indexes):]
@@ -462,11 +455,11 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 		addr := GetFinalOffset(prgrm, fp, nil, argTypeSig)
 		switch {
 		case (argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC) && argTypeSig.IsDeref:
-			return valueAt(prgrm, addr, elt, dims, printSeparator(dims))
+			return valueAt(prgrm, addr, eltType, eltType.Size(), nil, dims, printSeparator(dims))
 		case argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC:
 			return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, addr))
 		}
-		return valueAt(prgrm, addr, elt, dims, printSeparator(dims))
+		return valueAt(prgrm, addr, eltType, eltType.Size(), nil, dims, printSeparator(dims))
 	case TYPE_STRUCT, TYPE_POINTER_STRUCT:
 		if argTypeSig.Type == TYPE_POINTER_STRUCT && !argTypeSig.IsDeref {
 			return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig)))

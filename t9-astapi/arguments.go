@@ -399,7 +399,7 @@ func GetAccessibleArgsForFunctionByType(cxprogram *cxast.CXProgram, packageLocat
 
 	// Get all args from expression inputs
 	for _, expr := range fn.Expressions {
-		cxAtomicOp, _, _, err := cxprogram.GetOperation(&expr)
+		cxAtomicOp, _, err := cxprogram.GetOperation(&expr)
 		if err != nil {
 			panic(err)
 		}
@@ -457,7 +457,7 @@ func AddLiteralInputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 	cxparseractions.AST = cxprogram
 	litArg := cxparseractions.WritePrimary(cxprogram, argType, bytes, false)
 
-	cxAtomicOp2, _, _, err := cxprogram.GetOperation(expr)
+	cxAtomicOp2, _, err := cxprogram.GetOperation(expr)
 	if err != nil {
 		panic(err)
 	}

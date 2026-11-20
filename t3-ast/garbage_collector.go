@@ -25,9 +25,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 			// Now an arena getter, site S0336.
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S0337.
-			var glbl *CXArgument = &CXArgument{}
+			var glbl *CXArgument
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0338.
@@ -57,9 +55,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 					// Now an arena getter, site S0339.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a heap literal, site S0340.
-					var fld *CXArgument = &CXArgument{}
+					var fld *CXArgument
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -121,9 +117,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 							// Now an arena getter, site S0342.
 							typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
-							// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-							// Now a heap literal, site S0343.
-							var fld *CXArgument = &CXArgument{}
+							var fld *CXArgument
 							if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 								fldIdx := typeSignature.Meta
 								// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -281,9 +275,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 			// Now an arena getter, site S0348.
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S0349.
-			var glbl *CXArgument = &CXArgument{}
+			var glbl *CXArgument
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0350.
@@ -303,9 +295,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 					// Now an arena getter, site S0351.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a heap literal, site S0352.
-					var fld *CXArgument = &CXArgument{}
+					var fld *CXArgument
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -461,9 +451,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 			// Now an arena getter, site S0355.
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a heap literal, site S0356.
-			var glbl *CXArgument = &CXArgument{}
+			var glbl *CXArgument
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0357.
@@ -493,9 +481,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 					// Now an arena getter, site S0358.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a heap literal, site S0359.
-					var fld *CXArgument = &CXArgument{}
+					var fld *CXArgument
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -563,9 +549,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 								// Now an arena getter, site S0361.
 								typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
-								// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-								// Now a heap literal, site S0362.
-								var fld *CXArgument = &CXArgument{}
+								var fld *CXArgument
 								if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 									fldIdx := typeSignature.Meta
 									// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.

@@ -941,9 +941,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S1284.
 		affExprAtomicOpInputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetInputs(prgrm)[argIdx])
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S1285.
-		var arg *ast.CXArgument = &ast.CXArgument{}
+		var arg *ast.CXArgument
 		if affExprAtomicOpInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1286.
@@ -958,9 +956,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S1287.
 	affExprAtomicOpOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetOutputs(prgrm)[argIdx])
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S1288.
-	var arg *ast.CXArgument = &ast.CXArgument{}
+	var arg *ast.CXArgument
 	if affExprAtomicOpOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S1289.
@@ -1014,7 +1010,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 
 // 	getTarget(prgrm, inp3, fp, &tgtElt, &tgtArgType, &tgtArgIndex, &tgtPkg, &tgtFn, &tgtExpr)
 
-// 	tgtExprAtomicOp, _, _, err := prgrm.GetOperation(&tgtExpr)
+// 	tgtExprAtomicOp, _, err := prgrm.GetOperation(&tgtExpr)
 // 	if err != nil {
 // 		panic(err)
 // 	}
@@ -1142,7 +1138,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 
 // 	getTarget(prgrm, inp3, fp, &tgtElt, &tgtArgType, &tgtArgIndex, &tgtPkg, &tgtFn, &tgtExpr)
 
-// 	tgtExprAtomicOp, _, _, err := prgrm.GetOperation(&tgtExpr)
+// 	tgtExprAtomicOp, _, err := prgrm.GetOperation(&tgtExpr)
 // 	if err != nil {
 // 		panic(err)
 // 	}

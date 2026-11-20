@@ -211,7 +211,7 @@ func serializeExpression(prgrm *CXProgram, expr *CXExpression, s *SerializedCXPr
 	sExpr.Type = int64(expr.Type)
 	switch expr.Type {
 	case CX_LINE:
-		_, _, cxLine, err := prgrm.GetOperation(expr)
+		_, cxLine, err := prgrm.GetOperation(expr)
 		if err != nil {
 			panic(err)
 		}

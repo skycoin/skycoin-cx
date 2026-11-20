@@ -36,7 +36,7 @@ func AddNativeExpressionToFunction(cxprogram *cxast.CXProgram, functionName stri
 	// Now a constructor call, site S1592.
 	exp := cxast.MakeAtomicOperatorExpression(cxprogram, cxast.Natives[expressionType])
 
-	cxAtomicOp, _, _, err := cxprogram.GetOperation(exp)
+	cxAtomicOp, _, err := cxprogram.GetOperation(exp)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,7 @@ func AddNativeExpressionToFunctionByLineNumber(cxprogram *cxast.CXProgram, funct
 	// Now a constructor call, site S1596.
 	exp := cxast.MakeAtomicOperatorExpression(cxprogram, cxast.Natives[expressionType])
 
-	cxAtomicOp, _, _, err := cxprogram.GetOperation(exp)
+	cxAtomicOp, _, err := cxprogram.GetOperation(exp)
 	if err != nil {
 		panic(err)
 	}

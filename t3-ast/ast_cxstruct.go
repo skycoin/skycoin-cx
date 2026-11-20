@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 )
 
 type CXStructIndex int
@@ -13,58 +12,15 @@ type CXStructIndex int
 // ----------------------------------------------------------------
 //                             `CXStruct` Getters
 
-// GetField ...
-func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, error) {
+// GetField returns the signature of the field name of strct. Its
+// GetStructType and GetOffset give what a caller needs of the field.
+func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXTypeSignature, error) {
 	for _, typeSignatureIdx := range strct.Fields {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0254.
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Name == name {
-			// If type is struct
-			if typeSignature.Type == TYPE_STRUCT {
-				// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
-				// Now an arena getter, site S0255.
-				structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S0256.
-				return &CXArgument{
-					Name:                  typeSignature.Name,
-					Type:                  types.STRUCT,
-					DeclarationSpecifiers: []int{constants.DECL_STRUCT},
-					StructType:            structDetails.StructType,
-					Offset:                typeSignature.Offset,
-				}, nil
-
-			} else if typeSignature.Type == TYPE_POINTER_STRUCT {
-				// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
-				// Now an arena getter, site S0257.
-				structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S0258.
-				return &CXArgument{
-					Name:                  typeSignature.Name,
-					Type:                  types.STRUCT,
-					DeclarationSpecifiers: []int{constants.DECL_STRUCT},
-					StructType:            structDetails.StructType,
-					Offset:                typeSignature.Offset,
-				}, nil
-			} else if typeSignature.Type != TYPE_CXARGUMENT_DEPRECATE {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a heap literal, site S0259.
-				return &CXArgument{
-					Name:                  typeSignature.Name,
-					Type:                  types.Code(typeSignature.Meta),
-					DeclarationSpecifiers: []int{constants.DECL_BASIC},
-					StructType:            nil,
-					Offset:                typeSignature.Offset,
-				}, nil
-			}
-
-			// If type is cxargument deprecate
-			fldIdx := typeSignature.Meta
-			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now an arena getter, site S0260.
-			return prgrm.GetCXArg(CXArgumentIndex(fldIdx)), nil
+			return typeSignature, nil
 		}
 	}
 

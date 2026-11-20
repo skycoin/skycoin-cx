@@ -1173,7 +1173,7 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 //	 exprs - slice of expressions.
 func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 	for i, expr := range exprs {
-		expression, _, _, err := prgrm.GetOperation(&expr)
+		expression, _, err := prgrm.GetOperation(&expr)
 		if err != nil {
 			panic(err)
 		}
@@ -1191,7 +1191,7 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 		if isOpGoto {
 			// then it's a goto
 			for j, e := range exprs {
-				expressionToGoTo, _, _, err := prgrm.GetOperation(&e)
+				expressionToGoTo, _, err := prgrm.GetOperation(&e)
 				if err != nil {
 					panic(err)
 				}
@@ -2030,8 +2030,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					// Now an arena getter, site S0886.
 					field := prgrm.GetCXArgFromArray(fldIdx)
 					if inFld, err := strct.GetField(prgrm, field.Name); err == nil {
-						if inFld.StructType != nil {
-							strct = inFld.StructType
+						if inFld.GetStructType(prgrm) != nil {
+							strct = inFld.GetStructType(prgrm)
 						}
 					}
 				}
@@ -2947,9 +2947,9 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 			// Now an arena getter, site S0968.
 			field := prgrm.GetCXArgFromArray(fldIdx)
 			if inFld, err := strct.GetField(prgrm, field.Name); err == nil {
-				if inFld.StructType != nil {
+				if inFld.GetStructType(prgrm) != nil {
 					field.StructType = strct
-					strct = inFld.StructType
+					strct = inFld.GetStructType(prgrm)
 				}
 			} else {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.

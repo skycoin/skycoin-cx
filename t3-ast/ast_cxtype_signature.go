@@ -327,6 +327,8 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 }
 
 func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgument {
+	// MISUSE: builds an IR argument for the garbage collector, which needs only
+	// the offset, types and declaration specifiers of a field, see #423.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0299.
 	var arg *CXArgument = &CXArgument{}
@@ -702,4 +704,31 @@ func AllocCXTypeSignatureOfCXArgBuilder(prgrm *CXProgram, cxArgument *CXArgument
 	typeSigIdx := AllocCXTypeSignatureOfCXArg(prgrm, cxArgument)
 	prgrm.ReleaseCXArgUnlessNamed(cxArgument, typeSigIdx)
 	return typeSigIdx
+}
+
+// GetStructType returns the struct type of the value typeSignature names,
+// or nil when it is not a struct or a pointer to one.
+func (typeSignature *CXTypeSignature) GetStructType(prgrm *CXProgram) *CXStruct {
+	switch typeSignature.Type {
+	case TYPE_CXARGUMENT_DEPRECATE:
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1784.
+		return prgrm.GetCXArg(CXArgumentIndex(typeSignature.Meta)).StructType
+	case TYPE_STRUCT, TYPE_POINTER_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0255.
+		return prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta).StructType
+	}
+	return nil
+}
+
+// GetOffset returns the offset of the value typeSignature names. A signature
+// that names an argument has the offset of the argument.
+func (typeSignature *CXTypeSignature) GetOffset(prgrm *CXProgram) types.Pointer {
+	if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0260.
+		return prgrm.GetCXArg(CXArgumentIndex(typeSignature.Meta)).Offset
+	}
+	return typeSignature.Offset
 }

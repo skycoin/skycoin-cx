@@ -140,9 +140,7 @@ func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.P
 func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argTypeSig *CXTypeSignature) types.Pointer {
 	var finalOffset types.Pointer
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0371.
-	var arg *CXArgument = &CXArgument{}
+	var arg *CXArgument
 	if oldArg != nil {
 		arg = oldArg
 	} else if argTypeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
@@ -353,6 +351,14 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 		}
 
 		return argTypeSigOffset
+	}
+
+	if arg == nil {
+		// A signature of another type has no offset or dereferences of its own.
+		if prgrm.Stack.Size > 0 {
+			return fp
+		}
+		return 0
 	}
 
 	finalOffset = arg.Offset

@@ -27,7 +27,7 @@ func expOffset(prgrm *ast.CXProgram, value ast.CXValue) types.Pointer {
 	if err != nil {
 		panic(err)
 	}
-	return value.Offset + expFld.Offset
+	return value.Offset + expFld.GetOffset(prgrm)
 }
 
 // regexpCompile is a helper function for `opRegexpMustCompile` and

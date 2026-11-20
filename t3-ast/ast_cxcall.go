@@ -123,9 +123,7 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, cxAtomicOp *C
 		offset := GetFinalOffset(prgrm, fp, nil, inputTypeSignature)
 		value.Offset = offset
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0105.
-		var input *CXArgument = &CXArgument{}
+		var input *CXArgument
 		if inputTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0106.
@@ -155,9 +153,7 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, cxAtomicOp *C
 		offset := GetFinalOffset(prgrm, fp, nil, outputTypeSignature)
 		value.Offset = offset
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0108.
-		var output *CXArgument = &CXArgument{}
+		var output *CXArgument
 		if outputTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0109.
@@ -226,19 +222,18 @@ func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, c
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0112.
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a heap literal, site S0113.
-		var inp *CXArgument = &CXArgument{}
+		// An atomic input is passed by its signature only.
+		inpPassBy := 0
 		if input.Type == TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0114.
-			inp = prgrm.GetCXArgFromArray(CXArgumentIndex(input.Meta))
+			inpPassBy = prgrm.GetCXArgFromArray(CXArgumentIndex(input.Meta)).PassBy
 		}
 
 		var byts []byte
 
 		finalOffset := GetFinalOffset(prgrm, fp, nil, input)
-		if input.PassBy == constants.PASSBY_REFERENCE || inp.PassBy == constants.PASSBY_REFERENCE {
+		if input.PassBy == constants.PASSBY_REFERENCE || inpPassBy == constants.PASSBY_REFERENCE {
 			// If we're referencing an inner element, like an element of a slice (&slc[0])
 			// or a field of a struct (&struct.fld) we no longer need to add
 			// the OBJECT_HEADER_SIZE to the offset
