@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // VIOLATION: state outside State. Owner: t0-plbolt; moves to PackageDBMng in phase 2.
