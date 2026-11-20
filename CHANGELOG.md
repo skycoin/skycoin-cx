@@ -34,6 +34,7 @@
 
 #### Changed
 
+- `CXCall.Call` takes a pointer to the current expression instead of a copy, so a step no longer allocates. `CXValue.Expr` is cleared when the opcode handler returns. Allocations per run of a 100000 iteration loop fall from 1,000,019 to 11 and run time by about 30% (#407, #417)
 - `CXTypeSignature_Struct` objects live in `CxIrState.CXTypeSignature_StructMng`. Struct signatures are allocated there, `CXProgram.TypeSignatureForStructs` and `AddCXTypeSignatureStructInArray` are gone, and `GetCXTypeSignatureStructFromArray` reads the manager by slot index (#299, #321)
 - `CXTypeSignature_Array` objects live in `CxIrState.CXTypeSignature_ArrayMng`. Array and slice signatures are allocated there, `CXProgram.TypeSignatureForArrays` and `AddCXTypeSignatureArrayInArray` are gone, and `GetCXTypeSignatureArrayFromArray` reads the manager by slot index (#299, #316)
 - `CXLine` objects live in `CxIrState.CXLineMng`. `MakeCXLineExpression` and `Deserialize` allocate them there, `CXProgram.CXLines` and `CXProgram.AddCXLine` are gone, and `GetCXLine` reads the manager by slot index. `GetOperation` returns a nil line for an expression that is not a line instead of a new empty one (#299, #311)

@@ -196,6 +196,14 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, globalInputs 
 
 	OpcodeHandlers[cxAtomicOpOperator.AtomicOPCode](prgrm, inputValues, outputValues)
 
+	// Expr points into fn.Expressions and is valid for this step only.
+	for i := range inputValues {
+		inputValues[i].Expr = nil
+	}
+	for i := range outputValues {
+		outputValues[i].Expr = nil
+	}
+
 	return nil
 }
 
@@ -306,7 +314,8 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 	*/
 
 	fn := call.Operator
-	expr := fn.Expressions[call.Line]
+	// A pointer, not a copy, so nothing escapes to the heap (VMALLOC-001, #407).
+	expr := &fn.Expressions[call.Line]
 	fp := call.FramePointer
 
 	if expr.Type == CX_LINE {
@@ -328,7 +337,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 	if cxAtomicOpOperator == nil {
 		// then it's a declaration
 		// wiping this declaration's memory (removing garbage)
-		err := wipeDeclarationMemory(prgrm, &expr)
+		err := wipeDeclarationMemory(prgrm, expr)
 		if err != nil {
 			return err
 		}
@@ -336,7 +345,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 		call.Line++
 	} else if cxAtomicOpOperator.IsBuiltIn() {
 		//TODO: SLICES ARE NON ATOMIC
-		err := processBuiltInOperators(prgrm, &expr, globalInputs, globalOutputs, fp)
+		err := processBuiltInOperators(prgrm, expr, globalInputs, globalOutputs, fp)
 		if err != nil {
 			return err
 		}
@@ -344,7 +353,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 		call.Line++
 	} else {
 		//NON-ATOMIC OPERATOR
-		err := processNonAtomicOperators(prgrm, &expr, fp)
+		err := processNonAtomicOperators(prgrm, expr, fp)
 		if err != nil {
 			return err
 		}
