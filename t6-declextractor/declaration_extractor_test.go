@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t1-plloader"     // thin: tests use only LoadCXProgram, ParseArgsForCX; no depth gain
@@ -15,18 +14,9 @@ import (
 
 // Sets the offset for windows or other os
 func setOffset(offset int, lineNumber int) int {
-
-	//Input offset is the offset for linux/mac
-	var newOffset int = offset
-
-	runtimeOS := runtime.GOOS
-
-	//Determines runtime os and sets the offset accordingly
-	if runtimeOS == "windows" {
-		newOffset += lineNumber - 1
-	}
-
-	return newOffset
+	// .gitattributes checks .cx files out with LF on every OS, so the
+	// offsets are the same on Windows.
+	return offset
 }
 
 func TestDeclarationExtractor_ReplaceCommentsWithWhitespaces(t *testing.T) {
