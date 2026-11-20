@@ -1,9 +1,11 @@
 package main
 
+import "sys/string"
+
 var foo i32
 
 func bar () {
-    str.print("Hi.")
+    string.PrintLine("Hi.")
 }
 
 type foobar struct {

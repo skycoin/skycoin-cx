@@ -2,20 +2,22 @@
 
 package main
 
+import "sys/string"
+
 func main () {
 	var cmd str
 beginning:
 	cmd = "P"
 
-	if str.equal_by_value(cmd, "C") {
+	if string.EqualityByByteValue(cmd, "C") {
 		goto cat
 	}
 
-	if str.equal_by_value(cmd, "D") {
+	if string.EqualityByByteValue(cmd, "D") {
 		goto dog
 	}
 
-	if str.equal_by_value(cmd, "P") {
+	if string.EqualityByByteValue(cmd, "P") {
 		goto pigeon
 	}
 

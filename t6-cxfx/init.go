@@ -234,8 +234,8 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	opcodes.RegisterFunction(prgrm, "glfw.SetInputMode", opGlfwSetInputMode, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_I32, ast.ConstCxArg_I32), nil)
 	opcodes.RegisterFunction(prgrm, "glfw.SetWindowPos", opGlfwSetWindowPos, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_I32, ast.ConstCxArg_I32), nil)
 	opcodes.RegisterFunction(prgrm, "glfw.GetKey", opGlfwGetKey, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_I32), opcodes.Out(ast.ConstCxArg_I32))
-	opcodes.RegisterFunction(prgrm, "glfw.func_i32_i32", opGlfwFuncI32I32, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_I32))
-	opcodes.RegisterFunction(prgrm, "glfw.call_i32_i32", opGlfwCallI32I32, opcodes.In(ast.ConstCxArg_I32, ast.ConstCxArg_I32, ast.ConstCxArg_I32), nil)
+	opcodes.RegisterFunction(prgrm, "glfw.RegisterCallbackI32I32", opGlfwFuncI32I32, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_I32))
+	opcodes.RegisterFunction(prgrm, "glfw.InvokeCallbackI32I32", opGlfwCallI32I32, opcodes.In(ast.ConstCxArg_I32, ast.ConstCxArg_I32, ast.ConstCxArg_I32), nil)
 	opcodes.RegisterFunction(prgrm, "glfw.GetWindowContentScale", opGlfwGetWindowContentScale, opcodes.In(ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_I32, ast.ConstCxArg_I32))
 	opcodes.RegisterFunction(prgrm, "glfw.GetMonitorContentScale", opGlfwGetMonitorContentScale, nil, opcodes.Out(ast.ConstCxArg_F32, ast.ConstCxArg_F32))
 

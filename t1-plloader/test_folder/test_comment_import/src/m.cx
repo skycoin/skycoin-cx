@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 /*
 import "fromcomment"
 */
@@ -7,5 +9,5 @@ import "fromcomment"
 //import "linecomment"
 
 func main() {
-	str.print("x import y")
+	string.PrintLine("x import y")
 }

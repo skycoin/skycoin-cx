@@ -2,6 +2,7 @@ package main
 
 import "sys/gl"
 import "sys/glfw"
+import "sys/string"
 
 // Components
 type Displacement struct {
@@ -208,17 +209,17 @@ func setupScene () () {
 
 	wd := os.GetWorkingDirectory()
 
-        tex_characters = gl.NewTexture(str.concat(wd, "textures/roguelike_characters.png"))
-	tex_city = gl.NewTexture(str.concat(wd, "textures/roguelike_city.png"))
-	tex_dungeon = gl.NewTexture(str.concat(wd, "textures/roguelike_dungeon.png"))
-	tex_indoor = gl.NewTexture(str.concat(wd, "textures/roguelike_indoor.png"))
-	tex_pack = gl.NewTexture(str.concat(wd, "textures/roguelike_pack.png"))
+        tex_characters = gl.NewTexture(string.Concatenation(wd, "textures/roguelike_characters.png"))
+	tex_city = gl.NewTexture(string.Concatenation(wd, "textures/roguelike_city.png"))
+	tex_dungeon = gl.NewTexture(string.Concatenation(wd, "textures/roguelike_dungeon.png"))
+	tex_indoor = gl.NewTexture(string.Concatenation(wd, "textures/roguelike_indoor.png"))
+	tex_pack = gl.NewTexture(string.Concatenation(wd, "textures/roguelike_pack.png"))
 	// tooltips symbols
-	tex_act_up = gl.NewTexture(str.concat(wd, "textures/up.png"))
-	tex_act_down = gl.NewTexture(str.concat(wd, "textures/down.png"))
-	tex_act_right = gl.NewTexture(str.concat(wd, "textures/right.png"))
-	tex_act_left = gl.NewTexture(str.concat(wd, "textures/left.png"))
-	tex_act_water = gl.NewTexture(str.concat(wd, "textures/water.png"))
+	tex_act_up = gl.NewTexture(string.Concatenation(wd, "textures/up.png"))
+	tex_act_down = gl.NewTexture(string.Concatenation(wd, "textures/down.png"))
+	tex_act_right = gl.NewTexture(string.Concatenation(wd, "textures/right.png"))
+	tex_act_left = gl.NewTexture(string.Concatenation(wd, "textures/left.png"))
+	tex_act_water = gl.NewTexture(string.Concatenation(wd, "textures/water.png"))
 	
 	
 	var floors []Appearance

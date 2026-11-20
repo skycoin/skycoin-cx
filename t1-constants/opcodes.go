@@ -12,6 +12,10 @@ package constants
 // it leaves is never filled before its reassignable version. Reassigning a
 // number adds a new row with the same number after the deprecated one.
 //
+// A renamed opcode keeps its number and its row, which takes the new name.
+// OpcodeRenameTable records the old name and the version of the rename, the
+// old name can no longer be called, and it is never given to another opcode.
+//
 // Columns are number, name, version added, version deprecated and version
 // reassignable. A live opcode has 0 in the last two. An opcode older than
 // language versioning has version added 0.
@@ -23,8 +27,10 @@ package constants
 // deprecation becomes reassignable on 1 March. LanguageVersionReassignable
 // computes it, and opcodes_history.go lists every lifecycle event in order.
 //
-// docs/opcodes.csv holds the same table. TestOpcodeLifecycleTableMatchesCSV
-// fails when they differ, and CX_UPDATE_OPCODES_CSV=1 rewrites the CSV.
+// docs/opcodes.csv holds the same table, with the renames of each row in a
+// former_names column as old@version separated by semicolons.
+// TestOpcodeLifecycleTableMatchesCSV fails when they differ, and
+// CX_UPDATE_OPCODES_CSV=1 rewrites the CSV.
 //
 // Numbers 19 to 38, 45 to 72 and 85 to 126 sit inside the operator range
 // markers below and were never assigned.
@@ -502,22 +508,22 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{558, "f64.rand", 0, 0, 0},
 	{559, "str.eq", 0, 2611200001, 2711200001},   // 559 str.eq: added 0000000000, deprecated 2611200001, reassignable from 2711200001
 	{560, "str.uneq", 0, 2611200001, 2711200001}, // 560 str.uneq: added 0000000000, deprecated 2611200001, reassignable from 2711200001
-	{561, "str.concat", 0, 0, 0},
-	{562, "str.i8", 0, 0, 0},
-	{563, "str.i16", 0, 0, 0},
-	{564, "str.i32", 0, 0, 0},
-	{565, "str.i64", 0, 0, 0},
-	{566, "str.ui8", 0, 0, 0},
-	{567, "str.ui16", 0, 0, 0},
-	{568, "str.ui32", 0, 0, 0},
-	{569, "str.ui64", 0, 0, 0},
-	{570, "str.f32", 0, 0, 0},
-	{571, "str.f64", 0, 0, 0},
-	{572, "str.print", 0, 0, 0},
-	{573, "str.substr", 0, 0, 0},
-	{574, "str.index", 0, 0, 0},
-	{575, "str.lastindex", 0, 0, 0},
-	{576, "str.trimspace", 0, 0, 0},
+	{561, "string.Concatenation", 0, 0, 0},
+	{562, "string.ParseDecimalI8", 0, 0, 0},
+	{563, "string.ParseDecimalI16", 0, 0, 0},
+	{564, "string.ParseDecimalI32", 0, 0, 0},
+	{565, "string.ParseDecimalI64", 0, 0, 0},
+	{566, "string.ParseDecimalUI8", 0, 0, 0},
+	{567, "string.ParseDecimalUI16", 0, 0, 0},
+	{568, "string.ParseDecimalUI32", 0, 0, 0},
+	{569, "string.ParseDecimalUI64", 0, 0, 0},
+	{570, "string.ParseFloatF32", 0, 0, 0},
+	{571, "string.ParseFloatF64", 0, 0, 0},
+	{572, "string.PrintLine", 0, 0, 0},
+	{573, "string.SubstringByByteRange", 0, 0, 0},
+	{574, "string.ByteIndexOfFirstSubstring", 0, 0, 0},
+	{575, "string.ByteIndexOfLastSubstring", 0, 0, 0},
+	{576, "string.TrimSurroundingWhitespace", 0, 0, 0},
 	{577, "panicIf", 0, 0, 0},
 	{578, "panicIfNot", 0, 0, 0},
 	{579, "strerror", 0, 0, 0},
@@ -527,9 +533,9 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{583, "str.lteq", 0, 2611200001, 2711200001}, // 583 str.lteq: added 0000000000, deprecated 2611200001, reassignable from 2711200001
 	{584, "str.gt", 0, 2611200001, 2711200001},   // 584 str.gt: added 0000000000, deprecated 2611200001, reassignable from 2711200001
 	{585, "str.gteq", 0, 2611200001, 2711200001}, // 585 str.gteq: added 0000000000, deprecated 2611200001, reassignable from 2711200001
-	{586, "str.equal_by_value", 2611200001, 0, 0},
-	{587, "str.equal_by_pointer", 2611200001, 0, 0},
-	{588, "str.compare_by_value", 2611200001, 0, 0},
+	{586, "string.EqualityByByteValue", 2611200001, 0, 0},
+	{587, "string.EqualityByHeapPointer", 2611200001, 0, 0},
+	{588, "string.OrderingByByteValue", 2611200001, 0, 0},
 	{589, "ptr.eq", 2611200001, 0, 0},
 	{590, "ptr.uneq", 2611200001, 0, 0},
 	{591, "gl.Init", 0, 0, 0},
@@ -697,8 +703,8 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{753, "glfw.SetInputMode", 0, 0, 0},
 	{754, "glfw.SetWindowPos", 0, 0, 0},
 	{755, "glfw.GetKey", 0, 0, 0},
-	{756, "glfw.func_i32_i32", 0, 0, 0},
-	{757, "glfw.call_i32_i32", 0, 0, 0},
+	{756, "glfw.RegisterCallbackI32I32", 0, 0, 0},
+	{757, "glfw.InvokeCallbackI32I32", 0, 0, 0},
 	{758, "glfw.GetWindowContentScale", 0, 0, 0},
 	{759, "glfw.GetMonitorContentScale", 0, 0, 0},
 	{760, "gltext.LoadTrueType", 0, 0, 0},
@@ -733,6 +739,7 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{789, "al.SourceQueueBuffers", 0, 0, 0},
 	{790, "al.SourceState", 0, 0, 0},
 	{791, "al.SourceUnqueueBuffers", 0, 0, 0},
+	{792, "string.ByteLength", 2611200002, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -762,6 +769,76 @@ func OpcodeLifecycleLiveByNumber(number int) (OpcodeLifecycle, bool) {
 		}
 	}
 	return OpcodeLifecycle{}, false
+}
+
+// OpcodeRenameTable is every opcode rename, in version order. A renamed opcode
+// keeps its number and its row in OpcodeLifecycleTable, which holds the new
+// name, and the old name cannot be called. Read only.
+var OpcodeRenameTable = [...]OpcodeRename{
+	// number, old name, new name, version renamed
+	{561, "str.concat", "string.Concatenation", 2611200002},
+	{562, "str.i8", "string.ParseDecimalI8", 2611200002},
+	{563, "str.i16", "string.ParseDecimalI16", 2611200002},
+	{564, "str.i32", "string.ParseDecimalI32", 2611200002},
+	{565, "str.i64", "string.ParseDecimalI64", 2611200002},
+	{566, "str.ui8", "string.ParseDecimalUI8", 2611200002},
+	{567, "str.ui16", "string.ParseDecimalUI16", 2611200002},
+	{568, "str.ui32", "string.ParseDecimalUI32", 2611200002},
+	{569, "str.ui64", "string.ParseDecimalUI64", 2611200002},
+	{570, "str.f32", "string.ParseFloatF32", 2611200002},
+	{571, "str.f64", "string.ParseFloatF64", 2611200002},
+	{572, "str.print", "string.PrintLine", 2611200002},
+	{573, "str.substr", "string.SubstringByByteRange", 2611200002},
+	{574, "str.index", "string.ByteIndexOfFirstSubstring", 2611200002},
+	{575, "str.lastindex", "string.ByteIndexOfLastSubstring", 2611200002},
+	{576, "str.trimspace", "string.TrimSurroundingWhitespace", 2611200002},
+	{586, "str.equal_by_value", "string.EqualityByByteValue", 2611200002},
+	{587, "str.equal_by_pointer", "string.EqualityByHeapPointer", 2611200002},
+	{588, "str.compare_by_value", "string.OrderingByByteValue", 2611200002},
+	{756, "glfw.func_i32_i32", "glfw.RegisterCallbackI32I32", 2611200002},
+	{757, "glfw.call_i32_i32", "glfw.InvokeCallbackI32I32", 2611200002},
+}
+
+// OpcodeRename is one row of OpcodeRenameTable.
+type OpcodeRename struct {
+	Number  int
+	OldName string
+	NewName string
+	Version int64
+}
+
+// OpcodeRenamed follows the renames of the former opcode name old and returns
+// the last one, so its NewName is the current name.
+func OpcodeRenamed(old string) (OpcodeRename, bool) {
+	var last OpcodeRename
+	found := false
+	for _, rename := range OpcodeRenameTable {
+		if rename.OldName == old || (found && rename.OldName == last.NewName && rename.Number == last.Number) {
+			last, found = rename, true
+		}
+	}
+	return last, found
+}
+
+// opcodeRenamesOf returns the renames of row in version order.
+func opcodeRenamesOf(row OpcodeLifecycle) []OpcodeRename {
+	var renames []OpcodeRename
+	for _, rename := range OpcodeRenameTable {
+		if rename.Number == row.Number && rename.Version > row.VersionAdded && (row.VersionDeprecated == 0 || rename.Version <= row.VersionDeprecated) {
+			renames = append(renames, rename)
+		}
+	}
+	return renames
+}
+
+// OpcodeNameAt returns the name row had in version.
+func OpcodeNameAt(row OpcodeLifecycle, version int64) string {
+	for _, rename := range opcodeRenamesOf(row) {
+		if rename.Version > version {
+			return rename.OldName
+		}
+	}
+	return row.Name
 }
 
 // Named opcodes. Each value is its number in OpcodeLifecycleTable. The

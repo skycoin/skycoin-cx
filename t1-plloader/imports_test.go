@@ -18,7 +18,7 @@ func TestImports(t *testing.T) {
 		{"duplicates once", "import \"os\"\nimport \"os\"\n", []string{"os"}, false},
 		{"block comment", "/*\nimport \"fromcomment\"\n*/\nimport \"os\"\n", []string{"os"}, false},
 		{"line comments", "// import \"a\"\n//import \"b\"\nimport \"os\" // import \"c\"\n", []string{"os"}, false},
-		{"string literal", "func main() { str.print(\"import \\\"s\\\"\") }\n", nil, false},
+		{"string literal", "func main() { string.PrintLine(\"import \\\"s\\\"\") }\n", nil, false},
 		{"string over two lines", "var s str = \"a\nimport \\\"s\\\"\"\nimport \"os\"\n", []string{"os"}, false},
 		{"raw string", "var s str = `import\n\"r\"`\n", nil, false},
 		{"several on a line", "import \"a\"; import \"b\";\n", []string{"a", "b"}, false},

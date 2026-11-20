@@ -1,9 +1,11 @@
 package helper
 
+import "sys/string"
+
 type Animal struct {
     sound str
 }
 
 func (a *Animal) Speak (){
-    str.print(a.sound)
+    string.PrintLine(a.sound)
 }

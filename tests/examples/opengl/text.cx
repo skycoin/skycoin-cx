@@ -4,6 +4,7 @@ import "sys/gl"
 import "sys/glfw"
 import "sys/gltext"
 import "sys/os"
+import "sys/string"
 
 var width i32 = 800
 var height i32 = 600
@@ -21,7 +22,7 @@ func main () {
 
 	var wd str
 	wd = os.GetWorkingDirectory()
-	fontFile := str.concat(wd, "fonts/roboto-light.ttf")
+	fontFile := string.Concatenation(wd, "fonts/roboto-light.ttf")
 
 	var handle i32
 	var closeHandle bool

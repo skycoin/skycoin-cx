@@ -65,28 +65,28 @@ Program
 	Functions
 		0.- Function: main () ()
 			0.- Declaration: loco i32
-			1.- Expression: str.print(&*lit str)
-			2.- Expression: str.print(&*lit str)
-			3.- Expression: str.print(&*lit str)
+			1.- Expression: string.PrintLine(&*lit str)
+			2.- Expression: string.PrintLine(&*lit str)
+			3.- Expression: string.PrintLine(&*lit str)
 			4.- Expression: *tmp_0 i32 = mul(*lit i32, *lit i32)
 			5.- Expression: *tmp_1 i32 = add(*lit i32, *tmp_0 i32)
 			6.- Expression: i32.print(*tmp_1 i32)
-			7.- Expression: str.print(&*lit str)
+			7.- Expression: string.PrintLine(&*lit str)
 			8.- Expression: sayHi()
 			9.- Declaration: p Point
 			10.- Expression: p.x i32 = identity(*lit i32)
 			11.- Expression: p.y i32 = identity(*lit i32)
-			12.- Expression: str.print(&*lit str)
+			12.- Expression: string.PrintLine(&*lit str)
 			13.- Expression: i32.print(p.x i32)
 			14.- Expression: i32.print(p.y i32)
 			15.- Expression: i i32 = identity(*lit i32)
-			16.- Expression: str.print(&*lit str)
+			16.- Expression: string.PrintLine(&*lit str)
 			17.- Expression: i32.print(i i32)
 			18.- Expression: loco i32 = identity(*lit i32)
-			19.- Expression: str.print(&*lit str)
+			19.- Expression: string.PrintLine(&*lit str)
 			20.- Expression: i32.print(loco i32)
 		1.- Function: sayHi () ()
-			0.- Expression: str.print(&*lit str)
+			0.- Expression: string.PrintLine(&*lit str)
 
 after ParseSourceCode
 Program
@@ -102,28 +102,28 @@ Program
 	Functions
 		0.- Function: main () ()
 			0.- Declaration: loco i32
-			1.- Expression: str.print(&*lit str)
-			2.- Expression: str.print(&*lit str)
-			3.- Expression: str.print(&*lit str)
+			1.- Expression: string.PrintLine(&*lit str)
+			2.- Expression: string.PrintLine(&*lit str)
+			3.- Expression: string.PrintLine(&*lit str)
 			4.- Expression: *tmp_0 i32 = mul(*lit i32, *lit i32)
 			5.- Expression: *tmp_1 i32 = add(*lit i32, *tmp_0 i32)
 			6.- Expression: i32.print(*tmp_1 i32)
-			7.- Expression: str.print(&*lit str)
+			7.- Expression: string.PrintLine(&*lit str)
 			8.- Expression: sayHi()
 			9.- Declaration: p Point
 			10.- Expression: p.x i32 = identity(*lit i32)
 			11.- Expression: p.y i32 = identity(*lit i32)
-			12.- Expression: str.print(&*lit str)
+			12.- Expression: string.PrintLine(&*lit str)
 			13.- Expression: i32.print(p.x i32)
 			14.- Expression: i32.print(p.y i32)
 			15.- Expression: i i32 = identity(*lit i32)
-			16.- Expression: str.print(&*lit str)
+			16.- Expression: string.PrintLine(&*lit str)
 			17.- Expression: i32.print(i i32)
 			18.- Expression: loco i32 = identity(*lit i32)
-			19.- Expression: str.print(&*lit str)
+			19.- Expression: string.PrintLine(&*lit str)
 			20.- Expression: i32.print(loco i32)
 		1.- Function: sayHi () ()
-			0.- Expression: str.print(&*lit str)
+			0.- Expression: string.PrintLine(&*lit str)
 
 print string
 Hello World!

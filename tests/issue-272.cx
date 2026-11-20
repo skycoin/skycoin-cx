@@ -2,8 +2,10 @@
 
 package main
 
+import "sys/string"
+
 func main() {
 	var s str
-	s = str.concat("a", "b")
+	s = string.Concatenation("a", "b")
 	test(s, "ab", "string concatenation failed")
 }

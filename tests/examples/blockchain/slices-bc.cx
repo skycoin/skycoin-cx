@@ -5,6 +5,7 @@ var texts []str
 
 package main
 import "bc"
+import "sys/string"
 
 func main () {
 	// Initializing our CX chain numbers.
@@ -25,8 +26,8 @@ func main () {
 	i32.print(bc.numbers[2])
 	i32.print(bc.numbers[3])
 
-	str.print(bc.texts[0])
-	str.print(bc.texts[1])
-	str.print(bc.texts[2])
-	str.print(bc.texts[3])
+	string.PrintLine(bc.texts[0])
+	string.PrintLine(bc.texts[1])
+	string.PrintLine(bc.texts[2])
+	string.PrintLine(bc.texts[3])
 }

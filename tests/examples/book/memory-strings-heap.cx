@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 func greetings (name str) (g str) {
     g = sprintf("Greetings, %s", name)
 }
@@ -8,5 +10,5 @@ func main () {
     var name str
     name = "William"
     name = greetings(name)
-    str.print(name)
+    string.PrintLine(name)
 }

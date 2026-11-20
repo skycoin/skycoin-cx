@@ -8,8 +8,10 @@ Create a `hello-world.cx` file with the following content.
 ```
 package main
 
+import "sys/string"
+
 func main () {
-    str.print("Hello, World!")
+    string.PrintLine("Hello, World!")
 }
 ```
 
@@ -44,7 +46,7 @@ barebones CX structure (a `main` package and a `main` function) that
 you can use to start building a program.
 
 Let's create a small program to test the REPL. First, write
-`str.print("Testing the REPL")` after the `*`, and press enter. After
+`string.PrintLine("Testing the REPL")` after the `*`, and press enter. After
 pressing enter you'll see the message "Testing the REPL" on the screen. If you
 then write `:dp` (short for `:dProgram` or *debug program*), you
 should get the current program AST printed:
@@ -54,12 +56,12 @@ Program
 0.- Package: main
 	Functions
 		0.- Function: main () ()
-			0.- Expression: str.print("" str)
+			0.- Expression: string.PrintLine("" str)
 		1.- Function: *init () ()
 ```
 
 As we can see, we have a `main` package, a `main` function, and we
-have a single expression: `str.print("Testing the REPL")`.
+have a single expression: `string.PrintLine("Testing the REPL")`.
 
 Let's now create a new function. In order to do this, we first need to
 leave the `main` function. At this moment, any expression (or function

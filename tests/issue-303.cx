@@ -2,9 +2,11 @@
 
 package main
 
+import "sys/string"
+
 func main()() {
 	var s0 str = "left"
 	var s1 str = "right"
-	var s str = str.concat(s0, s1)
-	test(s, str.concat("left", "right"), "")
+	var s str = string.Concatenation(s0, s1)
+	test(s, string.Concatenation("left", "right"), "")
 }

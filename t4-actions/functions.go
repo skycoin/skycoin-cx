@@ -397,11 +397,11 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	case types.STR:
 		switch opCode {
 		case constants.OP_EQUAL, constants.OP_UNEQUAL:
-			msg = fmt.Sprintf("str %s str is not allowed, use str.equal_by_value or str.equal_by_pointer", sym)
+			msg = fmt.Sprintf("str %s str is not allowed, use string.EqualityByByteValue or string.EqualityByHeapPointer", sym)
 		case constants.OP_LT, constants.OP_GT, constants.OP_LTEQ, constants.OP_GTEQ:
-			msg = fmt.Sprintf("str %s str is not allowed, use str.compare_by_value", sym)
+			msg = fmt.Sprintf("str %s str is not allowed, use string.OrderingByByteValue", sym)
 		case constants.OP_ADD:
-			msg = "str + str is not allowed, use str.concat"
+			msg = "str + str is not allowed, use string.Concatenation"
 		default:
 			msg = fmt.Sprintf("operator %s is not allowed on str, strings have no arithmetic operators", sym)
 		}

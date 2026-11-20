@@ -9,6 +9,8 @@ func main () {
 
 package pkg
 
+import "sys/string"
+
 func FuncInPkg () {
-	str.print("FuncInPkg called WITH NO PARENTHESES")
+	string.PrintLine("FuncInPkg called WITH NO PARENTHESES")
 }

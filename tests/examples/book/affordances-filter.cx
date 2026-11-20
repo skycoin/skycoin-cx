@@ -1,5 +1,6 @@
 package main
 import "aff"
+import "sys/string"
 
 func isMainBar (prgrm aff.Program) (res bool) {
     if prgrm.Caller.FnName == "main.bar" && prgrm.Caller.FnSize == 0 {
@@ -16,7 +17,7 @@ func foo () {
         return
     }
 
-    str.print(`I will only print if "main.bar" calls me`)
+    string.PrintLine(`I will only print if "main.bar" calls me`)
 }
 
 func bar () {

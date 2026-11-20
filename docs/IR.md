@@ -566,7 +566,7 @@ leaves out with a build tag has no entry in `ast.Natives`.
 
 `CXProgram.Version` is an `int64`. `cxinit.MakeProgram` sets it to
 `constants.LanguageVersionCurrent` (`t1-constants/constants.go`), now
-2611200001. The format is `yymmddnnnn`, the release date and the release
+2611200002. The format is `yymmddnnnn`, the release date and the release
 number on that day, and `constants.LanguageVersionValid` checks it.
 
 `serializeProgram` writes the version as a decimal string,
@@ -647,6 +647,9 @@ This document does not list the opcodes. The list is
 * `opcodes.RegisterOpCode` asserts that the number is a live row with that
   name, then fills `ast.OpcodeHandlers`, `ast.OpNames`, `ast.OpCodes` and
   `ast.Natives`. A deprecated row gets no handler and leaves a gap.
+* A renamed opcode is registered under its new name only.
+  `constants.OpcodeRenameTable` keeps the old names, and the compiler
+  turns a call by an old name into a compile error that names the new one.
 * The typed operators are also reachable through `ast.Operators` by
   `ast.GetTypedOperatorOffset(typeCode, opcode)`, which is how
   `ProcessTypedOperator` turns `add` (82) into `i32.add` (383).

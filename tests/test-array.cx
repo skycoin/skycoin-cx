@@ -60,51 +60,51 @@ func testGetElement () {
 // }
 
 // func testPrintElement() () {
-// 	str.print("PASS: I32 Print element")
+// 	string.PrintLine("PASS: I32 Print element")
 // 	i32.print(intArray[2])
 
-// 	str.print("PASS: I64 Print element")
+// 	string.PrintLine("PASS: I64 Print element")
 // 	i64.print(longArray[2])
 
-// 	str.print("PASS: F32 Print element")
+// 	string.PrintLine("PASS: F32 Print element")
 // 	f32.print(floatArray[2])
 
-// 	str.print("PASS: F64 Print element")
+// 	string.PrintLine("PASS: F64 Print element")
 // 	f64.print(doubleArray[2])
 
-// 	str.print("PASS: BOOL Print element")
+// 	string.PrintLine("PASS: BOOL Print element")
 // 	bool.print(boolArray[2])
 
-// 	str.print("PASS: BYTE Print element")
+// 	string.PrintLine("PASS: BYTE Print element")
 // 	byte.print(byteArray[2])
 
-// 	str.print("FAIL: STR Print element doesn't work")
-// 	//str.print(stringArray[2])
+// 	string.PrintLine("FAIL: STR Print element doesn't work")
+// 	//string.PrintLine(stringArray[2])
 // }
 
 // func testPrintArray() () {
-// 	str.print("--------Print Array--------")
+// 	string.PrintLine("--------Print Array--------")
 
-// 	str.print("FAIL: []I32 Print Array")
+// 	string.PrintLine("FAIL: []I32 Print Array")
 // 	//[]i32.print(intArray)
 
-// 	str.print("FAIL: []I64 Print Array")
+// 	string.PrintLine("FAIL: []I64 Print Array")
 // 	//[]i64.print(longArray)
 
-// 	str.print("FAIL: []F32 Print Array")
+// 	string.PrintLine("FAIL: []F32 Print Array")
 // 	//[]f32.print(floatArray)
 
-// 	str.print("FAIL: []F64 Print Array")
+// 	string.PrintLine("FAIL: []F64 Print Array")
 // 	//[]f64.print(doubleArray)
 
-// 	str.print("FAIL: []BOOL Print Array")
+// 	string.PrintLine("FAIL: []BOOL Print Array")
 // 	//[]bool.print(boolArray)
 
-// 	str.print("FAIL: []BYTE Print Array")
+// 	string.PrintLine("FAIL: []BYTE Print Array")
 // 	//[]byte.print(byteArray)
 
-// 	str.print("FAIL: []STR Print Array")
-// 	//[]str.print(stringArray)
+// 	string.PrintLine("FAIL: []STR Print Array")
+// 	//[]string.PrintLine(stringArray)
 // }
 
 // func testMakeArray() () {
@@ -116,55 +116,55 @@ func testGetElement () {
 // 	var tempByte []byte
 // 	var tempString []str
 
-// 	str.print("--------Make Array Test--------")
-// 	str.print("FAIL: Make []I32")
+// 	string.PrintLine("--------Make Array Test--------")
+// 	string.PrintLine("FAIL: Make []I32")
 // 	//tempI32 = []i32.make(5)
 
-// 	str.print("FAIL: Make []I64")
+// 	string.PrintLine("FAIL: Make []I64")
 // 	//tempI64 = []i64.make(5)
 
-// 	str.print("FAIL: Make []F32")
+// 	string.PrintLine("FAIL: Make []F32")
 // 	//tempF32 = []f32.make(5)
 
-// 	str.print("FAIL: Make []F64")
+// 	string.PrintLine("FAIL: Make []F64")
 // 	//tempF64 = []f64.make(5)
 
-// 	str.print("FAIL: Make []BOOL")
+// 	string.PrintLine("FAIL: Make []BOOL")
 // 	//tempBool = []bool.make(5)
 
-// 	str.print("FAIL: Make []BYTE")
+// 	string.PrintLine("FAIL: Make []BYTE")
 // 	//tempByte = []byte.make(5)
 
-// 	str.print("FAIL: Make []STR")
+// 	string.PrintLine("FAIL: Make []STR")
 // 	//tempString = []str.make(5)
 // }
 
 // func testRead() () {
-// 	str.print("--------Array Read Test--------")
-// 	str.print("FAIL: []I32 Read")
+// 	string.PrintLine("--------Array Read Test--------")
+// 	string.PrintLine("FAIL: []I32 Read")
 // 	//test([]i32.read(intArray, 1), 2, "[]I32 Read error")
 
-// 	str.print("FAIL: []I64 Read")
+// 	string.PrintLine("FAIL: []I64 Read")
 // 	//test([]i64.read(longArray, 1), 30L, "[]I64 Read error")
 
-// 	str.print("FAIL: []F32 Read")
+// 	string.PrintLine("FAIL: []F32 Read")
 // 	//test([]f32.read(floatArray, 1), 6.7, "[]F32 Read error")
 
-// 	str.print("FAIL: []F64 Read")
+// 	string.PrintLine("FAIL: []F64 Read")
 // 	//test([]f64.read(doubleArray, 1), 70.0D, "[]F64 Read error")
 
-// 	str.print("FAIL: []BOOL Read")
+// 	string.PrintLine("FAIL: []BOOL Read")
 // 	//test([]bool.read(boolArray, 1), false, "[]BOOL Read error")
 
-// 	str.print("FAIL: []BYTE Read")
+// 	string.PrintLine("FAIL: []BYTE Read")
 // 	//test([]byte.read(byteArray, 1), 0, "[]BYTE Read error")
 
-// 	str.print("FAIL: []STR Read")
+// 	string.PrintLine("FAIL: []STR Read")
 // 	//test([]str.read(stringArray, 1), "Foo!", "[]STR Read error")
 // }
 
 // func testLength() () {
-// 	str.print("--------Lenght Array Test--------")
+// 	string.PrintLine("--------Lenght Array Test--------")
 // 	test(len(intArray), 5, "[]I32 len() error")
 // 	test(len(longArray), 5, "[]I64 len() error")
 // 	test(len(floatArray), 5, "[]F32 len() error")
@@ -183,7 +183,7 @@ func testGetElement () {
 // 	var tempByte byte = byteArray[2]
 // 	// var tempString str = stringArray[2]
 
-// 	str.print("--------Write Array Element--------")
+// 	string.PrintLine("--------Write Array Element--------")
 
 // 	intArray[2] = 374
 // 	longArray[2] = 9386489L

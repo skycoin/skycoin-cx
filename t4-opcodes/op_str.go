@@ -134,3 +134,7 @@ func opStrEqualByPointer(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []a
 func opStrCompareByValue(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outputs[0].Set_i32(prgrm, int32(strings.Compare(inputs[0].Get_str(prgrm), inputs[1].Get_str(prgrm))))
 }
+
+func opStrByteLength(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_i32(prgrm, int32(len(inputs[0].Get_str(prgrm))))
+}

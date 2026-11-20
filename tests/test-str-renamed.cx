@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	var s str = str.concat("a", "b")
+	i32.print(len(s))
+}

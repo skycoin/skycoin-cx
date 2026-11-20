@@ -1,6 +1,7 @@
 package main
 
 import "sys/time"
+import "sys/string"
 
 func factorial(in i32) (out i32) {
 	out = 1
@@ -13,7 +14,7 @@ func factorial(in i32) (out i32) {
 }
 
 func main () () {
-	str.print("Factorial 10:")
+	string.PrintLine("Factorial 10:")
 	var start i64
 	start = time.UnixNano()
 
@@ -21,6 +22,6 @@ func main () () {
 
 	var end i64
 	end = time.UnixNano()
-	str.print("Time elapsed (in nanoseconds)")
+	string.PrintLine("Time elapsed (in nanoseconds)")
 	i64.print(i64.sub(end, start))
 }

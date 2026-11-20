@@ -1,5 +1,6 @@
 package main
 import "sys/cipher"
+import "sys/string"
 
 func main() {
 	var pubKey cipher.PubKey
@@ -12,14 +13,14 @@ func main() {
 	// The length of a SecKey is 34 bytes (ui8).
 	i32.print(len(secKey.SecKey))
 
-	str.print("PubKey:")
+	string.PrintLine("PubKey:")
 	
 	// Printing PubKey
 	for c := 0; c < len(pubKey.PubKey); c++ {
 		printf("%d ", pubKey.PubKey[c])
 	}
 	
-	str.print("\nSecKey:")
+	string.PrintLine("\nSecKey:")
 
 	// Printing SecKey
 	for c := 0; c < len(secKey.SecKey); c++ {
@@ -27,5 +28,5 @@ func main() {
 	}
 	
 	// Printing newline.
-	str.print("")
+	string.PrintLine("")
 }

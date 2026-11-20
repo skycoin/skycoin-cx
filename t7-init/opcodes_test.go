@@ -38,8 +38,8 @@ func TestRegisteredOpcodesMatchLifecycleTable(t *testing.T) {
 			t.Errorf("deprecated opcode name %q is registered", row.Name)
 		}
 	}
-	if got := ast.OpCodes["str.equal_by_value"]; got != 586 {
-		t.Errorf("str.equal_by_value is %d, want 586", got)
+	if got := ast.OpCodes["string.EqualityByByteValue"]; got != 586 {
+		t.Errorf("string.EqualityByByteValue is %d, want 586", got)
 	}
 	if got := ast.OpCodes["ptr.uneq"]; got != 590 {
 		t.Errorf("ptr.uneq is %d, want 590", got)

@@ -2,10 +2,12 @@
 
 package main
 
+import "sys/string"
+
 func main()() {
 	var string str
 	string = "boo:foo"
-	string = str.substr(string, 4, len(string))
+	string = string.SubstringByByteRange(string, 4, len(string))
 	var s []str
 	s = append(s, string)
 	test(s[0], "foo", "")

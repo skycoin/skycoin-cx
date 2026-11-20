@@ -37,6 +37,9 @@ document or check script.
    day, release 0001, so deprecated 2611200001 is reassignable from
    2711200001, and 29 February moves to 1 March. Every event is listed in
    order in [t1-constants/opcodes_history.go](../t1-constants/opcodes_history.go).
+   A renamed opcode keeps its number and row, which takes the new name, and
+   `constants.OpcodeRenameTable` records the old name and the version as a
+   `renamed` event. An old name is a compile error and is never reused.
    `go test ./t1-constants` fails when the table, the CSV and the history
    disagree.
 9. **Language version.** The integer `yymmddnnnn`, the release date and the
@@ -65,6 +68,8 @@ document or check script.
     the compiler and runtime is a system library named `sys/<name>`, for
     example `sys/string`. It is marked as built in where it is documented,
     and a program must still import it explicitly (`import "sys/string"`).
-    Using a `sys/` package without the import is a compile error. Its
-    functions have verbose names and are never exposed as operators. See
+    Using a `sys/` package without the import, or importing it without
+    `sys/`, is a compile error. Its functions have verbose upper camel case
+    names, for example `string.OrderingByByteValue`, and are never exposed
+    as operators. `packages.DefaultPackages` in t0-packages lists them. See
     #380 and #379.

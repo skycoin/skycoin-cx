@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	cxpackages "github.com/skycoin/skycoin-cx/t0-packages" // thin: only IsDefaultPackage, SysPrefix; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -351,6 +352,10 @@ func PostfixExpressionNative(prgrm *ast.CXProgram, typeCode types.Code, opStrCod
 	// these will always be native functions
 	opCode, ok := ast.OpCodes[typeCode.Name()+"."+opStrCode]
 	if !ok {
+		if msg, renamed := renamedOpcodeMessage(typeCode.Name() + "." + opStrCode); renamed {
+			println(ast.CompilationError(CurrentFile, LineNo), msg)
+			return nil
+		}
 		println(ast.CompilationError(CurrentFile, LineNo) + " function '" +
 			typeCode.Name() + "." + opStrCode + "' does not exist")
 		return nil
@@ -880,6 +885,10 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			if details := leftExprOutputTypeSig.ArgDetails; details != nil {
 				file, line = details.FileName, details.FileLine
 			}
+			if msg, renamed := renamedOpcodeMessage(imp.Name + "." + ident); renamed {
+				println(ast.CompilationError(file, line), msg)
+				return nil
+			}
 			println(ast.CompilationError(file, line), fmt.Sprintf("identifier '%s.%s' does not exist", imp.Name, ident))
 			return nil
 		}
@@ -944,4 +953,19 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	}
 
 	return prevExprs
+}
+
+// renamedOpcodeMessage returns the compile error for name when it is a former
+// opcode name, see constants.OpcodeRenameTable.
+func renamedOpcodeMessage(name string) (string, bool) {
+	rename, found := constants.OpcodeRenamed(name)
+	if !found {
+		return "", false
+	}
+	msg := fmt.Sprintf("%s was renamed to %s in language version %d", name, rename.NewName, rename.Version)
+	oldPkg, _, _ := strings.Cut(name, ".")
+	if pkg, _, cut := strings.Cut(rename.NewName, "."); cut && pkg != oldPkg && cxpackages.IsDefaultPackage(pkg) {
+		msg += fmt.Sprintf(", import \"%s%s\"", cxpackages.SysPrefix, pkg)
+	}
+	return msg, true
 }

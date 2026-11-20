@@ -152,28 +152,28 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-control-flow.cx", types.CX_SUCCESS, "control floow")
 	t.Run("test-utils.cx test-struct.cx", types.CX_SUCCESS, "struct")
 	t.Run("test-str.cx", types.CX_SUCCESS, "str")
-	t.Run("test-str-compare.cx", types.CX_SUCCESS, "str ordering with str.compare_by_value (skycoin-cx#87, #183)")
+	t.Run("test-str-compare.cx", types.CX_SUCCESS, "str ordering with string.OrderingByByteValue (skycoin-cx#87, #183)")
 	t.Run("test-str-functions.cx", types.CX_SUCCESS, "str comparison functions (skycoin-cx#183)")
 	t.RunWant("test-str-operators-removed.cx", types.CX_COMPILATION_ERROR, "every operator on str is a compile error (skycoin-cx#183)",
-		"test-str-operators-removed.cx:13 str == str is not allowed, use str.equal_by_value or str.equal_by_pointer",
-		"test-str-operators-removed.cx:14 str != str is not allowed, use str.equal_by_value or str.equal_by_pointer",
-		"test-str-operators-removed.cx:15 str < str is not allowed, use str.compare_by_value",
-		"test-str-operators-removed.cx:16 str > str is not allowed, use str.compare_by_value",
-		"test-str-operators-removed.cx:17 str <= str is not allowed, use str.compare_by_value",
-		"test-str-operators-removed.cx:18 str >= str is not allowed, use str.compare_by_value",
-		"test-str-operators-removed.cx:19 str + str is not allowed, use str.concat",
-		"test-str-operators-removed.cx:20 operator - is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:21 operator * is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:22 operator / is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:23 operator % is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:24 operator & is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:25 operator | is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:26 operator ^ is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:27 operator &^ is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:28 operator << is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:29 operator >> is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:30 operator - is not allowed on str, strings have no arithmetic operators",
-		"test-str-operators-removed.cx:31 str + str is not allowed, use str.concat",
+		"test-str-operators-removed.cx:15 str == str is not allowed, use string.EqualityByByteValue or string.EqualityByHeapPointer",
+		"test-str-operators-removed.cx:16 str != str is not allowed, use string.EqualityByByteValue or string.EqualityByHeapPointer",
+		"test-str-operators-removed.cx:17 str < str is not allowed, use string.OrderingByByteValue",
+		"test-str-operators-removed.cx:18 str > str is not allowed, use string.OrderingByByteValue",
+		"test-str-operators-removed.cx:19 str <= str is not allowed, use string.OrderingByByteValue",
+		"test-str-operators-removed.cx:20 str >= str is not allowed, use string.OrderingByByteValue",
+		"test-str-operators-removed.cx:21 str + str is not allowed, use string.Concatenation",
+		"test-str-operators-removed.cx:22 operator - is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:23 operator * is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:24 operator / is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:25 operator % is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:26 operator & is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:27 operator | is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:28 operator ^ is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:29 operator &^ is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:30 operator << is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:31 operator >> is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:32 operator - is not allowed on str, strings have no arithmetic operators",
+		"test-str-operators-removed.cx:33 str + str is not allowed, use string.Concatenation",
 	)
 	t.RunWant("test-pointer-ordering-removed.cx", types.CX_COMPILATION_ERROR, "pointer ordering is a compile error (skycoin-cx#183)",
 		"test-pointer-ordering-removed.cx:14 pointer < pointer is not allowed, pointers support only == and !=",
@@ -237,10 +237,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-slices-remove-out-of-range-a.cx", types.CX_RUNTIME_INVALID_CAST, "Test remove with index < 0")
 	t.Run("test-slices-remove-out-of-range-b.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "Test remove with index >= len")
 	t.Run("test-slices-remove-out-of-range-c.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "Test remove with index == 0 && len == 0")
-	t.Run("test-str-substr-out-of-range-a.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "str.substr with a negative start")
-	t.Run("test-str-substr-out-of-range-b.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "str.substr with a negative end")
-	t.Run("test-str-substr-out-of-range-c.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "str.substr with start > end")
-	t.Run("test-str-substr-out-of-range-d.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "str.substr with end > len")
+	t.Run("test-str-substr-out-of-range-a.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "string.SubstringByByteRange with a negative start")
+	t.Run("test-str-substr-out-of-range-b.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "string.SubstringByByteRange with a negative end")
+	t.Run("test-str-substr-out-of-range-c.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "string.SubstringByByteRange with start > end")
+	t.Run("test-str-substr-out-of-range-d.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "string.SubstringByByteRange with end > len")
 	t.Run("test-short-declarations.cx", types.CX_SUCCESS, "short declarations")
 	t.Run("test-parse.cx", types.CX_SUCCESS, "parse")
 	t.Run("test-collection-functions.cx", types.CX_SUCCESS, "collection functions")
@@ -262,6 +262,11 @@ func runTestCases(t *runner.TestRunner) {
 		`test-sys-import-missing.cx:4 built-in package os is used without importing it, add import "sys/os"`)
 	t.RunWant("test-sys-import-bare.cx", types.CX_COMPILATION_ERROR, "built-in package imported without sys/ (skycoin-cx#380)",
 		`test-sys-import-bare.cx:3 built-in package os is imported as "sys/os"`)
+	t.Run("test-sys-string.cx", types.CX_SUCCESS, "sys/string functions (skycoin-cx#382)")
+	t.RunWant("test-str-renamed.cx", types.CX_COMPILATION_ERROR, "a renamed str function names its new name (skycoin-cx#382)",
+		`test-str-renamed.cx:4 str.concat was renamed to string.Concatenation in language version 2611200002, import "sys/string"`)
+	t.RunWant("test-sys-string-not-imported.cx", types.CX_COMPILATION_ERROR, "sys/string used without its import (skycoin-cx#382)",
+		`test-sys-string-not-imported.cx:4 built-in package string is used without importing it, add import "sys/string"`)
 	t.Run("test-unknown-native-function.cx", types.CX_COMPILATION_ERROR, "unknown function in an imported native package")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 

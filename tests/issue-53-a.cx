@@ -4,6 +4,8 @@ import "sys/cx"
 
 package main
 
+import "sys/string"
+
 type Too struct {
 	a i32
 	sb []i8
@@ -13,7 +15,7 @@ type Too struct {
 var TOO_SIZE i32 = 4 + cx.POINTER_SIZE + 4
 
 func getAddr(addr *i32) (out i32) {
-	out = str.i32(sprintf("%v", addr))
+	out = string.ParseDecimalI32(sprintf("%v", addr))
 }
 
 func testAddr(addr *i32, taddr i32, message str) () {

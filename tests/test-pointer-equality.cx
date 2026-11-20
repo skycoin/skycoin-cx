@@ -3,6 +3,8 @@
 
 package main
 
+import "sys/string"
+
 func main() {
 	var a i32
 	var b i32
@@ -41,5 +43,5 @@ func main() {
 	test(s == t, false, "*str == distinct")
 	test(s != t, true, "*str != distinct")
 	test(s == s, true, "*str == same")
-	test(str.equal_by_value(*s, *t), true, "dereferenced str compares by value")
+	test(string.EqualityByByteValue(*s, *t), true, "dereferenced str compares by value")
 }

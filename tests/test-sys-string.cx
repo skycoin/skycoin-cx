@@ -1,0 +1,22 @@
+package main
+
+import "sys/string"
+
+func main() {
+	test(string.ByteLength(""), 0, "ByteLength of empty")
+	test(string.ByteLength("abc"), 3, "ByteLength of ascii")
+	test(string.ByteLength("¡Hola"), 6, "ByteLength counts bytes")
+	test(string.OrderingByByteValue("a", "b"), -1, "OrderingByByteValue less")
+	test(string.OrderingByByteValue("b", "b"), 0, "OrderingByByteValue equal")
+	test(string.OrderingByByteValue("c", "b"), 1, "OrderingByByteValue greater")
+	test(string.EqualityByByteValue("ab", string.Concatenation("a", "b")), true, "EqualityByByteValue")
+	var s str = "abc"
+	test(string.EqualityByHeapPointer(s, s), true, "EqualityByHeapPointer")
+	test(string.SubstringByByteRange("hello", 1, 3), "el", "SubstringByByteRange")
+	test(string.ByteIndexOfFirstSubstring("abab", "b"), 1, "ByteIndexOfFirstSubstring")
+	test(string.ByteIndexOfLastSubstring("abab", "b"), 3, "ByteIndexOfLastSubstring")
+	test(string.TrimSurroundingWhitespace("  a b "), "a b", "TrimSurroundingWhitespace")
+	test(string.ParseDecimalI32("-12"), -12, "ParseDecimalI32")
+	test(string.ParseDecimalUI8("200"), 200UB, "ParseDecimalUI8")
+	test(string.ParseFloatF64("1.5"), 1.5D, "ParseFloatF64")
+}

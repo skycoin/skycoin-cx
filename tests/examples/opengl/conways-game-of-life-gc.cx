@@ -59,7 +59,7 @@ func wrapX (x i32) (newX i32) {
 		newX = i32.sub(columns, 1)
 		// return newX
 	}
-	// str.print("wrapX")
+	// string.PrintLine("wrapX")
 	// i32.print(x)
 	// i32.print(newX)
 }
@@ -74,7 +74,7 @@ func wrapY (y i32) (newY i32) {
 		newY = i32.sub(rows, 1)
 		// return i32.sub(rows, 1)
 	}
-	// str.print("wrapY")
+	// string.PrintLine("wrapY")
 	// i32.print(y)
 	// i32.print(newY)
 }
@@ -129,7 +129,7 @@ func aliveNeighbours (cell Cell, cells *[900]Cell) (aliveCount i32) {
 	var leftCell Cell
 	var upLeftCell Cell
 
-	// str.print("entering")
+	// string.PrintLine("entering")
 	// i32.print(map2Dto1D(upCellX, upCellY, columns))
 	// i32.print(upCellX)
 	// i32.print(upCellY)
@@ -151,7 +151,7 @@ func aliveNeighbours (cell Cell, cells *[900]Cell) (aliveCount i32) {
 	// i32.print(upCell.drawable)
 	// bool.print(upCell.alive)
 
-	// str.print("exit")
+	// string.PrintLine("exit")
 
 	if upCell.alive {
 		aliveCount = i32.add(aliveCount, 1)
@@ -182,7 +182,7 @@ func aliveNeighbours (cell Cell, cells *[900]Cell) (aliveCount i32) {
 }
 
 func changeState (cell Cell, cells *[900]Cell) (newCell Cell) {
-	// str.print("during changeState")
+	// string.PrintLine("during changeState")
 	// bool.print(cell.alive)
 	
 	cell.alive = cell.aliveNext
@@ -274,7 +274,7 @@ func newCell (x i32, y i32) (cell Cell) {
 		x: x,
 		y: y}
 
-	// str.print("during newCell")
+	// string.PrintLine("during newCell")
 	// i32.print(cell.id)
 }
 
@@ -297,7 +297,7 @@ func makeCells () (clls *[900]Cell) {
 		}
 	}
 
-	// str.print("during makeCells")
+	// string.PrintLine("during makeCells")
 	// var c i32
 	// for c = 0; c < 900; c++ {
 	// 	i32.print(cells[c].id)
@@ -367,7 +367,7 @@ func drawCell (cell Cell) {
 	// var boo bool
 	// boo = cell.alive
 
-	// str.print("during drawCell")
+	// string.PrintLine("during drawCell")
 	// bool.print(cell.alive)
 
 	if cell.alive {
@@ -387,7 +387,7 @@ func draw (cells *[900]Cell, window str, program i32) () {
 		drawCell((*cells)[i])
 	}
 
-	// str.print("during draw")
+	// string.PrintLine("during draw")
 	// var c i32
 	// for c = 0; c < 900; c++ {
 	// 	i32.print((*cells)[c].id)
@@ -415,7 +415,7 @@ func main () {
 	var cells *[900]Cell
 	cells = makeCells()
 
-	// str.print("after makeCells")
+	// string.PrintLine("after makeCells")
 	// var c i32
 	// for c = 0; c < 900; c++ {
 	// 	// i32.print((*cells)[c].id)

@@ -1,6 +1,8 @@
 // Package foo is the first package in the example 
 // It is a structure and a function. 
 package foo
+
+import "sys/string"
 // Global structure in the foo package
 type Point struct {
 	x i32
@@ -12,7 +14,7 @@ var num i32 = 15
 
 // Function which print a string 
 func packagename () {
-	str.print("From foo package")
+	string.PrintLine("From foo package")
 }
 
 // Package nosal is the second package of the example 

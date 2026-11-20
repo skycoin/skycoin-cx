@@ -2,7 +2,7 @@ package constants
 
 // Opcode lifecycle events in version order, see opcodes.go for the conventions.
 //
-// version     event         number name
+// version     event         number name (a rename lists the old name, then the new)
 // 0000000000  assigned      every row of OpcodeLifecycleTable with version added 0
 // 2611200001  assigned      586 str.equal_by_value
 // 2611200001  assigned      587 str.equal_by_pointer
@@ -15,6 +15,28 @@ package constants
 // 2611200001  deprecated    583 str.lteq
 // 2611200001  deprecated    584 str.gt
 // 2611200001  deprecated    585 str.gteq
+// 2611200002  assigned      792 string.ByteLength
+// 2611200002  renamed       561 str.concat string.Concatenation
+// 2611200002  renamed       562 str.i8 string.ParseDecimalI8
+// 2611200002  renamed       563 str.i16 string.ParseDecimalI16
+// 2611200002  renamed       564 str.i32 string.ParseDecimalI32
+// 2611200002  renamed       565 str.i64 string.ParseDecimalI64
+// 2611200002  renamed       566 str.ui8 string.ParseDecimalUI8
+// 2611200002  renamed       567 str.ui16 string.ParseDecimalUI16
+// 2611200002  renamed       568 str.ui32 string.ParseDecimalUI32
+// 2611200002  renamed       569 str.ui64 string.ParseDecimalUI64
+// 2611200002  renamed       570 str.f32 string.ParseFloatF32
+// 2611200002  renamed       571 str.f64 string.ParseFloatF64
+// 2611200002  renamed       572 str.print string.PrintLine
+// 2611200002  renamed       573 str.substr string.SubstringByByteRange
+// 2611200002  renamed       574 str.index string.ByteIndexOfFirstSubstring
+// 2611200002  renamed       575 str.lastindex string.ByteIndexOfLastSubstring
+// 2611200002  renamed       576 str.trimspace string.TrimSurroundingWhitespace
+// 2611200002  renamed       586 str.equal_by_value string.EqualityByByteValue
+// 2611200002  renamed       587 str.equal_by_pointer string.EqualityByHeapPointer
+// 2611200002  renamed       588 str.compare_by_value string.OrderingByByteValue
+// 2611200002  renamed       756 glfw.func_i32_i32 glfw.RegisterCallbackI32I32
+// 2611200002  renamed       757 glfw.call_i32_i32 glfw.InvokeCallbackI32I32
 // 2711200001  reassignable  559 str.eq
 // 2711200001  reassignable  560 str.uneq
 // 2711200001  reassignable  582 str.lt

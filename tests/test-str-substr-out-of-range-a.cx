@@ -1,6 +1,8 @@
 package main
 
+import "sys/string"
+
 func main() {
 	var s str = "hello"
-	str.print(str.substr(s, -1, 2))
+	string.PrintLine(string.SubstringByByteRange(s, -1, 2))
 }

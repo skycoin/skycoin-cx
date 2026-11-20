@@ -1,5 +1,6 @@
 package main
 import "sys/regexp"
+import "sys/string"
 
 func main() {
 	// `regexp.Regexp` stores information about the regular expressions you want to run.
@@ -13,7 +14,7 @@ func main() {
 	var err str
 	r, err = regexp.Compile("?")
 	// and then do whatever you want with the error.
-	str.print(str.concat("Not a valid regexp, you got this error: ", err))
+	string.PrintLine(string.Concatenation("Not a valid regexp, you got this error: ", err))
 
 	// Let's reset our regexp to "world".
 	r = regexp.MustCompile("world")
@@ -26,12 +27,12 @@ func main() {
 	found = r.Find(string)
 
 	// Should print "world", because `regexp` found the string in `string`.
-	str.print(found)
+	string.PrintLine(found)
 
 	// Changing string. Regexp should not find anything.
 	string = "¡Hola, mundo!"
 	found = r.Find(string)
 
 	// Should print empty string.
-	str.print(found)
+	string.PrintLine(found)
 }

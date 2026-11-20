@@ -3,6 +3,8 @@
 
 package main
 
+import "sys/string"
+
 func main() {
 	var a str
 	var b str
@@ -30,5 +32,5 @@ func main() {
 	s = -a
 	a += b
 	bool.print(c)
-	str.print(s)
+	string.PrintLine(s)
 }

@@ -4,16 +4,18 @@
 // 
 package main
 
+import "sys/string"
+
 
 
 // This main function will print a string in the terminal
-// str.print("") prints the string 
+// string.PrintLine("") prints the string 
 func main () {
 
     var	loco i32
 
-	str.print("print string")
+	string.PrintLine("print string")
 
- 	str.print("Hello World!")
+ 	string.PrintLine("Hello World!")
 
 }

@@ -2,6 +2,7 @@ package main
 
 import "sys/gl"
 import "sys/glfw"
+import "sys/string"
 
 var width i32 = 800
 var height i32 = 600
@@ -84,7 +85,7 @@ func main () {
 
 	var ratio f32
 
-	str.print("\nMove the ball to the right or the left using the arrow keys.")
+	string.PrintLine("\nMove the ball to the right or the left using the arrow keys.")
 
 	for bool.not(glfw.ShouldClose("window")) {
 		updateTiming()

@@ -47,7 +47,7 @@
   * [Parse Functions](#parse-functions)
   * [Unit Testing](#unit-testing)
   * [`bool` Type Functions](#bool-type-functions)
-  * [`str` Type Functions](#str-type-functions)
+  * [`sys/string` Package Functions](#sysstring-package-functions)
   * [`i32` Type Functions](#i32-type-functions)
   * [`i64` Type Functions](#i64-type-functions)
   * [`f32` Type Functions](#f32-type-functions)
@@ -87,7 +87,7 @@ closed by writing asterisk-slash (\*/).
 
 ```
 /* This code won't be executed
-str.print("Hello world!")
+string.PrintLine("Hello world!")
 */
 ```
 
@@ -488,6 +488,29 @@ single output parameter.
 We can then see how the `main` package `import`s both the `foo` and
 `bar` packages, to later call each of these functions.
 
+Built-in packages are implemented inside the compiler and runtime. Each
+lives under `sys/` and is marked as built in where it is documented. A
+program still imports it explicitly, by its `sys/` path, and calls it by
+the last element of the path.
+
+```
+package main
+
+import "sys/string"
+
+func main () {
+    string.PrintLine(string.Concatenation("Hello, ", "World!"))
+}
+```
+
+Using a built-in package without its import is a compile error, and so
+is importing one without `sys/` (`import "string"`). The built-in
+packages are `sys/string`, `sys/os`, `sys/time`, `sys/json`, `sys/tcp`,
+`sys/regexp`, `sys/cipher` and `sys/cx`, and in a cxfx build `sys/gl`,
+`sys/glfw`, `sys/al` and `sys/gltext`. Their functions have verbose
+camel case names, and none of them is an operator. See
+[docs/Conventions.md](docs/Conventions.md) rule 14.
+
 ## [Statements](#table-of-contents)
 
 Statements are different to declarations, as they don't create any
@@ -502,9 +525,11 @@ execute a block of code only if a condition is true.
 ```
 package main
 
+import "sys/string"
+
 func main () {
     if false {
-        str.print("This will never print")
+        string.PrintLine("This will never print")
     }
 }
 ```
@@ -515,9 +540,11 @@ statement is always going to evaluate to *false*.
 ```
 package main
 
+import "sys/string"
+
 func main () {
     if true {
-        str.print("This will always print")
+        string.PrintLine("This will always print")
     }
 }
 ```
@@ -527,11 +554,13 @@ In contrast, the example above will always print.
 ```
 package main
 
+import "sys/string"
+
 func main () {
     if true {
-        str.print("This will always print")
+        string.PrintLine("This will always print")
     } else {
-        str.print("This will never print")
+        string.PrintLine("This will never print")
     }
 }
 ```
@@ -551,18 +580,20 @@ various conditions/cases).
 ```
 package main
 
+import "sys/string"
+
 func main () {
    var i i32
    i = 0
 
    if i == 0 {
-     str.print("i is 0")
+     string.PrintLine("i is 0")
    } else if i == 1 {
-     str.print("i is 1")
+     string.PrintLine("i is 1")
    } else if i == 2 {
-     str.print("i is 2")
+     string.PrintLine("i is 2")
    } else {
-     str.print("i is NOT 0, 1 or 2")
+     string.PrintLine("i is NOT 0, 1 or 2")
    }
 }
 ```
@@ -576,9 +607,11 @@ programming languages, and as a traditional *for* statement.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	for true {
-		str.print("forever")
+		string.PrintLine("forever")
 	}
 }
 ```
@@ -591,9 +624,11 @@ can cancel the program's execution by hitting `Ctrl-C`.
 ```
 package main
 
+import "sys/string"
+
 func main () {
-	for str.equal_by_value("hi", "hi") {
-		str.print("hi")
+	for string.EqualityByByteValue("hi", "hi") {
+		string.PrintLine("hi")
 	}
 }
 ```
@@ -659,12 +694,14 @@ the corresponding labeled expression.
 ```
 package main
 
+import "sys/string"
+
 func main () (out i32) {
 	goto label2
 label1:
-	str.print("this should never be reached")
+	string.PrintLine("this should never be reached")
 label2:
-	str.print("this should be printed")
+	string.PrintLine("this should be printed")
 }
 ```
 
@@ -739,8 +776,10 @@ internally interpreted by the affordance system.
 ```
 package main
 
+import "sys/string"
+
 func exprPredicate (expr Expression) (res bool) {
-	if str.equal_by_value(expr.Operator, "i32.add") {
+	if string.EqualityByByteValue(expr.Operator, "i32.add") {
 		res = true
 	}
 }
@@ -991,10 +1030,12 @@ actual string gets stored in the heap memory segment.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var foo str
 
-	foo = str.concat("Hello, ", "World!")
+	foo = string.Concatenation("Hello, ", "World!")
 	foo = "Hi"
 }
 ```
@@ -1002,7 +1043,7 @@ func main () {
 When CX compiles the example above, three strings are first stored in
 the data memory segment (just like global variables, as these strings
 are constants, memory-wise): `"Hello, "`, `"World"` and `"Hi"`. When
-the program is executed, `str.concat` is called, which creates a new
+the program is executed, `string.Concatenation` is called, which creates a new
 string by concatenating `"Hello, "` and `"World!"`, and this new
 character string is allocated in the heap memory segment. Then `foo`
 is assigned only the address of this new character string. Then we
@@ -1458,21 +1499,23 @@ return output parameters, just like mathematical functions.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var players []str
 	players = []str{"Richard", "Mario", "Edward"}
 
-	str.print("=======================")
-	str.print(str.concat("Name: \t", players[0]))
-	str.print("=======================")
+	string.PrintLine("=======================")
+	string.PrintLine(string.Concatenation("Name: \t", players[0]))
+	string.PrintLine("=======================")
 
-	str.print("=======================")
-	str.print(str.concat("Name: \t", players[1]))
-	str.print("=======================")
+	string.PrintLine("=======================")
+	string.PrintLine(string.Concatenation("Name: \t", players[1]))
+	string.PrintLine("=======================")
 
-	str.print("=======================")
-	str.print(str.concat("Name: \t", players[2]))
-	str.print("=======================")
+	string.PrintLine("=======================")
+	string.PrintLine(string.Concatenation("Name: \t", players[2]))
+	string.PrintLine("=======================")
 }
 ```
 
@@ -1484,10 +1527,12 @@ example below.
 ```
 package main
 
+import "sys/string"
+
 func drawBox (player str) {
-	str.print("=======================")
-	str.print(str.concat("Name: \t", player))
-	str.print("=======================")
+	string.PrintLine("=======================")
+	string.PrintLine(string.Concatenation("Name: \t", player))
+	string.PrintLine("=======================")
 }
 
 func main () {
@@ -1509,6 +1554,8 @@ not allowed). This allows us to create more readable code.
 ```
 package main
 
+import "sys/string"
+
 type Player struct {
 	Name str
 	HP i32
@@ -1523,7 +1570,7 @@ type Monster struct {
 }
 
 func (player Player) draw () {
-	str.print(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\tLives: \t%d\n\n%s",
+	string.PrintLine(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\tLives: \t%d\n\n%s",
 		player.Name,
 		player.HP,
 		player.Mana,
@@ -1537,7 +1584,7 @@ func (player Player) draw () {
 }
 
 func (monster Monster) draw () {
-	str.print(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\n%s",
+	string.PrintLine(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\n%s",
 		monster.Name,
 		monster.HP,
 		monster.Mana,
@@ -1587,11 +1634,13 @@ that we're using to call it.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	if true {
-		str.print("hi")
+		string.PrintLine("hi")
 	}
-	str.print("bye")
+	string.PrintLine("bye")
 }
 ```
 
@@ -1601,9 +1650,9 @@ Program
 	Functions
 		0.- Function: main () ()
 			0.- Expression: jmp(true bool)
-			1.- Expression: str.print("" str)
+			1.- Expression: string.PrintLine("" str)
 			2.- Expression: jmp(true bool)
-			3.- Expression: str.print("" str)
+			3.- Expression: string.PrintLine("" str)
 		1.- Function: *init () ()
 ```
 
@@ -1617,6 +1666,8 @@ language), so you don't need to worry about it.
 
 ```
 package main
+
+import "sys/string"
 
 type Player struct {
 	Name str
@@ -1644,21 +1695,21 @@ func main () {
 	monster.Mana = 4
 
 	if player.HP < 5 {
-		str.print("===DANGER!===")
+		string.PrintLine("===DANGER!===")
 	} else {
-		str.print("===YOU CAN DO IT!===")
+		string.PrintLine("===YOU CAN DO IT!===")
 	}
 
 	if monster.HP < 10 {
-		str.print(sprintf("===%s is bleeding!===", monster.Name))
+		string.PrintLine(sprintf("===%s is bleeding!===", monster.Name))
 	}
 
 	if monster.HP < 5 {
-		str.print(sprintf("===%s is dying!===", monster.Name))
+		string.PrintLine(sprintf("===%s is dying!===", monster.Name))
 	}
 
 	if monster.HP == 0 {
-		str.print(sprintf("===%s is dead!===", monster.Name))
+		string.PrintLine(sprintf("===%s is dead!===", monster.Name))
 	}
 }
 ```
@@ -1707,6 +1758,8 @@ to 9 is translated to a set of of `jmp` instructions.
 ```
 package main
 
+import "sys/string"
+
 type Player struct {
 	Name str
 	HP i32
@@ -1721,7 +1774,7 @@ type Monster struct {
 }
 
 func (player Player) draw () {
-	str.print(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\tLives: \t%d\n\n%s",
+	string.PrintLine(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\tLives: \t%d\n\n%s",
 		player.Name,
 		player.HP,
 		player.Mana,
@@ -1735,7 +1788,7 @@ func (player Player) draw () {
 }
 
 func (monster Monster) draw () {
-	str.print(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\n%s",
+	string.PrintLine(sprintf("\n\tName: \t%s\n\tHP: \t%d\n\tMana: \t%d\n\n%s",
 		monster.Name,
 		monster.HP,
 		monster.Mana,
@@ -1750,7 +1803,7 @@ func (monster Monster) draw () {
 }
 
 func (player Player) attack (cmd str, monster *Monster) {
-	if bool.or(str.equal_by_value(cmd, "M"), str.equal_by_value(cmd, "m")) {
+	if bool.or(string.EqualityByByteValue(cmd, "M"), string.EqualityByByteValue(cmd, "m")) {
 		var dmg i32
 		dmg = i32.rand(1, 4)
 		(*monster).HP = (*monster).HP - dmg
@@ -1773,25 +1826,25 @@ func (monster Monster) attack (cmd str, player *Player) {
 
 func battleStatus (player Player, monster Monster) {
 	if player.HP < 5 {
-		str.print("===DANGER!===")
+		string.PrintLine("===DANGER!===")
 	} else {
-		str.print("===YOU CAN DO IT!===")
+		string.PrintLine("===YOU CAN DO IT!===")
 	}
 
 	if player.HP == 0 {
-		str.print("===YOU DIED===")
+		string.PrintLine("===YOU DIED===")
 	}
 
 	if monster.HP < 10 && monster.HP >= 5 {
-		str.print(sprintf("===%s is bleeding!===", monster.Name))
+		string.PrintLine(sprintf("===%s is bleeding!===", monster.Name))
 	}
 
 	if monster.HP < 5 && monster.HP > 0 {
-		str.print(sprintf("===%s is dying!===", monster.Name))
+		string.PrintLine(sprintf("===%s is dying!===", monster.Name))
 	}
 
 	if monster.HP <= 0 {
-		str.print(sprintf("===%s is dead!===", monster.Name))
+		string.PrintLine(sprintf("===%s is dead!===", monster.Name))
 	}
 }
 
@@ -1819,7 +1872,7 @@ func main () {
 		var cmd str
 		cmd = read()
 
-		if str.equal_by_value(cmd, "E") || str.equal_by_value(cmd, "e") {
+		if string.EqualityByByteValue(cmd, "E") || string.EqualityByByteValue(cmd, "e") {
 			return
 		}
 
@@ -1845,6 +1898,8 @@ the `goto` statement.
 ```
 package main
 
+import "sys/string"
+
 func main () (out i32) {
 beginning:
 	printf("What animal do you like the most: (C)at; (D)og; (P)igeon\n")
@@ -1852,26 +1907,26 @@ beginning:
 	var cmd str
 	cmd = read()
 
-	if str.equal_by_value(cmd, "C") || str.equal_by_value(cmd, "c") {
+	if string.EqualityByByteValue(cmd, "C") || string.EqualityByByteValue(cmd, "c") {
 		goto cat
 	}
 
-	if str.equal_by_value(cmd, "D") || str.equal_by_value(cmd, "d") {
+	if string.EqualityByByteValue(cmd, "D") || string.EqualityByByteValue(cmd, "d") {
 		goto dog
 	}
 
-	if str.equal_by_value(cmd, "P") || str.equal_by_value(cmd, "p") {
+	if string.EqualityByByteValue(cmd, "P") || string.EqualityByByteValue(cmd, "p") {
 		goto pigeon
 	}
 
 cat:
-	str.print("meow")
+	string.PrintLine("meow")
 	goto beginning
 dog:
-	str.print("woof")
+	string.PrintLine("woof")
 	goto beginning
 pigeon:
-	str.print("tweet")
+	string.PrintLine("tweet")
 	goto beginning
 }
 ```
@@ -1907,13 +1962,15 @@ below, we list the compatible types for the corresponding functions.
 Note: the preceding functions only work with arguments of type
 *bool*, *byte*, *i32*, *i64*, *f32*, *f64* or a pointer. Two pointers
 are equal when they hold the same address. Strings are compared with
-`str.equal_by_value` or `str.equal_by_pointer`, see
+`string.EqualityByByteValue` or `string.EqualityByHeapPointer`, see
 [Language versions](#language-versions).
 
 #### Example
 
 ```
 package main
+
+import "sys/string"
 
 func main () {
 	bool.print(eq(5, 5))
@@ -1922,7 +1979,7 @@ func main () {
 	bool.print(uneq(3L, 4L))
 	bool.print(3L != 4L) // alternative
 
-	bool.print(str.equal_by_value("hihi", "byebye"))
+	bool.print(string.EqualityByByteValue("hihi", "byebye"))
 }
 ```
 
@@ -1933,7 +1990,7 @@ func main () {
 
 Note: the preceding function only works with arguments of type *byte*,
 *bool*, *i32*, *i64*, *f32* or *f64*. Pointers cannot be ordered.
-Strings are ordered with `str.compare_by_value`, which returns -1, 0
+Strings are ordered with `string.OrderingByByteValue`, which returns -1, 0
 or 1, see [Language versions](#language-versions).
 
 #### Example
@@ -1941,11 +1998,13 @@ or 1, see [Language versions](#language-versions).
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	bool.print(lt(3B, 4B))
 	bool.print(3B < 4B) // alternative
 
-	bool.print(str.compare_by_value("hello", "hi!") > 0)
+	bool.print(string.OrderingByByteValue("hello", "hi!") > 0)
 
 	bool.print(lteq(5.3D, 5.3D))
 	bool.print(5.3D <= 5.3D) // alternative
@@ -2099,6 +2158,8 @@ point numbers.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var reply str
 	var name str
@@ -2109,7 +2170,7 @@ func main () {
 
 	reply = sprintf("Thank you for contacting our technical support, %s. We see that you are having trouble with our video game titled '%s', targetted to kids under age %d. If you provide us with your parents e-mail address, we'll be glad to help you!", name, title, 14)
 
-	str.print(reply)
+	string.PrintLine(reply)
 }
 ```
 
@@ -2148,6 +2209,8 @@ print output to a terminal.
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var password str
 
@@ -2155,11 +2218,11 @@ func main () {
 		printf("What's the password, kid? ")
 		password = read()
 
-		if str.equal_by_value(password, "123") {
-			str.print("Welcome back.")
+		if string.EqualityByByteValue(password, "123") {
+			string.PrintLine("Welcome back.")
 			return
 		} else {
-			str.print("Wrong, but you'll get another chance.")
+			string.PrintLine("Wrong, but you'll get another chance.")
 		}
 	}
 }
@@ -2167,7 +2230,7 @@ func main () {
 
 ### `byte.print`
 ### `bool.print`
-### `str.print`
+### `string.PrintLine`
 ### `i32.print`
 ### `i64.print`
 ### `f32.print`
@@ -2179,10 +2242,12 @@ func main () {
 ```
 package main
 
+import "sys/string"
+
 func main () {
     byte.print(5B)
     bool.print(true)
-    str.print("Hello!")
+    string.PrintLine("Hello!")
     i32.print(5)
     i64.print(5L)
     f32.print(5.0)
@@ -2209,11 +2274,13 @@ functions as "parse XXX to YYY".
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var b byte
 	b = 30B
 
-	str.print(str.concat("Hello, ", byte.str(b)))
+	string.PrintLine(string.Concatenation("Hello, ", byte.str(b)))
 	i32.print(5 + byte.i32(b))
 	i64.print(10L + byte.i64(b))
 	f32.print(33.3 + byte.f32(b))
@@ -2232,11 +2299,13 @@ func main () {
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var num i32
 	num = 43
 
-	str.print(str.concat("Hello, ", i32.str(num)))
+	string.PrintLine(string.Concatenation("Hello, ", i32.str(num)))
 	byte.print(5B + i32.byte(num))
 	i64.print(10L + i32.i64(num))
 	f32.print(33.3 + i32.f32(num))
@@ -2255,11 +2324,13 @@ func main () {
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var num i64
 	num = 43L
 
-	str.print(str.concat("Hello, ", i64.str(num)))
+	string.PrintLine(string.Concatenation("Hello, ", i64.str(num)))
 	byte.print(5B + i64.byte(num))
 	i64.print(10L + i64.i64(num))
 	f32.print(33.3 + i64.f32(num))
@@ -2278,11 +2349,13 @@ func main () {
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var num f32
 	num = 43.33
 
-	str.print(str.concat("Hello, ", f32.str(num)))
+	string.PrintLine(string.Concatenation("Hello, ", f32.str(num)))
 	byte.print(5B + f32.byte(num))
 	i32.print(33 + f32.f32(num))
 	i64.print(10L + f32.i64(num))
@@ -2301,11 +2374,13 @@ func main () {
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var num f64
 	num = 43.33D
 
-	str.print(str.concat("Hello, ", f64.str(num)))
+	string.PrintLine(string.Concatenation("Hello, ", f64.str(num)))
 	byte.print(5B + f64.byte(num))
 	i32.print(33 + f64.f32(num))
 	i64.print(10L + f64.i64(num))
@@ -2314,25 +2389,27 @@ func main () {
 ```
 
 ### `str.byte`
-### `str.i32`
-### `str.i64`
-### `str.f32`
-### `str.f64`
+### `string.ParseDecimalI32`
+### `string.ParseDecimalI64`
+### `string.ParseFloatF32`
+### `string.ParseFloatF64`
 
 #### Example
 
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var num str
 	num = "33"
 
 	byte.print(5B + str.byte(num))
-	i32.print(33 + str.f32(num))
-	i64.print(10L + str.i64(num))
-	f32.print(50.111 + str.f32(num))
-	f64.print(50.111D + str.f32(num))
+	i32.print(33 + string.ParseFloatF32(num))
+	i64.print(10L + string.ParseDecimalI64(num))
+	f32.print(50.111 + string.ParseFloatF32(num))
+	f64.print(50.111D + string.ParseFloatF32(num))
 }
 ```
 
@@ -2395,29 +2472,45 @@ func main () {
 }
 ```
 
-## [`str` Type Functions](#table-of-contents)
+## [`sys/string` Package Functions](#table-of-contents)
 
-### `str.print`
-### `str.concat`
+Built in, import with `import "sys/string"`. Using it without the import
+is a compile error. Positions and lengths count bytes, not characters.
+
+### `string.ByteLength (s str) (i32)`
+### `string.Concatenation (a str, b str) (str)`
+### `string.SubstringByByteRange (s str, start i32, end i32) (str)`
+### `string.ByteIndexOfFirstSubstring (s str, sub str) (i32)`
+### `string.ByteIndexOfLastSubstring (s str, sub str) (i32)`
+### `string.TrimSurroundingWhitespace (s str) (str)`
+### `string.ParseDecimalI8`, `I16`, `I32`, `I64`, `UI8`, `UI16`, `UI32`, `UI64` `(s str)`
+### `string.ParseFloatF32`, `string.ParseFloatF64` `(s str)`
+### `string.PrintLine (s str) ()`
+
+`SubstringByByteRange` returns bytes `start` up to but not including
+`end`. The index functions return -1 when `sub` is absent. The parse
+functions raise a runtime error when `s` does not parse.
 
 #### Example
 
 ```
 package main
 
+import "sys/string"
+
 func main () {
-	str.print(str.concat("Hello, ", "World!"))
+	string.PrintLine(string.Concatenation("Hello, ", "World!"))
 }
 ```
 
-### `str.equal_by_value (str, str) (bool)`
-### `str.equal_by_pointer (str, str) (bool)`
-### `str.compare_by_value (str, str) (i32)`
+### `string.EqualityByByteValue (str, str) (bool)`
+### `string.EqualityByHeapPointer (str, str) (bool)`
+### `string.OrderingByByteValue (str, str) (i32)`
 
-`str.equal_by_value` reports whether two strings hold the same bytes.
-`str.equal_by_pointer` reports whether both values refer to the same
+`string.EqualityByByteValue` reports whether two strings hold the same bytes.
+`string.EqualityByHeapPointer` reports whether both values refer to the same
 string object, which is true after an assignment such as `y = x` but
-false for two strings built separately. `str.compare_by_value` returns
+false for two strings built separately. `string.OrderingByByteValue` returns
 -1, 0 or 1 by byte order. These are the only way to compare strings,
 see [Language versions](#language-versions).
 
@@ -2426,14 +2519,16 @@ see [Language versions](#language-versions).
 ```
 package main
 
+import "sys/string"
+
 func main () {
 	var x str
 	var y str
 	x = "apple"
 	y = x
-	bool.print(str.equal_by_value(x, str.concat("app", "le"))) // true
-	bool.print(str.equal_by_pointer(x, y))                      // true
-	i32.print(str.compare_by_value(x, "banana"))                // -1
+	bool.print(string.EqualityByByteValue(x, string.Concatenation("app", "le"))) // true
+	bool.print(string.EqualityByHeapPointer(x, y))                      // true
+	i32.print(string.OrderingByByteValue(x, "banana"))                // -1
 }
 ```
 
@@ -2918,13 +3013,14 @@ underlaying operating system.
 ```
 package main
 import "sys/os"
+import "sys/string"
 
 func main () {
 	var wd str
 	wd = os.GetWorkingDirectory()
 
 	var fileName str
-	fileName = str.concat(wd, "testing.cx")
+	fileName = string.Concatenation(wd, "testing.cx")
 
 	os.Open(fileName)
 	os.Close(fileName)
@@ -3105,6 +3201,12 @@ its reassignable version.
 Reassignable is the deprecated version plus one year, same month and day,
 release 0001. Deprecated `2611200001` is reassignable from `2711200001`. A
 29 February deprecation moves to 1 March. `t1-constants/opcodes_history.go`
+A renamed opcode keeps its number and its row, which takes the new name.
+The old name and the version of the rename are kept in
+`OpcodeRenameTable` and in the `former_names` column of the CSV, the
+old name can no longer be called, and using it is a compile error that
+names the new one. An old name is never given to another opcode.
+
 lists every lifecycle event in version order. See
 [docs/Conventions.md](docs/Conventions.md).
 
@@ -3135,3 +3237,37 @@ and `>=` on pointers are compile errors.
 
 Serialized programs from before this version must be recompiled. See
 [skycoin-cx#183](https://github.com/skycoin/skycoin-cx/issues/183).
+
+## Version 2611200002, 2026-11-20
+
+Every built-in library lives under `sys/` and needs an explicit import,
+see [Packages](#packages). `import "os"` becomes `import "sys/os"`, and
+the same for `time`, `json`, `tcp`, `regexp`, `cipher`, `cx`, `gl`,
+`glfw`, `al` and `gltext`. A bare import of a built-in package, an
+unknown `sys/` path and a built-in package used without its import are
+compile errors.
+
+The `str` functions moved to `sys/string` with verbose camel case names.
+Each keeps its opcode number.
+
+| opcode | before | from 2611200002 |
+|---|---|---|
+| 561 | `str.concat` | `string.Concatenation` |
+| 562 to 569 | `str.i8` to `str.ui64` | `string.ParseDecimalI8` to `string.ParseDecimalUI64` |
+| 570, 571 | `str.f32`, `str.f64` | `string.ParseFloatF32`, `string.ParseFloatF64` |
+| 572 | `str.print` | `string.PrintLine` |
+| 573 | `str.substr` | `string.SubstringByByteRange` |
+| 574 | `str.index` | `string.ByteIndexOfFirstSubstring` |
+| 575 | `str.lastindex` | `string.ByteIndexOfLastSubstring` |
+| 576 | `str.trimspace` | `string.TrimSurroundingWhitespace` |
+| 586 | `str.equal_by_value` | `string.EqualityByByteValue` |
+| 587 | `str.equal_by_pointer` | `string.EqualityByHeapPointer` |
+| 588 | `str.compare_by_value` | `string.OrderingByByteValue` |
+| 756 | `glfw.func_i32_i32` | `glfw.RegisterCallbackI32I32` |
+| 757 | `glfw.call_i32_i32` | `glfw.InvokeCallbackI32I32` |
+
+`string.ByteLength` is new as opcode 792. The generic `len` still works
+on strings. Calling an old name is a compile error that names the new
+one. Serialized programs from before this version must be recompiled.
+See [skycoin-cx#380](https://github.com/skycoin/skycoin-cx/issues/380)
+and [skycoin-cx#382](https://github.com/skycoin/skycoin-cx/issues/382).

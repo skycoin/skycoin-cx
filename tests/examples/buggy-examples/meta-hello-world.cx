@@ -7,6 +7,6 @@ func main () () {
 	remExpr("toBeRemoved")
 toBeRemoved:
 	i32.div(3, 0)
-	addExpr("newPrint", "str.print")
+	addExpr("newPrint", "string.PrintLine")
 	affExpr("newPrint", ".", 0)
 }

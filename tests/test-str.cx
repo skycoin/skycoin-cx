@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 var gStr str
 
 func receivingStr (s str) {
@@ -30,10 +32,10 @@ func testSTRFunctions () () {
 	part1 = "Hello"
 	part2 = "Bye"
 
-	result = str.concat(part1, part2)
+	result = string.Concatenation(part1, part2)
 
-	test(str.concat(part1, part2), "HelloBye", "")
-	test(str.concat("One", "Two"), "OneTwo", "")
+	test(string.Concatenation(part1, part2), "HelloBye", "")
+	test(string.Concatenation("One", "Two"), "OneTwo", "")
 	test(result, "HelloBye", "")
 
 	var lStr str
@@ -43,22 +45,22 @@ func testSTRFunctions () () {
 	test(gStr, "Global", "global strings error")
 	test(lStr, "Local", "local strings error")
 
-	test(str.compare_by_value("foo", "bar"), 1, "str.compare_by_value() error")
-	test(str.compare_by_value("bar", "foo"), -1, "str.compare_by_value() error")
+	test(string.OrderingByByteValue("foo", "bar"), 1, "string.OrderingByByteValue() error")
+	test(string.OrderingByByteValue("bar", "foo"), -1, "string.OrderingByByteValue() error")
 
-	test(str.equal_by_value("foo", "foo"), true, "str.equal_by_value() error")
-	test(str.equal_by_value("foo", "bar"), false, "str.equal_by_value() error")
+	test(string.EqualityByByteValue("foo", "foo"), true, "string.EqualityByByteValue() error")
+	test(string.EqualityByByteValue("foo", "bar"), false, "string.EqualityByByteValue() error")
 
 	test(len("Foo bar"), 7, "len() error")
 
-	test(str.concat("Hello ", "World"), "Hello World", "str.concat() error")
+	test(string.Concatenation("Hello ", "World"), "Hello World", "string.Concatenation() error")
 
 	var concStr str
-	concStr = str.concat("Hello, ", "world!")
+	concStr = string.Concatenation("Hello, ", "world!")
 	test(concStr, "Hello, world!", "")
 
-	test(str.concat("meow ", "woof"), "meow woof", "")
-	test(str.concat(str.concat("meow ", "woof "), "tweet"), "meow woof tweet", "")
+	test(string.Concatenation("meow ", "woof"), "meow woof", "")
+	test(string.Concatenation(string.Concatenation("meow ", "woof "), "tweet"), "meow woof tweet", "")
 
 	// Just testing that the parser is able to recognize escaped double quotes.
 	test("\"hello\"", "\"hello\"", "")

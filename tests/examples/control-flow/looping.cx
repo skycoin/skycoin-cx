@@ -1,8 +1,10 @@
 package main
 
+import "sys/string"
+
 func main () () {
 	for false {
-		str.print("not today")
+		string.PrintLine("not today")
 	}
 	
 	var c i32

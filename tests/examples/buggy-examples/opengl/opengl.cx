@@ -2,6 +2,7 @@ package main
 
 import "sys/gl"
 import "sys/glfw"
+import "sys/string"
 
 var width i32 = 600
 var height i32 = 600
@@ -416,12 +417,12 @@ func myCallback (window str, key i32, scancode i32, action i32, mods i32) () {
 			return
 		}
 	}
-	// str.print(window)
+	// string.PrintLine(window)
 	// i32.print(key)
 	// i32.print(scancode)
 	// i32.print(action)
 	// i32.print(mods)
-	// str.print("")
+	// string.PrintLine("")
 }
 
 var p1x i32 = 1
@@ -452,11 +453,11 @@ func main () () {
 
 	wd := os.GetWorkingDirectory()
 	
-	tex_characters := gl.NewTexture(str.concat(wd, "textures/roguelike_characters.png"))
-	tex_city := gl.NewTexture(str.concat(wd, "textures/roguelike_city.png"))
-	tex_dungeon := gl.NewTexture(str.concat(wd, "textures/roguelike_dungeon.png"))
-	tex_indoor := gl.NewTexture(str.concat(wd, "textures/roguelike_indoor.png"))
-	tex_pack := gl.NewTexture(str.concat(wd, "textures/roguelike_pack.png"))
+	tex_characters := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_characters.png"))
+	tex_city := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_city.png"))
+	tex_dungeon := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_dungeon.png"))
+	tex_indoor := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_indoor.png"))
+	tex_pack := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_pack.png"))
 	
 	w_characters := 918
 	h_characters := 203

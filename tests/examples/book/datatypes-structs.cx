@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 type Person struct {
     name str
     age i32
@@ -16,9 +18,9 @@ func main () {
         name: "Gabrielle",
         age: 21}
     
-    str.print(p1.name)
+    string.PrintLine(p1.name)
     i32.print(p1.age)
     
-    str.print(p2.name)
+    string.PrintLine(p2.name)
     i32.print(p2.age)
 }

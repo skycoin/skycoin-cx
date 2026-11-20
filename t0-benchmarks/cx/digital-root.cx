@@ -1,6 +1,7 @@
 package main
 
 import "sys/time"
+import "sys/string"
 
 // Function to add each digit form the value
 func Sum(i i32, base i32) (out i32){
@@ -28,18 +29,18 @@ func main () () {
 	start = time.UnixNano()
 
 	if i32.gt(79563, 0){
-		str.print("The value is 79563")
+		string.PrintLine("The value is 79563")
 		var a []i32 = digiatlRoot(79563, 10)
-		str.print("The digital root of 79563 is...")
+		string.PrintLine("The digital root of 79563 is...")
 		i32.print(a[0])
-		str.print("and the persistence is...")
+		string.PrintLine("and the persistence is...")
 		i32.print(a[1])
 	} else {
-		str.print("I said GREATER than 0!")
+		string.PrintLine("I said GREATER than 0!")
 	}
 
 	var end i64
 	end = time.UnixNano()
-	str.print("Time elapsed (in nanoseconds)")
+	string.PrintLine("Time elapsed (in nanoseconds)")
 	i64.print(i64.sub(end, start))
 }

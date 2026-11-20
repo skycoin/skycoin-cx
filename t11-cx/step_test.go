@@ -34,7 +34,7 @@ func captureStdout(t *testing.T, fn func()) string {
 // the limit, and neither traces to stdout nor grows the program (#110).
 func TestRunCompiledMaxOps(t *testing.T) {
 	initProgram()
-	src := "package main\nfunc f() {\n\tstr.print(\"in f\")\n}\nfunc main() {\n\tf()\n\tf()\n\tfor true {\n\t}\n}\n"
+	src := "package main\nimport \"sys/string\"\nfunc f() {\n\tstring.PrintLine(\"in f\")\n}\nfunc main() {\n\tf()\n\tf()\n\tfor true {\n\t}\n}\n"
 	if err := cxparsing.ParseSourceStrings([]string{src}, []string{"step.cx"}); err != nil {
 		t.Fatal(err)
 	}

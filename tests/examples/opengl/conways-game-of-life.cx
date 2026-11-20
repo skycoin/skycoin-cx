@@ -127,7 +127,7 @@ func aliveNeighbours (cell Cell, cells [225]Cell) (aliveCount i32) {
 	// i32.print(map2Dto1D(downCellX, downCellY, columns))
 	// i32.print(map2Dto1D(upLeftCellX, upLeftCellY, columns))
 
-	// str.print("exit")
+	// string.PrintLine("exit")
 
 
 	
@@ -141,7 +141,7 @@ func aliveNeighbours (cell Cell, cells [225]Cell) (aliveCount i32) {
 	leftCell = cells[map2Dto1D(leftCellX, leftCellY, columns)]
 	upLeftCell = cells[map2Dto1D(upLeftCellX, upLeftCellY, columns)]
 
-	// str.print("entering")
+	// string.PrintLine("entering")
 
 	if upCell.alive {
 		aliveCount = i32.add(aliveCount, 1)

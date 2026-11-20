@@ -4,6 +4,9 @@
 
 #### Language
 
+- Language version 2611200002. Every built-in library lives under `sys/` and needs an explicit import, for example `import "sys/os"`. A bare import of a built-in package, an unknown `sys/` path and a built-in package used without its import are compile errors (#380)
+- The `str` functions moved to `sys/string` with verbose camel case names, for example `str.concat` is `string.Concatenation` and `str.compare_by_value` is `string.OrderingByByteValue`, and `glfw.func_i32_i32` and `glfw.call_i32_i32` are `glfw.RegisterCallbackI32I32` and `glfw.InvokeCallbackI32I32`. Opcodes keep their numbers, `OpcodeRenameTable` and the `former_names` column of `docs/opcodes.csv` record the renames, and an old name is a compile error that names the new one (#380, #382, #391)
+- `string.ByteLength`, opcode 792 (#382)
 - Language version 2611200001, formerly revision 1, see the Language versions section of LanguageGuide.md (#183, #296)
 - Opcode numbers are fixed in `constants.OpcodeLifecycleTable` and `docs/opcodes.csv`. Every opcode keeps the number it had before #197, deleted opcodes leave gaps that are not reused before their reassignable version, `ptr.eq` and `ptr.uneq` are 589 and 590, and the cxfx opcodes are 591 to 791 whatever the build tags (#296)
 - Strings have no built-in operators. `==`, `!=`, `<`, `>`, `<=`, `>=`, `+` and every other arithmetic or bitwise operator on `str` is a compile error that names the function to use (#183, #197)

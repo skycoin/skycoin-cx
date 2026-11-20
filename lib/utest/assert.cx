@@ -1,5 +1,7 @@
 package test
 
+import "sys/string"
+
 func _assert(v bool, msg str) {
   if (bool.not(v)) {
     addFailure(msg)
@@ -31,7 +33,7 @@ func AssertEqualsF64(actual f64, expected f64) {
 }
 
 func AssertEqualsStr(actual str, expected str) {
-  _assert(str.equal_by_value(actual, expected), sprintf("Actual: %s | Expected: %s.", actual, expected));
+  _assert(string.EqualityByByteValue(actual, expected), sprintf("Actual: %s | Expected: %s.", actual, expected));
 }
 
 func AssertEqualsBool(actual bool, expected bool) {
@@ -57,7 +59,7 @@ func AssertNotEqualsF64(actual f64, not_expected f64) {
 }
 
 func AssertNotEqualsStr(actual str, not_expected str) {
-  _assert(bool.not(str.equal_by_value(actual, not_expected)), sprintf("Actual: %s | Not Expected: %s.", actual, not_expected));
+  _assert(bool.not(string.EqualityByByteValue(actual, not_expected)), sprintf("Actual: %s | Not Expected: %s.", actual, not_expected));
 }
 
 // AssertSliceEquals

@@ -1,25 +1,27 @@
 // Language revision 1 replaced the str ordering operators with
-// str.compare_by_value. https://github.com/skycoin/skycoin-cx/issues/183
+// string.OrderingByByteValue. https://github.com/skycoin/skycoin-cx/issues/183
 
 package main
 
+import "sys/string"
+
 func main() {
-	test(str.compare_by_value("b", "a") > 0, true, "b > a")
-	test(str.compare_by_value("a", "b") > 0, false, "a > b")
-	test(str.compare_by_value("a", "a") > 0, false, "a > a")
-	test(str.compare_by_value("a", "a") >= 0, true, "a >= a")
-	test(str.compare_by_value("a", "b") >= 0, false, "a >= b")
-	test(str.compare_by_value("a", "b") < 0, true, "a < b")
-	test(str.compare_by_value("b", "a") < 0, false, "b < a")
-	test(str.compare_by_value("a", "a") < 0, false, "a < a")
-	test(str.compare_by_value("a", "a") <= 0, true, "a <= a")
-	test(str.compare_by_value("b", "a") <= 0, false, "b <= a")
+	test(string.OrderingByByteValue("b", "a") > 0, true, "b > a")
+	test(string.OrderingByByteValue("a", "b") > 0, false, "a > b")
+	test(string.OrderingByByteValue("a", "a") > 0, false, "a > a")
+	test(string.OrderingByByteValue("a", "a") >= 0, true, "a >= a")
+	test(string.OrderingByByteValue("a", "b") >= 0, false, "a >= b")
+	test(string.OrderingByByteValue("a", "b") < 0, true, "a < b")
+	test(string.OrderingByByteValue("b", "a") < 0, false, "b < a")
+	test(string.OrderingByByteValue("a", "a") < 0, false, "a < a")
+	test(string.OrderingByByteValue("a", "a") <= 0, true, "a <= a")
+	test(string.OrderingByByteValue("b", "a") <= 0, false, "b <= a")
 
 	var x str
 	var y str
 	x = "apple"
 	y = "banana"
-	test(str.compare_by_value(x, y), -1, "apple before banana")
-	test(str.compare_by_value(y, x), 1, "banana after apple")
-	test(str.compare_by_value(x, x), 0, "apple equals apple")
+	test(string.OrderingByByteValue(x, y), -1, "apple before banana")
+	test(string.OrderingByByteValue(y, x), 1, "banana after apple")
+	test(string.OrderingByByteValue(x, x), 0, "apple equals apple")
 }

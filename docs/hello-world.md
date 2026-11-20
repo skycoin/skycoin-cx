@@ -14,20 +14,20 @@ type Point struct {
 }
 
 // This main function will print a string in the terminal
-// str.print("") prints the string 
+// string.PrintLine("") prints the string 
 func main () {
 
     var	loco i32
 
-	str.print("print string")
+	string.PrintLine("print string")
 
- 	str.print("Hello World!")
+ 	string.PrintLine("Hello World!")
 
-	str.print("print 2+3*3")
+	string.PrintLine("print 2+3*3")
 
 	i32.print(2+3*3) 
 
-	str.print("call function sayhi()")
+	string.PrintLine("call function sayhi()")
 
 	sayHi()
 
@@ -37,7 +37,7 @@ func main () {
 	p.x = 100
 	p.y = 200
 
-	str.print("print  struct point")
+	string.PrintLine("print  struct point")
 
 
 	i32.print(p.x)
@@ -46,18 +46,18 @@ func main () {
 
 	i = 20
 
-	str.print("print  global varialble")
+	string.PrintLine("print  global varialble")
 
 	i32.print(i)
 
 
     loco = 20
     
-    str.print("print  local varialble")
+    string.PrintLine("print  local varialble")
     i32.print(loco)
 }
 
 func sayHi () () {
-	str.print("Hi")
+	string.PrintLine("Hi")
 }
 

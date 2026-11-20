@@ -2,6 +2,8 @@
 
 package main
 
+import "sys/string"
+
 type Card struct {
 	suit i32
 	rank i32
@@ -26,7 +28,7 @@ type PokerHand struct {
 
 func (ph PokerHand) bug()() {
 	if ph.cards[1].lt(ph.cards[2]) {
-		str.print("Hi ho Silver")
+		string.PrintLine("Hi ho Silver")
 	}
 }
 

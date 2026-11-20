@@ -3,14 +3,15 @@
 package main
 
 import "sys/os"
+import "sys/string"
 
 func main() {
 	var wd str
 	wd = os.GetWorkingDirectory()
-	test(str.equal_by_value(wd, ""), false, "working directory is empty")
+	test(string.EqualityByByteValue(wd, ""), false, "working directory is empty")
 
 	var handle i32
-	handle = os.Open(str.concat(wd, "testdata/json/test-0.json"))
+	handle = os.Open(string.Concatenation(wd, "testdata/json/test-0.json"))
 	test(handle >= 0, true, "cannot open a file relative to the working directory")
 	test(os.Close(handle), true, "close")
 }

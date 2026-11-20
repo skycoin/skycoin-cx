@@ -3,6 +3,7 @@ package main
 import "sys/gl"
 import "sys/glfw"
 import "sys/gltext"
+import "sys/string"
 
 var width i32 = 400
 var height i32 = 400
@@ -175,8 +176,8 @@ func mouseButton (window str, key i32, action i32, mods i32) {
 
 func init () {
 	wd := os.GetWorkingDirectory()
-	COIN_TEXTURE = gl.NewTexture(str.concat(wd, "textures/coin.png"))
-	STAR_TEXTURE = gl.NewTexture(str.concat(wd, "textures/star.png"))
+	COIN_TEXTURE = gl.NewTexture(string.Concatenation(wd, "textures/coin.png"))
+	STAR_TEXTURE = gl.NewTexture(string.Concatenation(wd, "textures/star.png"))
 }
 
 func main () {
@@ -190,7 +191,7 @@ func main () {
 	gl.LinkProgram(program)
 
 	wd := os.GetWorkingDirectory()
-	fontFile := str.concat(wd, "fonts/roboto-light.ttf")
+	fontFile := string.Concatenation(wd, "fonts/roboto-light.ttf")
 
 	os.Open(fontFile)
 	gltext.LoadTrueType("Roboto50", fontFile, 50, 32, 127, gltext.LeftToRight)

@@ -25,14 +25,14 @@ func main() {
 // "|", " ", "o", "_", "o", " ", "|", "\n",
 // " ", "\\", "_", "^", "_", "/", " ", "\n"}
 	
-	// str.print(bc.objective[0])
-	// str.print(bc.joinChars(bc.objective))
+	// string.PrintLine(bc.objective[0])
+	// string.PrintLine(bc.joinChars(bc.objective))
 	// bc.initPopulation()
 
 	// var result str
 	// for c := 0; c < 11; c++ {
-	// 	result = str.concat(result, coco[c])
-	// 	// str.print(bc.objective[c])
+	// 	result = string.Concatenation(result, coco[c])
+	// 	// string.PrintLine(bc.objective[c])
 	// }
-	// str.print(result)
+	// string.PrintLine(result)
 }

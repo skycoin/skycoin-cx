@@ -2,5 +2,5 @@ package main
 
 func main() {
 	var dir str = os.GetWorkingDirectory()
-	str.print(dir)
+	i32.print(len(dir))
 }

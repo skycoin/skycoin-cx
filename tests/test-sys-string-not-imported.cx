@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	var n i32 = string.ByteLength("ab")
+	i32.print(n)
+}

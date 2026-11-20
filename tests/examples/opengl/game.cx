@@ -3,6 +3,7 @@ package main
 import "sys/gl"
 import "sys/glfw"
 import "sys/os"
+import "sys/string"
 
 type Sprite struct {
 	x1 f32
@@ -110,7 +111,7 @@ func compileShader(source str, shaderType i32) (shader i32) {
 }
 
 func addNull (source str) (sourceWithNull str) {
-	sourceWithNull = str.concat(source, "\000")
+	sourceWithNull = string.Concatenation(source, "\000")
 }
 
 func initOpenGL () (program i32) {
@@ -522,16 +523,16 @@ func charActions (window str, key i32, scancode i32, action i32, mods i32) () {
 		drawTile(i32.add(p1x, 1), p1y, getSprite(1003))
 	}
 
-	if str.equal_by_value(northObj.name, "water") {
+	if string.EqualityByByteValue(northObj.name, "water") {
 		drawTile(p1x, i32.add(p1y, 1), getSprite(1004))
 	}
-	if str.equal_by_value(southObj.name, "water") {
+	if string.EqualityByByteValue(southObj.name, "water") {
 		drawTile(p1x, i32.add(p1y, -1), getSprite(1004))
 	}
-	if str.equal_by_value(westObj.name, "water") {
+	if string.EqualityByByteValue(westObj.name, "water") {
 		drawTile(i32.add(p1x, -1), p1y, getSprite(1004))
 	}
-	if str.equal_by_value(eastObj.name, "water") {
+	if string.EqualityByByteValue(eastObj.name, "water") {
 		drawTile(i32.add(p1x, 1), p1y, getSprite(1004))
 	}
 

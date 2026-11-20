@@ -107,12 +107,12 @@ for j := 0; j < 5; j++ {
 break
 printf("j: %d \n", j)
 	}
-  		str.print("out of j loop")
+  		string.PrintLine("out of j loop")
 	}
 
-	str.print("out of i loop")
+	string.PrintLine("out of i loop")
 	}
-	str.print("out of h loop")
+	string.PrintLine("out of h loop")
 }
 
 ```
@@ -234,14 +234,16 @@ func main()() {
 
 Expected behaviour: No compilation error
 
-## Runtime error when calling str.i32 with a string not representing a valid i32 number.
+## Runtime error when calling string.ParseDecimalI32 with a string not representing a valid i32 number.
 
 To Reproduce:
 ```
 package main
+
+import "sys/string"
 func main()() {
-	i := str.i32("a") // gives runtime error
-	k := str.i32("-2147483649") // gives runtime error
+	i := string.ParseDecimalI32("a") // gives runtime error
+	k := string.ParseDecimalI32("-2147483649") // gives runtime error
 }
 ```
 
@@ -391,7 +393,7 @@ Expected behavior: No compilation error
 ```package pkg
 
 func FuncInPkg () {
-str.print("FuncInPkg called with NO parentheses")
+string.PrintLine("FuncInPkg called with NO parentheses")
 }
 
 package main

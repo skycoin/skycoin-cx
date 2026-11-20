@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 var entityCount i32
 
 // Component masks
@@ -140,10 +142,10 @@ func renderFunction (world World) () {
 			displacement := world.displacement[entity]
 			
 			appearance := world.appearance[entity]
-			coords := str.concat(str.concat(str.concat(str.concat("(", i32.str(displacement.x)), ", "), i32.str(displacement.y)), ")")
+			coords := string.Concatenation(string.Concatenation(string.Concatenation(string.Concatenation("(", i32.str(displacement.x)), ", "), i32.str(displacement.y)), ")")
 			
-			str.print(str.concat(str.concat(appearance.name, " is at "), coords))
-			//str.print(str.concat(appearance.name, " is at "))
+			string.PrintLine(string.Concatenation(string.Concatenation(appearance.name, " is at "), coords))
+			//string.PrintLine(string.Concatenation(appearance.name, " is at "))
 		}
 	}
 }

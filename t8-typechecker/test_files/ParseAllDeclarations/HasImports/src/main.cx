@@ -3,6 +3,7 @@ package main
 import "helper"
 
 import "config"
+import "sys/string"
 
 var dog helper.Animal
 dog.sound = "bark"
@@ -11,6 +12,6 @@ func main() {
 
     dog.Speak()
 
-    str.print(config.Name)
+    string.PrintLine(config.Name)
     i32.print(config.Apple)
 }

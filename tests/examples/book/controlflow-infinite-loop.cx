@@ -1,7 +1,9 @@
 package main
 
+import "sys/string"
+
 func main () () {
     for true {
-        str.print("Infinite loop!")
+        string.PrintLine("Infinite loop!")
     }
 }

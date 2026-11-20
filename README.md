@@ -92,8 +92,10 @@ make build-gui
 ```
 package main
 
+import "sys/string"
+
 func main() {
-	str.print("Hello World!")
+	string.PrintLine("Hello World!")
 }
 ```
 

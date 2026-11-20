@@ -12,8 +12,9 @@ func addAddress () {
 
 package main
 import "bc"
+import "sys/string"
 
 func main() {
-	str.print(bc.addresses[0])
-	str.print(bc.addresses[1])
+	string.PrintLine(bc.addresses[0])
+	string.PrintLine(bc.addresses[1])
 }

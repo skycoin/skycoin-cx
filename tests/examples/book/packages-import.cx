@@ -6,9 +6,10 @@ func double () (out i32) {
 
 package main
 import "math"
+import "sys/string"
 
 func main () {
-    str.print("hi")
+    string.PrintLine("hi")
     var foo i32
     foo = math.double()
     i32.print(foo)

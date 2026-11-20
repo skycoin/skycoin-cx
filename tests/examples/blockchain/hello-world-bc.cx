@@ -1,7 +1,9 @@
 package bc
 
+import "sys/string"
+
 func helloWorld() {
-	str.print("Hello, World!")
+	string.PrintLine("Hello, World!")
 }
 
 package main

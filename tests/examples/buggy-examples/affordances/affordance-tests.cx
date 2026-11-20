@@ -1,9 +1,10 @@
 package main
 import "aff"
+import "sys/string"
 
 func predArg (arg aff.Argument) (res bool) {
 	// accept any argument
-	str.print(arg.Name)
+	string.PrintLine(arg.Name)
 	res = true
 }
 

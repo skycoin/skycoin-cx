@@ -14,7 +14,7 @@ import (
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
 )
 
-const hello = "package main\nfunc main() {\n\tstr.print(\"hi\")\n}\n"
+const hello = "package main\nimport \"sys/string\"\nfunc main() {\n\tstring.PrintLine(\"hi\")\n}\n"
 
 func TestMain(m *testing.M) {
 	actions.InitConstants()
@@ -62,10 +62,11 @@ func TestEvalErrorRestoresStdout(t *testing.T) {
 func TestEvalLargeOutput(t *testing.T) {
 	const line = "0123456789012345678901234567890123456789\n"
 	out := eval(t, `package main
+import "sys/string"
 func main() {
 	var i i32
 	for i = 0; i < 5000; i++ {
-		str.print("0123456789012345678901234567890123456789")
+		string.PrintLine("0123456789012345678901234567890123456789")
 	}
 }
 `)

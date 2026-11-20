@@ -2,6 +2,7 @@ package main
 
 import "sys/gl"
 import "sys/glfw"
+import "sys/string"
 
 var width i32 = 400
 var height i32 = 300
@@ -10,49 +11,49 @@ func mouseButton (window str, key i32, action i32, mods i32) () {
 	x, y := glfw.GetCursorPos("window")
 	if key == glfw.MouseButtonLeft {
 		if action == glfw.Press {
-			str.print("mouse button left pressed at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button left pressed at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 		if action == glfw.Release {
-			str.print("mouse button left released at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button left released at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 	}
 
 	if key == glfw.MouseButtonRight {
 		if action == glfw.Press {
-			str.print("mouse button right pressed at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button right pressed at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 		if action == glfw.Release {
-			str.print("mouse button right released at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button right released at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 	}
 
 	if key == glfw.MouseButtonMiddle {
 		if action == glfw.Press {
-			str.print("mouse button middle pressed at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button middle pressed at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 		if action == glfw.Release {
-			str.print("mouse button middle released at:")
-			str.print(str.concat("x: ", f64.str(x)))
-			str.print(str.concat("y: ", f64.str(y)))
+			string.PrintLine("mouse button middle released at:")
+			string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+			string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 		}
 	}
 }
 
 func mouseCursor (window str, xpos f64, ypos f64) () {
 	x, y := glfw.GetCursorPos("window")
-	str.print("mouse cursor at:")
-	str.print(str.concat("x: ", f64.str(x)))
-	str.print(str.concat("y: ", f64.str(y)))
+	string.PrintLine("mouse cursor at:")
+	string.PrintLine(string.Concatenation("x: ", f64.str(x)))
+	string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 }
 
 func main () () {

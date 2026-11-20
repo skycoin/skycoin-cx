@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 type Player struct {
     name str
 }
@@ -9,13 +11,13 @@ type Referee struct {
 }
 
 func (p *Player) printName () {
-    str.print("Player information")
-    str.print((*p).name)
+    string.PrintLine("Player information")
+    string.PrintLine((*p).name)
 }
 
 func (r *Referee) printName () {
-    str.print("Referee information")
-    str.print((*r).name)
+    string.PrintLine("Referee information")
+    string.PrintLine((*r).name)
 }
 
 func main () {

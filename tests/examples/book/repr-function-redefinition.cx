@@ -1,9 +1,11 @@
 package main
 
+import "sys/string"
+
 func main () {
-	str.print("Hello!")
+	string.PrintLine("Hello!")
 }
 
 func main () {
-	str.print("Bye!")
+	string.PrintLine("Bye!")
 }

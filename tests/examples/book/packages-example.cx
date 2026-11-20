@@ -1,5 +1,7 @@
 package foo
 
+import "sys/string"
+
 type Point struct {
     x i32
     y i32
@@ -8,7 +10,7 @@ type Point struct {
 var num i32 = 15
 
 func bar () {
-    str.print("From foo package")
+    string.PrintLine("From foo package")
 }
 
 package bar

@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 var Bool bool = true
 var Byte i8 = 8B
 var I16 i16 = 16H
@@ -45,7 +47,7 @@ func main () {
 	ui64.print(UI64)
 	f32.print(F32)
 	f64.print(F64)
-	str.print(string)
+	string.PrintLine(string)
 	aff.print(Affordance)
 	
 
@@ -73,7 +75,7 @@ func divide(c i32, d i32)(quotient i32, remainder f32) {
 }
 
 func printer(message str)() {
-	str.print(message)
+	string.PrintLine(message)
 }
 
 type AnotherType struct {

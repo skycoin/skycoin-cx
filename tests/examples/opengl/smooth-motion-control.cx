@@ -11,6 +11,7 @@ package main
 
 import "sys/gl"
 import "sys/glfw"
+import "sys/string"
 
 
 
@@ -93,7 +94,7 @@ func main () {
 
 
 func init () () {
-	str.print("\nMove the ball with the W,A,S,D keys.")
+	string.PrintLine("\nMove the ball with the W,A,S,D keys.")
 
 	TAU = f32.mul(2.0, 3.141592654)
 	FORCE = 0.08

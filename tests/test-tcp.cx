@@ -3,6 +3,7 @@
 package main
 
 import "sys/tcp"
+import "sys/string"
 
 func main() {
 	var err str
@@ -19,11 +20,11 @@ func main() {
 	tcp.Close()
 
 	err = tcp.Dial("tcp", "127.0.0.1:47115")
-	test(str.equal_by_value(err, ""), false, "dial after close must fail")
+	test(string.EqualityByByteValue(err, ""), false, "dial after close must fail")
 
 	err = tcp.Accept("", "")
-	test(str.equal_by_value(err, ""), false, "accept after close must fail")
+	test(string.EqualityByByteValue(err, ""), false, "accept after close must fail")
 
 	err = tcp.Listen("nosuchnet", "127.0.0.1:47115")
-	test(str.equal_by_value(err, ""), false, "listen on a bad network must fail")
+	test(string.EqualityByByteValue(err, ""), false, "listen on a bad network must fail")
 }

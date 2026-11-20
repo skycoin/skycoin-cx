@@ -1,11 +1,13 @@
 package main
 
+import "sys/string"
+
 func walk (flag bool) () {
 	if flag {
 		if i32.gt(i32.rand(0, 10), 5) {
-			str.print("The traveler keeps following the lane, making sure to ignore any pain.")
+			string.PrintLine("The traveler keeps following the lane, making sure to ignore any pain.")
 		} else {
-			str.print("North, east, west, south. Any direction is good, as long as no monster can be found.")
+			string.PrintLine("North, east, west, south. Any direction is good, as long as no monster can be found.")
 		}
 	}
 }
@@ -13,10 +15,10 @@ func walk (flag bool) () {
 func noise (flag bool) () {
 	if flag {
 		if i32.gt(i32.rand(0, 10), 5) {
-			str.print("A cracking noise is heard, but no monster is there.")
+			string.PrintLine("A cracking noise is heard, but no monster is there.")
 		} else {
 			addObject("monster")
-			str.print("Howling and growling, the monster is coming.")
+			string.PrintLine("Howling and growling, the monster is coming.")
 		}
 	}
 }
@@ -25,10 +27,10 @@ func consider (flag bool) () {
 	if flag {
 		if i32.gt(i32.rand(0, 10), 5) {
 			remObject("monster")
-			str.print("The traveler runs away, and cowardice lets him live for another day.")
+			string.PrintLine("The traveler runs away, and cowardice lets him live for another day.")
 		} else {
 			addObject("fight")
-			str.print("Bravery comes into sight, in the hope of living for another night.")
+			string.PrintLine("Bravery comes into sight, in the hope of living for another night.")
 		}
 	}
 }
@@ -38,10 +40,10 @@ func chance (flag bool) () {
 		if i32.gt(i32.rand(0, 10), 5) {
 			remObject("fight")
 			remObject("monster")
-			str.print("The monster stares, almost as in compassion, and leaves despite the traveler's past actions.")
+			string.PrintLine("The monster stares, almost as in compassion, and leaves despite the traveler's past actions.")
 		} else {
 			remObject("fight")
-			str.print("The monster starts a deep glare, waiting for the traveler to accept the dare.")
+			string.PrintLine("The monster starts a deep glare, waiting for the traveler to accept the dare.")
 		}
 	}
 }
@@ -50,18 +52,18 @@ func fightResult (flag bool) () {
 	if flag {
 		if i32.gt(i32.rand(0, 10), 5) {
 			addObject("died")
-			str.print("But failure describes this fend and, suddenly, this adventure comes to an end.")
+			string.PrintLine("But failure describes this fend and, suddenly, this adventure comes to an end.")
 		} else {
 			remObject("monster")
 			remObject("fight")
-			str.print("Naive, and even dumb, but the traveler's act leaves the monster numb.")
+			string.PrintLine("Naive, and even dumb, but the traveler's act leaves the monster numb.")
 		}
 	}
 }
 
 func theEnd (flag bool) () {
 	if flag {
-		str.print("")
+		string.PrintLine("")
 		halt("You died.")
 	}
 }
@@ -124,6 +126,6 @@ func main () () {
 		act()
 	}
 
-	str.print("")
-	str.print("You survived.")
+	string.PrintLine("")
+	string.PrintLine("You survived.")
 }

@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 type test struct {
 	x i32
 }
@@ -35,7 +37,7 @@ func testSliceStr(a []str, b []str, msg str) {
 	//printSliceStr("b", b)
 	if assert(len(a), len(b), msg) {
 		for i := 0; i < len(a); i++ {
-			if bool.not(str.equal_by_value(a[i], b[i])) {
+			if bool.not(string.EqualityByByteValue(a[i], b[i])) {
 				test(false, true, msg)
 			}
 		}
@@ -442,7 +444,7 @@ func testRemove() {
 	test(sExprsI32[1], 55, "")
 
 	var sExprsStr []str
-	sExprsStr = []str{ retStr(), str.concat("tweet ", "woof") }
+	sExprsStr = []str{ retStr(), string.Concatenation("tweet ", "woof") }
 	test(sExprsStr[0], "meow", "")
 	test(sExprsStr[1], "tweet woof", "")
 }

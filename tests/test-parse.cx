@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 func main () {
 	test(i8.str(10B), "10", "")
 	test(i8.i32(10B), 10, "")
@@ -31,9 +33,9 @@ func main () {
 	test(f64.i64(10.0D), 10L, "")
 	test(f64.f32(10.0D), 10.0, "")
 
-	test(str.i8("0"), 0B, "")
-	test(str.i32("123"), 123, "")
-	test(str.i64("444"), 444L, "")
-	test(str.f32("333"), 333.0, "")
-	test(str.f64("333"), 333.0D, "")
+	test(string.ParseDecimalI8("0"), 0B, "")
+	test(string.ParseDecimalI32("123"), 123, "")
+	test(string.ParseDecimalI64("444"), 444L, "")
+	test(string.ParseFloatF32("333"), 333.0, "")
+	test(string.ParseFloatF64("333"), 333.0D, "")
 }

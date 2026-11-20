@@ -1,5 +1,6 @@
 package main
 import "aff"
+import "sys/string"
 
 func exprPredicate (expr aff.Expression) (res bool) {
    	if expr.Operator == "i32.add" {
@@ -8,7 +9,7 @@ func exprPredicate (expr aff.Expression) (res bool) {
 }
 
 func fnPredicate (fn aff.Function) (res bool) {
-  	str.print(fn.Name)
+  	string.PrintLine(fn.Name)
   	i32.print(len(fn.InputSignature))
 	
   	var allI32 bool
@@ -28,10 +29,10 @@ func fnPredicate (fn aff.Function) (res bool) {
 func prgrmPredicate (prgrm aff.Program) (res bool) {
 	// var call aff.Caller
 
-	str.print("=======")
-	str.print(prgrm.Caller.FnName)
+	string.PrintLine("=======")
+	string.PrintLine(prgrm.Caller.FnName)
 	i32.print(prgrm.Caller.FnSize)
-	str.print("=======")
+	string.PrintLine("=======")
 	
   	if prgrm.HeapUsed > 300L {
   		res = true
@@ -54,7 +55,7 @@ func foo () {
   		return
   	}
 	
-  	str.print("SECRET")
+  	string.PrintLine("SECRET")
 }
 
 func bar () {
@@ -71,7 +72,7 @@ type Coco struct {
 
 func main () {
 	// var coco Coco
-	// str.print(coco.name)
+	// string.PrintLine(coco.name)
 
 	
   	num0 := 2

@@ -1,6 +1,8 @@
 // Package main 
 package main
 
+import "sys/string"
+
 // this is how we can import different packages into other packages 
 // here we are importing the math package 
 import "math"
@@ -8,7 +10,7 @@ import "math"
 func main () {
 
 // print a string on the terminal 
-	str.print("hi")
+	string.PrintLine("hi")
 
 	// initialization of a foo variable 
 	var foo i32

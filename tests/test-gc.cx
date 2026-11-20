@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 type StrctSlcI32 struct {
 	nums []i32
 }
@@ -42,10 +44,10 @@ func fn2() {
 	var errMsg str
 	
 	var slc []str
-	slc = append(slc, str.concat("2", "2"))
-	slc = append(slc, str.concat("3", "33"))
-	slc = append(slc, str.concat("44", "44"))
-	slc = append(slc, str.concat("5", "5555"))
+	slc = append(slc, string.Concatenation("2", "2"))
+	slc = append(slc, string.Concatenation("3", "33"))
+	slc = append(slc, string.Concatenation("44", "44"))
+	slc = append(slc, string.Concatenation("5", "5555"))
 	slc = append(slc, "666666")
 
 	errMsg = "slice not preserved after calling GC"
@@ -197,8 +199,8 @@ func fn3() {
 
 	errMsg = "slice of strings in struct was collected"
 	var strctSlcStr StrctSlcStr
-	strctSlcStr.txt = append(strctSlcStr.txt, str.concat("2", "2"))
-	strctSlcStr.txt = append(strctSlcStr.txt, str.concat("3", "33"))
+	strctSlcStr.txt = append(strctSlcStr.txt, string.Concatenation("2", "2"))
+	strctSlcStr.txt = append(strctSlcStr.txt, string.Concatenation("3", "33"))
 	strctSlcStr.txt = append(strctSlcStr.txt, "4444")
 	strctSlcStr.txt = append(strctSlcStr.txt, "55555")
 
@@ -241,9 +243,9 @@ func fn3() {
 	
 	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, "OneOne")
 	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, "TwoTwo")
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Three", "Three"))
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Four", "Four"))
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Five", "Five"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Three", "Three"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Four", "Four"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Five", "Five"))
 
 	// Checking if calling `fn1` and `fn2` destroy `glblStrSlc`.
 	for c := 0; c < 100; c++ {
@@ -474,8 +476,8 @@ func main() {
 
 	errMsg = "slice of strings in struct was collected"
 	var strctSlcStr StrctSlcStr
-	strctSlcStr.txt = append(strctSlcStr.txt, str.concat("2", "2"))
-	strctSlcStr.txt = append(strctSlcStr.txt, str.concat("3", "33"))
+	strctSlcStr.txt = append(strctSlcStr.txt, string.Concatenation("2", "2"))
+	strctSlcStr.txt = append(strctSlcStr.txt, string.Concatenation("3", "33"))
 	strctSlcStr.txt = append(strctSlcStr.txt, "4444")
 	strctSlcStr.txt = append(strctSlcStr.txt, "55555")
 
@@ -519,9 +521,9 @@ func main() {
 	errMsg = "slice of strings in global struct was collected"
 	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, "OneOne")
 	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, "TwoTwo")
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Three", "Three"))
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Four", "Four"))
-	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, str.concat("Five", "Five"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Three", "Three"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Four", "Four"))
+	glblStrctSlcStr.txt = append(glblStrctSlcStr.txt, string.Concatenation("Five", "Five"))
 
 	// Checking if calling `fn1` and `fn2` destroy `glblStrSlc`.
 	for c := 0; c < 100; c++ {

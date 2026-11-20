@@ -1,5 +1,6 @@
 package main
 import "bc"
+import "sys/string"
 
 func main () {
 	bc.numbers = append(bc.numbers, 5)
@@ -15,6 +16,6 @@ func main () {
 
 	// Print all the texts that have been added in transactions.
 	for d := 0; d < len(bc.texts); d++ {
-		str.print(bc.texts[d])
+		string.PrintLine(bc.texts[d])
 	}
 }

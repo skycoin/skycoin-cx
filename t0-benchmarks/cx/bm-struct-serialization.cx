@@ -1,5 +1,7 @@
 package main
 
+import "sys/string"
+
 type Point struct {
 	x i32
 	y i32
@@ -17,7 +19,7 @@ type Structs struct {
 
 func main () () {
 	wd := os.GetWorkingDirectory()
-	fileName := str.concat(wd, "serial")
+	fileName := string.Concatenation(wd, "serial")
 
 	/*
           Point

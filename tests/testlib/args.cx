@@ -2,6 +2,7 @@ package args
 
 import "sys/cx"
 import "sys/os"
+import "sys/string"
 
 // Str ...
 func Str(arg str, pattern str, value *str, match *bool) (success bool) {
@@ -15,16 +16,16 @@ func StrSlice(arg str, pattern str, value *[]str, match *bool) (success bool) {
     if success {
 		var index i32 = 0
 		for index >= 0 {
-			index = str.index(filterList, ",")
+			index = string.ByteIndexOfFirstSubstring(filterList, ",")
 			var filter str = filterList
             var filterListLen i32 = len(filterList)
 			if index >= 0 {
-				filter = str.substr(filterList, 0, index)
-				filterList = str.substr(filterList, index + 1, filterListLen)
+				filter = string.SubstringByByteRange(filterList, 0, index)
+				filterList = string.SubstringByByteRange(filterList, index + 1, filterListLen)
 			} else {
 				filterList = ""
 			}
-			filter = str.trimspace(filter)
+			filter = string.TrimSurroundingWhitespace(filter)
             if len(filter) > 0 || filterListLen > 0 {
     			*value = append(*value, filter)
             }
@@ -37,7 +38,7 @@ func I32(arg str, pattern str, value *i32, match *bool) (success bool) {
 	var strValue str = ""
 	success = getStr(arg, pattern, true, &strValue, match)
 	if success {
-		var i32Value i32 = str.i32(strValue)
+		var i32Value i32 = string.ParseDecimalI32(strValue)
 		*value = i32Value
 	}
 }
@@ -47,9 +48,9 @@ func Bool(arg str, pattern str, value *bool, match *bool) (success bool) {
     var strValue str = ""
     success = Str(arg, pattern, &strValue, match)
     if success {
-        if str.equal_by_value(strValue, "true") {
+        if string.EqualityByByteValue(strValue, "true") {
             *value = true
-        } else if str.equal_by_value(strValue, "false") {
+        } else if string.EqualityByByteValue(strValue, "false") {
             *value = false
         } else {
             success = false
@@ -78,7 +79,7 @@ func Flags(arg str, pattern str, flags *i32, match *bool, names []str, values []
 	        for i := 0; i < inputCount; i++ {
 	        	var value i32 = 0
 	        	for k := 0; k < nameCount; k++ {
-	        		if str.equal_by_value(slice[i], names[k]) {
+	        		if string.EqualityByByteValue(slice[i], names[k]) {
 	        			value = values[k]
                         k = nameCount // CX Issue break statument
 	        		}
@@ -123,12 +124,12 @@ func matchStr(arg str, pattern str, match *bool) (success bool) {
 	var argLen i32 = len(arg)
 	var patternLen i32 = len(pattern)
 	if argLen >= patternLen {
-		name := str.substr(arg, 0, patternLen)
-		if str.equal_by_value(name, pattern) {
+		name := string.SubstringByByteRange(arg, 0, patternLen)
+		if string.EqualityByByteValue(name, pattern) {
             var valid bool = false
             if argLen == patternLen {
                 valid = true
-            } else if str.equal_by_value(str.substr(arg, patternLen, patternLen + 1), "=") {
+            } else if string.EqualityByByteValue(string.SubstringByByteRange(arg, patternLen, patternLen + 1), "=") {
                 valid = true
             }
 
@@ -150,7 +151,7 @@ func getStr(arg str, pattern str, strict bool, value *str, match *bool) (success
 		var argLen i32 = len(arg)
 		var patternLen i32 = len(pattern) + 3 // + len("++=")
 		if argLen > patternLen || (!strict && argLen == patternLen) {
-			*value = str.substr(arg, patternLen, argLen)
+			*value = string.SubstringByByteRange(arg, patternLen, argLen)
 			success = true
 		}
 	}

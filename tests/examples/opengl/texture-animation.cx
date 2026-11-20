@@ -3,6 +3,7 @@ package main
 import "sys/gl"
 import "sys/glfw"
 import "sys/os"
+import "sys/string"
 
 var width i32 = 400
 var height i32 = 300
@@ -44,8 +45,8 @@ func display () {
 func init () () {
 	var wd str
 	wd = os.GetWorkingDirectory()
-	texture = append(texture, gl.NewTexture(str.concat(wd, "textures/adventurer_walk1.png")))
-	texture = append(texture, gl.NewTexture(str.concat(wd, "textures/adventurer_walk2.png")))
+	texture = append(texture, gl.NewTexture(string.Concatenation(wd, "textures/adventurer_walk1.png")))
+	texture = append(texture, gl.NewTexture(string.Concatenation(wd, "textures/adventurer_walk2.png")))
 }
 
 func main () () {
