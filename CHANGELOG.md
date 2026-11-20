@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- `str.substr` with a negative, reversed or too large range gave a raw Go slice panic. It now fails with `CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE` (#179)
 - Calling a function that does not exist in a built in package, such as `str.nosuchfn`, reported the error and then panicked. It now stops with the compile error (#177)
 - CX programs can call the `regexp` package. Using a package type without importing the package is now a compile error, not a compiler panic, and a runtime error in a function with a struct local no longer panics while printing the stack (#188)
 - The REPL `Eval` ran a program that failed to compile and returned whatever it printed. It now returns `compilation error` (#189)

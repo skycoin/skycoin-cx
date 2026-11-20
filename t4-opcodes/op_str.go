@@ -101,6 +101,9 @@ func opStrSubstr(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	str := inputs[0].Get_str(prgrm)
 	begin := inputs[1].Get_i32(prgrm)
 	end := inputs[2].Get_i32(prgrm)
+	if begin < 0 || end < begin || int(end) > len(str) {
+		panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
+	}
 	outputs[0].Set_str(prgrm, str[begin:end])
 }
 

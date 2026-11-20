@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	var s str = "hello"
+	str.print(str.substr(s, 1, -2))
+}
