@@ -7,6 +7,8 @@ import (
 )
 
 var ctx = context.Background()
+
+// VIOLATION: state outside State. Owner: t0-plredis; moves to PackageDBMng in phase 2.
 var rdb *redis.Client
 
 // VIOLATION: init chaining. Init 2 of the package loader tools: the redis

@@ -822,6 +822,7 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 		// initializing packages with their names,
 		// empty functions, structs, imports and globals
 		// and current function and struct
+		// VIOLATION: created outside manager; phase 1.
 		pkg := &CXPackage{}
 		pkg.Name = deserializeString(sPkg.NameOffset, sPkg.NameSize, s)
 		pkgIdx := prgrm.AddPackage(pkg)
@@ -957,6 +958,7 @@ func deserializeArguments(off int64, size int64, s *SerializedCXProgram, prgrm *
 // 	return nil
 // }
 
+// VIOLATION: created outside manager; phase 1.
 func deserializeArgument(sArg *serializedArgument, s *SerializedCXProgram, prgrm *CXProgram) *CXArgument {
 	var arg CXArgument
 	arg.ArgDetails = &CXArgumentDebug{}
@@ -1072,6 +1074,7 @@ func deserializeExpressions(off int64, size int64, s *SerializedCXProgram, prgrm
 	return exprs
 }
 
+// VIOLATION: created outside manager; phase 1.
 func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, prgrm *CXProgram) CXExpression {
 	var expr CXExpression
 
@@ -1205,6 +1208,7 @@ func initDeserialization(prgrm *CXProgram, s *SerializedCXProgram) {
 }
 
 // Deserialize deserializes a serialized CX program back to its golang struct representation.
+// VIOLATION: created outside manager; phase 1.
 func Deserialize(b []byte, useCompression bool) (prgrm *CXProgram) {
 	prgrm = &CXProgram{}
 	var s SerializedCXProgram

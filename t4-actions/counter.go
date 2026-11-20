@@ -3,6 +3,7 @@ package actions
 import "fmt"
 
 var (
+	// VIOLATION: state outside State. Owner: t4-actions; moves to ParseMng in phase 2.
 	TemporaryVariableCounter int
 )
 

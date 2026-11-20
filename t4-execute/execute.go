@@ -20,12 +20,14 @@ func getLastLine(cxprogram *ast.CXProgram) ast.CXExpression {
 		// cxprogram.CallStack[c].Operator.Expressions[cxprogram.CallStack[cxprogram.CallCounter-1].Line + 1]
 	}
 
+	// VIOLATION: created outside manager; phase 1.
 	cxAtomicOp := &ast.CXAtomicOperator{
 		Operator: -1,
 		Function: -1,
 	}
 
 	index := cxprogram.AddCXAtomicOp(cxAtomicOp)
+	// VIOLATION: created outside manager; phase 1.
 	return ast.CXExpression{
 		Index: index,
 		Type:  ast.CX_ATOMIC_OPERATOR,
@@ -229,6 +231,7 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 	return nil
 }
 
+// VIOLATION: created outside manager; phase 1.
 func MakeCall(prgrm *ast.CXProgram, op *ast.CXFunction) ast.CXCall {
 	return ast.CXCall{
 		Operator:     op,

@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to ParseMng in phase 2.
 var CurrentFileName string
 
 func (yylex Lexer) Error(e string) {

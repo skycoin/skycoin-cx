@@ -24,8 +24,13 @@ import (
 
 const VERSION = "0.8.0"
 
+// VIOLATION: state outside State. Owner: t10-cxrepl; moves to ReplMng in phase 2.
 var ReplTargetFn string = ""
+
+// VIOLATION: state outside State. Owner: t10-cxrepl; moves to ReplMng in phase 2.
 var ReplTargetStrct string = ""
+
+// VIOLATION: state outside State. Owner: t10-cxrepl; moves to ReplMng in phase 2.
 var ReplTargetMod string = ""
 
 func unsafeEval(code string) (out string) {

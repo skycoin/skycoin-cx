@@ -11,6 +11,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t5-cxos" // thin: only ValidFile; could move ValidFile to t0-util or t3-ast, max tier 11 to 10
 )
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to FontMng in phase 1.
 var fonts map[string]*gltext.Font = make(map[string]*gltext.Font, 0)
 
 func loadTrueType(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue, fixedPipeline bool) {

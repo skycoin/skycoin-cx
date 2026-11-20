@@ -67,6 +67,8 @@ const (
 )
 
 var (
+	// VIOLATION: state outside State. Owner: t1-constants; moves to CXNativeFunctionMng in phase 1.
 	START_PARSE_OPS int
-	END_PARSE_OPS   int
+	// VIOLATION: state outside State. Owner: t1-constants; moves to CXNativeFunctionMng in phase 1.
+	END_PARSE_OPS int
 )

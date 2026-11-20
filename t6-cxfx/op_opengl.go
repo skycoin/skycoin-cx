@@ -65,7 +65,10 @@ func Slice_f32_ToPtr(value []float32) unsafe.Pointer {
 	return unsafe.Pointer(&value[0])
 }
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to GIFMng in phase 1.
 var gifs map[string]*gif.GIF = make(map[string]*gif.GIF, 0)
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to TextureMng in phase 1.
 var textures map[string]Texture = make(map[string]Texture, 0)
 
 func decodeImg(file *os.File, cpuCopy bool) (data []byte, width int32, height int32, pixels []float32) {
@@ -348,6 +351,7 @@ func opGlNewTextureCube(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []as
 }
 
 func opCxReleaseTexture(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	// VIOLATION: created outside manager; phase 1.
 	textures[inputs[0].Get_str(prgrm)] = Texture{}
 }
 

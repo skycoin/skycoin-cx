@@ -17,6 +17,7 @@ type Config struct {
 }
 
 type TestRunner struct {
+	// VIOLATION: pointer at rest; becomes TestConfigGid in phase 3.
 	cfg         *Config
 	TestCount   int
 	TestSuccess int

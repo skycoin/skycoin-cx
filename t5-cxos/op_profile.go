@@ -12,6 +12,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// VIOLATION: state outside State. Owner: t5-cxos; moves to OsFileMng in phase 1.
 var openProfiles map[string]*os.File = make(map[string]*os.File, 0)
 
 func startCPUProfile(name string, rate int) *os.File {

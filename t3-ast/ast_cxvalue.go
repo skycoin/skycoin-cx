@@ -5,12 +5,14 @@ import (
 )
 
 type CXValue struct {
+	// VIOLATION: pointer at rest; becomes CXTypeSignatureGid in phase 3.
 	TypeSignature *CXTypeSignature // TODO:PTR remove Arg/TypeSignature
-	Expr          *CXExpression
-	Type          types.Code
-	Offset        types.Pointer
-	Size          types.Pointer
-	FramePointer  types.Pointer // TODO:PTR remove FramePointer
+	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
+	Expr         *CXExpression
+	Type         types.Code
+	Offset       types.Pointer
+	Size         types.Pointer
+	FramePointer types.Pointer // TODO:PTR remove FramePointer
 }
 
 func (value *CXValue) Get_bool(prgrm *CXProgram) bool {

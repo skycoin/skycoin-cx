@@ -140,6 +140,7 @@ var definitions []Type = []Type{
 
 type AllocatorHandler func(interface{}, Pointer) Pointer
 
+// VIOLATION: state outside State. Owner: t0-types; moves to CXProgramMng in phase 2.
 var Allocator AllocatorHandler
 
 func debugPanicIf(condition bool, error int) {

@@ -8,6 +8,7 @@ import (
 
 // CXCall ...
 type CXCall struct {
+	// VIOLATION: pointer at rest; becomes CXFunctionGid in phase 3.
 	Operator     *CXFunction   // What CX function will be called when running this CXCall in the runtime
 	Line         int           // What line in the CX function is currently being executed
 	FramePointer types.Pointer // Where in the stack is this function call's local variables stored
@@ -130,6 +131,7 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, globalInputs 
 		offset := GetFinalOffset(prgrm, fp, nil, inputTypeSignature)
 		value.Offset = offset
 
+		// VIOLATION: created outside manager; phase 1.
 		var input *CXArgument = &CXArgument{}
 		if inputTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 			input = prgrm.GetCXArgFromArray(CXArgumentIndex(inputTypeSignature.Meta))
@@ -156,6 +158,7 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, globalInputs 
 		offset := GetFinalOffset(prgrm, fp, nil, outputTypeSignature)
 		value.Offset = offset
 
+		// VIOLATION: created outside manager; phase 1.
 		var output *CXArgument = &CXArgument{}
 		if outputTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 			output = prgrm.GetCXArgFromArray(CXArgumentIndex(outputTypeSignature.Meta))
@@ -219,6 +222,7 @@ func processNonAtomicOperators(prgrm *CXProgram, expr *CXExpression, fp types.Po
 	newCallOperatorInputs := newCall.Operator.GetInputs(prgrm)
 	for i, inputIdx := range cxAtomicOp.GetInputs(prgrm) {
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
+		// VIOLATION: created outside manager; phase 1.
 		var inp *CXArgument = &CXArgument{}
 		if input.Type == TYPE_CXARGUMENT_DEPRECATE {
 			inp = prgrm.GetCXArgFromArray(CXArgumentIndex(input.Meta))

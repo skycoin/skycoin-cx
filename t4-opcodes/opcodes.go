@@ -59,6 +59,7 @@ func RegisterOperator(prgrm *ast.CXProgram, name string, handler ast.OpcodeHandl
 }
 
 // MakeNativeFunction ...
+// VIOLATION: created outside manager; phase 1.
 func MakeNativeFunction(prgrm *ast.CXProgram, opCode int, inputs []*ast.CXArgument, outputs []*ast.CXArgument) *ast.CXNativeFunction {
 	fn := &ast.CXNativeFunction{
 		AtomicOPCode: opCode,

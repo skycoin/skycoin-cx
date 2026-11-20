@@ -24,8 +24,10 @@ const (
 
 // For the cxgo. These shouldn't be used in the runtime for performance reasons
 var (
-	ConstCodes = map[string]int{}     //Todo: Used only once in actions/postfix.go
-	Constants  = map[int]CXConstant{} //Todo: Only used once in actions/postfix.go
+	// VIOLATION: state outside State. Owner: t4-actions; moves to CXConstantMng in phase 1.
+	ConstCodes = map[string]int{} //Todo: Used only once in actions/postfix.go
+	// VIOLATION: state outside State. Owner: t4-actions; moves to CXConstantMng in phase 1.
+	Constants = map[int]CXConstant{} //Todo: Only used once in actions/postfix.go
 )
 
 // nolint typecheck

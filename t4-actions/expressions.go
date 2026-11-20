@@ -421,6 +421,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			// VIOLATION: created outside manager; phase 1.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
@@ -430,6 +431,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			// VIOLATION: created outside manager; phase 1.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
@@ -450,6 +452,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	lastRightExpressionOperatorOutputs := lastRightExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)) < 1 {
 		lastRightExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastRightExpressionOperatorOutputs[0])
+		// VIOLATION: created outside manager; phase 1.
 		var lastRightExpressionOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
 
 		var typeSigIdx ast.CXTypeSignatureIndex
@@ -467,6 +470,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			// VIOLATION: created outside manager; phase 1.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
@@ -476,6 +480,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			// VIOLATION: created outside manager; phase 1.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
@@ -499,10 +504,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	lastLeftExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0])
+	// VIOLATION: created outside manager; phase 1.
 	var lastLeftExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		lastLeftExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOutputTypeSig.Meta))
 	} else if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastLeftExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+		// VIOLATION: created outside manager; phase 1.
 		lastLeftExpressionOutputArg = &ast.CXArgument{}
 	} else {
 		panic("type is not known")
@@ -524,10 +531,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	}
 
 	lastRightExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0])
+	// VIOLATION: created outside manager; phase 1.
 	var lastRightExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastRightExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		lastRightExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOutputTypeSig.Meta))
 	} else if lastRightExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastRightExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+		// VIOLATION: created outside manager; phase 1.
 		lastRightExpressionOutputArg = &ast.CXArgument{}
 	} else {
 		panic("type is not known")
@@ -574,6 +583,7 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 	}
 
 	lastPrevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastPrevExpression.GetOutputs(prgrm)[0])
+	// VIOLATION: created outside manager; phase 1.
 	var lastPrevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastPrevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		lastPrevExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastPrevExpressionOutputTypeSig.Meta))
@@ -701,6 +711,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 
 	fnOutputs := fn.GetOutputs(prgrm)
 	fnOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnOutputs[idx])
+	// VIOLATION: created outside manager; phase 1.
 	var outParam *ast.CXArgument = &ast.CXArgument{}
 	var typeSigIdx ast.CXTypeSignatureIndex
 	if fnOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -714,6 +725,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
+		// VIOLATION: created outside manager; phase 1.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
@@ -722,6 +734,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+		// VIOLATION: created outside manager; phase 1.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
@@ -730,6 +743,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+		// VIOLATION: created outside manager; phase 1.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package

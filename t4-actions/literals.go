@@ -213,6 +213,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 				} else if cxAtomicOpOutputTypeSig.Type == ast.TYPE_ATOMIC {
 					// TODO: give proper change when we implement type_structs
 					// Looks like we have to convert the arg to type cx arg deprecate again
+					// VIOLATION: created outside manager; phase 1.
 					newCXArg := &ast.CXArgument{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					newCXArg.Package = ast.CXPackageIndex(pkg.Index)
@@ -236,6 +237,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 				} else if cxAtomicOpOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 					// TODO: give proper change when we implement type_structs
 					// Looks like we have to convert the arg to type cx arg deprecate again
+					// VIOLATION: created outside manager; phase 1.
 					newCXArg := &ast.CXArgument{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					newCXArg.Package = ast.CXPackageIndex(pkg.Index)
@@ -395,6 +397,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 			// index is always i32
 			// hence, always an atomic type
 
+			// VIOLATION: created outside manager; phase 1.
 			indexTypeSignature := &ast.CXTypeSignature{
 				Name:       idxArg.Name,
 				Type:       ast.TYPE_ATOMIC,

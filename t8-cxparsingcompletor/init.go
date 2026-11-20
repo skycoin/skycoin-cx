@@ -8,6 +8,7 @@ import (
 	cxinit "github.com/skycoin/skycoin-cx/t7-init" // thin: only MakeProgram, RegisterPackages; only for the InitCXCore helper, goes with the init move (A), tier 8 to 5
 )
 
+// VIOLATION: state outside State. Owner: t8-cxparsingcompletor; moves to CXNativeFunctionMng in phase 2.
 var Initialized bool
 
 // VIOLATION: init chaining. Init 4-9: the steps t11-cx Run calls, called from

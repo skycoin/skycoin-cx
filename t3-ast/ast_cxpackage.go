@@ -17,7 +17,8 @@ type CXPackage struct {
 	Imports   map[string]CXPackageIndex  // imported packages
 	Functions map[string]CXFunctionIndex // declared functions in this package
 	Structs   map[string]CXStructIndex   // declared structs in this package
-	Globals   *CXStruct                  // declared global variables in this package
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	Globals *CXStruct // declared global variables in this package
 
 	// Used by the REPL and cxgo
 	CurrentFunction CXFunctionIndex
@@ -158,6 +159,7 @@ func (pkg *CXPackage) SelectFunction(prgrm *CXProgram, name string) (*CXFunction
 // MakePackage creates a new empty CXPackage.
 //
 // It can be filled in later with imports, structs, globals and functions.
+// VIOLATION: created outside manager; phase 1.
 func MakePackage(name string) *CXPackage {
 	return &CXPackage{
 		Name:            name,

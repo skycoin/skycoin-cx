@@ -9,8 +9,13 @@ import (
 
 type Func_i32_i32 func(a int32, b int32)
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var Functions_i32_i32 []Func_i32_i32
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CStringMng in phase 1.
 var freeFns map[string]*func() = make(map[string]*func(), 0)
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CStringMng in phase 1.
 var cSources map[string]**uint8 = make(map[string]**uint8, 0)
 
 func opGlfwFuncI32I32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

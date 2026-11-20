@@ -46,6 +46,7 @@ func defaultCmdFlags() cxCmdFlags {
 	}
 }
 
+// VIOLATION: state outside State. Owner: t11-cx; moves to ConfigMng in phase 2.
 var commandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 func appendDash(args []string) {

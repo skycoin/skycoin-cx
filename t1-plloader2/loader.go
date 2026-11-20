@@ -19,7 +19,11 @@ import (
 )
 
 var SKIP_PACKAGES = []string{"al", "gl", "glfw", "time", "os", "gltext", "cx", "json", "cipher", "tcp"}
+
+// VIOLATION: state outside State. Owner: t1-plloader2; moves to PackageFileMng in phase 1.
 var FileHashMap = make(map[string]string)
+
+// VIOLATION: state outside State. Owner: t1-plloader2; moves to PackageFileMng in phase 1.
 var PackageHashMap = make(map[string]string)
 
 func ParseArgsForCX(args []string, alsoSubdirs bool) (cxArgs []string, sourceCode []*os.File, fileNames []string) {

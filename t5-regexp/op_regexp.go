@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+// VIOLATION: state outside State. Owner: t5-regexp; moves to RegexpMng in phase 1.
 var regexps map[string]*regexp.Regexp = make(map[string]*regexp.Regexp, 0)
 
 // regexpCompile is a helper function for `opRegexpMustCompile` and
@@ -22,6 +23,7 @@ func regexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	exp := inputs[0].Get_str(prgrm)
 
 	// Output structure `Regexp`.
+	// VIOLATION: created outside manager; phase 1.
 	reg := ast.CXArgument{}
 	err := copier.Copy(&reg, outputs[0].TypeSignature)
 	if err != nil {
@@ -90,6 +92,7 @@ func opRegexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.C
 // opRegexpCompile is a wrapper for golang's `regexp`'s `MustCompile`.
 func opRegexpFind(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	// Output structure `Regexp`.
+	// VIOLATION: created outside manager; phase 1.
 	reg := ast.CXArgument{}
 	err := copier.Copy(&reg, inputs[0].TypeSignature)
 	if err != nil {

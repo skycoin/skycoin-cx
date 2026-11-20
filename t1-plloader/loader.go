@@ -17,7 +17,11 @@ import (
 )
 
 var SKIP_PACKAGES = []string{"al", "gl", "glfw", "time", "os", "gltext", "cx", "json", "cipher", "tcp"}
+
+// VIOLATION: state outside State. Owner: t1-plloader; moves to PackageFileMng in phase 1.
 var FileHashMap = make(map[string]string)
+
+// VIOLATION: state outside State. Owner: t1-plloader; moves to PackageFileMng in phase 1.
 var PackageHashMap = make(map[string]string)
 
 func Contains(list []string, element string) bool {

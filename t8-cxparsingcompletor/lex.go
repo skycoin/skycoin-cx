@@ -27,6 +27,7 @@ type Lexer struct {
 	crash     bool //used for crash behaviour
 	colbefore bool //used for colon keywords
 
+	// VIOLATION: pointer at rest; becomes yySymTypeGid in phase 3.
 	tok *yySymType //symbol read. soon to be depracated for fully new cxgo
 }
 

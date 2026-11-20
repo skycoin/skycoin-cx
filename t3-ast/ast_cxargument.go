@@ -122,8 +122,10 @@ type CXArgument struct {
 
 	PassBy int // pass by value or reference
 
+	// VIOLATION: pointer at rest; becomes CXArgumentDebugGid in phase 3.
 	ArgDetails *CXArgumentDebug
 
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
 	StructType         *CXStruct
 	PreviouslyDeclared bool
 }
@@ -259,6 +261,7 @@ func MakePointer(arg *CXArgument) *CXArgument {
 // MakeStructParameter helper for creating a struct parameter. It creates a
 // `CXArgument` named `argName`, that represents a structure instane of
 // `strctName`, from package `pkgName`.
+// VIOLATION: created outside manager; phase 1.
 func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *CXArgument {
 	pkg, err := prgrm.GetPackage(pkgName)
 	if err != nil {
@@ -280,6 +283,7 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 
 // Slice Helper function for creating parameters for standard library operators.
 // The current standard library only uses basic types and slices. If more options are needed, modify this function
+// VIOLATION: created outside manager; phase 1.
 func Slice(typeCode types.Code) *CXArgument {
 	arg := Param(typeCode)
 	arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_SLICE)
@@ -297,6 +301,7 @@ func Slice(typeCode types.Code) *CXArgument {
 // }
 
 // Param ...
+// VIOLATION: created outside manager; phase 1.
 func Param(typeCode types.Code) *CXArgument {
 	arg := MakeArgument("", "", -1).SetType(typeCode)
 	// arg.IsLocalDeclaration = true
@@ -304,6 +309,7 @@ func Param(typeCode types.Code) *CXArgument {
 }
 
 // MakeArgument ...
+// VIOLATION: created outside manager; phase 1.
 func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
 	return &CXArgument{
 		Name:    name,
@@ -317,6 +323,7 @@ func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
 }
 
 // MakeField ...
+// VIOLATION: created outside manager; phase 1.
 func MakeField(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
 	return &CXArgument{
 		Name:    name,
@@ -331,6 +338,7 @@ func MakeField(name string, typeCode types.Code, fileName string, fileLine int) 
 }
 
 // MakeGlobal ...
+// VIOLATION: created outside manager; phase 1.
 func MakeGlobal(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
 	size := typeCode.Size()
 	global := &CXArgument{

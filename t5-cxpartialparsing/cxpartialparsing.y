@@ -14,8 +14,10 @@
         - go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go t5-cxpartialparsing/cxpartialparsing.y
         */
 
+	// VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to CXProgramMng in phase 2.
 	var Program *ast.CXProgram
 
+	// VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to ParseMng in phase 2.
 	var lineNo int = -1
 	var replMode bool = false
 	var inREPL bool = false
@@ -62,12 +64,17 @@
 
 	line int
 
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	argument *ast.CXArgument
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	arguments []*ast.CXArgument
 
+	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
 	expression *ast.CXExpression
+	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
 	expressions []*ast.CXExpression
 
+        // VIOLATION: pointer at rest; becomes CXFunctionGid in phase 3.
         function *ast.CXFunction
         functionIndex ast.CXFunctionIndex
 }

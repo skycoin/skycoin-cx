@@ -9,6 +9,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// VIOLATION: state outside State. Owner: t0-plbolt; moves to PackageDBMng in phase 2.
 var DBPath string
 
 // VIOLATION: init chaining. Init 1 of the package loader tools: opens

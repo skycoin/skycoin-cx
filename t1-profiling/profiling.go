@@ -13,9 +13,13 @@ var (
 // profile         *os.File
 )
 
+// VIOLATION: state outside State. Owner: t1-profiling; moves to ConfigMng in phase 2.
 var DebugProfile bool
+
+// VIOLATION: state outside State. Owner: t1-profiling; moves to ConfigMng in phase 2.
 var DebugProfileRate int
 
+// VIOLATION: state outside State. Owner: t1-profiling; moves to ProfileMng in phase 1.
 var profiles = make(map[string]int64)
 
 func StartProfile(name string) {

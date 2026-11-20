@@ -32,6 +32,7 @@ func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, err
 			// If type is struct
 			if typeSignature.Type == TYPE_STRUCT {
 				structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
+				// VIOLATION: created outside manager; phase 1.
 				return &CXArgument{
 					Name:                  typeSignature.Name,
 					Type:                  types.STRUCT,
@@ -42,6 +43,7 @@ func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, err
 
 			} else if typeSignature.Type == TYPE_POINTER_STRUCT {
 				structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
+				// VIOLATION: created outside manager; phase 1.
 				return &CXArgument{
 					Name:                  typeSignature.Name,
 					Type:                  types.STRUCT,
@@ -50,6 +52,7 @@ func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, err
 					Offset:                typeSignature.Offset,
 				}, nil
 			} else if typeSignature.Type != TYPE_CXARGUMENT_DEPRECATE {
+				// VIOLATION: created outside manager; phase 1.
 				return &CXArgument{
 					Name:                  typeSignature.Name,
 					Type:                  types.Code(typeSignature.Meta),
@@ -72,6 +75,7 @@ func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, err
 //                     `CXStruct` Member handling
 
 // MakeStruct ...
+// VIOLATION: created outside manager; phase 1.
 func MakeStruct(name string) *CXStruct {
 	return &CXStruct{
 		Name: name,

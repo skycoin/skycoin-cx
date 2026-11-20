@@ -82,29 +82,50 @@ func (cb *CXCallback) Call(prgrm *ast.CXProgram, inputs [][]byte) {
 	}
 }
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appKeyboardCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appMouseCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appFramebufferSizeCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appWindowSizeCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appWindowPosCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appStartCallback CXCallback
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appStopCallback CXCallback
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
 var appCursorPositionCallback CXCallback // TODO : to deprecate
-var appMouseButtonCallback CXCallback    // TODO : to deprecate
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to CallbackMng in phase 1.
+var appMouseButtonCallback CXCallback // TODO : to deprecate
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to EventMng in phase 1.
 var eventCount int
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to EventMng in phase 1.
 var events []Event
+
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to EventMng in phase 1.
 var polled []Event
 var polledCount int
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to EventMng in phase 1.
 var mutex sync.Mutex
 
 func PushEvent(eventType EventType) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	// VIOLATION: created outside manager; phase 1.
 	event := Event{
 		eventType,
 		ACTION_RELEASE, // TODO : ACTION_NONE

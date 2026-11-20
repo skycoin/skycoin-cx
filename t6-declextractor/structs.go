@@ -9,12 +9,13 @@ import (
 )
 
 type StructDeclaration struct {
-	PackageID    string         // name of package
-	FileID       string         // name of file
-	StartOffset  int            // offset with in the file starting from 'type'
-	Length       int            // length of entire declaration i.e. 'type [name] [type]'
-	LineNumber   int            // line number of declaration
-	StructName   string         // name of struct being declared
+	PackageID   string // name of package
+	FileID      string // name of file
+	StartOffset int    // offset with in the file starting from 'type'
+	Length      int    // length of entire declaration i.e. 'type [name] [type]'
+	LineNumber  int    // line number of declaration
+	StructName  string // name of struct being declared
+	// VIOLATION: pointer at rest; becomes StructFieldGid in phase 3.
 	StructFields []*StructField // array of fields
 }
 

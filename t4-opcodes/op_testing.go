@@ -8,6 +8,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// VIOLATION: state outside State. Owner: t4-opcodes; moves to TestMng in phase 2.
 var assertSuccess = true
 
 // AssertFailed ...

@@ -26,8 +26,10 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 	} else {
 		// then it's an expression
 		if initializer[len(initializer)-1].IsStructLiteral() {
+			// VIOLATION: created outside manager; phase 1.
 			outputStruct := &ast.CXStruct{}
 			outputStruct.AddField_TypeSignature(prgrm, glblIdx)
+			// VIOLATION: created outside manager; phase 1.
 			index := prgrm.AddCXAtomicOp(&ast.CXAtomicOperator{Outputs: outputStruct, Operator: -1, Function: -1})
 			initializer = StructLiteralAssignment(prgrm,
 				[]ast.CXExpression{
@@ -89,6 +91,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		// then it was only added a reference to the symbol
 
 		// if offset is not valid, assign new offset
+		// VIOLATION: created outside manager; phase 1.
 		var glblArg *ast.CXArgument = &ast.CXArgument{}
 		if glbl.Offset < 0 || !glbl.Offset.IsValid() {
 			if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
@@ -120,6 +123,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypeArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_ARRAY_ATOMIC
 
+			// VIOLATION: created outside manager; phase 1.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
@@ -137,6 +141,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypePointerArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_POINTER_ARRAY_ATOMIC
 
+			// VIOLATION: created outside manager; phase 1.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
@@ -155,6 +160,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_SLICE_ATOMIC
 
+			// VIOLATION: created outside manager; phase 1.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
@@ -173,6 +179,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_POINTER_SLICE_ATOMIC
 
+			// VIOLATION: created outside manager; phase 1.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
@@ -189,6 +196,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else {
 			// its a cxargument_deprecate type
 			var glblIdx int
+			// VIOLATION: created outside manager; phase 1.
 			var glblCXArg *ast.CXArgument = &ast.CXArgument{}
 			if glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				glblIdx = glbl.Meta
@@ -221,6 +229,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 	} else {
 		// then it hasn't been defined
+		// VIOLATION: created outside manager; phase 1.
 		var glblArg *ast.CXArgument = &ast.CXArgument{}
 		if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, types.POINTER_SIZE), true)

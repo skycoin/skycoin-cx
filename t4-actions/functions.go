@@ -12,7 +12,8 @@ import (
 )
 
 type SymbolsData struct {
-	varCount     int
+	varCount int
+	// VIOLATION: pointer at rest; becomes CXTypeSignatureGid in phase 3.
 	symbols      []*ast.CXTypeSignature
 	symbolsIndex []map[string]int
 }
@@ -304,10 +305,12 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	if expressionOperator == nil {
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
+		// VIOLATION: created outside manager; phase 1.
 		var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 		} else {
+			// VIOLATION: created outside manager; phase 1.
 			expressionOutputArg = &ast.CXArgument{}
 		}
 
@@ -376,10 +379,12 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 		} else {
 			// then it's a function call
 			if len(inpExprAtomicOp.GetOutputs(prgrm)) < 1 {
+				// VIOLATION: created outside manager; phase 1.
 				var out *ast.CXArgument = &ast.CXArgument{}
 
 				inpExprAtomicOpOperatorOutputs := inpExprAtomicOpOperator.GetOutputs(prgrm)
 				inpExprAtomicOpOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(inpExprAtomicOpOperatorOutputs[0])
+				// VIOLATION: created outside manager; phase 1.
 				var inpExprAtomicOpOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
 				if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					inpExprAtomicOpOperatorOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inpExprAtomicOpOperatorOutputTypeSig.Meta))
@@ -390,6 +395,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 					if inpExprAtomicOpOperatorOutputArg.Type == types.UNDEFINED {
 						inpExprAtomicOpInputTypeSig := prgrm.GetCXTypeSignatureFromArray(inpExprAtomicOp.GetInputs(prgrm)[0])
 
+						// VIOLATION: created outside manager; phase 1.
 						var inpExprAtomicOpInputArg *ast.CXArgument = &ast.CXArgument{}
 						if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 							inpExprAtomicOpInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inpExprAtomicOpInputTypeSig.Meta))
@@ -406,6 +412,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC {
+							// VIOLATION: created outside manager; phase 1.
 							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_ATOMIC
@@ -415,6 +422,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(outTypeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+							// VIOLATION: created outside manager; phase 1.
 							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_POINTER_ATOMIC
@@ -579,6 +587,7 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				if !ast.IsComparisonOperator(expressionOperator.AtomicOPCode) {
 					expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 
+					// VIOLATION: created outside manager; phase 1.
 					var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
 					if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 						expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
@@ -616,6 +625,7 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	for _, argTypeSigIdx := range append(expression.GetInputs(prgrm), expression.GetOutputs(prgrm)...) {
 		argTypeSig := prgrm.GetCXTypeSignatureFromArray(argTypeSigIdx)
 
+		// VIOLATION: created outside manager; phase 1.
 		var arg *ast.CXArgument = &ast.CXArgument{}
 		if argTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSig.Meta))
@@ -829,6 +839,7 @@ func isPointerAdded(prgrm *ast.CXProgram, fn *ast.CXFunction, sym *ast.CXArgumen
 //	 typeSigIdx - the index of the type signature from the main CXTypeSignature array.
 func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeSignatureIndex) {
 	typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
+	// VIOLATION: created outside manager; phase 1.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
@@ -861,6 +872,7 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	// added to the list.
 	if sym.IsPointer() && !isPointerAdded(prgrm, fn, sym) {
 		if len(sym.Fields) > 0 {
+			// VIOLATION: created outside manager; phase 1.
 			tmp := ast.CXArgument{}
 			copier.Copy(&tmp, sym)
 			tmp.Fields = nil
@@ -965,6 +977,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 		var receivedType, expectedType string
 
 		expectedTypeSig := prgrm.GetCXTypeSignatureFromArray(expectedTypeSigIdx)
+		// VIOLATION: created outside manager; phase 1.
 		var expectedArg *ast.CXArgument = &ast.CXArgument{}
 		if expectedTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expectedArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expectedTypeSig.Meta))
@@ -1015,6 +1028,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 			inpType = ast.GetFormattedType(prgrm, expressionInputTypeSig)
 
+			// VIOLATION: created outside manager; phase 1.
 			var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 			expressionOutputTypeSigName := expressionOutputTypeSig.Name
 			if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -1037,6 +1051,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) {
 	// checking if number of inputs is not the same as the required number of inputs
 	if len(expression.GetInputs(prgrm)) != len(expressionOperatorInputs) {
+		// VIOLATION: created outside manager; phase 1.
 		expressionOperatorInputArg := &ast.CXArgument{}
 		if len(expressionOperatorInputs) > 0 {
 			expressionTypeSigIdx := expressionOperatorInputs[len(expressionOperatorInputs)-1]
@@ -1110,6 +1125,7 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 			}
 
 			expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
+			// VIOLATION: created outside manager; phase 1.
 			var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 			if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
@@ -1170,6 +1186,7 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		for i, outputIdx := range expression.GetOutputs(prgrm) {
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 
+			// VIOLATION: created outside manager; phase 1.
 			var out *ast.CXArgument = &ast.CXArgument{}
 			if output.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				out = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta))
@@ -1193,6 +1210,7 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 
 			if len(expression.GetInputs(prgrm)) > i {
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[i])
+				// VIOLATION: created outside manager; phase 1.
 				var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
 				if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
@@ -1376,6 +1394,7 @@ func ProcessSlice(prgrm *ast.CXProgram, inpIdx ast.CXArgumentIndex) {
 
 	inp := prgrm.GetCXArgFromArray(inpIdx)
 
+	// VIOLATION: created outside manager; phase 1.
 	var elt *ast.CXArgument = &ast.CXArgument{}
 	if len(inp.Fields) > 0 {
 		elt = prgrm.GetCXArgFromArray(inp.Fields[len(inp.Fields)-1])
@@ -1411,10 +1430,13 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	}
 
 	if isOpIdent {
+		// VIOLATION: created outside manager; phase 1.
 		var inp *ast.CXArgument = &ast.CXArgument{}
+		// VIOLATION: created outside manager; phase 1.
 		var out *ast.CXArgument = &ast.CXArgument{}
 
 		expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
+		// VIOLATION: created outside manager; phase 1.
 		var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
@@ -1424,6 +1446,7 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		}
 
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
+		// VIOLATION: created outside manager; phase 1.
 		var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
@@ -1444,6 +1467,7 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		for _, inputIdx := range expression.GetInputs(prgrm) {
 			input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 
+			// VIOLATION: created outside manager; phase 1.
 			var inp *ast.CXArgument = &ast.CXArgument{}
 			if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				inp = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
@@ -1503,6 +1527,7 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 	fnArg.Package = ast.CXPackageIndex(pkg.Index)
 
 	fnArgIdx := prgrm.AddCXArgInArray(fnArg)
+	// VIOLATION: created outside manager; phase 1.
 	fnArgTypeSig := &ast.CXTypeSignature{
 		Name:       fnArg.Name,
 		Offset:     fnArg.Offset,
@@ -1519,6 +1544,7 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.CXTypeSignatureIndex, offset *types.Pointer, shouldAlreadyExist bool) {
 	typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 
+	// VIOLATION: created outside manager; phase 1.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
@@ -1687,6 +1713,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					panic(err)
 				}
 
+				// VIOLATION: created outside manager; phase 1.
 				var argOut *ast.CXArgument = &ast.CXArgument{StructType: nil}
 				var argOutType string
 				if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -1735,6 +1762,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			}
 			// then we found an output
 			if len(prgrm.CXArgs[outIdx].Fields) > 0 {
+				// VIOLATION: created outside manager; phase 1.
 				var argOut *ast.CXArgument = &ast.CXArgument{}
 				if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					argOut = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argOutTypeSignature.Meta))
@@ -1777,6 +1805,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			os.Exit(constants.CX_COMPILATION_ERROR)
 		}
 
+		// VIOLATION: created outside manager; phase 1.
 		var argOut *ast.CXArgument = &ast.CXArgument{}
 		if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			argOut = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argOutTypeSignature.Meta))
@@ -1803,6 +1832,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, &prgrm.CXArgs[outIdx])
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				// VIOLATION: created outside manager; phase 1.
 				newInputs := &ast.CXStruct{Fields: []ast.CXTypeSignatureIndex{typeSigIdx}}
 				if prgrm.CXAtomicOps[expr.Index].Inputs != nil {
 					for _, typeSig := range prgrm.CXAtomicOps[expr.Index].Inputs.Fields {
@@ -1844,6 +1874,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, &prgrm.CXArgs[outIdx])
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
+				// VIOLATION: created outside manager; phase 1.
 				newInputs := &ast.CXStruct{Fields: []ast.CXTypeSignatureIndex{typeSigIdx}}
 				if prgrm.CXAtomicOps[expr.Index].Inputs != nil {
 					for _, typeSig := range prgrm.CXAtomicOps[expr.Index].Inputs.Fields {
@@ -1978,6 +2009,7 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 
 // CopyArgFields copies 'arg' fields to 'sym' fields.
 func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
+	// VIOLATION: created outside manager; phase 1.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(symTypeSignature.Meta))
@@ -1985,6 +2017,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		sym = nil
 	}
 
+	// VIOLATION: created outside manager; phase 1.
 	var arg *ast.CXArgument = &ast.CXArgument{}
 	if argTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSignature.Meta))
@@ -2354,6 +2387,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 		return
 	}
 
+	// VIOLATION: created outside manager; phase 1.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	var symFields []ast.CXArgumentIndex
 	if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -2402,6 +2436,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 					methodOutputs := method.GetOutputs(prgrm)
 					methodOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(methodOutputs[0])
 
+					// VIOLATION: created outside manager; phase 1.
 					var methodOutputArg *ast.CXArgument = &ast.CXArgument{}
 					if methodOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 						methodOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(methodOutputTypeSig.Meta))

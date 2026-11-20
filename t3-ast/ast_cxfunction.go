@@ -18,7 +18,9 @@ type CXFunction struct {
 	AtomicOPCode int
 
 	// Contents
-	Inputs      *CXStruct      // Input parameters to the function
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	Inputs *CXStruct // Input parameters to the function
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
 	Outputs     *CXStruct      // Output parameters from the function
 	Expressions []CXExpression // Expressions, including control flow statements, in the function
 
@@ -38,6 +40,7 @@ type CXFunction struct {
 	FileLine int
 
 	// Used by the GC
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	ListOfPointers []*CXArgument // Root pointers for the GC algorithm
 }
 
@@ -47,7 +50,9 @@ type CXNativeFunction struct {
 	AtomicOPCode int
 
 	// Contents
-	Inputs  []*CXArgument // Input parameters to the function
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	Inputs []*CXArgument // Input parameters to the function
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	Outputs []*CXArgument // Output parameters from the function
 }
 
@@ -63,6 +68,7 @@ func (cxf CXFunction) IsAtomic() bool {
 
 // MakeFunction creates an empty function.
 // Later, parameters and contents can be added.
+// VIOLATION: created outside manager; phase 1.
 func MakeFunction(name string, fileName string, fileLine int) *CXFunction {
 	return &CXFunction{
 		Name:     name,
@@ -133,6 +139,7 @@ func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction 
 	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
 
 	if fn.Inputs == nil {
+		// VIOLATION: created outside manager; phase 1.
 		fn.Inputs = &CXStruct{}
 	}
 
@@ -183,6 +190,7 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
 
 	if fn.Outputs == nil {
+		// VIOLATION: created outside manager; phase 1.
 		fn.Outputs = &CXStruct{}
 	}
 
@@ -299,6 +307,7 @@ func (fn *CXFunction) RemoveLocalVariableFromArray(name string) error {
 //                             `CXFunction` Selectors
 
 // MakeAtomicOperatorExpression ...
+// VIOLATION: created outside manager; phase 1.
 func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExpression {
 	var opIdx CXFunctionIndex = -1
 	if op != nil {
@@ -317,6 +326,7 @@ func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExp
 }
 
 // MakeCXLineExpression ...
+// VIOLATION: created outside manager; phase 1.
 func MakeCXLineExpression(prgrm *CXProgram, fileName string, lineNo int, lineStr string) *CXExpression {
 	index := prgrm.AddCXLine(&CXLine{
 		FileName:   fileName,

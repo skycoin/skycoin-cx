@@ -26,10 +26,15 @@ const INIT_FN = "initDef"
 
 const CALLSTACK_SIZE types.Pointer = 1000
 
-var STACK_SIZE types.Pointer = 1048576     // 1 Mb
+var STACK_SIZE types.Pointer = 1048576 // 1 Mb
+// VIOLATION: state outside State. Owner: t1-constants; moves to ConfigMng in phase 2.
 var INIT_HEAP_SIZE types.Pointer = 2097152 // 2 Mb
+// VIOLATION: state outside State. Owner: t1-constants; moves to ConfigMng in phase 2.
 var MAX_HEAP_SIZE types.Pointer = 67108864 // 64 Mb
+// VIOLATION: state outside State. Owner: t1-constants; moves to ConfigMng in phase 2.
 var MIN_HEAP_FREE_RATIO float32 = 0.4
+
+// VIOLATION: state outside State. Owner: t1-constants; moves to ConfigMng in phase 2.
 var MAX_HEAP_FREE_RATIO float32 = 0.7
 
 const NULL_HEAP_ADDRESS_OFFSET = types.POINTER_SIZE

@@ -44,6 +44,7 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 			expressionOutput.Name = structLiteralName
 
 			toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0])
+			// VIOLATION: created outside manager; phase 1.
 			var toExpressionOutput *ast.CXArgument = &ast.CXArgument{}
 			if toExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				toExpressionOutput = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(toExpressionOutputTypeSig.Meta))
@@ -96,6 +97,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 	lastFromCXLine, _ := prgrm.GetPreviousCXLine(fromExprs, len(fromExprs)-1)
 
 	lastFromExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastFromExpression.GetOutputs(prgrm)[0])
+	// VIOLATION: created outside manager; phase 1.
 	var lastFromExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastFromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		lastFromExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastFromExpressionOutputTypeSig.Meta))
@@ -225,6 +227,7 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 		typeSig := prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0]
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSig)
 	} else {
+		// VIOLATION: created outside manager; phase 1.
 		var fromExpressionInputArg *ast.CXArgument = &ast.CXArgument{}
 		fromExpressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)[0])
 		var typeSigIdx ast.CXTypeSignatureIndex
@@ -310,6 +313,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 	expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 	expressionIdx := expr.Index
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
+	// VIOLATION: created outside manager; phase 1.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 
 	toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0])
@@ -328,6 +332,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 	var typeSigIdx ast.CXTypeSignatureIndex
 	if fromExpressionOperator == nil {
 		fromExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0])
+		// VIOLATION: created outside manager; phase 1.
 		var fromExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 		if fromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			fromExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionOutputTypeSig.Meta))
@@ -365,6 +370,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 			if fromExprs[lastFromExpressionIdx].IsArrayLiteral() {
 				fromExpressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)[0])
+				// VIOLATION: created outside manager; phase 1.
 				var fromExpressionInputArg *ast.CXArgument = &ast.CXArgument{}
 				if fromExpressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					fromExpressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionInputTypeSig.Meta))

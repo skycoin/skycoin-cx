@@ -247,6 +247,7 @@ func IsAllArgsBasicTypes(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 
 		var inpType types.Code
 
+		// VIOLATION: created outside manager; phase 1.
 		var inp *ast.CXArgument = &ast.CXArgument{}
 		if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			inp = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))

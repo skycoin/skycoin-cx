@@ -12,14 +12,17 @@ import (
 )
 
 // todo need to find a way to support Listener and connection interface
+// VIOLATION: state outside State. Owner: t5-tcp; moves to TCPListenerMng in phase 1.
 var ln net.Listener
 
 var lc net.ListenConfig
 
+// VIOLATION: state outside State. Owner: t5-tcp; moves to TCPConnMng in phase 1.
 var conn net.Conn
 
 // VIOLATION: init chaining. Init 3: the tcp package RPC server, called from Go
 // package init.
+// VIOLATION: state outside State. Owner: t5-tcp; moves to RPCServerMng in phase 1.
 var DefaultServer = rpc.NewServer()
 
 func opTCPDial(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

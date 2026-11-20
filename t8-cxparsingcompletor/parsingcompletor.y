@@ -49,9 +49,12 @@ build-parser: ## Generate lexer and parser for CX grammar
 	line int
         lineStr string
 
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	argument *ast.CXArgument
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	arguments []*ast.CXArgument
 
+	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
 	expression *ast.CXExpression
 	expressions []ast.CXExpression
 
@@ -62,6 +65,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 
 	arrayArguments [][]ast.CXExpression
 
+    // VIOLATION: pointer at rest; becomes CXFunctionGid in phase 3.
     function *ast.CXFunction
     functionIndex ast.CXFunctionIndex
 }
@@ -1193,6 +1197,7 @@ expression_statement:
                 { $$ = nil }
 	|       expression SEMICOLON
                 {          
+                        // VIOLATION: created outside manager; phase 1.
                         var lastFirstAtomicOp *ast.CXAtomicOperator= &ast.CXAtomicOperator{Operator:-1}
                         var err error
 

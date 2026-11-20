@@ -31,6 +31,7 @@ func SerializeCXProgramV2(prgrm *CXProgram, includeDataMemory, useCompression bo
 	return b
 }
 
+// VIOLATION: created outside manager; phase 1.
 func DeserializeCXProgramV2(b []byte, useCompression bool) *CXProgram {
 	prgrm := &CXProgram{}
 	var sPrgrm SerializedCXProgram

@@ -55,6 +55,7 @@ type CXTypeSignature struct {
 	// if type is atomic, meta is the atomic type
 	Meta int
 
+	// VIOLATION: pointer at rest; becomes CXArgumentDebugGid in phase 3.
 	ArgDetails *CXArgumentDebug // Contains file name and file line
 }
 
@@ -83,6 +84,7 @@ type CXTypeSignature_Struct struct {
 	// value.
 	Fields []CXArgumentIndex
 
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
 	StructType *CXStruct
 }
 
@@ -322,6 +324,7 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 }
 
 func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgument {
+	// VIOLATION: created outside manager; phase 1.
 	var arg *CXArgument = &CXArgument{}
 	if typeSignature.Type == TYPE_ATOMIC {
 		arg.Type = types.Code(typeSignature.Meta)
@@ -429,6 +432,7 @@ func (typeSignature *CXTypeSignature) IsInnerReference(prgrm *CXProgram) bool {
 // Added _ForStructs for now so it will be separate from others for smooth transition.
 // TODO: Remove _ForStructs
 func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
+	// VIOLATION: created outside manager; phase 1.
 	newCXTypeSignature := CXTypeSignature{
 		Name:       cxArgument.Name,
 		Package:    cxArgument.Package,
@@ -459,6 +463,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(fieldType),
 			Lengths: cxArgument.Lengths,
@@ -473,6 +478,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(fieldType),
 			Lengths: cxArgument.Lengths,
@@ -487,6 +493,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -500,6 +507,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -512,6 +520,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
@@ -524,6 +533,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
@@ -547,6 +557,7 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 }
 
 func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
+	// VIOLATION: created outside manager; phase 1.
 	newCXTypeSignature := CXTypeSignature{
 		Name:       cxArgument.Name,
 		Package:    cxArgument.Package,
@@ -572,6 +583,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If simple array atomic type, i.e. [5]i32, [2]f64, etc.
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -585,6 +597,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -598,6 +611,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -611,6 +625,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
@@ -623,6 +638,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
@@ -635,6 +651,7 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
+		// VIOLATION: created outside manager; phase 1.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,

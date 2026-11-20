@@ -1,7 +1,9 @@
 package ast
 
 type CXAtomicOperator struct {
-	Inputs   *CXStruct
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	Inputs *CXStruct
+	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
 	Outputs  *CXStruct
 	Operator CXFunctionIndex
 
@@ -32,6 +34,7 @@ func (op *CXAtomicOperator) GetOperatorName(prgrm *CXProgram) string {
 // AddInput ...
 func (op *CXAtomicOperator) AddInput(prgrm *CXProgram, typeSignatureIdx CXTypeSignatureIndex) *CXAtomicOperator {
 	if op.Inputs == nil {
+		// VIOLATION: created outside manager; phase 1.
 		op.Inputs = &CXStruct{Package: op.Package}
 	}
 
@@ -71,6 +74,7 @@ func (op *CXAtomicOperator) GetInputs(prgrm *CXProgram) []CXTypeSignatureIndex {
 // AddOutput ...
 func (op *CXAtomicOperator) AddOutput(prgrm *CXProgram, typeSignatureIdx CXTypeSignatureIndex) *CXAtomicOperator {
 	if op.Outputs == nil {
+		// VIOLATION: created outside manager; phase 1.
 		op.Outputs = &CXStruct{Package: op.Package}
 	}
 

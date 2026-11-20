@@ -877,6 +877,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 	if argType == "Input" {
 
 		affExprAtomicOpInputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetInputs(prgrm)[argIdx])
+		// VIOLATION: created outside manager; phase 1.
 		var arg *ast.CXArgument = &ast.CXArgument{}
 		if affExprAtomicOpInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpInputTypeSig.Meta))
@@ -888,6 +889,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 	}
 
 	affExprAtomicOpOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetOutputs(prgrm)[argIdx])
+	// VIOLATION: created outside manager; phase 1.
 	var arg *ast.CXArgument = &ast.CXArgument{}
 	if affExprAtomicOpOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpOutputTypeSig.Meta))

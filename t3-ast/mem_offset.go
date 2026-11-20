@@ -12,6 +12,7 @@ type DereferenceStruct struct {
 	derefPointer  bool
 	idxCounter    int
 
+	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
 	arg         *CXArgument
 	finalOffset types.Pointer
 	fp          types.Pointer
@@ -130,6 +131,7 @@ func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.P
 func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argTypeSig *CXTypeSignature) types.Pointer {
 	var finalOffset types.Pointer
 
+	// VIOLATION: created outside manager; phase 1.
 	var arg *CXArgument = &CXArgument{}
 	if oldArg != nil {
 		arg = oldArg

@@ -21,6 +21,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 		for _, glblFldIdx := range pkg.Globals.Fields {
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
+			// VIOLATION: created outside manager; phase 1.
 			var glbl *CXArgument = &CXArgument{}
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				glbl = prgrm.GetCXArg(CXArgumentIndex(glblFld.Meta))
@@ -47,6 +48,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 				for _, typeSignatureIdx := range glbl.StructType.Fields {
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
+					// VIOLATION: created outside manager; phase 1.
 					var fld *CXArgument = &CXArgument{}
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
@@ -105,6 +107,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 						for _, typeSignatureIdx := range ptr.StructType.Fields {
 							typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
+							// VIOLATION: created outside manager; phase 1.
 							var fld *CXArgument = &CXArgument{}
 							if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 								fldIdx := typeSignature.Meta
@@ -253,6 +256,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 		for _, glblFldIdx := range pkg.Globals.Fields {
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
+			// VIOLATION: created outside manager; phase 1.
 			var glbl *CXArgument = &CXArgument{}
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				glbl = prgrm.GetCXArg(CXArgumentIndex(glblFld.Meta))
@@ -269,6 +273,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 				for _, typeSignatureIdx := range glbl.StructType.Fields {
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
+					// VIOLATION: created outside manager; phase 1.
 					var fld *CXArgument = &CXArgument{}
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
@@ -419,6 +424,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 		for _, glblFldIdx := range pkg.Globals.Fields {
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 
+			// VIOLATION: created outside manager; phase 1.
 			var glbl *CXArgument = &CXArgument{}
 			if glblFld.Type == TYPE_CXARGUMENT_DEPRECATE {
 				glbl = prgrm.GetCXArg(CXArgumentIndex(glblFld.Meta))
@@ -445,6 +451,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 				for _, typeSignatureIdx := range glbl.StructType.Fields {
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
+					// VIOLATION: created outside manager; phase 1.
 					var fld *CXArgument = &CXArgument{}
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
@@ -509,6 +516,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 							for _, typeSignatureIdx := range ptr.StructType.Fields {
 								typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
+								// VIOLATION: created outside manager; phase 1.
 								var fld *CXArgument = &CXArgument{}
 								if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 									fldIdx := typeSignature.Meta

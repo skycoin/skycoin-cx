@@ -413,6 +413,7 @@ func GetFunctionSet(fnNames []string) (fns []*cxast.CXNativeFunction) {
 	return fns
 }
 
+// VIOLATION: created outside manager; phase 1.
 func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 	var cxProgram *cxast.CXProgram
 

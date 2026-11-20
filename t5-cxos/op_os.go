@@ -25,7 +25,10 @@ const (
 	OS_SEEK_END
 )
 
+// VIOLATION: state outside State. Owner: t5-cxos; moves to OsFileMng in phase 1.
 var openFiles []*os.File
+
+// VIOLATION: state outside State. Owner: t5-cxos; moves to OsFileMng in phase 1.
 var freeFiles []int32
 
 // helper function used to validate file handle from i32

@@ -413,20 +413,25 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 	case CX_ATOMIC_OPERATOR:
 		cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
 		if err != nil {
+			// VIOLATION: created outside manager; phase 1.
 			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
 		}
 
+		// VIOLATION: created outside manager; phase 1.
 		return cxAtomicOp, &CXArgument{}, &CXLine{}, nil
 	case CX_LINE:
 		cxLine, err := cxprogram.GetCXLine(expr.Index)
 		if err != nil {
+			// VIOLATION: created outside manager; phase 1.
 			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
 		}
 
+		// VIOLATION: created outside manager; phase 1.
 		return &CXAtomicOperator{}, &CXArgument{}, cxLine, nil
 		// case CX_ARGUMENT:
 	}
 
+	// VIOLATION: created outside manager; phase 1.
 	return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, fmt.Errorf("operation type is not found.")
 }
 
@@ -435,12 +440,14 @@ func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex in
 		if exprs[i].Type == CX_LINE {
 			_, _, cxLine, err := cxprogram.GetOperation(&exprs[i])
 			if err != nil {
+				// VIOLATION: created outside manager; phase 1.
 				return &CXLine{}, err
 			}
 
 			return cxLine, nil
 		}
 	}
+	// VIOLATION: created outside manager; phase 1.
 	return &CXLine{}, fmt.Errorf("CXLine not found.")
 }
 
@@ -449,12 +456,14 @@ func (cxprogram *CXProgram) GetCXAtomicOpFromExpressions(exprs []CXExpression, c
 		if exprs[i].Type == CX_ATOMIC_OPERATOR {
 			cxAtomicOp, err := cxprogram.GetCXAtomicOp(exprs[i].Index)
 			if err != nil {
+				// VIOLATION: created outside manager; phase 1.
 				return &CXAtomicOperator{}, err
 			}
 
 			return cxAtomicOp, nil
 		}
 	}
+	// VIOLATION: created outside manager; phase 1.
 	return &CXAtomicOperator{}, fmt.Errorf("CXAtomicOperator not found.")
 }
 
@@ -463,12 +472,14 @@ func (cxprogram *CXProgram) GetPreviousCXAtomicOpFromExpressions(exprs []CXExpre
 		if exprs[i].Type == CX_ATOMIC_OPERATOR {
 			cxAtomicOp, err := cxprogram.GetCXAtomicOp(exprs[i].Index)
 			if err != nil {
+				// VIOLATION: created outside manager; phase 1.
 				return &CXAtomicOperator{}, err
 			}
 
 			return cxAtomicOp, nil
 		}
 	}
+	// VIOLATION: created outside manager; phase 1.
 	return &CXAtomicOperator{}, fmt.Errorf("CXAtomicOperator not found.")
 }
 
@@ -500,6 +511,7 @@ func (cxprogram *CXProgram) GetCurrentFunction() (*CXFunction, error) {
 
 	currentPackage, err := cxprogram.GetPackageFromArray(cxprogram.CurrentPackage)
 	if err != nil {
+		// VIOLATION: created outside manager; phase 1.
 		return &CXFunction{}, err
 	}
 

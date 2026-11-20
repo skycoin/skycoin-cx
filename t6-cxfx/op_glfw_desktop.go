@@ -8,6 +8,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to WindowMng in phase 1.
 var windows map[string]*glfw.Window = make(map[string]*glfw.Window, 0)
 
 func opGlfwFullscreen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
@@ -29,6 +30,7 @@ func opGlfwFullscreen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.
 	window.MakeContextCurrent()
 }
 
+// VIOLATION: state outside State. Owner: t6-cxfx; moves to WindowMng in phase 1.
 var initialized bool
 
 func opGlfwInit(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

@@ -26,6 +26,7 @@ func RegisterPackages(prgrm *ast.CXProgram) {
 
 // MakeProgram returns a new empty program. Call RegisterPackages on it to add
 // the native packages.
+// VIOLATION: created outside manager; phase 1.
 func MakeProgram() *ast.CXProgram {
 	minHeapSize := ast.MinHeapSize()
 	newPrgrm := &ast.CXProgram{

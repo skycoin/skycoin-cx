@@ -28,6 +28,17 @@ before the run loop. `make check-inits` fails on `func init()` outside package
 main. The files that still break the rule are listed in `init-allowlist.txt`,
 which only shrinks, and each one is marked `// VIOLATION: init chaining`.
 
+State lives in one place. One State object holds every manager, and no
+state lives anywhere else, so there are no mutable package level variables.
+Each object type has an `<Obj>Def` file, a 64 bit generational index
+`<Obj>Gid` and an `<Obj>Mng` manager that holds the array of objects.
+Objects are created and returned only through their manager. A pointer kept
+at rest, in a struct field or a global, is a Gid instead. A pointer local to
+a function may stay. Work goes through the packages by tier, lowest first.
+Code that still breaks the rule is marked `// VIOLATION: state outside
+State`, `// VIOLATION: pointer at rest` or `// VIOLATION: created outside
+manager`, and the marks only go away. See skycoin/skycoin-cx#9.
+
 
 Table of Contents
 
