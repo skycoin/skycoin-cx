@@ -113,7 +113,7 @@ such as `CXFunctionIndex`.
 | `CXFunctions` | `CXFunction` | `CXFunctionIndex` | `GetFunctionFromArray` (nil for -1) |
 | `CXStructs` | `CXStruct` | `CXStructIndex` | direct index |
 | `CXAtomicOps` | `CXAtomicOperator` | `int` | `GetCXAtomicOp` |
-| `CXLines` | `CXLine` | `int` | `GetCXLine` |
+| `CxIrState.CXLineMng`, was `CXLines` | `CXLine` | `int`, the slot index | `GetCXLine` |
 | `CXArgs` | `CXArgument` | `CXArgumentIndex` | `GetCXArg`, `GetCXArgFromArray` |
 | `CXTypeSignatures` | `CXTypeSignature` | `CXTypeSignatureIndex` | `GetCXTypeSignatureFromArray` |
 | `TypeSignatureForArrays` | `CXTypeSignature_Array` | `int` | `GetCXTypeSignatureArrayFromArray` |
@@ -170,7 +170,7 @@ Scopes, branches and loops become jumps over this list.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `Type` | `CXOPERATION_TYPE` | `CX_ATOMIC_OPERATOR` (1) or `CX_LINE` (3) |
-| `Index` | `int` | Index into `CXAtomicOps` for `CX_ATOMIC_OPERATOR`, into `CXLines` for `CX_LINE` |
+| `Index` | `int` | Index into `CXAtomicOps` for `CX_ATOMIC_OPERATOR`, the slot in `CxIrState.CXLineMng` for `CX_LINE` |
 | `ExpressionType` | `CXEXPR_TYPE` | `CXEXPR_UNUSED` (0), `CXEXPR_METHOD_CALL` (1), `CXEXPR_STRUCT_LITERAL` (2), `CXEXPR_ARRAY_LITERAL` (3), `CXEXPR_SCOPE_NEW` (4), `CXEXPR_SCOPE_DEL` (5) |
 
 `CXOPERATION_TYPE` (`t3-ast/ast_cxoperation.go`) also defines `UNUSED`

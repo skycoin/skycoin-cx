@@ -23,12 +23,13 @@ var compileBenchmarkPrograms = []string{
 	"examples/testing-pointers-to-arrays-of-structs.cx",
 }
 
-// compileBenchmarkObjectCount is the number of IR objects in the arenas of
-// actions.AST, reported per compile so object model changes show up.
+// compileBenchmarkObjectCount is the number of IR objects in the arenas and
+// managers of actions.AST, reported per compile so object model changes show
+// up.
 func compileBenchmarkObjectCount() int {
 	program := actions.AST
 	return len(program.CXPackages) + len(program.CXFunctions) + len(program.CXStructs) +
-		len(program.CXAtomicOps) + len(program.CXLines) + len(program.CXArgs) +
+		len(program.CXAtomicOps) + program.CxIrState.CXLineMng.CXLineLen() + len(program.CXArgs) +
 		len(program.CXTypeSignatures) + len(program.TypeSignatureForArrays) +
 		len(program.TypeSignatureForStructs)
 }

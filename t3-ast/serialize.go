@@ -8,6 +8,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin/src/cipher/encoder"
 )
 
@@ -1198,17 +1199,12 @@ func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, 
 	expr.ExpressionType = CXEXPR_TYPE(sExpr.ExpressionType)
 	switch sExpr.Type {
 	case int64(CX_LINE):
-		// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
-		// Now a heap literal, site S0449.
-		cxLine := &CXLine{}
-
+		lineGid := prgrm.CxIrState.CXLineMng.CXLineAlloc()
+		cxLine := prgrm.CxIrState.CXLineMng.CXLineGet(lineGid)
 		cxLine.FileName = sExpr.FileName
 		cxLine.LineNumber = int(sExpr.LineNumber)
 		cxLine.LineStr = sExpr.LineStr
-		// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
-		// Now an arena insert, site S0450.
-		index := prgrm.AddCXLine(cxLine)
-		expr.Index = index
+		expr.Index = int(objmodel.GidIndex(int64(lineGid)))
 		expr.Type = CX_LINE
 	case int64(CX_ATOMIC_OPERATOR):
 		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.

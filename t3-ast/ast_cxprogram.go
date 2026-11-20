@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
 type StackSegmentStruct struct {
@@ -219,14 +220,16 @@ func (cxprogram *CXProgram) GetStructFromArray(index CXStructIndex) *CXStruct {
 // ----------------------------------------------------------------
 //            `CXProgram` CXLines, CXArgs, and CXAtomicOps Handling
 
+// GetCXLine returns the line in slot index of the program's CXLineMng. An
+// expression keeps the slot index, not the Gid, until phase 5 of CXLine.
 func (cxprogram *CXProgram) GetCXLine(index int) (*CXLine, error) {
-	if index > (len(cxprogram.CXLines) - 1) {
+	manager := &cxprogram.CxIrState.CXLineMng
+	if index < 0 || index >= int(manager.CXLineMngNext) {
 		return nil, fmt.Errorf("error: CXLines[%d]: index out of bounds", index)
 	}
 
-	// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
-	// Now a pointer into an arena, site S0205.
-	return &cxprogram.CXLines[index], nil
+	gid := objmodel.GidCompose(CXLineGidTypeTag, manager.CXLineMngGenerations[index], uint32(index))
+	return manager.CXLineGet(CXLineGid(gid)), nil
 }
 
 func (cxprogram *CXProgram) GetCXArg(index CXArgumentIndex) *CXArgument {
@@ -247,14 +250,6 @@ func (cxprogram *CXProgram) GetCXAtomicOp(index int) (*CXAtomicOperator, error) 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now a pointer into an arena, site S0207.
 	return &cxprogram.CXAtomicOps[index], nil
-}
-
-func (cxprogram *CXProgram) AddCXLine(CXLine *CXLine) int {
-	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
-	// Now an arena append, site S0208.
-	cxprogram.CXLines = append(cxprogram.CXLines, *CXLine)
-
-	return len(cxprogram.CXLines) - 1
 }
 
 // func (cxprogram *CXProgram) AddCXArg(CXArg *CXArgument) int {
@@ -452,21 +447,21 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 		cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0226 S0227 S0228.
-			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
+			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0226 S0227.
+			return &CXAtomicOperator{}, &CXArgument{}, nil, err
 		}
 
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0229 S0230.
-		return cxAtomicOp, &CXArgument{}, &CXLine{}, nil
+		// Now a heap literal, site S0229.
+		return cxAtomicOp, &CXArgument{}, nil, nil
 	case CX_LINE:
 		// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
 		// Now an arena getter, site S0231.
 		cxLine, err := cxprogram.GetCXLine(expr.Index)
 		if err != nil {
 			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0232 S0233 S0234.
-			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
+			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0232 S0233.
+			return &CXAtomicOperator{}, &CXArgument{}, nil, err
 		}
 
 		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
@@ -476,8 +471,8 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 	}
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-	// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0237 S0238 S0239.
-	return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, fmt.Errorf("operation type is not found.")
+	// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0237 S0238.
+	return &CXAtomicOperator{}, &CXArgument{}, nil, fmt.Errorf("operation type is not found.")
 }
 
 func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex int) (*CXLine, error) {

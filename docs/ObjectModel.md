@@ -44,7 +44,7 @@ free one.
 | `CXStruct` | `0x05` | `CXProgram.CXStructs`, and heap `*CXStruct` parameter lists | `CXStructIndex` |
 | `CXExpression` | `0x06` | none, held by value in `CXFunction.Expressions` and `CXProgram.SysInitExprs` | none |
 | `CXAtomicOperator` | `0x07` | `CXProgram.CXAtomicOps` | `int` |
-| `CXLine` | `0x08` | `CXProgram.CXLines` | `int` |
+| `CXLine` | `0x08` | `CxIrState.CXLineMng` since #311 | `int`, the slot index |
 | `CXArgument` | `0x09` | `CXProgram.CXArgs` | `CXArgumentIndex` |
 | `CXArgumentDebug` | `0x0A` | none, heap | `*CXArgumentDebug` |
 | `CXTypeSignature` | `0x0B` | `CXProgram.CXTypeSignatures` | `CXTypeSignatureIndex` |
@@ -542,6 +542,12 @@ object and phase are in
    `Remove*` site calls the manager. The arenas become the managers' arrays.
 5. **Gid.** Each index type and each pointer at rest becomes a Gid.
 6. **Teardown.** Teardown1, Teardown2 and the Len 0 test.
+
+In phase 4 a field that names an object by an `int` index keeps the index,
+which is the Gid's index bits, `int(objmodel.GidIndex(int64(gid)))`. The
+old getter, such as `GetCXLine`, builds the Gid back from the slot's
+generation and calls Get, so its callers wait for phase 5. A site that
+fills an object takes the Get pointer after its last Alloc on that manager.
 
 The objects go through phases 4 and 5 in this order, contained objects
 first, so an object's allocation moves before the objects whose

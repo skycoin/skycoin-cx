@@ -3,6 +3,8 @@ package ast
 import (
 	"errors"
 	"fmt"
+
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
 type CXFunctionIndex int
@@ -314,13 +316,12 @@ func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExp
 // OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 // Now a constructor, site S0153.
 func MakeCXLineExpression(prgrm *CXProgram, fileName string, lineNo int, lineStr string) *CXExpression {
-	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
-	// Now a heap literal, site S0154 S0155.
-	index := prgrm.AddCXLine(&CXLine{
-		FileName:   fileName,
-		LineNumber: lineNo,
-		LineStr:    lineStr,
-	})
+	lineGid := prgrm.CxIrState.CXLineMng.CXLineAlloc()
+	line := prgrm.CxIrState.CXLineMng.CXLineGet(lineGid)
+	line.FileName = fileName
+	line.LineNumber = lineNo
+	line.LineStr = lineStr
+	index := int(objmodel.GidIndex(int64(lineGid)))
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 	// Now a heap literal, site S0156.

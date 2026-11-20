@@ -30,6 +30,7 @@
 
 #### Changed
 
+- `CXLine` objects live in `CxIrState.CXLineMng`. `MakeCXLineExpression` and `Deserialize` allocate them there, `CXProgram.CXLines` and `CXProgram.AddCXLine` are gone, and `GetCXLine` reads the manager by slot index. `GetOperation` returns a nil line for an expression that is not a line instead of a new empty one (#299, #311)
 - Every program has its own `CxIrState`, reached through `CXProgram.CxIrState` until phase 5 of `CXProgram`. `MakeProgram` and `Deserialize` make and initialize it, see "Until the program is managed" in `docs/ObjectModel.md`. The `CXArgumentDebug` allocation sites stay as they are until its Gid phase, because the object is shared through a pointer field (#299, #306)
 - Each IR struct of `t3-ast` lives in its own `<obj>_def.go`, for example `cxargument_def.go`, as the object model asks. `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer`, which nothing used, are removed (#299)
 - Every site the object model will change, 1628 in all, carries a two line `// OBJMODEL:` comment with its target manager call or Gid, its phase, its issue and its id in `docs/objectmodel-sites.csv`. The `// VIOLATION:` comments for IR objects are gone (#299)
