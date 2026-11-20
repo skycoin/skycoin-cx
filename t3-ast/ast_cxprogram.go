@@ -143,6 +143,15 @@ func (cxprogram *CXProgram) AddFunctionInArray(fn *CXFunction) CXFunctionIndex {
 	return CXFunctionIndex(fn.Index)
 }
 
+// nativeArgCopy returns a copy of a native argument for one program.
+// Natives are shared by every program, so their Index must stay unset.
+func nativeArgCopy(arg *CXArgument) *CXArgument {
+	// VIOLATION: created outside manager; phase 1.
+	cp := *arg
+	cp.Index = -1
+	return &cp
+}
+
 func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFunctionIndex {
 	fnNative := &CXFunction{
 		Index:          len(cxprogram.CXFunctions),
@@ -160,7 +169,7 @@ func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFun
 			panic("error adding local variable name")
 		}
 
-		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, argIn)
+		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, nativeArgCopy(argIn))
 
 		newFieldIdx := cxprogram.AddCXTypeSignatureInArray(newField)
 		fnNative.Inputs.Fields = append(fnNative.Inputs.Fields, newFieldIdx)
@@ -174,7 +183,7 @@ func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFun
 			panic("error adding local variable name")
 		}
 
-		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, argOut)
+		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, nativeArgCopy(argOut))
 		newFieldIdx := cxprogram.AddCXTypeSignatureInArray(newField)
 		fnNative.Outputs.Fields = append(fnNative.Outputs.Fields, newFieldIdx)
 	}

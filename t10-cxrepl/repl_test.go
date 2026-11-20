@@ -1,6 +1,7 @@
 package repl_test
 
 import (
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -68,5 +69,29 @@ func main() {
 `)
 	if want := strings.Repeat(line, 5000); out != want {
 		t.Fatalf("got %d bytes of output, want %d: %.80q", len(out), len(want), out)
+	}
+}
+
+// Operators used to keep the argument index of the program that first used
+// them, so the next program read the wrong argument. See #174.
+func TestEvalNoStateBetweenPrograms(t *testing.T) {
+	a := "package main\nfunc main() {\n\tvar i i32 = 1\n\ti++\n\tbool.print(i < 3)\n}\n"
+	b := "package main\nfunc main() {\n\tvar f f32 = 1.5\n\tf32.print(f + 2.0)\n}\n"
+	if out := eval(t, a); out != "true\n" {
+		t.Fatalf("Eval(a): got %q, want %q", out, "true\n")
+	}
+	stderr := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stderr = w
+	out := eval(t, b)
+	os.Stderr = stderr
+	w.Close()
+	var errs strings.Builder
+	io.Copy(&errs, r)
+	if out != "3.5\n" || errs.Len() > 0 {
+		t.Fatalf("Eval(b) after Eval(a): got %q, compile output %q", out, errs.String())
 	}
 }
