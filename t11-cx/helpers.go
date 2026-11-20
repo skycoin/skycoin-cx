@@ -49,6 +49,8 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 	defer profiling.StopProfile("parse")
 
 	if actions.AST == nil {
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0056 S0057.
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 	}
@@ -81,12 +83,20 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 
 // initMainPkg adds a `main` package with an empty `main` function to `prgrm`.
 func initMainPkg(prgrm *ast.CXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now a constructor call, site S0058.
 	mod := ast.MakePackage(constants.MAIN_PKG)
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S0059.
 	modIdx := prgrm.AddPackage(mod)
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0060.
 	modPkg, err := prgrm.GetPackageFromArray(modIdx)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now a constructor call, site S0061.
 	fn := ast.MakeFunction(constants.MAIN_FUNC, actions.CurrentFile, actions.LineNo)
 	modPkg.AddFunction(prgrm, fn)
 }

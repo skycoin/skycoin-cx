@@ -16,10 +16,14 @@ func sampleProgramWithPackages(t *testing.T) *cxast.CXProgram {
 	t.Helper()
 	prgrm := generateSampleProgramFromCXEvolves(t, false)
 	for _, pkg := range []string{"alpha", "beta", "gamma", "delta"} {
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S0050.
 		if err := astapi.AddEmptyPackage(prgrm, pkg); err != nil {
 			t.Fatal(err)
 		}
 		for _, fn := range []string{"one", "two", "three"} {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+			// Now an arena insert, site S0051.
 			if err := astapi.AddEmptyFunctionToPackage(prgrm, pkg, pkg+"_"+fn); err != nil {
 				t.Fatal(err)
 			}
@@ -32,6 +36,8 @@ func sampleProgramWithPackages(t *testing.T) *cxast.CXProgram {
 func packageFunctions(prgrm *cxast.CXProgram) map[string][]string {
 	got := map[string][]string{}
 	for name, pkgIdx := range prgrm.Packages {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0052.
 		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
 		if err != nil {
 			continue
@@ -77,6 +83,8 @@ func TestSerializeKeepsFunctionsInTheirPackage(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Now a constructor call, site S0053.
 		got, err := cxast.Deserialize(b, nil)
 		if err != nil {
 			t.Fatal(err)

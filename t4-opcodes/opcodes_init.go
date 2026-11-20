@@ -21,6 +21,8 @@ func Out(params ...*ast.CXArgument) []*ast.CXArgument {
 }
 
 func RegisterOpcodes(prgrm *ast.CXProgram) {
+	// OBJMODEL: state.CXNativeFunctionMng (manager storage) or []CXNativeFunctionGid, phase 4 #356.
+	// Now a slice of objects, site S1351.
 	ast.Operators = make([]*ast.CXNativeFunction, ast.OPERATOR_HANDLER_COUNT)
 
 	RegisterOpCode(prgrm, constants.OP_IDENTITY, "identity", opIdentity, In(ast.ConstCxArg_UND_TYPE), Out(ast.ConstCxArg_UND_TYPE))
@@ -72,11 +74,21 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterOpCode(prgrm, constants.OP_BOOL_AND, "bool.and", opBoolAnd, In(ast.ConstCxArg_BOOL, ast.ConstCxArg_BOOL), Out(ast.ConstCxArg_BOOL))
 	RegisterOpCode(prgrm, constants.OP_BOOL_NOT, "bool.not", opBoolNot, In(ast.ConstCxArg_BOOL), Out(ast.ConstCxArg_BOOL))
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1352.
 	RegisterOpCode(prgrm, constants.OP_APPEND, "append", opSliceAppend, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_UND_TYPE), Out(ast.Slice(types.UNDEFINED)))
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1353.
 	RegisterFunction(prgrm, "resize", opSliceResize, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1354.
 	RegisterFunction(prgrm, "insert", opSliceInsertElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32, ast.ConstCxArg_UND_TYPE), Out(ast.Slice(types.UNDEFINED)))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1355.
 	RegisterFunction(prgrm, "remove", opSliceRemoveElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1356.
 	RegisterFunction(prgrm, "copy", opSliceCopy, In(ast.Slice(types.UNDEFINED), ast.Slice(types.UNDEFINED)), Out(ast.ConstCxArg_I32))
 
 	RegisterFunction(prgrm, "len", opSliceLen, In(ast.ConstCxArg_UND_TYPE), Out(ast.ConstCxArg_I32))
@@ -485,7 +497,11 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterFunction(prgrm, "panicIfNot", opPanicIfNot, In(ast.ConstCxArg_BOOL, ast.ConstCxArg_STR), nil)
 	RegisterFunction(prgrm, "strerror", opStrError, In(ast.ConstCxArg_I32), Out(ast.ConstCxArg_STR))
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1357.
 	RegisterFunction(prgrm, "aff.print", opAffPrint, In(ast.Slice(types.AFF)), nil)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1358.
 	RegisterFunction(prgrm, "aff.query", opAffQuery, In(ast.Slice(types.AFF)), Out(ast.Slice(types.AFF)))
 	// RegisterFunction(prgrm,"aff.on", opAffOn, In(ast.Slice(types.AFF), ast.Slice(types.AFF)), nil)
 	// RegisterFunction(prgrm,"aff.of", opAffOf, In(ast.Slice(types.AFF), ast.Slice(types.AFF)), nil)

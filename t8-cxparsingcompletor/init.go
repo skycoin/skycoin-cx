@@ -19,6 +19,8 @@ func InitCXCore() {
 		cxos.InitConstants()
 		cxfx.InitConstants()
 		if actions.AST == nil {
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1466 S1467.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 		}

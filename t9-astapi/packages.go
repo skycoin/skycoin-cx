@@ -20,6 +20,8 @@ import (
 // []string{"main", "secondpackage", "thirdpackage"}
 func GetPackagesNameList(cxprogram *cxast.CXProgram) (list []string) {
 	for _, pkgIdx := range cxprogram.Packages {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S1610.
 		pkg, err := cxprogram.GetPackageFromArray(pkgIdx)
 		if err != nil {
 			panic(err)
@@ -44,7 +46,11 @@ func GetPackagesNameList(cxprogram *cxast.CXProgram) (list []string) {
 //
 // Note the new main package added to the cx program.
 func AddEmptyPackage(cxprogram *cxast.CXProgram, pkgName string) error {
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now a constructor call, site S1611.
 	pkg := cxast.MakePackage(pkgName)
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S1612.
 	cxprogram.AddPackage(pkg)
 	return nil
 }

@@ -77,6 +77,8 @@ func unsafeEval(code string) (out string) {
 	globals.FoundCompileErrors = false
 
 	// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0001 S0002.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	cxpartialparsing.Program = actions.AST
@@ -89,6 +91,8 @@ func unsafeEval(code string) (out string) {
 	parseErrors += cxparsingcompletor.Parse(lexer)
 	if parseErrors > 0 || globals.FoundCompileErrors {
 		restore()
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0003 S0004.
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 		return cxparsering.ErrCompilation.Error()
@@ -104,6 +108,8 @@ func unsafeEval(code string) (out string) {
 	if err != nil {
 		restore()
 		// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0005 S0006.
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 		return fmt.Sprintf("%s", err)
@@ -113,6 +119,8 @@ func unsafeEval(code string) (out string) {
 	out = restore()
 
 	// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0007 S0008.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	return out
@@ -139,6 +147,8 @@ func Eval(code string) string {
 		return result
 	case <-timer.C:
 		// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0009 S0010.
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 		return "Timed out."

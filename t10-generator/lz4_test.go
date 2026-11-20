@@ -92,6 +92,8 @@ func TestDeserializeCompressed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S0016.
 	got, err := cxast.Deserialize(b, c)
 	if err != nil {
 		t.Fatal(err)
@@ -104,6 +106,8 @@ func TestDeserializeCompressed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S0017.
 	if _, err := cxast.Deserialize(short[:8], nil); err == nil {
 		t.Fatal("want an error for truncated input")
 	}
@@ -129,6 +133,8 @@ func TestSerializeCodecMisuse(t *testing.T) {
 		if _, err := cxast.SerializeCXProgram(prgrm, false, tc.c); !errors.Is(err, tc.want) {
 			t.Errorf("%s: SerializeCXProgram: got %v, want %v", name, err, tc.want)
 		}
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Now a constructor call, site S0018.
 		if _, err := cxast.Deserialize([]byte{0}, tc.c); !errors.Is(err, tc.want) {
 			t.Errorf("%s: Deserialize: got %v, want %v", name, err, tc.want)
 		}
@@ -143,6 +149,8 @@ func TestDeserializeRejectsOtherVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S0019.
 	got, err := cxast.Deserialize(b, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -155,6 +163,8 @@ func TestDeserializeRejectsOtherVersion(t *testing.T) {
 	if b, err = cxast.SerializeCXProgram(prgrm, false, nil); err != nil {
 		t.Fatal(err)
 	}
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S0020.
 	if _, err := cxast.Deserialize(b, nil); err == nil {
 		t.Fatal("want an error for a program from another version")
 	}

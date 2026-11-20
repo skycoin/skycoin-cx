@@ -37,11 +37,17 @@ func RegisterOpCode(prgrm *ast.CXProgram, code int, name string, handler ast.Opc
 	ast.OpCodes[name] = code
 
 	if inputs == nil {
+		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+		// Now a slice of objects, site S1344.
 		inputs = []*ast.CXArgument{}
 	}
 	if outputs == nil {
+		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+		// Now a slice of objects, site S1345.
 		outputs = []*ast.CXArgument{}
 	}
+	// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
+	// Now a constructor call, site S1346.
 	ast.Natives[code] = MakeNativeFunction(prgrm, code, inputs, outputs)
 }
 
@@ -67,12 +73,19 @@ func RegisterOperator(prgrm *ast.CXProgram, name string, handler ast.OpcodeHandl
 }
 
 // MakeNativeFunction ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
+// Now a constructor, site S1347.
 func MakeNativeFunction(prgrm *ast.CXProgram, opCode int, inputs []*ast.CXArgument, outputs []*ast.CXArgument) *ast.CXNativeFunction {
+	// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
+	// Now a heap literal, site S1348.
 	fn := &ast.CXNativeFunction{
 		AtomicOPCode: opCode,
-		Inputs:       []*ast.CXArgument{},
-		Outputs:      []*ast.CXArgument{},
+		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+		// Now a slice of objects, site S1349.
+		Inputs: []*ast.CXArgument{},
+		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+		// Now a slice of objects, site S1350.
+		Outputs: []*ast.CXArgument{},
 	}
 
 	offset := types.Pointer(0)

@@ -18,10 +18,14 @@ type CXFunction struct {
 	AtomicOPCode int
 
 	// Contents
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0127.
 	Inputs *CXStruct // Input parameters to the function
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
-	Outputs     *CXStruct      // Output parameters from the function
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0128.
+	Outputs *CXStruct // Output parameters from the function
+	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
+	// Now objects held by value, site S0129.
 	Expressions []CXExpression // Expressions, including control flow statements, in the function
 
 	// contains the name of its local variables
@@ -40,7 +44,8 @@ type CXFunction struct {
 	FileLine int
 
 	// Used by the GC
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, phase 5 #327.
+	// Now a pointer at rest, site S0130.
 	ListOfPointers []*CXArgument // Root pointers for the GC algorithm
 }
 
@@ -50,9 +55,11 @@ type CXNativeFunction struct {
 	AtomicOPCode int
 
 	// Contents
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, phase 5 #327.
+	// Now a pointer at rest, site S0131.
 	Inputs []*CXArgument // Input parameters to the function
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, phase 5 #327.
+	// Now a pointer at rest, site S0132.
 	Outputs []*CXArgument // Output parameters from the function
 }
 
@@ -68,13 +75,18 @@ func (cxf CXFunction) IsAtomic() bool {
 
 // MakeFunction creates an empty function.
 // Later, parameters and contents can be added.
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+// Now a constructor, site S0133.
 func MakeFunction(name string, fileName string, fileLine int) *CXFunction {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now a heap literal, site S0134.
 	return &CXFunction{
 		Name:     name,
 		Index:    -1,
 		FileName: fileName,
 		FileLine: fileLine,
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0135.
 		Inputs: &CXStruct{
 			Name: name + "_Input",
 		},
@@ -129,6 +141,8 @@ func (fn *CXFunction) GetExpressionByLine(line int) (*CXExpression, error) {
 func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction {
 	fnInputs := fn.GetInputs(prgrm)
 	for _, inputIdx := range fnInputs {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0136.
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 		if input.Name == param.Name {
 			return fn
@@ -139,10 +153,13 @@ func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction 
 	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
 
 	if fn.Inputs == nil {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0137.
 		fn.Inputs = &CXStruct{}
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0138.
 	newFieldIdx := prgrm.AddCXTypeSignatureInArray(newField)
 	fn.Inputs.AddField_TypeSignature(prgrm, newFieldIdx)
 
@@ -179,6 +196,8 @@ func (fn *CXFunction) GetInputs(prgrm *CXProgram) []CXTypeSignatureIndex {
 func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction {
 	fnOutputs := fn.GetOutputs(prgrm)
 	for _, outputIdx := range fnOutputs {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0139.
 		output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 		if output.Name == param.Name {
 			return fn
@@ -190,10 +209,13 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 	newField := GetCXTypeSignatureRepresentationOfCXArg(prgrm, param)
 
 	if fn.Outputs == nil {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0140.
 		fn.Outputs = &CXStruct{}
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0141.
 	newFieldIdx := prgrm.AddCXTypeSignatureInArray(newField)
 	fn.Outputs.AddField_TypeSignature(prgrm, newFieldIdx)
 
@@ -229,6 +251,8 @@ func (fn *CXFunction) GetOutputs(prgrm *CXProgram) []CXTypeSignatureIndex {
 // AddExpression ...
 func (fn *CXFunction) AddExpression(prgrm *CXProgram, expr *CXExpression) *CXFunction {
 	if expr.Type == CX_ATOMIC_OPERATOR {
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0142.
 		cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			panic(err)
@@ -244,6 +268,8 @@ func (fn *CXFunction) AddExpression(prgrm *CXProgram, expr *CXExpression) *CXFun
 }
 
 func (fn *CXFunction) AddExpressionByLineNumber(prgrm *CXProgram, expr *CXExpression, line int) *CXFunction {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0143.
 	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
@@ -255,7 +281,11 @@ func (fn *CXFunction) AddExpressionByLineNumber(prgrm *CXProgram, expr *CXExpres
 	if lenExprs == line {
 		fn.Expressions = append(fn.Expressions, *expr)
 	} else {
+		// OBJMODEL: state.CXExpressionMng.CXExpressionRelease(gid), phase 4 #346.
+		// Now a dropped object, site S0144.
 		fn.Expressions = append(fn.Expressions[:line+1], fn.Expressions[line:]...)
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now an object copy, site S0145.
 		fn.Expressions[line] = *expr
 	}
 
@@ -269,8 +299,12 @@ func (fn *CXFunction) RemoveExpression(line int) {
 	if len(fn.Expressions) > 0 {
 		lenExprs := len(fn.Expressions)
 		if line >= lenExprs-1 || line < 0 {
+			// OBJMODEL: state.CXExpressionMng.CXExpressionRelease(gid), phase 4 #346.
+			// Now a dropped object, site S0146.
 			fn.Expressions = fn.Expressions[:len(fn.Expressions)-1]
 		} else {
+			// OBJMODEL: state.CXExpressionMng.CXExpressionRelease(gid), phase 4 #346.
+			// Now a dropped object, site S0147.
 			fn.Expressions = append(fn.Expressions[:line], fn.Expressions[line+1:]...)
 		}
 	}
@@ -307,18 +341,25 @@ func (fn *CXFunction) RemoveLocalVariableFromArray(name string) error {
 //                             `CXFunction` Selectors
 
 // MakeAtomicOperatorExpression ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+// Now a constructor, site S0148.
 func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExpression {
 	var opIdx CXFunctionIndex = -1
 	if op != nil {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now an arena insert, site S0149.
 		opIdx = prgrm.AddNativeFunctionInArray(op)
 	}
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+	// Now a heap literal, site S0150 S0151.
 	index := prgrm.AddCXAtomicOp(&CXAtomicOperator{
 		Operator: opIdx,
 		// Function: -1,
 	})
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a heap literal, site S0152.
 	return &CXExpression{
 		Index: index,
 		Type:  CX_ATOMIC_OPERATOR,
@@ -326,14 +367,19 @@ func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExp
 }
 
 // MakeCXLineExpression ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+// Now a constructor, site S0153.
 func MakeCXLineExpression(prgrm *CXProgram, fileName string, lineNo int, lineStr string) *CXExpression {
+	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+	// Now a heap literal, site S0154 S0155.
 	index := prgrm.AddCXLine(&CXLine{
 		FileName:   fileName,
 		LineNumber: lineNo,
 		LineStr:    lineStr,
 	})
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a heap literal, site S0156.
 	return &CXExpression{
 		Index: index,
 		Type:  CX_LINE,

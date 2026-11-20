@@ -13,7 +13,9 @@ import (
 // ReturnExpressions stores the `Size` of the return arguments represented by `Expressions`.
 // For example: `return foo() + bar()` is a set of 3 expressions and they represent a single return argument
 type ReturnExpressions struct {
-	Size        int
+	Size int
+	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
+	// Now objects held by value, site S0607.
 	Expressions []ast.CXExpression
 }
 
@@ -41,7 +43,11 @@ func IterationExpressions(prgrm *ast.CXProgram,
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0608.
 	upExprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0609.
 	upExpr := ast.MakeAtomicOperatorExpression(prgrm, jmpFn)
 	upExpressionIdx := upExpr.Index
 
@@ -53,18 +59,26 @@ func IterationExpressions(prgrm *ast.CXProgram,
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
 	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0610.
 	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 	prgrm.CXAtomicOps[upExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[upExpressionIdx].ThenLines = upLines
 	prgrm.CXAtomicOps[upExpressionIdx].ElseLines = downLines
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0611.
 	downExprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0612.
 	downExpr := ast.MakeAtomicOperatorExpression(prgrm, jmpFn)
 	downExpressionIdx := downExpr.Index
 
 	prgrm.CXAtomicOps[downExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0613.
 	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 	lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)) < 1 {
@@ -72,32 +86,52 @@ func IterationExpressions(prgrm *ast.CXProgram,
 			println(ast.CompilationError(CurrentFile, LineNo), "loop condition has no value")
 			os.Exit(types.CX_COMPILATION_ERROR)
 		}
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0614.
 		lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
 
 		var lastCondExpressionOperatorOutputType types.Code
 		var typeSigIdx ast.CXTypeSignatureIndex
 		if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0615.
 			lastCondExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastCondExpressionOperatorOutputTypeSig.Meta))
 			lastCondExpressionOperatorOutputType = lastCondExpressionOperatorOutputArg.Type
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a constructor call, site S0616.
 			predicate := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(lastCondExpressionOperatorOutputType)
 			predicate.Package = ast.CXPackageIndex(pkg.Index)
 			predicate.PreviouslyDeclared = true
 
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, predicate)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0617.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now a local object, site S0618.
 			var newTypeSig ast.CXTypeSignature
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an object copy, site S0619.
 			newTypeSig = *lastCondExpressionOperatorOutputTypeSig
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
 			newTypeSig.Offset = types.Pointer(0)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0620.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now a local object, site S0621.
 			var newTypeSig ast.CXTypeSignature
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an object copy, site S0622.
 			newTypeSig = *lastCondExpressionOperatorOutputTypeSig
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
 			newTypeSig.Offset = types.Pointer(0)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0623.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 		} else {
 			panic("type is not known")
@@ -107,6 +141,8 @@ func IterationExpressions(prgrm *ast.CXProgram,
 		prgrm.CXAtomicOps[downExpressionIdx].AddInput(prgrm, typeSigIdx)
 	} else {
 		predicateTypeSigIdx := prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0624.
 		predicateTypeSig := prgrm.GetCXTypeSignatureFromArray(predicateTypeSigIdx)
 		var predicateIdx ast.CXArgumentIndex
 		if predicateTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -170,16 +206,24 @@ func trueJmpExpressions(prgrm *ast.CXProgram, opcode int) []ast.CXExpression {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0625.
 	exprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0626.
 	expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[opcode])
 	expressionIdx := expr.Index
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
 	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0627.
 	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
+	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+	// Now a slice of objects, site S0628.
 	return []ast.CXExpression{*exprCXLine, *expr}
 }
 
@@ -222,12 +266,18 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0629.
 	ifExprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0630.
 	ifExpr := ast.MakeAtomicOperatorExpression(prgrm, jmpFn)
 	ifExpressionIdx := ifExpr.Index
 	prgrm.CXAtomicOps[ifExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0631.
 	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 
 	var predicateTypeSigIdx ast.CXTypeSignatureIndex
@@ -236,6 +286,8 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		predicateTypeSigIdx = prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
 	} else {
 		// then it's an expression
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0632.
 		predicate := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 		if conditionExprs[len(conditionExprs)-1].IsMethodCall() {
 			// we'll change this once we have access to method's types in
@@ -245,10 +297,14 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 			prgrm.CXAtomicOps[lastCondExpressionIdx].Outputs = nil
 		} else {
 			lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0633.
 			lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
 
 			var lastCondExpressionOperatorOutputArgType types.Code
 			if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0634.
 				lastCondExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastCondExpressionOperatorOutputTypeSig.Meta))
 				lastCondExpressionOperatorOutputArgType = lastCondExpressionOperatorOutputArg.Type
 			} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -264,6 +320,8 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		predicate.Package = ast.CXPackageIndex(pkg.Index)
 
 		predicateTypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, predicate)
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0635.
 		predicateTypeSigIdx = prgrm.AddCXTypeSignatureInArray(predicateTypeSig)
 		prgrm.CXAtomicOps[lastCondExpressionIdx].AddOutput(prgrm, predicateTypeSigIdx)
 	}
@@ -276,7 +334,11 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	prgrm.CXAtomicOps[ifExpressionIdx].ThenLines = thenLines
 	prgrm.CXAtomicOps[ifExpressionIdx].ElseLines = elseLines
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0636.
 	skipExprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0637.
 	skipExpr := ast.MakeAtomicOperatorExpression(prgrm, jmpFn)
 	skipExpressionIdx := skipExpr.Index
 
@@ -286,6 +348,8 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
 	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, trueArg)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0638.
 	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 	prgrm.CXAtomicOps[skipExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[skipExpressionIdx].ThenLines = skipLines
@@ -306,20 +370,28 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 
 // resolveTypeForUnd tries to determine the type that will be returned from an expression
 func resolveTypeForUnd(prgrm *ast.CXProgram, expr *ast.CXExpression) types.Code {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0639.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0640.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	expressionInputs := expression.GetInputs(prgrm)
 	expressionOutputs := expression.GetOutputs(prgrm)
 	if len(expressionInputs) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0641.
 		expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionInputs[0])
 
 		var expressionInputArgType types.Code
 		if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0642.
 			expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 			expressionInputArgType = expressionInputArg.Type
 		} else if expressionInputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -335,9 +407,13 @@ func resolveTypeForUnd(prgrm *ast.CXProgram, expr *ast.CXExpression) types.Code 
 	}
 
 	if len(expressionOutputs) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0643.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOutputs[0])
 		var expressionOutputArgType types.Code
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0644.
 			expressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 			expressionOutputArgType = expressionOutputArg.Type
 		} else if expressionOutputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -358,10 +434,14 @@ func resolveTypeForUnd(prgrm *ast.CXProgram, expr *ast.CXExpression) types.Code 
 	}
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 	if len(expressionOperatorOutputs) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0645.
 		expressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorOutputs[0])
 
 		var expressionOperatorOutputArgType types.Code
 		if expressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0646.
 			expressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOperatorOutputTypeSig.Meta))
 			expressionOperatorOutputArgType = expressionOperatorOutputArg.Type
 		} else if expressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -405,15 +485,23 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	}
 
 	lastLeftExpressionIdx := leftExprs[len(leftExprs)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0647.
 	lastLeftExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].Operator)
 	lastLeftExpressionOperatorOutputs := lastLeftExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)) < 1 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0648.
 		lastLeftExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastLeftExpressionOperatorOutputs[0])
 
 		var typeSigIdx ast.CXTypeSignatureIndex
 		if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0649.
 			lastLeftExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOperatorOutputTypeSig.Meta))
 
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a constructor call, site S0650.
 			out := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &leftExprs[len(leftExprs)-1]))
 			out.Size = lastLeftExpressionOperatorOutputArg.Size
@@ -423,9 +511,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.PreviouslyDeclared = true
 
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0651.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0652 S0653.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
@@ -433,9 +524,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0654.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0655 S0656.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
@@ -443,6 +537,8 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0657.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else {
 			panic("type is not known")
@@ -452,17 +548,26 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	}
 
 	lastRightExpressionIdx := rightExprs[len(rightExprs)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0658.
 	lastRightExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].Operator)
 	lastRightExpressionOperatorOutputs := lastRightExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)) < 1 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0659.
 		lastRightExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastRightExpressionOperatorOutputs[0])
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0660.
 		var lastRightExpressionOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
 
 		var typeSigIdx ast.CXTypeSignatureIndex
 		if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0661.
 			lastRightExpressionOperatorOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOperatorOutputTypeSig.Meta))
 
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a constructor call, site S0662.
 			out := ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &rightExprs[len(rightExprs)-1]))
 			out.Size = lastRightExpressionOperatorOutputArg.Size
@@ -472,9 +577,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.PreviouslyDeclared = true
 
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0663.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0664 S0665.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
@@ -482,9 +590,12 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0666.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0667 S0668.
 			typeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 			typeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
@@ -492,6 +603,8 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
 			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0669.
 			typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else {
 			panic("type is not known")
@@ -500,20 +613,30 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		prgrm.CXAtomicOps[lastRightExpressionIdx].AddOutput(prgrm, typeSigIdx)
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0670.
 	exprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0671.
 	expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[opcode])
 	expressionIdx := expr.Index
 
 	// we can't know the type until we compile the full function
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0672.
 	lastLeftExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0])
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0673.
 	var lastLeftExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0674.
 		lastLeftExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOutputTypeSig.Meta))
 	} else if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastLeftExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0675.
 		lastLeftExpressionOutputArg = &ast.CXArgument{}
 	} else {
 		panic("type is not known")
@@ -534,13 +657,19 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0676.
 	lastRightExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0])
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0677.
 	var lastRightExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastRightExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0678.
 		lastRightExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOutputTypeSig.Meta))
 	} else if lastRightExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastRightExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0679.
 		lastRightExpressionOutputArg = &ast.CXArgument{}
 	} else {
 		panic("type is not known")
@@ -586,10 +715,15 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0680.
 	lastPrevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastPrevExpression.GetOutputs(prgrm)[0])
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0681.
 	var lastPrevExpressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 	if lastPrevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0682.
 		lastPrevExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastPrevExpressionOutputTypeSig.Meta))
 
 		// Some properties need to be read from the base argument
@@ -607,31 +741,51 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 			exprOut.DeclarationSpecifiers = append(exprOut.DeclarationSpecifiers, constants.DECL_POINTER)
 		case "!":
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now a constructor call, site S0683.
 				expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_BOOL_NOT])
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+				// Now an arena getter, site S0684.
 				expression, err := prgrm.GetCXAtomicOp(expr.Index)
 				if err != nil {
 					panic(err)
 				}
 				expression.Package = ast.CXPackageIndex(pkg.Index)
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0685.
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+				// Now an arena insert, site S0686.
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 				expression.AddInput(prgrm, typeSigIdx)
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now an object copy, site S0687.
 				prevExprs[len(prevExprs)-1] = *expr
 			} else {
 				panic(err)
 			}
 		case "-":
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now a constructor call, site S0688.
 				expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_NEG])
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+				// Now an arena getter, site S0689.
 				expression, err := prgrm.GetCXAtomicOp(expr.Index)
 				if err != nil {
 					panic(err)
 				}
 				expression.Package = ast.CXPackageIndex(pkg.Index)
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0690.
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(ast.CXArgumentIndex(exprOut.Index)))
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+				// Now an arena insert, site S0691.
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 				expression.AddInput(prgrm, typeSigIdx)
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now an object copy, site S0692.
 				prevExprs[len(prevExprs)-1] = *expr
 			} else {
 				panic(err)
@@ -650,7 +804,11 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 			lastPrevExpressionOutputTypeSig.PassBy = constants.PASSBY_REFERENCE
 		case "!":
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now a constructor call, site S0693.
 				expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_BOOL_NOT])
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+				// Now an arena getter, site S0694.
 				expression, err := prgrm.GetCXAtomicOp(expr.Index)
 				if err != nil {
 					panic(err)
@@ -659,13 +817,19 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 
 				typeSigIdx := lastPrevExpressionOutputTypeSig.Index
 				expression.AddInput(prgrm, typeSigIdx)
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now an object copy, site S0695.
 				prevExprs[len(prevExprs)-1] = *expr
 			} else {
 				panic(err)
 			}
 		case "-":
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now a constructor call, site S0696.
 				expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_NEG])
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+				// Now an arena getter, site S0697.
 				expression, err := prgrm.GetCXAtomicOp(expr.Index)
 				if err != nil {
 					panic(err)
@@ -674,6 +838,8 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 
 				typeSigIdx := lastPrevExpressionOutputTypeSig.Index
 				expression.AddInput(prgrm, typeSigIdx)
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Now an object copy, site S0698.
 				prevExprs[len(prevExprs)-1] = *expr
 			} else {
 				panic(err)
@@ -714,58 +880,82 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 	lastExpr := retExprs[len(retExprs)-1]
 
 	fnOutputs := fn.GetOutputs(prgrm)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0699.
 	fnOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnOutputs[idx])
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0700.
 	var outParam *ast.CXArgument = &ast.CXArgument{}
 	var typeSigIdx ast.CXTypeSignatureIndex
 	if fnOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0701.
 		outParam = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fnOutputTypeSig.Meta))
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0702.
 		out := ast.MakeArgument(outParam.Name, CurrentFile, LineNo)
 		out.SetType(outParam.Type)
 		out.StructType = outParam.StructType
 		out.PreviouslyDeclared = true
 
 		typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0703.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0704 S0705.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_ATOMIC
 		newCXTypeSig.Meta = int(fnOutputTypeSig.Type)
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0706.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0707 S0708.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_POINTER_ATOMIC
 		newCXTypeSig.Meta = int(fnOutputTypeSig.Type)
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0709.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else if fnOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0710 S0711.
 		newCXTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: LineNo}}
 		newCXTypeSig.Name = fnOutputTypeSig.Name
 		newCXTypeSig.Package = fnOutputTypeSig.Package
 		newCXTypeSig.Type = ast.TYPE_SLICE_ATOMIC
 		newCXTypeSig.Meta = fnOutputTypeSig.Meta
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0712.
 		typeSigIdx = prgrm.AddCXTypeSignatureInArray(newCXTypeSig)
 	} else {
 		panic("type is not known")
 	}
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0713.
 	lastExpression, err := prgrm.GetCXAtomicOp(lastExpr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0714.
 	lastExpressionOperator := prgrm.GetFunctionFromArray(lastExpression.Operator)
 	if lastExpressionOperator == nil {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now an arena insert, site S0715.
 		opIdx := prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY])
 		lastExpression.Operator = opIdx
 
@@ -775,8 +965,14 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		lastExpression.AddOutput(prgrm, typeSigIdx)
 		return retExprs
 	} else if len(lastExpression.GetOutputs(prgrm)) > 0 {
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S0716.
 		exprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S0717.
 		expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0718.
 		expression, err := prgrm.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			panic(err)
@@ -834,9 +1030,15 @@ func AddJmpToReturnExpressions(prgrm *ast.CXProgram, exprs ReturnExpressions) []
 		println(ast.CompilationError(lastExprCXLine.FileName, lastExprCXLine.LineNumber), fmt.Sprintf("function '%s' expects to return %d argument%s, but %d output argument%s %s provided", fn.Name, len(fnOutputs), plural1, exprs.Size, plural2, plural3))
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0719.
 	exprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
 	// expression to jump to the end of the embedding function
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S0720.
 	expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_GOTO])
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0721.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)

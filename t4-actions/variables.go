@@ -9,6 +9,8 @@ import (
 
 func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpression, glblIdx ast.CXTypeSignatureIndex) {
 	initializerExpressionIdx := initializer[len(initializer)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1209.
 	initializerExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[initializerExpressionIdx].Operator)
 	// then we just re-assign offsets
 	if initializerExpressionOperator == nil {
@@ -18,6 +20,8 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 		prgrm.CXAtomicOps[initializerExpressionIdx].Outputs = nil
 
 		prgrm.CXAtomicOps[initializerExpressionIdx].AddOutput(prgrm, glblIdx)
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now an arena insert, site S1210.
 		opIdx := prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY])
 		prgrm.CXAtomicOps[initializerExpressionIdx].Operator = opIdx
 
@@ -26,12 +30,16 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 	} else {
 		// then it's an expression
 		if initializer[len(initializer)-1].IsStructLiteral() {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+			// Now a heap literal, site S1211.
 			outputStruct := &ast.CXStruct{}
 			outputStruct.AddField_TypeSignature(prgrm, glblIdx)
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+			// Now a heap literal, site S1212 S1213.
 			index := prgrm.AddCXAtomicOp(&ast.CXAtomicOperator{Outputs: outputStruct, Operator: -1, Function: -1})
 			initializer = StructLiteralAssignment(prgrm,
+				// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+				// Now a slice of objects, site S1214.
 				[]ast.CXExpression{
 					{
 						Index: index,
@@ -91,7 +99,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		// then it was only added a reference to the symbol
 
 		// if offset is not valid, assign new offset
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S1215.
 		var glblArg *ast.CXArgument = &ast.CXArgument{}
 		if !glbl.Offset.IsValid() {
 			if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
@@ -123,12 +132,15 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypeArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_ARRAY_ATOMIC
 
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now a heap literal, site S1216.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
 				Indexes: declaration_specifiers.Indexes,
 			}
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now an arena insert, site S1217.
 			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 			glbl.Meta = typeSignatureForArrayIdx
@@ -141,13 +153,16 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else if ast.IsTypePointerArrayAtomic(declaration_specifiers) {
 			glbl.Type = ast.TYPE_POINTER_ARRAY_ATOMIC
 
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now a heap literal, site S1218.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
 				Indexes: declaration_specifiers.Indexes,
 			}
 
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now an arena insert, site S1219.
 			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 			glbl.Meta = typeSignatureForArrayIdx
 			glbl.PassBy = declaration_specifiers.PassBy
@@ -160,13 +175,16 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_SLICE_ATOMIC
 
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now a heap literal, site S1220.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
 				Indexes: declaration_specifiers.Indexes,
 			}
 
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now an arena insert, site S1221.
 			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 			glbl.Meta = typeSignatureForArrayIdx
 			glbl.PassBy = declaration_specifiers.PassBy
@@ -179,13 +197,16 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 			glbl.Type = ast.TYPE_POINTER_SLICE_ATOMIC
 
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now a heap literal, site S1222.
 			typeSignatureForArray := &ast.CXTypeSignature_Array{
 				Meta:    int(declaration_specifiers.Type),
 				Lengths: declaration_specifiers.Lengths,
 				Indexes: declaration_specifiers.Indexes,
 			}
 
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+			// Now an arena insert, site S1223.
 			typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 			glbl.Meta = typeSignatureForArrayIdx
 			glbl.PassBy = declaration_specifiers.PassBy
@@ -196,10 +217,13 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		} else {
 			// its a cxargument_deprecate type
 			var glblIdx int
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a heap literal, site S1224.
 			var glblCXArg *ast.CXArgument = &ast.CXArgument{}
 			if glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				glblIdx = glbl.Meta
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1225.
 				glblCXArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(glblIdx))
 			} else {
 				panic("type is not type cx argument deprecate\n\n")
@@ -215,6 +239,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			declaration_specifiers.PassBy = prgrm.CXArgs[glblIdx].PassBy
 			declaration_specifiers.Package = prgrm.CXArgs[glblIdx].Package
 
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an object copy, site S1226.
 			prgrm.CXArgs[glblIdx] = *declaration_specifiers
 			prgrm.CXArgs[glblIdx].Index = glblIdx
 
@@ -229,7 +255,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 	} else {
 		// then it hasn't been defined
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S1227.
 		var glblArg *ast.CXArgument = &ast.CXArgument{}
 		if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, types.POINTER_SIZE), true)
@@ -244,6 +271,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		declaration_specifiers.Package = ast.CXPackageIndex(pkg.Index)
 
 		typeSignature := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, declaration_specifiers)
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S1228.
 		typeSignatureIdx := prgrm.AddCXTypeSignatureInArray(typeSignature)
 		pkg.AddGlobal_TypeSignature(prgrm, typeSignatureIdx)
 
@@ -264,21 +293,31 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1229.
 	initializerExpressionOperator := prgrm.GetFunctionFromArray(initializerExpression.Operator)
 	if initializerExpressionOperator == nil {
 		// THEN it's a literal, e.g. var foo i32 = 10;
 
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S1230.
 		exprCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
 
 		// we need to create an expression that links the initializer expressions
 		// with the declared variable
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S1231.
 		expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])
 		cxExprAtomicOpIdx := expr.Index
 		prgrm.CXAtomicOps[cxExprAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 		var initOutTypeSigIdx ast.CXTypeSignatureIndex
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S1232.
 		initializerExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(initializerExpression.GetOutputs(prgrm)[0])
 		if initializerExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1233.
 			initializerExpressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(initializerExpressionOutputTypeSig.Meta))
 			initOut := initializerExpressionOutputArg
 			initOutIdx := ast.CXArgumentIndex(initializerExpressionOutputTypeSig.Meta)
@@ -288,7 +327,11 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 			// output, in case of something like var foo *i32 = &bar
 			prgrm.CXArgs[declSpecIdx].PassBy = initOut.PassBy
 
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1234.
 			typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(initOutIdx))
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S1235.
 			initOutTypeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || initializerExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			initOutTypeSigIdx = initializerExpression.GetOutputs(prgrm)[0]
@@ -301,6 +344,8 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 		prgrm.CXAtomicOps[cxExprAtomicOpIdx].AddOutput(prgrm, localVarIdx)
 		prgrm.CXAtomicOps[cxExprAtomicOpIdx].AddInput(prgrm, initOutTypeSigIdx)
 
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now an object copy, site S1236.
 		(*initializer)[len(*initializer)-1] = *exprCXLine
 		(*initializer) = append(*initializer, *expr)
 
@@ -308,6 +353,8 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 		// ELSE it's an expression with an operator
 
 		expr := (*initializer)[len(*initializer)-1]
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S1237.
 		cxExprAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			panic(err)
@@ -318,6 +365,8 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 		// ELSE we simply add it using `AddOutput`
 		if len(cxExprAtomicOp.GetOutputs(prgrm)) > 0 {
 			// declSpecIdx := prgrm.AddCXArgInArray(declarationSpecifiers)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+			// Now a dropped object, site S1238.
 			cxExprAtomicOp.Outputs.Fields = nil
 
 		}
@@ -358,10 +407,14 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1239.
 	declCXLine := ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)
 	// Declaration expression to handle the inline initialization.
 	// For example, `var foo i32 = 11` needs to be divided into two expressions:
 	// one that declares `foo`, and another that assigns 11 to `foo`
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1240.
 	decl := ast.MakeAtomicOperatorExpression(prgrm, nil)
 	expressionIdx := decl.Index
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
@@ -370,9 +423,15 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	declarationSpecifiers.ArgDetails.FileLine = declarator.ArgDetails.FileLine
 	declarationSpecifiers.Package = ast.CXPackageIndex(pkg.Index)
 	declarationSpecifiers.PreviouslyDeclared = true
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S1241.
 	declSpecIdx := prgrm.AddCXArgInArray(declarationSpecifiers)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S1242.
 	localVarTypeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, prgrm.GetCXArgFromArray(declSpecIdx))
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S1243.
 	localVarTypeSigIdx := prgrm.AddCXTypeSignatureInArray(localVarTypeSig)
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, localVarTypeSigIdx)
 
@@ -383,14 +442,20 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	if doesInitialize && initializer != nil {
 		processLocalInitialization(prgrm, pkg, &initializer, localVarTypeSigIdx, declSpecIdx)
 
+		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+		// Now a slice of objects, site S1244.
 		return append([]ast.CXExpression{*declCXLine, *decl}, initializer...)
 	} else {
 		// There is no initialization.
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S1245.
 		expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 		cxAtomicOpIdx := expr.Index
 		prgrm.CXAtomicOps[cxAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
 		prgrm.CXAtomicOps[cxAtomicOpIdx].AddOutput(prgrm, localVarTypeSigIdx)
 
+		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+		// Now a slice of objects, site S1246.
 		return []ast.CXExpression{*declCXLine, *expr}
 	}
 

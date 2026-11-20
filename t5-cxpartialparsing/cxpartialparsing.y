@@ -14,7 +14,8 @@
         - go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go t5-cxpartialparsing/cxpartialparsing.y
         */
 
-	// VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to CXProgramMng in phase 2.
+	// OBJMODEL: *CxIrState passed as a parameter, owned by main, phase 5 #372.
+	// Now a pointer at rest, site S1392.
 	var Program *ast.CXProgram
 
 	// VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to ParseMng in phase 2.
@@ -32,6 +33,8 @@
 	}
 
 	func PreFunctionDeclaration (fnIdx ast.CXFunctionIndex, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
+                // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+                // Now an arena getter, site S1393.
                 fn:=actions.AST.GetFunctionFromArray(fnIdx)
 		// adding inputs, outputs
 		for _, inp := range inputs {
@@ -64,17 +67,22 @@
 
 	line int
 
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
+	// Now a pointer at rest, site S1394.
 	argument *ast.CXArgument
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
+	// Now a pointer at rest, site S1395.
 	arguments []*ast.CXArgument
 
-	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
+	// OBJMODEL: CXExpressionGid, the parser value stack lives across Allocs, phase 4 #346.
+	// Now a pointer at rest, site S1396.
 	expression *ast.CXExpression
-	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
+	// OBJMODEL: CXExpressionGid, the parser value stack lives across Allocs, phase 4 #346.
+	// Now a pointer at rest, site S1397.
 	expressions []*ast.CXExpression
 
-        // VIOLATION: pointer at rest; becomes CXFunctionGid in phase 3.
+        // OBJMODEL: CXFunctionGid, the parser value stack lives across Allocs, phase 4 #351.
+        // Now a pointer at rest, site S1398.
         function *ast.CXFunction
         functionIndex ast.CXFunctionIndex
 }
@@ -206,6 +214,8 @@ struct_fields:
 
 fields:         parameter_declaration SEMICOLON
                 {
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1399.
 			$$ = []*ast.CXArgument{$1}
                 }
         |       fields parameter_declaration SEMICOLON
@@ -232,6 +242,8 @@ function_header:
                 FUNC IDENTIFIER
                 {
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now a constructor call, site S1400.
 				fn := ast.MakeFunction($2, CurrentFileName, lineNo)
 				_,fnIdx:=pkg.AddFunction(Program,fn)
                                 pkg.CurrentFunction=fnIdx
@@ -250,8 +262,12 @@ function_header:
 			fnName := $3[0].StructType.Name + "." + $5
 
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now a constructor call, site S1401.
 				fn := ast.MakeFunction(fnName, CurrentFileName, lineNo)
 				_,fnIdx:=pkg.AddFunction(Program,fn)
+                                // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+                                // Now an arena getter, site S1402.
                                 newFn:=Program.GetFunctionFromArray(fnIdx)
                                 newFn.AddInput(Program,$3[0])
                                 
@@ -290,6 +306,8 @@ parameter_type_list:
 parameter_list:
                 parameter_declaration
                 {
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1403.
 			$$ = []*ast.CXArgument{$1}
                 }
 	|       parameter_list COMMA parameter_declaration
@@ -320,6 +338,8 @@ direct_declarator:
                 IDENTIFIER
                 {
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a constructor call, site S1404.
 				arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = $1
@@ -336,11 +356,15 @@ direct_declarator:
 id_list:	IDENTIFIER
 		{
 			arg := actions.DeclarationSpecifiersStruct(Program,$1, "", false, actions.CurrentFile, actions.LineNo)
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1405.
 			$$ = []*ast.CXArgument{arg}
 		}
 	|	type_specifier
 		{
 			arg := actions.DeclarationSpecifiersBasic(types.Code($1))			 
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1406.
 			$$ = []*ast.CXArgument{arg}
 		}
 	|	id_list COMMA IDENTIFIER
@@ -369,8 +393,14 @@ types_list:
 declaration_specifiers:
 		FUNC types_list types_list
 		{
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a constructor call, site S1407.
 			arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an arena insert, site S1408.
 			arg.Inputs = Program.AddPointerArgsToCXArgsArray($2)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an arena insert, site S1409.
 			arg.Outputs = Program.AddPointerArgsToCXArgsArray($3)
 			$$ = actions.DeclarationSpecifiers(arg, []types.Pointer{0}, constants.DECL_FUNC)
 		}

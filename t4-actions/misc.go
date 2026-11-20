@@ -35,6 +35,8 @@ func WritePrimary(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, isSlic
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1052.
 	arg := ast.MakeArgument("", CurrentFile, LineNo)
 	arg.SetType(typeCode)
 	arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -76,7 +78,11 @@ func WritePrimary(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, isSlic
 	prgrm.Data.Size += size
 	prgrm.Heap.StartsAt = prgrm.Data.Size + prgrm.Data.StartsAt
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S1053.
 	argIdx := prgrm.AddCXArgInArray(arg)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S1054.
 	argReturn := prgrm.GetCXArgFromArray(argIdx)
 
 	return argReturn
@@ -91,23 +97,37 @@ func WritePrimaryExprs(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, i
 
 	arg := WritePrimary(prgrm, typeCode, byts, isSlice)
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1055.
 	expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
 	prgrm.CXAtomicOps[expr.Index].Package = ast.CXPackageIndex(pkg.Index)
 
 	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arg)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S1056.
 	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 	prgrm.CXAtomicOps[expr.Index].AddOutput(prgrm, typeSigIdx)
 
+	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+	// Now a slice of objects, site S1057.
 	return []ast.CXExpression{*expr}
 }
 
 func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile string, lineNo int) {
 	// Argument type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1058.
 	argStrct := ast.MakeStruct("Argument")
 	// argStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1059.
 	argFldName := ast.MakeField("Name", types.STR, "", 0)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1060.
 	argFldIndex := ast.MakeField("Index", types.I32, "", 0)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1061.
 	argFldType := ast.MakeField("Type", types.STR, "", 0)
 
 	argStrct.AddField(prgrm, argFldName)
@@ -117,9 +137,13 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, argStrct)
 
 	// Expression type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1062.
 	exprStrct := ast.MakeStruct("Expression")
 	// exprStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1063.
 	exprFldOperator := ast.MakeField("Operator", types.STR, "", 0)
 
 	exprStrct.AddField(prgrm, exprFldOperator)
@@ -127,15 +151,23 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, exprStrct)
 
 	// Function type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1064.
 	fnStrct := ast.MakeStruct("Function")
 	// fnStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1065.
 	fnFldName := ast.MakeField("Name", types.STR, "", 0)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1066.
 	fnFldInpSig := ast.MakeField("InputSignature", types.STR, "", 0)
 	fnFldInpSig.Size = types.STR.Size()
 	fnFldInpSig = DeclarationSpecifiers(fnFldInpSig, []types.Pointer{0}, constants.DECL_SLICE)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1067.
 	fnFldOutSig := ast.MakeField("OutputSignature", types.STR, "", 0)
 	fnFldOutSig.Size = types.STR.Size()
 	fnFldOutSig = DeclarationSpecifiers(fnFldOutSig, []types.Pointer{0}, constants.DECL_SLICE)
@@ -148,9 +180,13 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, fnStrct)
 
 	// Structure type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1068.
 	strctStrct := ast.MakeStruct("Structure")
 	// strctStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1069.
 	strctFldName := ast.MakeField("Name", types.STR, "", 0)
 
 	strctStrct.AddField(prgrm, strctFldName)
@@ -158,9 +194,13 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, strctStrct)
 
 	// Package type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1070.
 	pkgStrct := ast.MakeStruct("Structure")
 	// pkgStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1071.
 	pkgFldName := ast.MakeField("Name", types.STR, "", 0)
 
 	pkgStrct.AddField(prgrm, pkgFldName)
@@ -168,10 +208,16 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, pkgStrct)
 
 	// Caller type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1072.
 	callStrct := ast.MakeStruct("Caller")
 	// callStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_I32)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1073.
 	callFldFnName := ast.MakeField("FnName", types.STR, "", 0)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1074.
 	callFldFnSize := ast.MakeField("FnSize", types.I32, "", 0)
 
 	callStrct.AddField(prgrm, callFldFnName)
@@ -180,13 +226,21 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile str
 	pkg.AddStruct(prgrm, callStrct)
 
 	// Program type
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1075.
 	prgrmStrct := ast.MakeStruct("Program")
 	// prgrmStrct.Size = cxcore.GetArgSize(cxcore.TYPE_I32) + cxcore.GetArgSize(cxcore.TYPE_I64)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1076.
 	prgrmFldCallCounter := ast.MakeField("CallCounter", types.I32, "", 0)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1077.
 	prgrmFldFreeHeap := ast.MakeField("HeapUsed", types.I64, "", 0)
 
 	// prgrmFldCaller := cxcore.MakeField("Caller", cxcore.TYPE_STRUCT, "", 0)
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S1078.
 	strctPkg, err := prgrm.GetPackageFromArray(callStrct.Package)
 	if err != nil {
 		panic(err)
@@ -208,39 +262,56 @@ func PrimaryIdentifier(prgrm *ast.CXProgram, ident string) []ast.CXExpression {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1079.
 	arg := ast.MakeArgument(ident, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
 	arg.SetType(types.IDENTIFIER)
 	arg.Name = ident
 	arg.Package = ast.CXPackageIndex(pkg.Index)
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1080.
 	expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1081.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
 	typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, arg)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S1082.
 	typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 	expression.AddOutput(prgrm, typeSigIdx)
 	expression.Package = ast.CXPackageIndex(pkg.Index)
+	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+	// Now a slice of objects, site S1083.
 	return []ast.CXExpression{*expr}
 }
 
 // IsAllArgsBasicTypes checks if all the input arguments in an expressions are of basic type.
 func IsAllArgsBasicTypes(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1084.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, inputIdx := range expression.GetInputs(prgrm) {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S1085.
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 
 		var inpType types.Code
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S1086.
 		var inp *ast.CXArgument = &ast.CXArgument{}
 		if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1087.
 			inp = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
 
 			inpType = inp.Type

@@ -9,16 +9,32 @@ import (
 )
 
 func RegisterPackage(prgrm *ast.CXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now a constructor call, site S1410.
 	regexpPkg := ast.MakePackage("regexp")
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S1411.
 	pkgIdx := prgrm.AddPackage(regexpPkg)
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S1412.
 	regexpPkg, _ = prgrm.GetPackageFromArray(pkgIdx)
 
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1413.
 	regexpStrct := ast.MakeStruct("Regexp")
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1414.
 	regexpArg := ast.MakeArgument("exp", "", 0).SetType(types.STR).SetPackage(regexpPkg)
 	regexpStrct.AddField(prgrm, regexpArg)
 	regexpPkg.AddStruct(prgrm, regexpStrct)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1415.
 	opcodes.RegisterFunction(prgrm, "regexp.Compile", opRegexpCompile, opcodes.In(ast.ConstCxArg_STR), opcodes.Out(ast.MakeStructParameter(prgrm, "regexp", "Regexp", "r"), ast.ConstCxArg_STR))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1416.
 	opcodes.RegisterFunction(prgrm, "regexp.MustCompile", opRegexpMustCompile, opcodes.In(ast.ConstCxArg_STR), opcodes.Out(ast.MakeStructParameter(prgrm, "regexp", "Regexp", "r")))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1417.
 	opcodes.RegisterFunction(prgrm, "regexp.Regexp.Find", opRegexpFind, opcodes.In(ast.MakeStructParameter(prgrm, "regexp", "Regexp", "r"), ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_STR))
 }

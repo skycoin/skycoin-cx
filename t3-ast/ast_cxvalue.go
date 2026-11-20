@@ -5,9 +5,11 @@ import (
 )
 
 type CXValue struct {
-	// VIOLATION: pointer at rest; becomes CXTypeSignatureGid in phase 3.
+	// OBJMODEL: CXTypeSignatureGid, phase 5 #332.
+	// Now a pointer at rest, site S0333.
 	TypeSignature *CXTypeSignature // TODO:PTR remove Arg/TypeSignature
-	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
+	// OBJMODEL: CXExpressionGid, phase 5 #347.
+	// Now a pointer at rest, site S0334.
 	Expr         *CXExpression
 	Type         types.Code
 	Offset       types.Pointer

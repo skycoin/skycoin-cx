@@ -10,14 +10,26 @@ import (
 )
 
 func RegisterPackage(prgrm *ast.CXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now a constructor call, site S1359.
 	cipherPkg := ast.MakePackage("cipher")
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1360.
 	pubkeyStrct := ast.MakeStruct("PubKey")
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a constructor call, site S1361.
 	seckeyStrct := ast.MakeStruct("SecKey")
 
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S1362.
 	pkgIdx := prgrm.AddPackage(cipherPkg)
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S1363.
 	cPkg, _ := prgrm.GetPackageFromArray(pkgIdx)
 
 	// PubKey
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1364.
 	pubkeyFld := ast.MakeArgument("PubKey", "", -1).SetType(types.UI8).SetPackage(cPkg)
 	pubkeyFld.DeclarationSpecifiers = append(pubkeyFld.DeclarationSpecifiers, constants.DECL_ARRAY)
 	// pubkeyFld.IsArray = true
@@ -25,6 +37,8 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	// pubkeyFld.TotalSize = 33                // 33 * 1 byte (ui8)
 
 	// SecKey
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S1365.
 	seckeyFld := ast.MakeArgument("SecKey", "", -1).SetType(types.UI8).SetPackage(cPkg)
 	seckeyFld.DeclarationSpecifiers = append(seckeyFld.DeclarationSpecifiers, constants.DECL_ARRAY)
 	// seckeyFld.IsArray = true
@@ -38,5 +52,7 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	cPkg.AddStruct(prgrm, seckeyStrct)
 
 	opcodes.RegisterFunction(prgrm, "cipher.GenerateKeyPair", opCipherGenerateKeyPair, nil,
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S1366 S1367.
 		opcodes.Out(ast.MakeStructParameter(prgrm, "cipher", "PubKey", "pubKey"), ast.MakeStructParameter(prgrm, "cipher", "SecKey", "sec")))
 }

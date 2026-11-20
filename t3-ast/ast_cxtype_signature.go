@@ -55,7 +55,8 @@ type CXTypeSignature struct {
 	// if type is atomic, meta is the atomic type
 	Meta int
 
-	// VIOLATION: pointer at rest; becomes CXArgumentDebugGid in phase 3.
+	// OBJMODEL: CXArgumentDebugGid, phase 5 #307.
+	// Now a pointer at rest, site S0271.
 	ArgDetails *CXArgumentDebug // Contains file name and file line
 }
 
@@ -84,7 +85,8 @@ type CXTypeSignature_Struct struct {
 	// value.
 	Fields []CXArgumentIndex
 
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0272.
 	StructType *CXStruct
 }
 
@@ -106,6 +108,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 			return typeSignature.GetArraySize(prgrm)
 		}
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0273.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		if len(arrDetails.Indexes) > 0 {
 			return types.Code(arrDetails.Meta).Size()
@@ -113,6 +117,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 
 		return typeSignature.GetArraySize(prgrm)
 	case TYPE_POINTER_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0274.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		if typeSignature.IsDeref && len(arrDetails.Indexes) > 0 {
 			return types.Code(arrDetails.Meta).Size()
@@ -122,6 +128,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 
 		return types.POINTER.Size()
 	case TYPE_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0275.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 
 		if typeSignature.IsDeref || len(sliceDetails.Indexes) > 0 {
@@ -131,6 +139,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 		return types.POINTER_SIZE
 	case TYPE_POINTER_SLICE_ATOMIC:
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0276.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		if typeSignature.IsDeref || len(sliceDetails.Indexes) > 0 {
 			return types.Code(sliceDetails.Meta).Size()
@@ -138,18 +148,26 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 
 		return types.POINTER.Size()
 	case TYPE_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0277.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now a pointer into an arena, site S0278.
 			return GetArgSize(prgrm, &prgrm.CXArgs[structDetails.Fields[lenFlds-1]])
 		}
 		return structDetails.StructType.GetStructSize(prgrm)
 	case TYPE_POINTER_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0279.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now a pointer into an arena, site S0280.
 			return GetArgSize(prgrm, &prgrm.CXArgs[structDetails.Fields[lenFlds-1]])
 		}
 
@@ -172,6 +190,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 
 	case TYPE_CXARGUMENT_DEPRECATE:
 		argIdx := typeSignature.Meta
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now a pointer into an arena, site S0281.
 		return GetArgSize(prgrm, &prgrm.CXArgs[argIdx])
 	}
 
@@ -181,6 +201,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 func (typeSignature *CXTypeSignature) GetArrayLength(prgrm *CXProgram) types.Pointer {
 	switch typeSignature.Type {
 	case TYPE_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0282.
 		typeSignatureForArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		return types.TotalLength(typeSignatureForArray.Lengths)
 	}
@@ -191,6 +213,8 @@ func (typeSignature *CXTypeSignature) GetArrayLength(prgrm *CXProgram) types.Poi
 func (typeSignature *CXTypeSignature) GetArraySize(prgrm *CXProgram) types.Pointer {
 	switch typeSignature.Type {
 	case TYPE_ARRAY_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0283.
 		typeSignatureForArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		arrType := types.Code(typeSignatureForArray.Meta)
 		return types.TotalLength(typeSignatureForArray.Lengths) * arrType.Size()
@@ -207,23 +231,35 @@ func (typeSignature *CXTypeSignature) GetType(prgrm *CXProgram) types.Code {
 	case TYPE_POINTER_ATOMIC:
 		atomicType = types.Code(typeSignature.Meta)
 	case TYPE_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0284.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		atomicType = types.Code(arrDetails.Meta)
 	case TYPE_POINTER_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0285.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		atomicType = types.Code(arrDetails.Meta)
 	case TYPE_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0286.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		atomicType = types.Code(sliceDetails.Meta)
 	case TYPE_POINTER_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0287.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		atomicType = types.Code(sliceDetails.Meta)
 	case TYPE_STRUCT:
 		atomicType = types.STRUCT
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0288.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		fldLen := len(structDetails.Fields)
 		if fldLen > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0289.
 			fld := prgrm.GetCXArgFromArray(structDetails.Fields[fldLen-1])
 			fld = fld.GetAssignmentElement(prgrm)
 
@@ -235,9 +271,13 @@ func (typeSignature *CXTypeSignature) GetType(prgrm *CXProgram) types.Code {
 	case TYPE_POINTER_STRUCT:
 		atomicType = types.STRUCT
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0290.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		fldLen := len(structDetails.Fields)
 		if fldLen > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0291.
 			fld := prgrm.GetCXArgFromArray(structDetails.Fields[fldLen-1])
 			fld = fld.GetAssignmentElement(prgrm)
 
@@ -262,19 +302,29 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 	case TYPE_POINTER_ATOMIC:
 		typeString = types.Code(typeSignature.Meta).Name()
 	case TYPE_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0292.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		typeString = types.Code(arrDetails.Meta).Name()
 	case TYPE_POINTER_ARRAY_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0293.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		typeString = types.Code(arrDetails.Meta).Name()
 	case TYPE_SLICE_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0294.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		typeString = types.Code(arrDetails.Meta).Name()
 	case TYPE_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0295.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		fldsLen := len(structDetails.Fields)
 		if fldsLen > 0 {
 			fldIdx := structDetails.Fields[fldsLen-1]
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0296.
 			fld := prgrm.GetCXArgFromArray(fldIdx)
 			elt := fld.GetAssignmentElement(prgrm)
 
@@ -294,10 +344,14 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 		}
 
 	case TYPE_POINTER_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0297.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		fldsLen := len(structDetails.Fields)
 		if fldsLen > 0 {
 			fldIdx := structDetails.Fields[fldsLen-1]
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0298.
 			fld := prgrm.GetCXArgFromArray(fldIdx)
 			elt := fld.GetAssignmentElement(prgrm)
 
@@ -324,7 +378,8 @@ func (typeSignature *CXTypeSignature) GetTypeString(prgrm *CXProgram) string {
 }
 
 func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgument {
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0299.
 	var arg *CXArgument = &CXArgument{}
 	if typeSignature.Type == TYPE_ATOMIC {
 		arg.Type = types.Code(typeSignature.Meta)
@@ -351,6 +406,8 @@ func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgume
 			arg.DeclarationSpecifiers = []int{constants.DECL_POINTER}
 		}
 	} else if typeSignature.Type == TYPE_ARRAY_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0300.
 		typeSignatureArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		arg.Type = types.Code(typeSignatureArray.Meta)
 		arg.StructType = nil
@@ -366,6 +423,8 @@ func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgume
 		}
 
 	} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0301.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		arg.Type = types.Code(sliceDetails.Meta)
 		arg.StructType = nil
@@ -383,6 +442,8 @@ func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgume
 
 	} else if typeSignature.Type == TYPE_STRUCT {
 		arg.Type = types.STRUCT
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0302.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		arg.StructType = structDetails.StructType
 		// TODO: this should not be needed.
@@ -394,6 +455,8 @@ func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgume
 
 	} else if typeSignature.Type == TYPE_POINTER_STRUCT {
 		arg.Type = types.POINTER
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0303.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 		arg.StructType = structDetails.StructType
 		// TODO: this should not be needed.
@@ -414,6 +477,8 @@ func (typeSignature *CXTypeSignature) GetCXArgFormat(prgrm *CXProgram) *CXArgume
 func (typeSignature *CXTypeSignature) IsInnerReference(prgrm *CXProgram) bool {
 	switch typeSignature.Type {
 	case TYPE_CXARGUMENT_DEPRECATE:
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0304.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta))
 
 		if arg.PassBy == constants.PASSBY_REFERENCE && len(arg.Indexes) > 0 {
@@ -432,7 +497,8 @@ func (typeSignature *CXTypeSignature) IsInnerReference(prgrm *CXProgram) bool {
 // Added _ForStructs for now so it will be separate from others for smooth transition.
 // TODO: Remove _ForStructs
 func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now a value literal, site S0305.
 	newCXTypeSignature := CXTypeSignature{
 		Name:       cxArgument.Name,
 		Package:    cxArgument.Package,
@@ -463,12 +529,15 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0306.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(fieldType),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0307.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -478,12 +547,15 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0308.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(fieldType),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0309.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -493,12 +565,15 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0310.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0311.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -507,12 +582,15 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0312.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0313.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -520,12 +598,15 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now a heap literal, site S0314.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an arena insert, site S0315.
 		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
 
 		newCXTypeSignature.Meta = typeSignatureForStructIdx
@@ -533,16 +614,21 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now a heap literal, site S0316.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an arena insert, site S0317.
 		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
 
 		newCXTypeSignature.Meta = typeSignatureForStructIdx
 	} else {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now an arena insert, site S0318.
 		fldIdx := prgrm.AddCXArgInArray(cxArgument)
 
 		// All are TYPE_CXARGUMENT_DEPRECATE for now.
@@ -557,7 +643,8 @@ func GetCXTypeSignatureRepresentationOfCXArg_ForStructs(prgrm *CXProgram, cxArgu
 }
 
 func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArgument) *CXTypeSignature {
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now a value literal, site S0319.
 	newCXTypeSignature := CXTypeSignature{
 		Name:       cxArgument.Name,
 		Package:    cxArgument.Package,
@@ -583,12 +670,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If simple array atomic type, i.e. [5]i32, [2]f64, etc.
 		newCXTypeSignature.Type = TYPE_ARRAY_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0320.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0321.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -597,12 +687,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_POINTER_ARRAY_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0322.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0323.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -611,12 +704,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_SLICE_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0324.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0325.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -625,12 +721,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 		newCXTypeSignature.Type = TYPE_POINTER_SLICE_ATOMIC
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now a heap literal, site S0326.
 		typeSignatureForArray := &CXTypeSignature_Array{
 			Meta:    int(cxArgument.Type),
 			Lengths: cxArgument.Lengths,
 			Indexes: cxArgument.Indexes,
 		}
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0327.
 		typeSignatureForArrayIdx := prgrm.AddCXTypeSignatureArrayInArray(typeSignatureForArray)
 
 		newCXTypeSignature.Meta = typeSignatureForArrayIdx
@@ -638,12 +737,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_STRUCT
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now a heap literal, site S0328.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an arena insert, site S0329.
 		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
 
 		newCXTypeSignature.Meta = typeSignatureForStructIdx
@@ -651,12 +753,15 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// If type is struct
 		newCXTypeSignature.Type = TYPE_POINTER_STRUCT
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now a heap literal, site S0330.
 		typeSignatureForStruct := &CXTypeSignature_Struct{
 			Fields:     cxArgument.Fields,
 			StructType: cxArgument.StructType,
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an arena insert, site S0331.
 		typeSignatureForStructIdx := prgrm.AddCXTypeSignatureStructInArray(typeSignatureForStruct)
 
 		newCXTypeSignature.Meta = typeSignatureForStructIdx
@@ -665,6 +770,8 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 		// FieldIdx or the CXArg ID is in Meta field.
 		cxArgumentIndex := cxArgument.Index
 		if cxArgument.Index == -1 || cxArgument.Index == 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an arena insert, site S0332.
 			cxArgumentIndex = int(prgrm.AddCXArgInArray(cxArgument))
 		}
 		newCXTypeSignature.Type = TYPE_CXARGUMENT_DEPRECATE

@@ -12,7 +12,8 @@ type DereferenceStruct struct {
 	derefPointer  bool
 	idxCounter    int
 
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: no change, the struct lives on the stack of one GetFinalOffset call.
+	// Site S0366.
 	arg         *CXArgument
 	finalOffset types.Pointer
 	fp          types.Pointer
@@ -21,6 +22,8 @@ type DereferenceStruct struct {
 // GetSize ...
 func GetArgSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	if len(arg.Fields) > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0367.
 		return GetArgSize(prgrm, prgrm.GetCXArgFromArray(arg.Fields[len(arg.Fields)-1]))
 	}
 
@@ -101,6 +104,8 @@ func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer boo
 // GetDerefSizeSlice ...
 func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.Pointer {
 	if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0368.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta))
 		arg = arg.GetAssignmentElement(prgrm)
 		if len(arg.Lengths) > 1 && (len(arg.Lengths)-len(arg.Indexes)) > 1 {
@@ -111,12 +116,16 @@ func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.P
 		}
 		return arg.Size
 	} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0369.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		if len(sliceDetails.Lengths) > 1 && (len(sliceDetails.Lengths)-len(sliceDetails.Indexes)) > 1 {
 			return types.POINTER_SIZE
 		}
 		return types.Code(sliceDetails.Meta).Size()
 	} else if typeSignature.Type == TYPE_POINTER_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0370.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 		if len(sliceDetails.Lengths) > 1 && (len(sliceDetails.Lengths)-len(sliceDetails.Indexes)) > 1 {
 			return types.POINTER_SIZE
@@ -131,11 +140,14 @@ func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.P
 func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argTypeSig *CXTypeSignature) types.Pointer {
 	var finalOffset types.Pointer
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0371.
 	var arg *CXArgument = &CXArgument{}
 	if oldArg != nil {
 		arg = oldArg
 	} else if argTypeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now a pointer into an arena, site S0372.
 		arg = &prgrm.CXArgs[argTypeSig.Meta]
 	} else if argTypeSig.Type == TYPE_ATOMIC {
 		argTypeSigOffset := argTypeSig.Offset
@@ -175,6 +187,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			argTypeSigOffset += fp
 		}
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0373.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 		indexesLen := len(arrDetails.Indexes)
 
@@ -186,6 +200,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 
 			sizeToUse := types.Code(arrDetails.Meta).Size()
 			sizeOfElement := subSize * sizeToUse
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0374.
 			argTypeSigOffset += types.Cast_i32_to_ptr(types.Read_i32(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, prgrm.GetCXTypeSignatureFromArray(arrDetails.Indexes[i])))) * sizeOfElement
 		}
 
@@ -202,6 +218,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 		if argTypeSig.IsDeref {
 			finalOffset = types.Read_ptr(prgrm.Memory, finalOffset)
 
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+			// Now an arena getter, site S0375.
 			arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 			indexesLen := len(arrDetails.Indexes)
 
@@ -213,6 +231,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 
 				sizeToUse := types.Code(arrDetails.Meta).Size()
 				sizeOfElement := subSize * sizeToUse
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0376.
 				finalOffset += types.Cast_i32_to_ptr(types.Read_i32(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, prgrm.GetCXTypeSignatureFromArray(arrDetails.Indexes[i])))) * sizeOfElement
 			}
 		}
@@ -231,6 +251,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			argTypeSigOffset += fp
 		}
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0377.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 		indexesLen := len(arrDetails.Indexes)
 		eltSize := types.Code(arrDetails.Meta).Size()
@@ -248,6 +270,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			argTypeSigOffset += types.OBJECT_HEADER_SIZE
 			argTypeSigOffset += constants.SLICE_HEADER_SIZE
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0378.
 			indexOffset := GetFinalOffset(prgrm, fp, nil, prgrm.GetCXTypeSignatureFromArray(arrDetails.Indexes[i]))
 			indexValue := types.Read_i32(prgrm.Memory, indexOffset)
 
@@ -288,8 +312,12 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			argTypeSigOffset += fp
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0379.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 		for _, fldIdx := range structDetails.Fields {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0380.
 			fld := prgrm.GetCXArgFromArray(fldIdx)
 			argTypeSigOffset += fld.Offset
 			argTypeSigOffset = CalculateDereferences(prgrm, fld, argTypeSigOffset, fp)
@@ -313,8 +341,12 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 			}
 		}
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0381.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 		for _, fldIdx := range structDetails.Fields {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0382.
 			fld := prgrm.GetCXArgFromArray(fldIdx)
 			argTypeSigOffset += fld.Offset
 			argTypeSigOffset = CalculateDereferences(prgrm, fld, argTypeSigOffset, fp)
@@ -339,6 +371,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 
 	finalOffset = CalculateDereferences(prgrm, arg, finalOffset, fp)
 	for _, fldIdx := range arg.Fields {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0383.
 		fld := prgrm.GetCXArgFromArray(fldIdx)
 		// elt = fld
 		finalOffset += fld.Offset
@@ -360,6 +394,8 @@ func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 	sizeToUse := GetDerefSize(prgrm, drfsStruct.arg, drfsStruct.idxCounter, drfsStruct.derefPointer, false) //TODO: is always arg.Size unless arg.StructType != nil
 	drfsStruct.derefPointer = false
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0384.
 	indexOffset := GetFinalOffset(prgrm, drfsStruct.fp, nil, prgrm.GetCXTypeSignatureFromArray(drfsStruct.arg.Indexes[drfsStruct.idxCounter]))
 	indexValue := types.Read_i32(prgrm.Memory, indexOffset)
 
@@ -384,6 +420,8 @@ func CalculateDereference_Array(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 	drfsStruct.baseOffset = drfsStruct.finalOffset
 	drfsStruct.sizeofElement = subSize * sizeToUse
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0385.
 	drfsStruct.finalOffset += types.Cast_i32_to_ptr(types.Read_i32(prgrm.Memory, GetFinalOffset(prgrm, drfsStruct.fp, nil, prgrm.GetCXTypeSignatureFromArray(drfsStruct.arg.Indexes[drfsStruct.idxCounter])))) * drfsStruct.sizeofElement // TODO:PTR Use Read_ptr
 	drfsStruct.idxCounter++
 }

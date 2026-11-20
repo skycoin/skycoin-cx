@@ -19,11 +19,15 @@ func TestASTAPI_Expressions(t *testing.T) {
 	parsingcompletor.InitCXCore()
 
 	t.Run("make program", func(t *testing.T) {
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Now a constructor call, site S1598.
 		cxprogram = cxinit.MakeProgram()
 		cxinit.RegisterPackages(cxprogram)
 	})
 
 	t.Run("add empty package", func(t *testing.T) {
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S1599.
 		err := astapi.AddEmptyPackage(cxprogram, "main")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)
@@ -31,6 +35,8 @@ func TestASTAPI_Expressions(t *testing.T) {
 	})
 
 	t.Run("add empty function to package", func(t *testing.T) {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now an arena insert, site S1600.
 		err := astapi.AddEmptyFunctionToPackage(cxprogram, "main", "TestFunction")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)
@@ -77,6 +83,8 @@ func TestASTAPI_Expressions(t *testing.T) {
 	})
 
 	t.Run("remove expression from a function", func(t *testing.T) {
+		// OBJMODEL: state.CXExpressionMng.CXExpressionRelease(gid), phase 4 #346.
+		// Now a release, site S1601.
 		err := astapi.RemoveExpressionFromFunction(cxprogram, "TestFunction", 2)
 		if err != nil {
 			t.Errorf("want no error, got %v", err)

@@ -49,13 +49,18 @@ build-parser: ## Generate lexer and parser for CX grammar
 	line int
         lineStr string
 
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
+	// Now a pointer at rest, site S1468.
 	argument *ast.CXArgument
-	// VIOLATION: pointer at rest; becomes CXArgumentGid in phase 3.
+	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
+	// Now a pointer at rest, site S1469.
 	arguments []*ast.CXArgument
 
-	// VIOLATION: pointer at rest; becomes CXExpressionGid in phase 3.
+	// OBJMODEL: CXExpressionGid, the parser value stack lives across Allocs, phase 4 #346.
+	// Now a pointer at rest, site S1470.
 	expression *ast.CXExpression
+	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
+	// Now objects held by value, site S1471.
 	expressions []ast.CXExpression
 
 	SelectStatement actions.SelectStatement
@@ -63,9 +68,12 @@ build-parser: ## Generate lexer and parser for CX grammar
 
 	ReturnExpressions actions.ReturnExpressions
 
+	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
+	// Now objects held by value, site S1472.
 	arrayArguments [][]ast.CXExpression
 
-    // VIOLATION: pointer at rest; becomes CXFunctionGid in phase 3.
+    // OBJMODEL: CXFunctionGid, the parser value stack lives across Allocs, phase 4 #351.
+    // Now a pointer at rest, site S1473.
     function *ast.CXFunction
     functionIndex ast.CXFunctionIndex
 }
@@ -266,6 +274,8 @@ struct_fields:
 
 fields:         parameter_declaration SEMICOLON
                 {
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1474.
 			$$ = []*ast.CXArgument{$1}
                 }
         |       fields parameter_declaration SEMICOLON
@@ -325,6 +335,8 @@ parameter_type_list:
 parameter_list:
                 parameter_declaration
                 {
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1475.
 			$$ = []*ast.CXArgument{$1}
                 }
 	|       parameter_list COMMA parameter_declaration
@@ -350,6 +362,8 @@ direct_declarator:
                 IDENTIFIER
                 {
 			if pkg, err := actions.AST.GetCurrentPackage(); err == nil {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a constructor call, site S1476.
 				arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = $1
@@ -366,11 +380,15 @@ direct_declarator:
 id_list:	IDENTIFIER
 		{
 			arg := actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1477.
 			$$ = []*ast.CXArgument{arg}
 		}
 	|	type_specifier
 		{
 			arg := actions.DeclarationSpecifiersBasic(types.Code($1))
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1478.
 			$$ = []*ast.CXArgument{arg}
 		}
 	|	id_list COMMA IDENTIFIER
@@ -405,9 +423,15 @@ types_list:
 declaration_specifiers:
                 FUNC types_list types_list
 		{
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a constructor call, site S1479.
 			arg := ast.MakeArgument("", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
                        
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an arena insert, site S1480.
 			arg.Inputs =  actions.AST.AddPointerArgsToCXArgsArray($2)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now an arena insert, site S1481.
 			arg.Outputs =  actions.AST.AddPointerArgsToCXArgsArray($3)
 			$$ = actions.DeclarationSpecifiers(arg, []types.Pointer{0}, constants.DECL_FUNC)
 		}
@@ -497,8 +521,12 @@ struct_literal_fields:
                         for i:=0;i<len($3);i++{
                                 if $3[i].Type!=ast.CX_LINE{
                                         if $3[i].IsStructLiteral() {
+                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+                                                // Now a slice of objects, site S1482.
                                                 $$ = actions.StructLiteralAssignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$1)}, $3)
                                         } else {
+                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+                                                // Now a slice of objects, site S1483.
                                                 $$ = actions.Assignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$1)}, "=", $3)
                                         }
                                         break
@@ -510,8 +538,12 @@ struct_literal_fields:
                         for i:=0;i<len($5);i++{
                                 if $5[i].Type!=ast.CX_LINE{
                                         if $5[i].IsStructLiteral() {
+                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+                                                // Now a slice of objects, site S1484.
                                                 $$ = append($1, actions.StructLiteralAssignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$3)}, $5)...)
                                         } else {
+                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+                                                // Now a slice of objects, site S1485.
                                                 $$ = append($1, actions.Assignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$3)}, "=", $5)...)
                                         }
                                         break
@@ -623,14 +655,22 @@ slice_literal_expression:
                                 if expr.Type==ast.CX_LINE{
                                         continue
                                 }
+                                // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+                                // Now an arena getter, site S1486.
                                 expression, err := actions.AST.GetCXAtomicOp(expr.Index)
                                 if err != nil {
                                         panic(err)
                                 }
 
+                                // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                                // Now an arena getter, site S1487.
                                 expressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(expression.GetOutputs(actions.AST)[0])
+                                // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                                // Now an arena getter, site S1488.
                                 lastExpressionInputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(lastExpression.GetInputs(actions.AST)[0])
 			        if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				        // Now an arena getter, site S1489.
 				        expressionOutputArg := actions.AST.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
                                         
                                         if expressionOutputArg.Name == lastExpressionInputTypeSig.Name {
@@ -639,11 +679,15 @@ slice_literal_expression:
                                         }
 			        } else if expressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
                                         if expressionOutputTypeSig.Name == lastExpressionInputTypeSig.Name {
+                                                // OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+                                                // Now an arena getter, site S1490.
                                                 sliceDetails:=actions.AST.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
                                                 sliceDetails.Lengths = append(sliceDetails.Lengths, 0)
                                         }
                                 } else if expressionOutputTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
                                         if expressionOutputTypeSig.Name == lastExpressionInputTypeSig.Name {
+                                                // OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+                                                // Now an arena getter, site S1491.
                                                 sliceDetails:=actions.AST.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
                                                 sliceDetails.Lengths = append(sliceDetails.Lengths, 0)
                                         }
@@ -1016,6 +1060,8 @@ struct_literal_expression:
                         if err != nil {
                                 panic(err)
                         }
+                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                        // Now an arena getter, site S1492.
                         cxAtomicOpOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(actions.AST)[0])
 			$$ = actions.PrimaryStructLiteralExternal(actions.AST,cxAtomicOpOutputTypeSig.Name, $3, $5)
                 }
@@ -1042,11 +1088,15 @@ assignment_expression:
                                                                                 continue
                                                                         }
 
+                                                                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+                                                                        // Now an arena getter, site S1493.
                                                                         fromExpression,err := actions.AST.GetCXAtomicOp(from.Index)
                                                                         if err != nil {
                                                                                 panic(err)
                                                                         }
 
+                                                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                                                                        // Now an arena getter, site S1494.
                                                                         fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
                                                                         fromExpressionOutputIdx:= fromExpressionOutputTypeSig.Meta
                                                                         actions.AST.CXArgs[fromExpressionOutputIdx].PreviouslyDeclared = true
@@ -1063,11 +1113,15 @@ assignment_expression:
                                                                                 continue
                                                                         }
 
+                                                                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+                                                                        // Now an arena getter, site S1495.
                                                                         fromExpression, err := actions.AST.GetCXAtomicOp(from.Index)
                                                                         if err != nil {
                                                                                 panic(err)
                                                                         }
 
+                                                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                                                                        // Now an arena getter, site S1496.
                                                                         fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
                                                                         fromExpressionOutputIdx:=fromExpressionOutputTypeSig.Meta
                                                                         actions.AST.CXArgs[fromExpressionOutputIdx].PreviouslyDeclared = true
@@ -1197,7 +1251,8 @@ expression_statement:
                 { $$ = nil }
 	|       expression SEMICOLON
                 {          
-                        // VIOLATION: created outside manager; phase 1.
+                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+                        // Now a heap literal, site S1497.
                         var lastFirstAtomicOp *ast.CXAtomicOperator= &ast.CXAtomicOperator{Operator:-1}
                         var err error
 
@@ -1207,12 +1262,16 @@ expression_statement:
                                         panic(err)
                                 }
                         }
+                       // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+                       // Now an arena getter, site S1498.
                        lastFirstAtomicOpOperator:=actions.AST.GetFunctionFromArray(lastFirstAtomicOp.Operator)
 
 			if len($1) > 0 && lastFirstAtomicOpOperator == nil  && !$1[len($1) - 1].IsMethodCall() {
 				outs := lastFirstAtomicOp.GetOutputs(actions.AST)
                                
 				if len(outs) > 0 {
+                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+                                        // Now an arena getter, site S1499.
                                         outTypeSig:=actions.AST.GetCXTypeSignatureFromArray(outs[0])
 					println(ast.CompilationError( outTypeSig.ArgDetails.FileName,  outTypeSig.ArgDetails.FileLine), "invalid expression")
 				} else {
@@ -1221,6 +1280,8 @@ expression_statement:
 				$$ = nil
 			} else if len($1) > 0 && $1[0].Type != ast.CX_LINE {
 				// test() and assert report the CX_LINE before them (skycoin-cx#254)
+				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+				// Also state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346. Site S1500 S1501.
 				$$ = append([]ast.CXExpression{*ast.MakeCXLineExpression(actions.AST, actions.CurrentFile, actions.LineNo, actions.LineStr)}, $1...)
 			} else {
 				$$ = $1
@@ -1337,11 +1398,17 @@ jump_statement: GOTO IDENTIFIER SEMICOLON
                                 panic(err)
                         }
                         
+                        // OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+                        // Now a constructor call, site S1502.
                         exprCXLine := ast.MakeCXLineExpression(actions.AST, actions.CurrentFile, actions.LineNo, actions.LineStr)
+                        // OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+                        // Now a constructor call, site S1503.
                         expr := ast.MakeAtomicOperatorExpression(actions.AST,ast.Natives[constants.OP_GOTO])
                         expressionIdx :=expr.Index
                         actions.AST.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
                         actions.AST.CXAtomicOps[expressionIdx].Label = $2
+                        // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+                        // Now a slice of objects, site S1504.
                         $$ = []ast.CXExpression{*exprCXLine,*expr}
 			
                 }

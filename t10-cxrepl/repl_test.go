@@ -19,6 +19,8 @@ const hello = "package main\nfunc main() {\n\tstr.print(\"hi\")\n}\n"
 func TestMain(m *testing.M) {
 	actions.InitConstants()
 	cxos.InitConstants()
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0011 S0012.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	opcodes.RegisterOpcodes(actions.AST)

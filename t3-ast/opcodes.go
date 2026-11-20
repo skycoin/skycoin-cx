@@ -37,9 +37,11 @@ const (
 // Todo: What is an operator?
 var (
 	// Natives ...
-	// VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
+	// OBJMODEL: state.CXNativeFunctionMng, keyed by opcode, phase 4 #356.
+	// Now a pointer at rest, site S0387.
 	Natives = map[int]*CXNativeFunction{}
-	// VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
+	// OBJMODEL: state.CXNativeFunctionMng, keyed by opcode, phase 4 #356.
+	// Now a pointer at rest, site S0388.
 	Operators []*CXNativeFunction
 )
 

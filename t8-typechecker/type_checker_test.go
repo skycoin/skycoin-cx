@@ -127,13 +127,21 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1528 S1529.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
 			if tc.strctName != "" {
 
+				// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+				// Now a constructor call, site S1530.
 				pkg := ast.MakePackage(tc.pkgName)
+				// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+				// Now an arena insert, site S1531.
 				pkgIdx := actions.AST.AddPackage(pkg)
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a constructor call, site S1532.
 				strct := ast.MakeStruct(tc.strctName)
 				strct.Package = ast.CXPackageIndex(pkgIdx)
 				pkg = pkg.AddStruct(actions.AST, strct)
@@ -244,14 +252,22 @@ func TestTypeChecker_ParseParameterDeclaration(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1533 S1534.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
 			var pkg *ast.CXPackage
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now a constructor call, site S1535.
 			pkg = ast.MakePackage(tc.pkgName)
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now an arena insert, site S1536.
 			pkgIdx := actions.AST.AddPackage(pkg)
 
 			if tc.strctName != "" {
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a constructor call, site S1537.
 				strct := ast.MakeStruct(tc.strctName)
 				strct.Package = ast.CXPackageIndex(pkgIdx)
 				pkg = pkg.AddStruct(actions.AST, strct)
@@ -315,6 +331,8 @@ func TestTypeChecker_ParseImports(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1538 S1539.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
@@ -339,6 +357,8 @@ func TestTypeChecker_ParseImports(t *testing.T) {
 				var match bool
 				var gotImport string
 				for _, pkgIdx := range program.Packages {
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S1540.
 					pkg, err := program.GetPackageFromArray(pkgIdx)
 					if err != nil {
 						panic(err)
@@ -349,6 +369,8 @@ func TestTypeChecker_ParseImports(t *testing.T) {
 					}
 
 					for _, impIdx := range pkg.Imports {
+						// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+						// Now an arena getter, site S1541.
 						impPkg, err := program.GetPackageFromArray(impIdx)
 						if err != nil {
 							panic(err)
@@ -493,6 +515,8 @@ func TestTypeChecker_ParseGlobals(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1542 S1543.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
@@ -540,6 +564,8 @@ func TestTypeChecker_ParseGlobals(t *testing.T) {
 				gotIndex := -1
 				var gotGlobalType string
 				for i, globalIdx := range pkg.Globals.Fields {
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+					// Now an arena getter, site S1544.
 					gotGlobal := program.GetCXTypeSignatureFromArray(globalIdx)
 					if gotGlobal.Name == wantGlobal.Name {
 						gotIndex = i
@@ -655,6 +681,8 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1545 S1546.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
@@ -687,10 +715,14 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 
 				var match bool
 				var ast3 string
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a local object, site S1547.
 				var gotStruct ast.CXStruct
 
 				for _, pkgIdx := range program.Packages {
 
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S1548.
 					pkg, err := program.GetPackageFromArray(pkgIdx)
 					gotPkgName := pkg.Name
 
@@ -718,6 +750,8 @@ func TestTypeChecker_ParseStructs(t *testing.T) {
 
 								for _, gotFieldIdx := range gotStruct.Fields {
 
+									// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+									// Now an arena getter, site S1549.
 									gotField := program.GetCXTypeSignatureFromArray(gotFieldIdx)
 									var gotFieldType string
 									var gotFieldIndex int
@@ -826,6 +860,8 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1550 S1551.
 			actions.AST = cxinit.MakeProgram()
 			cxinit.RegisterPackages(actions.AST)
 
@@ -871,6 +907,8 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 
 				for _, pkgIdx := range program.Packages {
 
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S1552.
 					pkg, err := program.GetPackageFromArray(pkgIdx)
 
 					if err != nil {
@@ -878,6 +916,8 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 					}
 
 					for _, gotFuncIdx := range pkg.Functions {
+						// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+						// Now an arena getter, site S1553.
 						gotFunc = program.GetFunctionFromArray(gotFuncIdx)
 						gotFuncName = gotFunc.Name
 
@@ -1204,6 +1244,8 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 					var gotGlobalType string
 					var match bool
 					for _, globalIdx := range gotPkg.Globals.Fields {
+						// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+						// Now an arena getter, site S1554.
 						gotGlobal := program.GetCXTypeSignatureFromArray(globalIdx)
 						gotGlobalName = gotGlobal.Name
 
@@ -1229,6 +1271,8 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 				for _, wantStruct := range wantPkg.Structs {
 					var match bool
 					var fields string
+					// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+					// Now a local object, site S1555.
 					var gotStruct ast.CXStruct
 					for _, structIdx := range gotPkg.Structs {
 						gotStruct = program.CXStructs[structIdx]
@@ -1240,6 +1284,8 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 
 								for _, gotFieldIdx := range gotStruct.Fields {
 
+									// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+									// Now an arena getter, site S1556.
 									gotField := program.GetCXTypeSignatureFromArray(gotFieldIdx)
 									var gotFieldType string
 
@@ -1286,6 +1332,8 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 					var gotFuncInputs string
 					var gotFuncOutputs string
 					for _, gotFuncIdx := range gotPkg.Functions {
+						// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+						// Now an arena getter, site S1557.
 						gotFunc := program.GetFunctionFromArray(gotFuncIdx)
 						gotFuncName = gotFunc.Name
 
@@ -1321,6 +1369,8 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 
 func getFormattedParam(prgrm *ast.CXProgram, paramTypeSigIdxs []ast.CXTypeSignatureIndex, pkg *ast.CXPackage, buf *bytes.Buffer) {
 	for i, paramTypeSigIdx := range paramTypeSigIdxs {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S1558.
 		paramTypeSig := prgrm.GetCXTypeSignatureFromArray(paramTypeSigIdx)
 
 		// Checking if this argument comes from an imported package.
@@ -1330,6 +1380,8 @@ func getFormattedParam(prgrm *ast.CXProgram, paramTypeSigIdxs []ast.CXTypeSignat
 		}
 
 		if paramTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1559.
 			param := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(paramTypeSig.Meta))
 
 			buf.WriteString(fmt.Sprintf("%s %s", ast.GetFormattedName(prgrm, param, externalPkg, pkg), ast.GetFormattedType(prgrm, paramTypeSig)))

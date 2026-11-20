@@ -50,33 +50,45 @@ func (cxe CXExpression) IsArrayLiteral() bool {
 
 // IsBreak checks if expression type is break
 func (cxe CXExpression) IsBreak(prgrm *CXProgram) bool {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0120.
 	expression, err := prgrm.GetCXAtomicOp(cxe.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0121.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	return expressionOperator != nil && expressionOperator.AtomicOPCode == constants.OP_BREAK
 }
 
 // IsContinue checks if expression type is continue
 func (cxe CXExpression) IsContinue(prgrm *CXProgram) bool {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0122.
 	expression, err := prgrm.GetCXAtomicOp(cxe.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0123.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	return expressionOperator != nil && expressionOperator.AtomicOPCode == constants.OP_CONTINUE
 }
 
 // IsUndType checks if expression type is und type
 func (cxe CXExpression) IsUndType(prgrm *CXProgram) bool {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0124.
 	expression, err := prgrm.GetCXAtomicOp(cxe.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0125.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	return expressionOperator != nil && IsOperator(expressionOperator.AtomicOPCode)
 
@@ -96,6 +108,8 @@ func (cxe CXExpression) IsScopeDel() bool {
 //                             `CXExpression` Getters
 
 func (cxe CXExpression) GetLabel(prgrm *CXProgram) string {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0126.
 	expression, err := prgrm.GetCXAtomicOp(cxe.Index)
 	if err != nil {
 		panic(err)

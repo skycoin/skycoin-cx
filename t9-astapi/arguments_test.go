@@ -21,11 +21,15 @@ func TestASTAPI_Arguments(t *testing.T) {
 	parsingcompletor.InitCXCore()
 
 	t.Run("make program", func(t *testing.T) {
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Now a constructor call, site S1585.
 		cxprogram = cxinit.MakeProgram()
 		cxinit.RegisterPackages(cxprogram)
 	})
 
 	t.Run("add empty package", func(t *testing.T) {
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S1586.
 		err := astapi.AddEmptyPackage(cxprogram, "main")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)
@@ -33,6 +37,8 @@ func TestASTAPI_Arguments(t *testing.T) {
 	})
 
 	t.Run("add empty function to package", func(t *testing.T) {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now an arena insert, site S1587.
 		err := astapi.AddEmptyFunctionToPackage(cxprogram, "main", "TestFunction")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)
@@ -125,13 +131,19 @@ func TestASTAPI_Arguments(t *testing.T) {
 	})
 
 	t.Run("add global", func(t *testing.T) {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S1588.
 		arg := cxast.MakeGlobal("testGlobal", types.I16, "", -1)
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S1589.
 		cxpackage, err := cxprogram.GetPackageFromArray(cxprogram.Packages["main"])
 		if err != nil {
 			panic(err)
 		}
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now an arena insert, site S1590.
 		argIdx := cxprogram.AddCXArgInArray(arg)
 		cxpackage.AddGlobal(cxprogram, argIdx)
 	})

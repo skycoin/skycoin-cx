@@ -74,6 +74,8 @@ func CallAffPredicate(prgrm *ast.CXProgram, fn *ast.CXFunction, predValue []byte
 		prgrm.Memory[newFP+c] = 0
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S1253.
 	newCallOperatorInputTypeSig := prgrm.GetCXTypeSignatureFromArray(newCallOperatorInputs[0])
 
 	// sending value to predicate function
@@ -96,6 +98,8 @@ func CallAffPredicate(prgrm *ast.CXProgram, fn *ast.CXFunction, predValue []byte
 		}
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S1254.
 	newCallOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(newCallOperatorOutputs[0])
 
 	prevCall.Line--
@@ -108,11 +112,15 @@ func CallAffPredicate(prgrm *ast.CXProgram, fn *ast.CXFunction, predValue []byte
 // Used by QueryArgument to query inputs and then outputs from expressions.
 func queryParam(prgrm *ast.CXProgram, fn *ast.CXFunction, argsIdx []ast.CXArgumentIndex, exprLbl string, argOffsetB []byte, affOffset *types.Pointer) {
 	for i, argIdx := range argsIdx {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1255.
 		arg := prgrm.GetCXArgFromArray(argIdx)
 
 		var typOffset types.Pointer
 		elt := arg.GetAssignmentElement(prgrm)
 		if elt.StructType != nil {
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1256.
 			strctTypePkg, err := prgrm.GetPackageFromArray(elt.StructType.Package)
 			if err != nil {
 				panic(err)
@@ -160,14 +168,20 @@ func queryParam(prgrm *ast.CXProgram, fn *ast.CXFunction, argsIdx []ast.CXArgume
 
 // QueryArgument ...
 func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, argOffsetB []byte, affOffset *types.Pointer) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1257.
 	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1258.
 	cxAtomicOpFunction := prgrm.GetFunctionFromArray(cxAtomicOp.Function)
 
 	for _, ex := range cxAtomicOpFunction.Expressions {
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S1259.
 		exCXAtomicOp, err := prgrm.GetCXAtomicOp(ex.Index)
 		if err != nil {
 			panic(err)
@@ -180,6 +194,8 @@ func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 
 		var inputCXArgsIdxs []ast.CXArgumentIndex
 		for _, inputIdx := range exCXAtomicOp.GetInputs(prgrm) {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S1260.
 			input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 			if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				inputCXArgsIdxs = append(inputCXArgsIdxs, ast.CXArgumentIndex(input.Meta))
@@ -191,6 +207,8 @@ func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 
 		var outputCXArgsIdxs []ast.CXArgumentIndex
 		for _, outputIdx := range exCXAtomicOp.GetOutputs(prgrm) {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S1261.
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 			if output.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				outputCXArgsIdxs = append(outputCXArgsIdxs, ast.CXArgumentIndex(output.Meta))
@@ -204,18 +222,26 @@ func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 
 // QueryExpressions ...
 func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, exprOffsetB []byte, affOffset *types.Pointer) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1262.
 	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1263.
 	cxAtomicOpFunction := prgrm.GetFunctionFromArray(cxAtomicOp.Function)
 
 	for _, ex := range cxAtomicOpFunction.Expressions {
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S1264.
 		exCXAtomicOp, err := prgrm.GetCXAtomicOp(ex.Index)
 		if err != nil {
 			panic(err)
 		}
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S1265.
 		exCXAtomicOpOperator := prgrm.GetFunctionFromArray(exCXAtomicOp.Operator)
 
 		if exCXAtomicOpOperator == nil || exCXAtomicOp.Label == "" {
@@ -260,12 +286,18 @@ func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, param
 
 	var arrCXArgs []*ast.CXArgument
 	for _, paramIdx := range params {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1266.
 		param := prgrm.GetCXArgFromArray(paramIdx)
 		arrCXArgs = append(arrCXArgs, param)
 	}
 	for _, paramIdx := range paramsTypeSig {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S1267.
 		param := prgrm.GetCXTypeSignatureFromArray(paramIdx)
 		if param.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1268.
 			arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(param.Meta))
 			arrCXArgs = append(arrCXArgs, arg)
 		} else {
@@ -276,6 +308,8 @@ func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, param
 	for _, param := range arrCXArgs {
 		var typOffset types.Pointer
 		if param.StructType != nil {
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1269.
 			strctTypePkg, err := prgrm.GetPackageFromArray(param.StructType.Package)
 			if err != nil {
 				panic(err)
@@ -325,11 +359,15 @@ func queryStructsInPackage(prgrm *ast.CXProgram, fn *ast.CXFunction, strctOffset
 
 // QueryStructure ...
 func QueryStructure(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, strctOffsetB []byte, affOffset *types.Pointer) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1270.
 	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S1271.
 	pkg, err := prgrm.GetPackageFromArray(cxAtomicOp.Package)
 	if err != nil {
 		panic(err)
@@ -337,6 +375,8 @@ func QueryStructure(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpres
 
 	queryStructsInPackage(prgrm, fn, strctOffsetB, affOffset, pkg)
 	for _, impIdx := range pkg.Imports {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S1272.
 		imp, err := prgrm.GetPackageFromArray(impIdx)
 		if err != nil {
 			panic(err)
@@ -347,16 +387,22 @@ func QueryStructure(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpres
 
 // QueryFunction ...
 func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, fnOffsetB []byte, affOffset *types.Pointer) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1273.
 	cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S1274.
 	pkg, err := prgrm.GetPackageFromArray(cxAtomicOp.Package)
 	if err != nil {
 		panic(err)
 	}
 	for _, fIdx := range pkg.Functions {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S1275.
 		f := prgrm.GetFunctionFromArray(fIdx)
 
 		if f.Name == constants.SYS_INIT_FUNC {
@@ -413,6 +459,8 @@ func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressio
 		// opNameB = encoder.Serialize(OpNames[call.Operator.OpCode])
 		opNameOffset = types.AllocWrite_str_data(prgrm, prgrm.Memory, ast.OpNames[call.Operator.AtomicOPCode])
 	} else {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S1276.
 		opPkg, err := prgrm.GetPackageFromArray(call.Operator.Package)
 		if err != nil {
 			panic(err)
@@ -458,6 +506,8 @@ func QueryProgram(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressi
 			// opNameB = encoder.Serialize(OpNames[call.Operator.OpCode])
 			opNameOffset = types.AllocWrite_str_data(prgrm, prgrm.Memory, ast.OpNames[call.Operator.AtomicOPCode])
 		} else {
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1277.
 			opPkg, err := prgrm.GetPackageFromArray(call.Operator.Package)
 			if err != nil {
 				panic(err)
@@ -509,18 +559,24 @@ func getTarget(prgrm *ast.CXProgram, inp2 *ast.CXTypeSignature, fp types.Pointer
 			switch *tgtElt {
 			case "Pkg":
 				if pkg, err := prgrm.GetPackage(aff); err == nil {
+					// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+					// Now an object copy, site S1278.
 					*tgtPkg = *pkg
 				} else {
 					panic(err)
 				}
 			case "fn":
 				if fn, err := tgtPkg.GetFunction(prgrm, aff); err == nil {
+					// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+					// Now an object copy, site S1279.
 					*tgtFn = *fn
 				} else {
 					panic(err)
 				}
 			case "expr":
 				if expr, err := tgtFn.GetExpressionByLabel(prgrm, aff); err == nil {
+					// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+					// Now an object copy, site S1280.
 					*tgtExpr = *expr
 				} else {
 					panic(err)
@@ -558,6 +614,8 @@ func getAffordances(prgrm *ast.CXProgram, inp1 *ast.CXTypeSignature, fp types.Po
 	var fltrElt string
 	elts := GetInferActions(prgrm, inp1, fp)
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1281.
 	tgtExprAtomicOp, err := prgrm.GetCXAtomicOp(tgtExpr.Index)
 	if err != nil {
 		panic(err)
@@ -824,6 +882,8 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 				if expr.Type == ast.CX_LINE {
 					continue
 				}
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+				// Now an arena getter, site S1282.
 				cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 				if err != nil {
 					panic(err)
@@ -869,6 +929,8 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S1283.
 	affExprAtomicOp, err := prgrm.GetCXAtomicOp(affExpr.Index)
 	if err != nil {
 		panic(err)
@@ -876,10 +938,15 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 
 	if argType == "Input" {
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S1284.
 		affExprAtomicOpInputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetInputs(prgrm)[argIdx])
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S1285.
 		var arg *ast.CXArgument = &ast.CXArgument{}
 		if affExprAtomicOpInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1286.
 			arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpInputTypeSig.Meta))
 		} else {
 			panic("type is not a cx argumetn deprecate\n\n")
@@ -888,10 +955,15 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 		return arg
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S1287.
 	affExprAtomicOpOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetOutputs(prgrm)[argIdx])
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S1288.
 	var arg *ast.CXArgument = &ast.CXArgument{}
 	if affExprAtomicOpOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1289.
 		arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpOutputTypeSig.Meta))
 	} else {
 		panic("type is not a cx argumetn deprecate\n\n")
@@ -1195,6 +1267,8 @@ func opAffQuery(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 		default:
 			switch cmd {
 			case "filter":
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S1290.
 				inp1Pkg, err := prgrm.GetPackageFromArray(inputs[0].TypeSignature.Package)
 				if err != nil {
 					panic(err)
@@ -1250,9 +1324,13 @@ func opAffQuery(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 					types.Write_ptr(prgrmOffsetB[:], 0, prgrmOffset)
 
 					fnInputs := fn.GetInputs(prgrm)
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+					// Now an arena getter, site S1291.
 					fnInputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnInputs[0])
 					var predInp *ast.CXArgument
 					if fnInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S1292.
 						predInp = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fnInputTypeSig.Meta))
 					} else {
 						panic("type is not type cx argument deprecate\n\n")

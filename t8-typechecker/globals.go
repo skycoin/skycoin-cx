@@ -24,8 +24,14 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 		// If package not in AST
 		if err != nil || pkg == nil {
 
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now a constructor call, site S1510.
 			newPkg := ast.MakePackage(global.PackageID)
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now an arena insert, site S1511.
 			pkgIdx := actions.AST.AddPackage(newPkg)
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1512.
 			newPkg, err := actions.AST.GetPackageFromArray(pkgIdx)
 
 			if err != nil {
@@ -49,9 +55,13 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 		globalTokens := reGlobalDeclaration.FindSubmatch(globalDeclaration)
 
 		// add Global as CX Argument to CX Package
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S1513.
 		globalArg := ast.MakeArgument(global.GlobalVariableName, global.FileID, global.LineNumber)
 		globalArg.Offset = types.InvalidPointer
 		globalArg.Package = ast.CXPackageIndex(pkg.Index)
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now an arena insert, site S1514.
 		globalArgIdx := actions.AST.AddCXArgInArray(globalArg)
 
 		pkg.AddGlobal(actions.AST, globalArgIdx)
@@ -63,6 +73,8 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 			return err
 		}
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1515.
 		actions.DeclareGlobalInPackage(actions.AST, nil, actions.AST.GetCXArgFromArray(globalArgIdx), declarationSpecifier, nil, false)
 
 	}

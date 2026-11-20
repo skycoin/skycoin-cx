@@ -491,12 +491,13 @@ constructors create it.
 
 | Step | Objects (phase 4, phase 5 sites each) | Phase 4 sites | Phase 5 sites |
 | --- | --- | --- | --- |
-| 1 | `CXArgumentDebug` (20, 2), `CXLine` (11, 3), `CXTypeSignature_Array` (37, 61), `CXTypeSignature_Struct` (14, 35) | 82 | 101 |
-| 2 | `CXArgument` (288, 196), `CXTypeSignature` (139, 179) | 427 | 375 |
-| 3 | `CXStruct` (32, 13) | 32 | 13 |
-| 4 | `CXAtomicOperator` (16, 91), `CXExpression` (116, 9) | 132 | 100 |
-| 5 | `CXFunction` (44, 89), `CXNativeFunction` (6, 0) | 50 | 89 |
-| 6 | `CXPackage` (49, 90), `CXCall` (6, 1), `CXProgram` (47, 2) | 102 | 93 |
+| 1 | `CXArgumentDebug` (20, 2), `CXLine` (11, 3), `CXTypeSignature_Array` (37, 61), `CXTypeSignature_Struct` (15, 35) | 83 | 101 |
+| 2 | `CXArgument` (291, 196), `CXTypeSignature` (147, 179) | 438 | 375 |
+| 3 | `CXStruct` (35, 13) | 35 | 13 |
+| 4 | `CXAtomicOperator` (16, 91), `CXExpression` (119, 9) | 135 | 100 |
+| 5 | `CXFunction` (45, 89), `CXNativeFunction` (6, 0) | 51 | 89 |
+| 6 | `CXPackage` (49, 90), `CXCall` (9, 1), `CXProgram` (57, 2) | 115 | 93 |
+
 
 
 Phases 1 and 2 add files and touch no existing site, about 14 Def moves and
@@ -507,7 +508,7 @@ PR. Phase 6 adds the teardown functions and their test.
 ## Inventory
 
 [objectmodel-sites.csv](objectmodel-sites.csv) has one row for every site
-that breaks the standard today, 1596 in all, plus one row for
+that breaks the standard today, 1628 in all, plus one row for
 `DereferenceStruct.arg`, which lives on the stack and needs no change. Its
 columns are
 
@@ -526,13 +527,14 @@ columns are
 
 | Category | Meaning |
 | --- | --- |
-| `ctor-def` | a `Make*`, `Param`, `Slice` or `nativeArgCopy` constructor |
+| `ctor-def` | a constructor, `Make*`, `MakeCall`, `Param`, `Slice`, `nativeArgCopy`, `Deserialize`, `deserializeArgument`, `deserializeExpression` or the test generator `GenerateSampleProgram` |
 | `ctor-call` | a call to one of those constructors |
 | `arena-add` | a call that inserts into an arena, `Add*InArray`, `AddCXLine`, `AddCXAtomicOp`, `AddPackage` and the `astapi` wrappers |
 | `arena-append` | an `append` to an arena slice inside those functions |
 | `alloc-literal-heap` | `&<Obj>{...}` |
 | `alloc-literal-value` | `<Obj>{...}` that becomes an object |
 | `alloc-copy` | `*ptr` copied into a new object |
+| `alloc-var` | a local `var x <Obj>` that becomes an object |
 | `make-slice` | `make([]<Obj>...)`, `make([]*<Obj>...)` or a slice literal of objects |
 | `release-call` | a `Remove*` call |
 | `drop` | an object dropped for Go's garbage collector, a list field truncated or spliced, a `delete` from a name map, or a program replaced |
@@ -544,23 +546,24 @@ columns are
 
 The counts per object.
 
-| Object | ctor-def | ctor-call | arena-add | arena-append | alloc-literal-heap | alloc-literal-value | alloc-copy | make-slice | release-call | drop | get-call | get-addr-arena | ptr-field | ptr-global | value-field | phase 4 | phase 5 | total |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `CXArgumentDebug` | 0 | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 20 | 2 | 22 |
-| `CXLine` | 0 | 0 | 2 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 | 0 | 0 | 11 | 3 | 14 |
-| `CXTypeSignature_Array` | 0 | 0 | 18 | 1 | 12 | 2 | 4 | 0 | 0 | 0 | 60 | 1 | 0 | 0 | 0 | 37 | 61 | 98 |
-| `CXTypeSignature_Struct` | 0 | 0 | 7 | 1 | 4 | 0 | 2 | 0 | 0 | 0 | 34 | 1 | 0 | 0 | 0 | 14 | 35 | 49 |
-| `CXArgument` | 7 | 138 | 31 | 1 | 81 | 1 | 3 | 16 | 0 | 6 | 178 | 15 | 8 | 0 | 0 | 288 | 196 | 484 |
-| `CXTypeSignature` | 0 | 0 | 89 | 1 | 21 | 4 | 14 | 1 | 0 | 9 | 176 | 1 | 2 | 0 | 0 | 139 | 179 | 318 |
-| `CXStruct` | 1 | 15 | 2 | 1 | 12 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 7 | 0 | 0 | 32 | 13 | 45 |
-| `CXAtomicOperator` | 0 | 0 | 3 | 1 | 12 | 0 | 0 | 0 | 0 | 0 | 90 | 1 | 0 | 0 | 0 | 16 | 91 | 107 |
-| `CXExpression` | 2 | 78 | 0 | 0 | 2 | 0 | 7 | 19 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 116 | 9 | 125 |
-| `CXFunction` | 1 | 7 | 21 | 2 | 4 | 0 | 3 | 1 | 2 | 1 | 87 | 1 | 3 | 0 | 0 | 44 | 89 | 133 |
-| `CXNativeFunction` | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 0 | 6 |
-| `CXPackage` | 1 | 16 | 25 | 1 | 2 | 0 | 2 | 1 | 0 | 1 | 89 | 1 | 0 | 0 | 0 | 49 | 90 | 139 |
-| `CXCall` | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 6 | 1 | 7 |
-| `CXProgram` | 1 | 25 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 | 2 | 0 | 47 | 2 | 49 |
-| total | 15 | 280 | 198 | 10 | 182 | 8 | 35 | 43 | 4 | 39 | 716 | 28 | 26 | 4 | 9 | 825 | 771 | 1596 |
+| Object | ctor-def | ctor-call | arena-add | arena-append | alloc-literal-heap | alloc-literal-value | alloc-copy | alloc-var | make-slice | release-call | drop | get-call | get-addr-arena | ptr-field | ptr-global | value-field | phase 4 | phase 5 | total |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `CXArgumentDebug` | 0 | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 20 | 2 | 22 |
+| `CXLine` | 0 | 0 | 2 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 | 0 | 0 | 11 | 3 | 14 |
+| `CXTypeSignature_Array` | 0 | 0 | 18 | 1 | 12 | 2 | 4 | 0 | 0 | 0 | 0 | 60 | 1 | 0 | 0 | 0 | 37 | 61 | 98 |
+| `CXTypeSignature_Struct` | 0 | 0 | 7 | 1 | 4 | 0 | 2 | 1 | 0 | 0 | 0 | 34 | 1 | 0 | 0 | 0 | 15 | 35 | 50 |
+| `CXArgument` | 8 | 139 | 31 | 1 | 81 | 1 | 3 | 1 | 16 | 0 | 6 | 178 | 15 | 8 | 0 | 0 | 291 | 196 | 487 |
+| `CXTypeSignature` | 0 | 0 | 89 | 1 | 21 | 4 | 14 | 8 | 1 | 0 | 9 | 176 | 1 | 2 | 0 | 0 | 147 | 179 | 326 |
+| `CXStruct` | 1 | 15 | 2 | 1 | 12 | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 6 | 7 | 0 | 0 | 35 | 13 | 48 |
+| `CXAtomicOperator` | 0 | 0 | 3 | 1 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 90 | 1 | 0 | 0 | 0 | 16 | 91 | 107 |
+| `CXExpression` | 3 | 79 | 0 | 0 | 2 | 0 | 7 | 1 | 19 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 119 | 9 | 128 |
+| `CXFunction` | 1 | 7 | 21 | 2 | 4 | 0 | 3 | 1 | 1 | 2 | 1 | 87 | 1 | 3 | 0 | 0 | 45 | 89 | 134 |
+| `CXNativeFunction` | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 0 | 6 |
+| `CXPackage` | 1 | 16 | 25 | 1 | 2 | 0 | 2 | 0 | 1 | 0 | 1 | 89 | 1 | 0 | 0 | 0 | 49 | 90 | 139 |
+| `CXCall` | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 9 | 1 | 10 |
+| `CXProgram` | 3 | 33 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 | 2 | 0 | 57 | 2 | 59 |
+| total | 20 | 292 | 198 | 10 | 182 | 8 | 35 | 15 | 43 | 4 | 39 | 716 | 28 | 26 | 4 | 9 | 857 | 771 | 1628 |
+
 
 
 The list was made with a `go/ast` and `go/types` walk of every package,

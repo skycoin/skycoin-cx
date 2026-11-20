@@ -28,6 +28,7 @@
 
 #### Changed
 
+- Every site the object model will change, 1628 in all, carries a two line `// OBJMODEL:` comment with its target manager call or Gid, its phase, its issue and its id in `docs/objectmodel-sites.csv`. The `// VIOLATION:` comments for IR objects are gone (#299)
 - `t3-ast/tostring.go` prints struct values through one helper and reads atomic values through one switch, and the array and pointer array branches of `GetPrintableValue` are one. The output is unchanged (#238)
 - `loader.ReadProgram` reads a stored program with its packages and files. The graph, tree, encoder and file output use it instead of four copies of the same database walk, and `encoder.SaveFilesToDisk` takes a `loader.StoredPackage` (#92)
 - `bolt.Init` takes the database file path and keeps the database open until `bolt.Close`, and `packageloader` needs `-db`. The database was opened on every call and kept next to the executable, so `go run` lost it (#99)

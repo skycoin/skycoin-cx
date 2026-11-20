@@ -20,8 +20,14 @@ func ParseStructs(files []*loader.File, structs []declaration_extractor.StructDe
 		// If package is not found
 		if err != nil {
 
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now a constructor call, site S1522.
 			newPkg := ast.MakePackage(strct.PackageID)
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now an arena insert, site S1523.
 			pkgIdx := actions.AST.AddPackage(newPkg)
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1524.
 			newPkg, err = actions.AST.GetPackageFromArray(pkgIdx)
 
 			if err != nil {
@@ -35,6 +41,8 @@ func ParseStructs(files []*loader.File, structs []declaration_extractor.StructDe
 		// Select Package to Add to AST
 		actions.AST.SelectPackage(strct.PackageID)
 
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a constructor call, site S1525.
 		structCX := ast.MakeStruct(strct.StructName)
 		structCX.Package = ast.CXPackageIndex(pkg.Index)
 

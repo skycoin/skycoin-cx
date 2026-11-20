@@ -1,9 +1,11 @@
 package ast
 
 type CXAtomicOperator struct {
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0087.
 	Inputs *CXStruct
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0088.
 	Outputs  *CXStruct
 	Operator CXFunctionIndex
 
@@ -20,6 +22,8 @@ type CXAtomicOperator struct {
 //                             `CXAtomicOperator` Getters
 
 func (op *CXAtomicOperator) GetOperatorName(prgrm *CXProgram) string {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0089.
 	opOperator := prgrm.GetFunctionFromArray(op.Operator)
 	if opOperator.IsBuiltIn() {
 		return OpNames[opOperator.AtomicOPCode]
@@ -34,10 +38,13 @@ func (op *CXAtomicOperator) GetOperatorName(prgrm *CXProgram) string {
 // AddInput ...
 func (op *CXAtomicOperator) AddInput(prgrm *CXProgram, typeSignatureIdx CXTypeSignatureIndex) *CXAtomicOperator {
 	if op.Inputs == nil {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0090.
 		op.Inputs = &CXStruct{Package: op.Package}
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0091.
 	typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 	if typeSignature.Package == -1 {
 		typeSignature.Package = op.Package
@@ -45,6 +52,8 @@ func (op *CXAtomicOperator) AddInput(prgrm *CXProgram, typeSignatureIdx CXTypeSi
 
 	// Add Package if arg has no package
 	if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0092.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta))
 		if arg.Package == -1 {
 			arg.Package = op.Package
@@ -74,10 +83,13 @@ func (op *CXAtomicOperator) GetInputs(prgrm *CXProgram) []CXTypeSignatureIndex {
 // AddOutput ...
 func (op *CXAtomicOperator) AddOutput(prgrm *CXProgram, typeSignatureIdx CXTypeSignatureIndex) *CXAtomicOperator {
 	if op.Outputs == nil {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0093.
 		op.Outputs = &CXStruct{Package: op.Package}
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0094.
 	typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 	if typeSignature.Package == -1 {
 		typeSignature.Package = op.Package
@@ -85,6 +97,8 @@ func (op *CXAtomicOperator) AddOutput(prgrm *CXProgram, typeSignatureIdx CXTypeS
 
 	// Add Package if arg has no package
 	if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0095.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta))
 		if arg.Package == -1 {
 			arg.Package = op.Package

@@ -175,6 +175,8 @@ func Run(args []string) {
 	// Init 6: gl, glfw and al constants (empty without cxfx)
 	cxfx.InitConstants()
 	// Init 7: actions.AST, the program state
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0062 S0063.
 	actions.AST = cxinit.MakeProgram()
 	// Init 8: native packages in the program and the global opcode tables
 	cxinit.RegisterPackages(actions.AST)

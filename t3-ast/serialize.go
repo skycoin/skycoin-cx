@@ -45,6 +45,8 @@ func indexPackage(pkg *CXPackage, s *SerializedCXProgram) {
 }
 
 func indexStruct(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0389.
 	strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 	if err != nil {
 		panic(err)
@@ -59,6 +61,8 @@ func indexStruct(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgram) {
 }
 
 func indexFunction(prgrm *CXProgram, fn *CXFunction, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0390.
 	fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 	if err != nil {
 		panic(err)
@@ -125,6 +129,8 @@ func serializeArgument(prgrm *CXProgram, arg *CXArgument, s *SerializedCXProgram
 	if arg.StructType == nil {
 		s.Arguments[argOff].StructTypeOffset = sNil
 	} else {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0391.
 		strctPkg, err := prgrm.GetPackageFromArray(arg.StructType.Package)
 		if err != nil {
 			panic(err)
@@ -155,6 +161,8 @@ func serializeArgument(prgrm *CXProgram, arg *CXArgument, s *SerializedCXProgram
 	s.Arguments[argOff].InputsOffset, s.Arguments[argOff].InputsSize = serializeSliceOfArguments(prgrm, prgrm.ConvertIndexArgsToPointerArgs(arg.Inputs), s)
 	s.Arguments[argOff].OutputsOffset, s.Arguments[argOff].OutputsSize = serializeSliceOfArguments(prgrm, prgrm.ConvertIndexArgsToPointerArgs(arg.Outputs), s)
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0392.
 	argPkg, err := prgrm.GetPackageFromArray(arg.Package)
 	if err != nil {
 		panic(err)
@@ -213,11 +221,15 @@ func serializeExpression(prgrm *CXProgram, expr *CXExpression, s *SerializedCXPr
 		sExpr.LineStr = cxLine.LineStr
 
 	case CX_ATOMIC_OPERATOR:
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0393.
 		cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			panic(err)
 		}
 
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0394.
 		cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
 
 		if cxAtomicOpOperator == nil {
@@ -233,6 +245,8 @@ func serializeExpression(prgrm *CXProgram, expr *CXExpression, s *SerializedCXPr
 			sExpr.IsNative = serializeBoolean(false)
 			sExpr.OpCode = sNil
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0395.
 			opPkg, err := prgrm.GetPackageFromArray(cxAtomicOpOperator.Package)
 			if err != nil {
 				panic(err)
@@ -254,8 +268,12 @@ func serializeExpression(prgrm *CXProgram, expr *CXExpression, s *SerializedCXPr
 
 		sExpr.ExpressionType = int64(expr.ExpressionType)
 
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0396.
 		cxAtomicOpFunction := prgrm.GetFunctionFromArray(cxAtomicOp.Function)
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0397.
 		fnPkg, err := prgrm.GetPackageFromArray(cxAtomicOpFunction.Package)
 		if err != nil {
 			panic(err)
@@ -267,6 +285,8 @@ func serializeExpression(prgrm *CXProgram, expr *CXExpression, s *SerializedCXPr
 			panic("function reference not found")
 		}
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0398.
 		cxAtomicOpPkg, err := prgrm.GetPackageFromArray(cxAtomicOp.Package)
 		if err != nil {
 			panic(err)
@@ -287,6 +307,8 @@ func serializeCall(prgrm *CXProgram, call *CXCall, s *SerializedCXProgram) int {
 	callOff := len(s.Calls) - 1
 	serializedCall := &s.Calls[callOff]
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0399.
 	opPkg, err := prgrm.GetPackageFromArray(call.Operator.Package)
 	if err != nil {
 		panic(err)
@@ -305,6 +327,8 @@ func serializeCall(prgrm *CXProgram, call *CXCall, s *SerializedCXProgram) int {
 }
 
 func serializeStructArguments(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0400.
 	strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 	if err != nil {
 		panic(err)
@@ -320,6 +344,8 @@ func serializeStructArguments(prgrm *CXProgram, strct *CXStruct, s *SerializedCX
 }
 
 func serializeFunctionArguments(prgrm *CXProgram, fn *CXFunction, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0401.
 	fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 	if err != nil {
 		panic(err)
@@ -344,6 +370,8 @@ func serializePackageName(pkg *CXPackage, s *SerializedCXProgram) {
 }
 
 func serializeStructName(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0402.
 	strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 	if err != nil {
 		panic(err)
@@ -355,6 +383,8 @@ func serializeStructName(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgr
 }
 
 func serializeFunctionName(prgrm *CXProgram, fn *CXFunction, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0403.
 	fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 	if err != nil {
 		panic(err)
@@ -374,9 +404,13 @@ func serializePackageGlobals(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXPr
 
 		var glblArgs []*CXArgument
 		for _, glblFldIdx := range pkg.Globals.Fields {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0404.
 			glblFld := prgrm.GetCXTypeSignatureFromArray(glblFldIdx)
 			// Assuming only all are TYPE_CXARGUMENT_DEPRECATE
 			// TODO: To be replaced
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0405.
 			glbl := prgrm.GetCXArg(CXArgumentIndex(glblFld.Meta))
 			glblArgs = append(glblArgs, glbl)
 		}
@@ -396,6 +430,8 @@ func serializePackageImports(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXPr
 	imps := make([]int64, l)
 	count := 0
 	for _, impIdx := range importsByName(pkg) {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0406.
 		impPkg, err := prgrm.GetPackageFromArray(impIdx)
 		if err != nil {
 			panic(err)
@@ -415,6 +451,8 @@ func serializePackageImports(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXPr
 }
 
 func serializeStructPackage(prgrm *CXProgram, strct *CXStruct, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0407.
 	strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 	if err != nil {
 		panic(err)
@@ -434,6 +472,8 @@ func serializeStructPackage(prgrm *CXProgram, strct *CXStruct, s *SerializedCXPr
 }
 
 func serializeFunctionPackage(prgrm *CXProgram, fn *CXFunction, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0408.
 	fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 	if err != nil {
 		panic(err)
@@ -459,8 +499,12 @@ func serializePackageIntegers(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXP
 			// package has no functions
 			sPkg.CurrentFunctionName = ""
 		} else {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0409.
 			currFn := prgrm.GetFunctionFromArray(pkg.CurrentFunction)
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0410.
 			currFnPkg, err := prgrm.GetPackageFromArray(currFn.Package)
 			if err != nil {
 				panic(err)
@@ -495,6 +539,8 @@ func serializePackageIntegers(prgrm *CXProgram, pkg *CXPackage, s *SerializedCXP
 // }
 
 func serializeFunctionIntegers(prgrm *CXProgram, fn *CXFunction, s *SerializedCXProgram) {
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0411.
 	fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 	if err != nil {
 		panic(err)
@@ -552,6 +598,8 @@ func serializeProgram(prgrm *CXProgram, s *SerializedCXProgram) {
 	sPrgrm.PackagesOffset = int64(0)
 	sPrgrm.PackagesSize = int64(len(prgrm.Packages))
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0412.
 	currPkg, err := prgrm.GetPackageFromArray(prgrm.CurrentPackage)
 	if err != nil {
 		panic(err)
@@ -562,8 +610,12 @@ func serializeProgram(prgrm *CXProgram, s *SerializedCXProgram) {
 		panic("package reference not found")
 	}
 
+	// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+	// Now a slice of objects, site S0413.
 	args := []*CXArgument{}
 	for _, argIdx := range prgrm.ProgramInput {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0414.
 		arg := prgrm.GetCXArg(argIdx)
 		args = append(args, arg)
 	}
@@ -612,6 +664,8 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	for _, pkg := range packagesByName(prgrm) {
 
 		for _, strctIdx := range structsByName(pkg) {
+			// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
+			// Now a pointer into an arena, site S0415.
 			strct := &prgrm.CXStructs[strctIdx]
 			indexStruct(prgrm, strct, s)
 			serializeStructName(prgrm, strct, s)
@@ -624,6 +678,8 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	for _, pkg := range packagesByName(prgrm) {
 
 		for _, strctIdx := range structsByName(pkg) {
+			// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
+			// Now a pointer into an arena, site S0416.
 			strct := &prgrm.CXStructs[strctIdx]
 			serializeStructArguments(prgrm, strct, s)
 		}
@@ -639,6 +695,8 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	for _, pkg := range packagesByName(prgrm) {
 
 		for _, fnIdx := range functionsByName(pkg) {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0417.
 			fn := prgrm.GetFunctionFromArray(fnIdx)
 
 			indexFunction(prgrm, fn, s)
@@ -690,8 +748,12 @@ func serializeCXProgramElements(prgrm *CXProgram, s *SerializedCXProgram) {
 	for _, pkg := range packagesByName(prgrm) {
 
 		for _, fnIdx := range functionsByName(pkg) {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0418.
 			fn := prgrm.GetFunctionFromArray(fnIdx)
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0419.
 			fnPkg, err := prgrm.GetPackageFromArray(fn.Package)
 			if err != nil {
 				panic(err)
@@ -822,10 +884,15 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 		// initializing packages with their names,
 		// empty functions, structs, imports and globals
 		// and current function and struct
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now a heap literal, site S0420.
 		pkg := &CXPackage{}
 		pkg.Name = deserializeString(sPkg.NameOffset, sPkg.NameSize, s)
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S0421.
 		pkgIdx := prgrm.AddPackage(pkg)
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0422.
 		pkg, _ = prgrm.GetPackageFromArray(pkgIdx)
 
 		if sPkg.ImportsSize > 0 {
@@ -836,9 +903,13 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 			pkg.Functions = make(map[string]CXFunctionIndex, sPkg.FunctionsSize)
 
 			for _, sFn := range s.Functions[sPkg.FunctionsOffset : sPkg.FunctionsOffset+sPkg.FunctionsSize] {
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now a local object, site S0423.
 				var fn CXFunction
 				fn.Name = deserializeString(sFn.NameOffset, sFn.NameSize, s)
 
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now an arena insert, site S0424.
 				fnIdx := prgrm.AddFunctionInArray(&fn)
 				pkg.Functions[fn.Name] = fnIdx
 			}
@@ -848,8 +919,12 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 			pkg.Structs = make(map[string]CXStructIndex, sPkg.StructsSize)
 
 			for _, sStrct := range s.Structs[sPkg.StructsOffset : sPkg.StructsOffset+sPkg.StructsSize] {
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a local object, site S0425.
 				var strct CXStruct
 				strct.Name = deserializeString(sStrct.NameOffset, sStrct.NameSize, s)
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now an arena insert, site S0426.
 				strctIdx := prgrm.AddStructInArray(&strct)
 				pkg.Structs[strct.Name] = strctIdx
 			}
@@ -883,6 +958,8 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 			glblArgs := deserializeArguments(sPkg.GlobalsOffset, sPkg.GlobalsSize, s, prgrm)
 			var glblArgsIdxs []CXArgumentIndex
 			for _, glbl := range glblArgs {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now an arena insert, site S0427.
 				glblIdx := prgrm.AddCXArgInArray(glbl)
 				glblArgsIdxs = append(glblArgsIdxs, CXArgumentIndex(glblIdx))
 			}
@@ -896,6 +973,8 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 		if sPkg.StructsSize > 0 {
 			for _, sStrct := range s.Structs[sPkg.StructsOffset : sPkg.StructsOffset+sPkg.StructsSize] {
 				strctName := deserializeString(sStrct.NameOffset, sStrct.NameSize, s)
+				// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
+				// Now a pointer into an arena, site S0428.
 				strct := &prgrm.CXStructs[pkg.Structs[strctName]]
 				deserializeStruct(&sStrct, strct, s, prgrm)
 			}
@@ -905,11 +984,15 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 		if sPkg.FunctionsSize > 0 {
 			for _, sFn := range s.Functions[sPkg.FunctionsOffset : sPkg.FunctionsOffset+sPkg.FunctionsSize] {
 				fnName := deserializeString(sFn.NameOffset, sFn.NameSize, s)
+				// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+				// Now an arena getter, site S0429.
 				pkgFn := prgrm.GetFunctionFromArray(pkg.Functions[fnName])
 
 				deserializeFunction(&sFn, pkgFn, s, prgrm)
 			}
 		}
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an object copy, site S0430.
 		prgrm.CXPackages[pkgIdx] = *pkg
 	}
 
@@ -919,6 +1002,8 @@ func deserializePackages(s *SerializedCXProgram, prgrm *CXProgram) {
 
 func deserializeStruct(sStrct *serializedStruct, strct *CXStruct, s *SerializedCXProgram, prgrm *CXProgram) {
 	strct.Name = deserializeString(sStrct.NameOffset, sStrct.NameSize, s)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena insert, site S0431.
 	strct.Fields = prgrm.AddPointerArgsToTypeSignaturesArray(deserializeArguments(sStrct.FieldsOffset, sStrct.FieldsSize, s, prgrm))
 
 	strct.Package = prgrm.Packages[sStrct.PackageName]
@@ -933,8 +1018,12 @@ func deserializeArguments(off int64, size int64, s *SerializedCXProgram, prgrm *
 	idxs := deserializeIntegers(off, size, s)
 
 	// sArgs := s.Arguments[off : off + size]
+	// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+	// Now a slice of objects, site S0432.
 	args := make([]*CXArgument, size)
 	for i, idx := range idxs {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0433.
 		args[i] = deserializeArgument(&s.Arguments[idx], s, prgrm)
 	}
 	return args
@@ -958,9 +1047,14 @@ func deserializeArguments(off int64, size int64, s *SerializedCXProgram, prgrm *
 // 	return nil
 // }
 
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0434.
 func deserializeArgument(sArg *serializedArgument, s *SerializedCXProgram, prgrm *CXProgram) *CXArgument {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a local object, site S0435.
 	var arg CXArgument
+	// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
+	// Now a heap literal, site S0436.
 	arg.ArgDetails = &CXArgumentDebug{}
 	arg.Name = deserializeString(sArg.NameOffset, sArg.NameSize, s)
 	arg.Type = types.Code(sArg.Type)
@@ -981,8 +1075,14 @@ func deserializeArgument(sArg *serializedArgument, s *SerializedCXProgram, prgrm
 	arg.Lengths = deserializePointers(sArg.LengthsOffset, sArg.LengthsSize, s)
 	// TODO: include serializing of CXTypeSignature for indexes
 	// arg.Indexes = prgrm.AddPointerArgsToCXArgsArray(deserializeArguments(sArg.IndexesOffset, sArg.IndexesSize, s, prgrm))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0437.
 	arg.Fields = prgrm.AddPointerArgsToCXArgsArray(deserializeArguments(sArg.FieldsOffset, sArg.FieldsSize, s, prgrm))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0438.
 	arg.Inputs = prgrm.AddPointerArgsToCXArgsArray(deserializeArguments(sArg.InputsOffset, sArg.InputsSize, s, prgrm))
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0439.
 	arg.Outputs = prgrm.AddPointerArgsToCXArgsArray(deserializeArguments(sArg.OutputsOffset, sArg.OutputsSize, s, prgrm))
 	arg.Package = -1
 	if _, ok := prgrm.Packages[sArg.PackageName]; ok {
@@ -1001,12 +1101,16 @@ func deserializeOperator(sExpr *serializedExpression, s *SerializedCXProgram, pr
 	sOp := s.Functions[sExpr.OperatorOffset]
 	opName := deserializeString(sOp.NameOffset, sOp.NameSize, s)
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0440.
 	opPkg, err := prgrm.GetPackageFromArray(opPkgIdx)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, fnIdx := range opPkg.Functions {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0441.
 		fn := prgrm.GetFunctionFromArray(fnIdx)
 
 		if fn.Name == opName {
@@ -1021,6 +1125,8 @@ func deserializePackageImport(sImp *serializedPackage, s *SerializedCXProgram, p
 	impName := deserializeString(sImp.NameOffset, sImp.NameSize, s)
 
 	for _, pkgIdx := range prgrm.Packages {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0442.
 		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
 		if err != nil {
 			panic(err)
@@ -1043,11 +1149,15 @@ func deserializeExpressionFunction(sExpr *serializedExpression, s *SerializedCXP
 	sFn := s.Functions[sExpr.FunctionOffset]
 	fnName := deserializeString(sFn.NameOffset, sFn.NameSize, s)
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0443.
 	fnPkg, err := prgrm.GetPackageFromArray(fnPkgIdx)
 	if err != nil {
 		panic(err)
 	}
 	for _, fnIdx := range fnPkg.Functions {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0444.
 		fn := prgrm.GetFunctionFromArray(fnIdx)
 
 		if fn.Name == fnName {
@@ -1067,36 +1177,55 @@ func deserializeExpressions(off int64, size int64, s *SerializedCXProgram, prgrm
 	idxs := deserializeIntegers(off, size, s)
 
 	// sExprs := s.Expressions[off : off + size]
+	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+	// Now a slice of objects, site S0445.
 	exprs := make([]CXExpression, size)
 	for i, idx := range idxs {
+		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+		// Now a constructor call, site S0446.
 		exprs[i] = deserializeExpression(&s.Expressions[idx], s, prgrm)
 	}
 	return exprs
 }
 
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+// Now a constructor, site S0447.
 func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, prgrm *CXProgram) CXExpression {
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a local object, site S0448.
 	var expr CXExpression
 
 	expr.ExpressionType = CXEXPR_TYPE(sExpr.ExpressionType)
 	switch sExpr.Type {
 	case int64(CX_LINE):
+		// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+		// Now a heap literal, site S0449.
 		cxLine := &CXLine{}
 
 		cxLine.FileName = sExpr.FileName
 		cxLine.LineNumber = int(sExpr.LineNumber)
 		cxLine.LineStr = sExpr.LineStr
+		// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+		// Now an arena insert, site S0450.
 		index := prgrm.AddCXLine(cxLine)
 		expr.Index = index
 		expr.Type = CX_LINE
 	case int64(CX_ATOMIC_OPERATOR):
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now a heap literal, site S0451 S0452.
 		cxAtomicOpOperatorIdx := prgrm.AddFunctionInArray(&CXFunction{})
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+		// Now a heap literal, site S0453.
 		cxAtomicOp := &CXAtomicOperator{Operator: cxAtomicOpOperatorIdx}
 
 		if deserializeBool(sExpr.IsNative) {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+			// Now an arena insert, site S0454.
 			opIdx := prgrm.AddNativeFunctionInArray(Natives[int(sExpr.OpCode)])
 			cxAtomicOp.Operator = opIdx
 		} else {
+			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+			// Now an arena insert, site S0455.
 			opIdx := prgrm.AddFunctionInArray(deserializeOperator(sExpr, s, prgrm))
 			cxAtomicOp.Operator = opIdx
 		}
@@ -1104,6 +1233,8 @@ func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, 
 		inputCXArgsArray := deserializeArguments(sExpr.InputsOffset, sExpr.InputsSize, s, prgrm)
 		for _, inputCXArg := range inputCXArgsArray {
 			typeSignature := GetCXTypeSignatureRepresentationOfCXArg(prgrm, inputCXArg)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0456.
 			typeSignatureIdx := prgrm.AddCXTypeSignatureInArray(typeSignature)
 			cxAtomicOp.AddInput(prgrm, typeSignatureIdx)
 		}
@@ -1111,6 +1242,8 @@ func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, 
 		outputCXArgsArray := deserializeArguments(sExpr.OutputsOffset, sExpr.OutputsSize, s, prgrm)
 		for _, outputCXArg := range outputCXArgsArray {
 			typeSignature := GetCXTypeSignatureRepresentationOfCXArg(prgrm, outputCXArg)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+			// Now an arena insert, site S0457.
 			typeSignatureIdx := prgrm.AddCXTypeSignatureInArray(typeSignature)
 			cxAtomicOp.AddOutput(prgrm, typeSignatureIdx)
 		}
@@ -1122,6 +1255,8 @@ func deserializeExpression(sExpr *serializedExpression, s *SerializedCXProgram, 
 		cxAtomicOp.Package = prgrm.Packages[sExpr.PackageName]
 		cxAtomicOp.Function = deserializeExpressionFunction(sExpr, s, prgrm)
 
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+		// Now an arena insert, site S0458.
 		index := prgrm.AddCXAtomicOp(cxAtomicOp)
 		expr.Index = index
 		expr.Type = CX_ATOMIC_OPERATOR
@@ -1148,6 +1283,8 @@ func deserializeFunction(sFn *serializedFunction, fn *CXFunction, s *SerializedC
 	fn.Expressions = deserializeExpressions(sFn.ExpressionsOffset, sFn.ExpressionsSize, s, prgrm)
 	fn.Size = types.Cast_i64_to_ptr(sFn.Size)
 	fn.LineCount = int(sFn.Length)
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now an object copy, site S0459.
 	prgrm.CXFunctions[fn.Index] = *fn
 }
 
@@ -1185,6 +1322,8 @@ func deserializeIntegers(off int64, size int64, s *SerializedCXProgram) []int {
 func initDeserialization(prgrm *CXProgram, s *SerializedCXProgram) {
 	prgrm.Memory = s.Memory
 	prgrm.Packages = make(map[string]CXPackageIndex, len(s.Packages))
+	// OBJMODEL: state.CXCallMng (manager storage) or []CXCallGid, phase 4 #366.
+	// Now a slice of objects, site S0460.
 	prgrm.CallStack = make([]CXCall, constants.CALLSTACK_SIZE)
 	prgrm.Heap.StartsAt = types.Cast_i64_to_ptr(s.Program.HeapStartsAt)
 	prgrm.Heap.Pointer = types.Cast_i64_to_ptr(s.Program.HeapPointer)
@@ -1219,7 +1358,8 @@ func deserializeVersion(s *SerializedCXProgram) int64 {
 
 // Deserialize deserializes a serialized CX program back to its golang struct representation.
 // A nil codec reads b as uncompressed. A non-nil codec must be initialized.
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+// Now a constructor, site S0461.
 func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 	if codec != nil {
 		var err error
@@ -1227,6 +1367,8 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 			return nil, err
 		}
 	}
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a heap literal, site S0462.
 	prgrm := &CXProgram{}
 	var s SerializedCXProgram
 	if _, err := DecodeSerializedCXProgram(b, &s); err != nil {
@@ -1243,8 +1385,12 @@ func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
 // packagesByName returns the program's packages in name order. The serialized
 // offsets depend on every walk using the same order, so all of them use this.
 func packagesByName(prgrm *CXProgram) []*CXPackage {
+	// OBJMODEL: state.CXPackageMng (manager storage) or []CXPackageGid, phase 4 #361.
+	// Now a slice of objects, site S0463.
 	pkgs := make([]*CXPackage, 0, len(prgrm.Packages))
 	for _, name := range sortedKeys(prgrm.Packages) {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0464.
 		pkg, err := prgrm.GetPackageFromArray(prgrm.Packages[name])
 		if err != nil {
 			panic(err)

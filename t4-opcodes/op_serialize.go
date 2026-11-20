@@ -26,6 +26,8 @@ func opDeserialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	_l := prgrm.Memory[off+types.OBJECT_HEADER_SIZE : off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE]
 	l := types.Read_ptr(_l, 4) // TODO:PTR remove hardcode 4
 
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S1309.
 	if _, err := ast.Deserialize(prgrm.Memory[off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE:off+types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE+l], nil); err != nil { // BUG : should be l * elt.TotalSize ?
 		panic(err)
 	}

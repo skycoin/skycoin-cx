@@ -16,7 +16,11 @@ import (
 func DeclarePackage(prgrm *ast.CXProgram, pkgName string) {
 	// Add a new package to the program if it's not previously defined.
 	if _, err := prgrm.GetPackage(pkgName); err != nil {
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now a constructor call, site S1088.
 		pkg := ast.MakePackage(pkgName)
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S1089.
 		prgrm.AddPackage(pkg)
 	}
 
@@ -78,8 +82,14 @@ func DeclareImport(prgrm *ast.CXProgram, impName string, currentFile string, lin
 	// if we get here during the 2nd pass, it's either a core package or
 	// something is panic-level wrong.
 	if cxpackages.IsDefaultPackage(ident) {
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now a constructor call, site S1090.
 		imp := ast.MakePackage(ident)
+		// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+		// Now an arena insert, site S1091.
 		impIdx := prgrm.AddPackage(imp)
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S1092.
 		newImp, err := prgrm.GetPackageFromArray(impIdx)
 		if err != nil {
 			panic(err)

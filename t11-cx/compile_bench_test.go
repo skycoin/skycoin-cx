@@ -50,6 +50,8 @@ func BenchmarkCompile(b *testing.B) {
 			objectCount := 0
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
+				// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+				// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0054 S0055.
 				actions.AST = cxinit.MakeProgram()
 				cxinit.RegisterPackages(actions.AST)
 				globals.FoundCompileErrors = false

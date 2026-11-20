@@ -28,11 +28,15 @@ func (cxprogram *CXProgram) PrintStack() {
 
 		opInputs := op.GetInputs(cxprogram)
 		for _, inputIdx := range opInputs {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0465.
 			input := cxprogram.GetCXTypeSignatureFromArray(inputIdx)
 
 			fmt.Println("ProgramInput")
 			fmt.Printf("\t%s : %s() : %s\n", stackValueHeader(input.ArgDetails.FileName, input.ArgDetails.FileLine), op.Name, GetPrintableValue(cxprogram, fp, input))
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0466.
 			inpPkg, err := cxprogram.GetPackageFromArray(input.Package)
 			if err != nil {
 				panic(err)
@@ -42,11 +46,15 @@ func (cxprogram *CXProgram) PrintStack() {
 
 		opOutputs := op.GetOutputs(cxprogram)
 		for _, outputIdx := range opOutputs {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0467.
 			output := cxprogram.GetCXTypeSignatureFromArray(outputIdx)
 
 			fmt.Println("ProgramOutput")
 			fmt.Printf("\t%s : %s() : %s\n", stackValueHeader(output.ArgDetails.FileName, output.ArgDetails.FileLine), op.Name, GetPrintableValue(cxprogram, fp, output))
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0468.
 			outPkg, err := cxprogram.GetPackageFromArray(output.Package)
 			if err != nil {
 				panic(err)
@@ -57,19 +65,27 @@ func (cxprogram *CXProgram) PrintStack() {
 		// fmt.Println("Expressions")
 		exprs := ""
 		for _, expr := range op.Expressions {
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+			// Now an arena getter, site S0469.
 			cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
 			if err != nil {
 				panic(err)
 			}
 
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0470.
 			cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
 			for _, inputIdx := range cxAtomicOp.GetInputs(cxprogram) {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0471.
 				input := cxprogram.GetCXTypeSignatureFromArray(inputIdx)
 
 				if input.Name == "" || cxAtomicOpOperator == nil {
 					continue
 				}
 
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0472.
 				inpPkg, err := cxprogram.GetPackageFromArray(input.Package)
 				if err != nil {
 					panic(err)
@@ -93,6 +109,8 @@ func (cxprogram *CXProgram) PrintStack() {
 			}
 
 			for _, outputIdx := range cxAtomicOp.GetOutputs(cxprogram) {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0473.
 				output := cxprogram.GetCXTypeSignatureFromArray(outputIdx)
 
 				if output.Type == TYPE_CXARGUMENT_DEPRECATE {
@@ -100,6 +118,8 @@ func (cxprogram *CXProgram) PrintStack() {
 						continue
 					}
 
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S0474.
 					outPkg, err := cxprogram.GetPackageFromArray(output.Package)
 					if err != nil {
 						panic(err)
@@ -126,6 +146,8 @@ func (cxprogram *CXProgram) PrintStack() {
 						continue
 					}
 
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S0475.
 					outputPkg, err := cxprogram.GetPackageFromArray(output.Package)
 					if err != nil {
 						panic(err)

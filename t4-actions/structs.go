@@ -27,6 +27,8 @@ func DeclareStruct(prgrm *ast.CXProgram, structName string, structFields []*ast.
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+	// Now a dropped object, site S1208.
 	strct.Fields = nil
 	for _, field := range structFields {
 		if _, err := strct.GetField(prgrm, field.Name); err == nil {

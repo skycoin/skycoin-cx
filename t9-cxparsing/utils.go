@@ -83,8 +83,14 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 				if match := rePkgName.FindStringSubmatch(string(line)); match != nil {
 					if pkg, err := cxpartialparsing.Program.GetPackage(match[len(match)-1]); err != nil {
 						// then it hasn't been added
+						// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+						// Now a constructor call, site S1620.
 						newPkg := ast.MakePackage(match[len(match)-1])
+						// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+						// Now an arena insert, site S1621.
 						pkgIdx := cxpartialparsing.Program.AddPackage(newPkg)
+						// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+						// Now an arena getter, site S1622.
 						newPkg, err = cxpartialparsing.Program.GetPackageFromArray(pkgIdx)
 						if err != nil {
 							panic(err)
@@ -111,6 +117,8 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 							"No package defined")
 					} else if _, err := cxpartialparsing.Program.GetStruct(match[len(match)-1], prePkg.Name); err != nil {
 						// then it hasn't been added
+						// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+						// Now a constructor call, site S1623.
 						strct := ast.MakeStruct(match[len(match)-1])
 						prePkg.AddStruct(cxpartialparsing.Program, strct)
 					}
@@ -190,8 +198,14 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 				if match := rePkgName.FindStringSubmatch(string(line)); match != nil {
 					if pkg, err := cxpartialparsing.Program.GetPackage(match[len(match)-1]); err != nil {
 						// then it hasn't been added
+						// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+						// Now a constructor call, site S1624.
 						prePkg = ast.MakePackage(match[len(match)-1])
+						// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+						// Now an arena insert, site S1625.
 						pkgIdx := cxpartialparsing.Program.AddPackage(prePkg)
+						// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+						// Now an arena getter, site S1626.
 						prePkg, err = cxpartialparsing.Program.GetPackageFromArray(pkgIdx)
 						if err != nil {
 							panic(err)
@@ -263,9 +277,13 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 				if match := reGlblName.FindStringSubmatch(string(line)); match != nil {
 					if _, err := prePkg.GetGlobal(actions.AST, match[len(match)-1]); err != nil {
 						// then it hasn't been added
+						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+						// Now a constructor call, site S1627.
 						arg := ast.MakeArgument(match[len(match)-1], "", 0)
 						arg.Offset = types.InvalidPointer
 						arg.Package = ast.CXPackageIndex(prePkg.Index)
+						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+						// Now an arena insert, site S1628.
 						argIdx := actions.AST.AddCXArgInArray(arg)
 
 						prePkg.AddGlobal(actions.AST, argIdx)
@@ -302,6 +320,8 @@ func AddInitFunction(prgrm *ast.CXProgram) error {
 		return err
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now a constructor call, site S1629.
 	initFn := ast.MakeFunction(constants.SYS_INIT_FUNC, actions.CurrentFile, actions.LineNo)
 	_, fnIdx := mainPkg.AddFunction(prgrm, initFn)
 

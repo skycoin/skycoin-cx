@@ -13,6 +13,8 @@ func ParseAllDeclarations(files []*loader.File, imports []declaration_extractor.
 	// VIOLATION: init chaining. Init 7-8 again when actions.AST is nil, called
 	// from ParseAllDeclarations. The caller should pass the program in.
 	if actions.AST == nil {
+		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1526 S1527.
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 	}

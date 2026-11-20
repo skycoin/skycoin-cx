@@ -29,7 +29,11 @@ import (
 //
 // Note the new expression add() added in TestFunction.
 func AddNativeExpressionToFunction(cxprogram *cxast.CXProgram, functionName string, expressionType int) error {
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1591.
 	expCXLine := cxast.MakeCXLineExpression(cxprogram, "", -1, "")
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1592.
 	exp := cxast.MakeAtomicOperatorExpression(cxprogram, cxast.Natives[expressionType])
 
 	cxAtomicOp, _, _, err := cxprogram.GetOperation(exp)
@@ -37,6 +41,8 @@ func AddNativeExpressionToFunction(cxprogram *cxast.CXProgram, functionName stri
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1593.
 	cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
 	cxAtomicOpOperator.Name = cxast.OpNames[expressionType]
 
@@ -79,6 +85,8 @@ func RemoveExpressionFromFunction(cxprogram *cxast.CXProgram, functionName strin
 		return err
 	}
 
+	// OBJMODEL: state.CXExpressionMng.CXExpressionRelease(gid), phase 4 #346.
+	// Now a release, site S1594.
 	fn.RemoveExpression(expressionLineNumber)
 	return nil
 }
@@ -113,7 +121,11 @@ func RemoveExpressionFromFunction(cxprogram *cxast.CXProgram, functionName strin
 //
 // Note the new expression sub() is added in line number 1.
 func AddNativeExpressionToFunctionByLineNumber(cxprogram *cxast.CXProgram, functionName string, expressionType, lineNumber int) error {
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1595.
 	expCXLine := cxast.MakeCXLineExpression(cxprogram, "", -1, "")
+	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
+	// Now a constructor call, site S1596.
 	exp := cxast.MakeAtomicOperatorExpression(cxprogram, cxast.Natives[expressionType])
 
 	cxAtomicOp, _, _, err := cxprogram.GetOperation(exp)
@@ -121,6 +133,8 @@ func AddNativeExpressionToFunctionByLineNumber(cxprogram *cxast.CXProgram, funct
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1597.
 	cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
 	cxAtomicOpOperator.Name = cxast.OpNames[expressionType]
 	fn, err := FindFunction(cxprogram, functionName)

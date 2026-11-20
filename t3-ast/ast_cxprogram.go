@@ -28,6 +28,8 @@ type CXProgram struct {
 	//ProgramOutput []*CXArgument // outputs to the OS
 	Memory []byte // Used when running the program
 
+	// OBJMODEL: []CXCallGid or CXCallGid, phase 5 #367.
+	// Now objects held by value, site S0186.
 	CallStack   []CXCall      // Collection of function calls. Call stack is not in CX Memory.
 	CallCounter types.Pointer // What function call is the currently being executed in the CallStack
 	Terminated  bool          // Utility field for the runtime. Indicates if a CX program has already finished or not.
@@ -50,6 +52,8 @@ type CXProgram struct {
 	// Then reference the package of function by CxFunction id
 
 	// For Initializers
+	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
+	// Now objects held by value, site S0187.
 	SysInitExprs []CXExpression
 }
 
@@ -80,6 +84,8 @@ func (cxprogram *CXProgram) AddPackage(mod *CXPackage) CXPackageIndex {
 		return idx
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S0188.
 	index := cxprogram.AddPackageInArray(mod)
 
 	cxprogram.Packages[mod.Name] = CXPackageIndex(index)
@@ -91,6 +97,8 @@ func (cxprogram *CXProgram) AddPackage(mod *CXPackage) CXPackageIndex {
 func (cxprogram *CXProgram) AddPackageInArray(pkg *CXPackage) CXPackageIndex {
 	// The index of pkg after it will be added in the array
 	pkg.Index = len(cxprogram.CXPackages)
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena append, site S0189.
 	cxprogram.CXPackages = append(cxprogram.CXPackages, *pkg)
 
 	return CXPackageIndex(pkg.Index)
@@ -101,6 +109,8 @@ func (cxprogram *CXProgram) GetPackageFromArray(index CXPackageIndex) (*CXPackag
 		return nil, fmt.Errorf("error: CXPackages[%d]: index out of bounds", index)
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now a pointer into an arena, site S0190.
 	return &cxprogram.CXPackages[index], nil
 }
 
@@ -138,6 +148,8 @@ func (cxprogram *CXProgram) AddFunctionInArray(fn *CXFunction) CXFunctionIndex {
 	// The index of fn after it will be added in the array
 	fn.Index = len(cxprogram.CXFunctions)
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now an arena append, site S0191.
 	cxprogram.CXFunctions = append(cxprogram.CXFunctions, *fn)
 
 	return CXFunctionIndex(fn.Index)
@@ -145,18 +157,27 @@ func (cxprogram *CXProgram) AddFunctionInArray(fn *CXFunction) CXFunctionIndex {
 
 // nativeArgCopy returns a copy of a native argument for one program.
 // Natives are shared by every program, so their Index must stay unset.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0192.
 func nativeArgCopy(arg *CXArgument) *CXArgument {
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an object copy, site S0193.
 	cp := *arg
 	cp.Index = -1
 	return &cp
 }
 
 func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFunctionIndex {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now a heap literal, site S0194.
 	fnNative := &CXFunction{
-		Index:          len(cxprogram.CXFunctions),
-		AtomicOPCode:   fn.AtomicOPCode,
-		Inputs:         &CXStruct{},
+		Index:        len(cxprogram.CXFunctions),
+		AtomicOPCode: fn.AtomicOPCode,
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0195.
+		Inputs: &CXStruct{},
+		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+		// Now a heap literal, site S0196.
 		Outputs:        &CXStruct{},
 		LocalVariables: []string{},
 	}
@@ -169,8 +190,12 @@ func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFun
 			panic("error adding local variable name")
 		}
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0197.
 		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, nativeArgCopy(argIn))
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0198.
 		newFieldIdx := cxprogram.AddCXTypeSignatureInArray(newField)
 		fnNative.Inputs.Fields = append(fnNative.Inputs.Fields, newFieldIdx)
 	}
@@ -183,11 +208,17 @@ func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFun
 			panic("error adding local variable name")
 		}
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0199.
 		newField := GetCXTypeSignatureRepresentationOfCXArg(cxprogram, nativeArgCopy(argOut))
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0200.
 		newFieldIdx := cxprogram.AddCXTypeSignatureInArray(newField)
 		fnNative.Outputs.Fields = append(fnNative.Outputs.Fields, newFieldIdx)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now an arena append, site S0201.
 	cxprogram.CXFunctions = append(cxprogram.CXFunctions, *fnNative)
 
 	return CXFunctionIndex(fnNative.Index)
@@ -202,6 +233,8 @@ func (cxprogram *CXProgram) GetFunctionFromArray(index CXFunctionIndex) *CXFunct
 		panic(fmt.Errorf("error: CXFunctions[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now a pointer into an arena, site S0202.
 	return &cxprogram.CXFunctions[index]
 }
 
@@ -212,6 +245,8 @@ func (cxprogram *CXProgram) AddStructInArray(strct *CXStruct) CXStructIndex {
 	// The index of fn after it will be added in the array
 	strct.Index = len(cxprogram.CXStructs)
 
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now an arena append, site S0203.
 	cxprogram.CXStructs = append(cxprogram.CXStructs, *strct)
 
 	return CXStructIndex(strct.Index)
@@ -226,6 +261,8 @@ func (cxprogram *CXProgram) GetStructFromArray(index CXStructIndex) *CXStruct {
 		panic(fmt.Errorf("error: CXStructs[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
+	// Now a pointer into an arena, site S0204.
 	return &cxprogram.CXStructs[index]
 }
 
@@ -237,6 +274,8 @@ func (cxprogram *CXProgram) GetCXLine(index int) (*CXLine, error) {
 		return nil, fmt.Errorf("error: CXLines[%d]: index out of bounds", index)
 	}
 
+	// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
+	// Now a pointer into an arena, site S0205.
 	return &cxprogram.CXLines[index], nil
 }
 
@@ -245,6 +284,8 @@ func (cxprogram *CXProgram) GetCXArg(index CXArgumentIndex) *CXArgument {
 		panic(fmt.Errorf("error: CXArgs[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now a pointer into an arena, site S0206.
 	return &cxprogram.CXArgs[index]
 }
 
@@ -253,10 +294,14 @@ func (cxprogram *CXProgram) GetCXAtomicOp(index int) (*CXAtomicOperator, error) 
 		return nil, fmt.Errorf("error: CXAtomicOps[%d]: index out of bounds", index)
 	}
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now a pointer into an arena, site S0207.
 	return &cxprogram.CXAtomicOps[index], nil
 }
 
 func (cxprogram *CXProgram) AddCXLine(CXLine *CXLine) int {
+	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+	// Now an arena append, site S0208.
 	cxprogram.CXLines = append(cxprogram.CXLines, *CXLine)
 
 	return len(cxprogram.CXLines) - 1
@@ -269,6 +314,8 @@ func (cxprogram *CXProgram) AddCXLine(CXLine *CXLine) int {
 // }
 
 func (cxprogram *CXProgram) AddCXAtomicOp(CXAtomicOp *CXAtomicOperator) int {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+	// Now an arena append, site S0209.
 	cxprogram.CXAtomicOps = append(cxprogram.CXAtomicOps, *CXAtomicOp)
 
 	return len(cxprogram.CXAtomicOps) - 1
@@ -279,6 +326,8 @@ func (cxprogram *CXProgram) AddCXAtomicOp(CXAtomicOp *CXAtomicOperator) int {
 //	`CXProgram` CXTypeSignatures handling
 func (cxprogram *CXProgram) AddCXTypeSignatureInArray(typeSignature *CXTypeSignature) CXTypeSignatureIndex {
 	typeSignature.Index = CXTypeSignatureIndex(len(cxprogram.CXTypeSignatures))
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now an arena append, site S0210.
 	cxprogram.CXTypeSignatures = append(cxprogram.CXTypeSignatures, *typeSignature)
 
 	return typeSignature.Index
@@ -293,6 +342,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureInd
 		panic(fmt.Errorf("error: CXTypeSignature[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now a pointer into an arena, site S0211.
 	return &cxprogram.CXTypeSignatures[index]
 }
 
@@ -300,6 +351,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureInd
 //
 //	`CXProgram` TypeSignature_Array handling
 func (cxprogram *CXProgram) AddCXTypeSignatureArrayInArray(typeSignatureArray *CXTypeSignature_Array) int {
+	// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+	// Now an arena append, site S0212.
 	cxprogram.TypeSignatureForArrays = append(cxprogram.TypeSignatureForArrays, *typeSignatureArray)
 
 	return len(cxprogram.TypeSignatureForArrays) - 1
@@ -314,6 +367,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureArrayFromArray(index int) *CXTypeS
 		panic(fmt.Errorf("error: TypeSignatureForArrays[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+	// Now a pointer into an arena, site S0213.
 	return &cxprogram.TypeSignatureForArrays[index]
 }
 
@@ -321,6 +376,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureArrayFromArray(index int) *CXTypeS
 //
 //	`CXProgram` TypeSignature_Struct handling
 func (cxprogram *CXProgram) AddCXTypeSignatureStructInArray(typeSignatureStruct *CXTypeSignature_Struct) int {
+	// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+	// Now an arena append, site S0214.
 	cxprogram.TypeSignatureForStructs = append(cxprogram.TypeSignatureForStructs, *typeSignatureStruct)
 
 	return len(cxprogram.TypeSignatureForStructs) - 1
@@ -335,6 +392,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureStructFromArray(index int) *CXType
 		panic(fmt.Errorf("error: TypeSignatureForArrays[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+	// Now a pointer into an arena, site S0215.
 	return &cxprogram.TypeSignatureForStructs[index]
 }
 
@@ -344,6 +403,8 @@ func (cxprogram *CXProgram) GetCXTypeSignatureStructFromArray(index int) *CXType
 func (cxprogram *CXProgram) AddCXArgInArray(cxArg *CXArgument) CXArgumentIndex {
 	// The index of fn after it will be added in the array
 	cxArg.Index = len(cxprogram.CXArgs)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena append, site S0216.
 	cxprogram.CXArgs = append(cxprogram.CXArgs, *cxArg)
 
 	return CXArgumentIndex(cxArg.Index)
@@ -358,12 +419,16 @@ func (cxprogram *CXProgram) GetCXArgFromArray(index CXArgumentIndex) *CXArgument
 		panic(fmt.Errorf("error: CXArgument[%d]: index out of bounds", index))
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now a pointer into an arena, site S0217.
 	return &cxprogram.CXArgs[index]
 }
 
 func (cxprogram *CXProgram) ConvertIndexArgsToPointerArgs(idxs []CXArgumentIndex) []*CXArgument {
 	var cxArgs []*CXArgument
 	for _, idx := range idxs {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0218.
 		arg := cxprogram.GetCXArgFromArray(idx)
 		cxArgs = append(cxArgs, arg)
 	}
@@ -373,6 +438,8 @@ func (cxprogram *CXProgram) ConvertIndexArgsToPointerArgs(idxs []CXArgumentIndex
 func (cxprogram *CXProgram) AddPointerArgsToCXArgsArray(cxArgs []*CXArgument) []CXArgumentIndex {
 	var cxArgsIdxs []CXArgumentIndex
 	for _, cxArg := range cxArgs {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now an arena insert, site S0219.
 		cxArgIdx := cxprogram.AddCXArgInArray(cxArg)
 		cxArgsIdxs = append(cxArgsIdxs, cxArgIdx)
 	}
@@ -383,9 +450,13 @@ func (cxprogram *CXProgram) AddPointerArgsToCXArgsArray(cxArgs []*CXArgument) []
 func (cxprogram *CXProgram) ConvertIndexTypeSignaturesToPointerArgs(idxs []CXTypeSignatureIndex) []*CXArgument {
 	var cxArgs []*CXArgument
 	for _, typeSignatureIdx := range idxs {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0220.
 		typeSignature := cxprogram.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 			idx := typeSignature.Meta
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0221.
 			arg := cxprogram.GetCXArgFromArray(CXArgumentIndex(idx))
 			cxArgs = append(cxArgs, arg)
 		}
@@ -397,8 +468,12 @@ func (cxprogram *CXProgram) ConvertIndexTypeSignaturesToPointerArgs(idxs []CXTyp
 func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgument) []CXTypeSignatureIndex {
 	var cxTypeSignaturesIdxs []CXTypeSignatureIndex
 	for _, cxArg := range cxArgs {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now an arena insert, site S0222.
 		cxArgIdx := cxprogram.AddCXArgInArray(cxArg)
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now a heap literal, site S0223.
 		newCXTypeSignature := &CXTypeSignature{
 			Name:       cxArg.Name,
 			Package:    cxArg.Package,
@@ -408,6 +483,8 @@ func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgu
 			ArgDetails: cxArg.ArgDetails,
 		}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+		// Now an arena insert, site S0224.
 		newCXTypeSignatureIdx := cxprogram.AddCXTypeSignatureInArray(newCXTypeSignature)
 		cxTypeSignaturesIdxs = append(cxTypeSignaturesIdxs, newCXTypeSignatureIdx)
 	}
@@ -420,27 +497,36 @@ func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgu
 func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator, *CXArgument, *CXLine, error) {
 	switch expr.Type {
 	case CX_ATOMIC_OPERATOR:
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0225.
 		cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
 		if err != nil {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0226 S0227 S0228.
 			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
 		}
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0229 S0230.
 		return cxAtomicOp, &CXArgument{}, &CXLine{}, nil
 	case CX_LINE:
+		// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
+		// Now an arena getter, site S0231.
 		cxLine, err := cxprogram.GetCXLine(expr.Index)
 		if err != nil {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+			// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0232 S0233 S0234.
 			return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, err
 		}
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+		// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Site S0235 S0236.
 		return &CXAtomicOperator{}, &CXArgument{}, cxLine, nil
 		// case CX_ARGUMENT:
 	}
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+	// Also state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326. Also state.CXLineMng.CXLineAlloc(), phase 4 #311. Site S0237 S0238 S0239.
 	return &CXAtomicOperator{}, &CXArgument{}, &CXLine{}, fmt.Errorf("operation type is not found.")
 }
 
@@ -449,46 +535,56 @@ func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex in
 		if exprs[i].Type == CX_LINE {
 			_, _, cxLine, err := cxprogram.GetOperation(&exprs[i])
 			if err != nil {
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+				// Now a heap literal, site S0240.
 				return &CXLine{}, err
 			}
 
 			return cxLine, nil
 		}
 	}
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
+	// Now a heap literal, site S0241.
 	return &CXLine{}, fmt.Errorf("CXLine not found.")
 }
 
 func (cxprogram *CXProgram) GetCXAtomicOpFromExpressions(exprs []CXExpression, currIndex int) (*CXAtomicOperator, error) {
 	for i := currIndex; i < len(exprs); i++ {
 		if exprs[i].Type == CX_ATOMIC_OPERATOR {
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+			// Now an arena getter, site S0242.
 			cxAtomicOp, err := cxprogram.GetCXAtomicOp(exprs[i].Index)
 			if err != nil {
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+				// Now a heap literal, site S0243.
 				return &CXAtomicOperator{}, err
 			}
 
 			return cxAtomicOp, nil
 		}
 	}
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+	// Now a heap literal, site S0244.
 	return &CXAtomicOperator{}, fmt.Errorf("CXAtomicOperator not found.")
 }
 
 func (cxprogram *CXProgram) GetPreviousCXAtomicOpFromExpressions(exprs []CXExpression, currIndex int) (*CXAtomicOperator, error) {
 	for i := currIndex; i >= 0; i-- {
 		if exprs[i].Type == CX_ATOMIC_OPERATOR {
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+			// Now an arena getter, site S0245.
 			cxAtomicOp, err := cxprogram.GetCXAtomicOp(exprs[i].Index)
 			if err != nil {
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+				// Now a heap literal, site S0246.
 				return &CXAtomicOperator{}, err
 			}
 
 			return cxAtomicOp, nil
 		}
 	}
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
+	// Now a heap literal, site S0247.
 	return &CXAtomicOperator{}, fmt.Errorf("CXAtomicOperator not found.")
 }
 
@@ -500,6 +596,8 @@ func (cxprogram *CXProgram) SelectPackage(name string) (*CXPackage, error) {
 
 	cxprogram.CurrentPackage = cxprogram.Packages[name]
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0248.
 	return cxprogram.GetPackageFromArray(cxprogram.Packages[name])
 }
 
@@ -509,6 +607,8 @@ func (cxprogram *CXProgram) GetCurrentPackage() (*CXPackage, error) {
 		return nil, errors.New("current package is nil")
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0249.
 	return cxprogram.GetPackageFromArray(cxprogram.CurrentPackage)
 }
 
@@ -518,9 +618,12 @@ func (cxprogram *CXProgram) GetCurrentFunction() (*CXFunction, error) {
 		return nil, errors.New("current package is nil")
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0250.
 	currentPackage, err := cxprogram.GetPackageFromArray(cxprogram.CurrentPackage)
 	if err != nil {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+		// Now a heap literal, site S0251.
 		return &CXFunction{}, err
 	}
 
@@ -528,6 +631,8 @@ func (cxprogram *CXProgram) GetCurrentFunction() (*CXFunction, error) {
 		return nil, errors.New("current function is nil")
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0252.
 	return cxprogram.GetFunctionFromArray(currentPackage.CurrentFunction), nil
 
 }
@@ -538,6 +643,8 @@ func (cxprogram *CXProgram) GetPackage(pkgName string) (*CXPackage, error) {
 		return nil, fmt.Errorf("package '%s' not found", pkgName)
 	}
 
+	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+	// Now an arena getter, site S0253.
 	return cxprogram.GetPackageFromArray(cxprogram.Packages[pkgName])
 }
 

@@ -39,6 +39,8 @@ func TestNoArgsStartsRepl(t *testing.T) {
 func initProgram() {
 	actions.InitConstants()
 	cxos.InitConstants()
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0064 S0065.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	opcodes.RegisterOpcodes(actions.AST)

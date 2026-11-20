@@ -32,6 +32,8 @@ func buildStrImports(prgrm *CXProgram, pkg *CXPackage, ast *string) {
 
 	count := 0
 	for _, impIdx := range pkg.Imports {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0476.
 		impPkg, err := prgrm.GetPackageFromArray(impIdx)
 		if err != nil {
 			panic(err)
@@ -49,6 +51,8 @@ func buildStrGlobals(prgrm *CXProgram, pkg *CXPackage, ast *string) {
 	}
 
 	for idx, glblIdx := range pkg.Globals.Fields {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0477.
 		glbl := prgrm.GetCXTypeSignatureFromArray(glblIdx)
 
 		*ast += fmt.Sprintf("\t\t%d.- Global: %s %s\n", idx, glbl.Name, GetFormattedType(prgrm, glbl))
@@ -68,6 +72,8 @@ func buildStrStructs(prgrm *CXProgram, pkg *CXPackage, ast *string) {
 		*ast += fmt.Sprintf("\t\t%d.- Struct: %s\n", count, strct.Name)
 
 		for k, typeSignatureIdx := range strct.Fields {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0478.
 			typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
 			*ast += fmt.Sprintf("\t\t\t%d.- Field: %s %s\n",
@@ -90,6 +96,8 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 	// ignore the increment from the `*init` function.
 	var j int
 	for _, fnIdx := range pkg.Functions {
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0479.
 		fn := prgrm.GetFunctionFromArray(fnIdx)
 
 		if fn.Name == constants.SYS_INIT_FUNC {
@@ -115,11 +123,15 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 			var opName1 string
 			var lbl string
 
+			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+			// Now an arena getter, site S0480.
 			cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 			if err != nil {
 				panic(err)
 			}
 
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0481.
 			cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
 			// Adding label in case a `goto` statement was used for the expression.
 			if cxAtomicOp.Label != "" {
@@ -142,6 +154,8 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 			getFormattedParam(prgrm, cxAtomicOp.GetOutputs(prgrm), pkg, &outs)
 
 			if expr.Type == CX_LINE {
+				// OBJMODEL: state.CXLineMng.CXLineGet(gid), phase 5 #312.
+				// Now an arena getter, site S0482.
 				cxLine, _ := prgrm.GetCXLine(expr.Index)
 				*ast1 += fmt.Sprintf("\t\t\t%d.- Line: %v: %s\n",
 					k,
@@ -164,6 +178,8 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 				// Then it's a variable declaration. These are represented
 				// by expressions without operators that only have outputs.
 				cxAtomicOpOutputs := cxAtomicOp.GetOutputs(prgrm)
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0483.
 				cxAtomicOpOutputTypeSignature := prgrm.GetCXTypeSignatureFromArray(cxAtomicOpOutputs[len(cxAtomicOpOutputs)-1])
 				if len(cxAtomicOpOutputs) > 0 {
 					*ast1 += fmt.Sprintf("\t\t\t%d.- Declaration%s: %s %s\n",
@@ -186,6 +202,8 @@ func BuildStrPackages(prgrm *CXProgram, ast *string) {
 	// ignore the increments from core or stdlib packages.
 	var i int
 	for _, pkgIdx := range prgrm.Packages {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0484.
 		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
 		if err != nil {
 			panic(err)
@@ -212,6 +230,8 @@ func BuildStrPackages(prgrm *CXProgram, ast *string) {
 // `buf`.
 func getFormattedParam(prgrm *CXProgram, paramTypeSigIdxs []CXTypeSignatureIndex, pkg *CXPackage, buf *bytes.Buffer) {
 	for i, paramTypeSigIdx := range paramTypeSigIdxs {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0485.
 		paramTypeSig := prgrm.GetCXTypeSignatureFromArray(paramTypeSigIdx)
 
 		// Checking if this argument comes from an imported package.
@@ -221,6 +241,8 @@ func getFormattedParam(prgrm *CXProgram, paramTypeSigIdxs []CXTypeSignatureIndex
 		}
 
 		if paramTypeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0486.
 			param := prgrm.GetCXArgFromArray(CXArgumentIndex(paramTypeSig.Meta))
 
 			buf.WriteString(fmt.Sprintf("%s %s", GetFormattedName(prgrm, param, externalPkg, pkg), GetFormattedType(prgrm, paramTypeSig)))
@@ -306,6 +328,8 @@ func structAt(prgrm *CXProgram, addr types.Pointer, strct *CXStruct) string {
 	val := "{"
 	off := types.Pointer(0)
 	for c, fldIdx := range strct.Fields {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0487.
 		fld := prgrm.GetCXTypeSignatureFromArray(fldIdx)
 		if c > 0 {
 			val += ", "
@@ -323,12 +347,20 @@ func typeSignatureAt(prgrm *CXProgram, addr types.Pointer, typeSig *CXTypeSignat
 		val, _ := readAtomic(prgrm.Memory, types.Code(typeSig.Meta).Name(), addr)
 		return val
 	case TYPE_ARRAY_ATOMIC, TYPE_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0488.
 		arr := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0489.
 		elt := &CXArgument{Type: types.Code(arr.Meta), Size: types.Code(arr.Meta).Size()}
 		return valueAt(prgrm, addr, elt, arr.Lengths, printSeparator(arr.Lengths))
 	case TYPE_STRUCT:
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0490.
 		return structAt(prgrm, addr, prgrm.GetCXTypeSignatureStructFromArray(typeSig.Meta).StructType)
 	case TYPE_CXARGUMENT_DEPRECATE:
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0491.
 		elt := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSig.Meta))
 		return valueAt(prgrm, addr, elt, elt.Lengths, printSeparator(elt.Lengths))
 	}
@@ -383,6 +415,8 @@ func argValueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument) string {
 	if elt.IsPointer() {
 		for _, op := range elt.DereferenceOperations {
 			if op == constants.DEREF_POINTER {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now an object copy, site S0492.
 				target := *elt
 				target.Type = elt.PointerTargetType
 				elt = &target
@@ -401,6 +435,8 @@ func argValueAt(prgrm *CXProgram, addr types.Pointer, elt *CXArgument) string {
 func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSignature) string {
 	switch argTypeSig.Type {
 	case TYPE_CXARGUMENT_DEPRECATE:
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0493.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(argTypeSig.Meta))
 		elt := arg.GetAssignmentElement(prgrm)
 		return argValueAt(prgrm, GetFinalOffset(prgrm, fp, nil, argTypeSig), elt)
@@ -413,7 +449,11 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 	case TYPE_POINTER_ATOMIC:
 		return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig)))
 	case TYPE_ARRAY_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC, TYPE_SLICE_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0494.
 		arr := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0495.
 		elt := &CXArgument{Type: types.Code(arr.Meta), Size: types.Code(arr.Meta).Size()}
 		dims := arr.Lengths
 		if len(arr.Indexes) <= len(dims) {
@@ -431,9 +471,13 @@ func GetPrintableValue(prgrm *CXProgram, fp types.Pointer, argTypeSig *CXTypeSig
 		if argTypeSig.Type == TYPE_POINTER_STRUCT && !argTypeSig.IsDeref {
 			return fmt.Sprintf("%v", types.Read_ptr(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig)))
 		}
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0496.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 		addr := GetFinalOffset(prgrm, fp, nil, argTypeSig)
 		if n := len(structDetails.Fields); n > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0497.
 			return argValueAt(prgrm, addr, prgrm.GetCXArgFromArray(structDetails.Fields[n-1]))
 		}
 		return structAt(prgrm, addr, structDetails.StructType)
@@ -461,6 +505,8 @@ func getFormattedDerefs(prgrm *CXProgram, arg *CXArgument, includePkg bool, pkg 
 
 	// Checking if we have indexing operations, e.g. foo[2][1]
 	for _, idxIdx := range arg.Indexes {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0498.
 		idx := prgrm.GetCXTypeSignatureFromArray(idxIdx)
 		// Checking if the value is in data segment.
 		// If this is the case, we can safely display it.
@@ -490,6 +536,8 @@ func GetFormattedName(prgrm *CXProgram, arg *CXArgument, includePkg bool, pkg *C
 
 	// Adding as suffixes all the fields.
 	for _, fldIdx := range arg.Fields {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0499.
 		fld := prgrm.GetCXArgFromArray(fldIdx)
 		name = fmt.Sprintf("%s.%s", name, getFormattedDerefs(prgrm, fld, includePkg, pkg))
 	}
@@ -508,6 +556,8 @@ func GetFormattedName(prgrm *CXProgram, arg *CXArgument, includePkg bool, pkg *C
 func formatParameters(prgrm *CXProgram, params []CXTypeSignatureIndex) string {
 	types := "("
 	for i, paramIdx := range params {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0500.
 		param := prgrm.GetCXTypeSignatureFromArray(paramIdx)
 		types += GetFormattedType(prgrm, param)
 		if i != len(params)-1 {
@@ -524,6 +574,8 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 	typ := ""
 
 	if typeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0501.
 		expressionOutputArg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSig.Meta))
 		typ = getFormattedType_CXArg(prgrm, expressionOutputArg)
 	} else if typeSig.Type == TYPE_ATOMIC {
@@ -538,6 +590,8 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 			typ = "*" + typ
 		}
 	} else if typeSig.Type == TYPE_ARRAY_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0502.
 		arrayData := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
@@ -552,6 +606,8 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 			typ = "*" + typ
 		}
 	} else if typeSig.Type == TYPE_POINTER_ARRAY_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0503.
 		arrayData := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
@@ -567,6 +623,8 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 		}
 
 	} else if typeSig.Type == TYPE_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0504.
 		arrayData := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
@@ -581,6 +639,8 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 			typ = "*" + typ
 		}
 	} else if typeSig.Type == TYPE_POINTER_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0505.
 		arrayData := prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta)
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
@@ -595,9 +655,13 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 			typ = "*" + typ
 		}
 	} else if typeSig.Type == TYPE_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0506.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSig.Meta)
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0507.
 			fld := prgrm.GetCXArgFromArray(structDetails.Fields[lenFlds-1])
 			fld = fld.GetAssignmentElement(prgrm)
 
@@ -614,9 +678,13 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 		}
 
 	} else if typeSig.Type == TYPE_POINTER_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0508.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSig.Meta)
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0509.
 			fld := prgrm.GetCXArgFromArray(structDetails.Fields[lenFlds-1])
 			fld = fld.GetAssignmentElement(prgrm)
 
@@ -680,6 +748,8 @@ func getFormattedType_CXArg(prgrm *CXProgram, arg *CXArgument) string {
 					// typ += formatParameters(prgrm, prgrm.ConvertIndexArgsToPointerArgs(elt.Outputs))
 					// } else {
 					// Then it refers to a named function defined in a package.
+					// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+					// Now an arena getter, site S0510.
 					pkg, err := prgrm.GetPackageFromArray(arg.Package)
 					if err != nil {
 						println(CompilationError(elt.ArgDetails.FileName, elt.ArgDetails.FileLine), err.Error())
@@ -707,6 +777,8 @@ func getFormattedType_CXArg(prgrm *CXProgram, arg *CXArgument) string {
 func SignatureStringOfStruct(prgrm *CXProgram, s *CXStruct) string {
 	fields := ""
 	for _, typeSignatureIdx := range s.Fields {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0511.
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		fields += fmt.Sprintf(" %s %s;", typeSignature.Name, GetFormattedType(prgrm, typeSignature))
 	}

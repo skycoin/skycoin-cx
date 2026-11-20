@@ -122,10 +122,12 @@ type CXArgument struct {
 
 	PassBy int // pass by value or reference
 
-	// VIOLATION: pointer at rest; becomes CXArgumentDebugGid in phase 3.
+	// OBJMODEL: CXArgumentDebugGid, phase 5 #307.
+	// Now a pointer at rest, site S0066.
 	ArgDetails *CXArgumentDebug
 
-	// VIOLATION: pointer at rest; becomes CXStructGid in phase 3.
+	// OBJMODEL: CXStructGid, phase 5 #337.
+	// Now a pointer at rest, site S0067.
 	StructType         *CXStruct
 	PreviouslyDeclared bool
 }
@@ -177,6 +179,8 @@ Note: Low priority for deprecation
 // GetAssignmentElement ...
 func (arg *CXArgument) GetAssignmentElement(prgrm *CXProgram) *CXArgument {
 	if len(arg.Fields) > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0068.
 		return prgrm.GetCXArgFromArray(arg.Fields[len(arg.Fields)-1]).GetAssignmentElement(prgrm)
 	}
 	return arg
@@ -187,6 +191,8 @@ func (arg *CXArgument) GetAssignmentElement(prgrm *CXProgram) *CXArgument {
 func (arg *CXArgument) GetType(prgrm *CXProgram) types.Code {
 	fieldCount := len(arg.Fields)
 	if fieldCount > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0069.
 		return prgrm.GetCXArgFromArray(arg.Fields[fieldCount-1]).GetType(prgrm)
 	}
 
@@ -228,6 +234,8 @@ func (arg *CXArgument) AddInput(prgrm *CXProgram, inp *CXArgument) *CXArgument {
 		inp.Package = arg.Package
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0070.
 	inpIdx := prgrm.AddCXArgInArray(inp)
 	arg.Inputs = append(arg.Inputs, inpIdx)
 
@@ -240,6 +248,8 @@ func (arg *CXArgument) AddOutput(prgrm *CXProgram, out *CXArgument) *CXArgument 
 		out.Package = arg.Package
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0071.
 	outIdx := prgrm.AddCXArgInArray(out)
 	arg.Outputs = append(arg.Outputs, outIdx)
 
@@ -261,7 +271,8 @@ func MakePointer(arg *CXArgument) *CXArgument {
 // MakeStructParameter helper for creating a struct parameter. It creates a
 // `CXArgument` named `argName`, that represents a structure instane of
 // `strctName`, from package `pkgName`.
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0072.
 func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *CXArgument {
 	pkg, err := prgrm.GetPackage(pkgName)
 	if err != nil {
@@ -273,6 +284,8 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S0073.
 	arg := MakeArgument(argName, "", -1).SetType(types.STRUCT)
 	// arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_STRUCT)
 	arg.Size = strct.GetStructSize(prgrm)
@@ -283,8 +296,11 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 
 // Slice Helper function for creating parameters for standard library operators.
 // The current standard library only uses basic types and slices. If more options are needed, modify this function
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0074.
 func Slice(typeCode types.Code) *CXArgument {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S0075.
 	arg := Param(typeCode)
 	arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_SLICE)
 	return arg
@@ -301,19 +317,27 @@ func Slice(typeCode types.Code) *CXArgument {
 // }
 
 // Param ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0076.
 func Param(typeCode types.Code) *CXArgument {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S0077.
 	arg := MakeArgument("", "", -1).SetType(typeCode)
 	// arg.IsLocalDeclaration = true
 	return arg
 }
 
 // MakeArgument ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0078.
 func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0079.
 	return &CXArgument{
 		Name:    name,
 		Package: -1,
+		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
+		// Now a heap literal, site S0080.
 		ArgDetails: &CXArgumentDebug{
 			FileName: fileName,
 			FileLine: fileLine,
@@ -323,11 +347,16 @@ func MakeArgument(name string, fileName string, fileLine int) *CXArgument {
 }
 
 // MakeField ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0081.
 func MakeField(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0082.
 	return &CXArgument{
 		Name:    name,
 		Package: -1,
+		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
+		// Now a heap literal, site S0083.
 		ArgDetails: &CXArgumentDebug{
 			FileName: fileName,
 			FileLine: fileLine,
@@ -338,12 +367,17 @@ func MakeField(name string, typeCode types.Code, fileName string, fileLine int) 
 }
 
 // MakeGlobal ...
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+// Now a constructor, site S0084.
 func MakeGlobal(name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
 	size := typeCode.Size()
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0085.
 	global := &CXArgument{
 		Name:    name,
 		Package: -1,
+		// OBJMODEL: state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306.
+		// Now a heap literal, site S0086.
 		ArgDetails: &CXArgumentDebug{
 			FileName: fileName,
 			FileLine: fileLine,

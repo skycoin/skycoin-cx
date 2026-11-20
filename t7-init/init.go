@@ -26,15 +26,22 @@ func RegisterPackages(prgrm *ast.CXProgram) {
 
 // MakeProgram returns a new empty program. Call RegisterPackages on it to add
 // the native packages.
-// VIOLATION: created outside manager; phase 1.
+// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+// Now a constructor, site S1460.
 func MakeProgram() *ast.CXProgram {
 	minHeapSize := ast.MinHeapSize()
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a heap literal, site S1461.
 	newPrgrm := &ast.CXProgram{
-		Packages:       make(map[string]ast.CXPackageIndex, 0),
+		Packages: make(map[string]ast.CXPackageIndex, 0),
+		// OBJMODEL: state.CXFunctionMng (manager storage) or []CXFunctionGid, phase 4 #351.
+		// Now a slice of objects, site S1462.
 		CXFunctions:    make([]ast.CXFunction, 0),
 		CurrentPackage: -1,
-		CallStack:      make([]ast.CXCall, constants.CALLSTACK_SIZE),
-		Memory:         make([]byte, constants.STACK_SIZE+minHeapSize),
+		// OBJMODEL: state.CXCallMng (manager storage) or []CXCallGid, phase 4 #366.
+		// Now a slice of objects, site S1463.
+		CallStack: make([]ast.CXCall, constants.CALLSTACK_SIZE),
+		Memory:    make([]byte, constants.STACK_SIZE+minHeapSize),
 		Stack: ast.StackSegmentStruct{
 			Size: constants.STACK_SIZE,
 		},
@@ -45,6 +52,8 @@ func MakeProgram() *ast.CXProgram {
 			Size:    minHeapSize,
 			Pointer: constants.NULL_HEAP_ADDRESS_OFFSET, // We can start adding objects to the heap after the NULL (nil) bytes.
 		},
+		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+		// Now a slice of objects, site S1464.
 		CXArgs:  make([]ast.CXArgument, 0),
 		Version: constants.LanguageVersionCurrent,
 	}

@@ -13,7 +13,8 @@ import (
 
 type SymbolsData struct {
 	varCount int
-	// VIOLATION: pointer at rest; becomes CXTypeSignatureGid in phase 3.
+	// OBJMODEL: CXTypeSignatureGid, phase 5 #332.
+	// Now a pointer at rest, site S0722.
 	symbols      []*ast.CXTypeSignature
 	symbolsIndex []map[string]int
 }
@@ -43,6 +44,8 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 				pkg.CurrentFunction = ast.CXFunctionIndex(fn.Index)
 				return ast.CXFunctionIndex(fn.Index)
 			} else {
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now a constructor call, site S0723.
 				fn := ast.MakeFunction(fnName, CurrentFile, LineNo)
 				fn.AddInput(prgrm, receiver[0])
 				_, fnIdx := pkg.AddFunction(prgrm, fn)
@@ -59,6 +62,8 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 				pkg.CurrentFunction = ast.CXFunctionIndex(fn.Index)
 				return ast.CXFunctionIndex(fn.Index)
 			} else {
+				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+				// Now a constructor call, site S0724.
 				fn := ast.MakeFunction(fnName, CurrentFile, LineNo)
 				_, fnIdx := pkg.AddFunction(prgrm, fn)
 				pkg.CurrentFunction = fnIdx
@@ -80,14 +85,20 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 //	 inputs - parameters to be added in the function as input.
 //	 outputs - parameters to be added in the function as output.
 func FunctionAddParameters(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs, outputs []*ast.CXArgument) {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0725.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
 	fnInputs := fn.GetInputs(prgrm)
 	if len(fnInputs) != len(inputs) {
 		// it must be a method declaration
 		// so we save the first input
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+		// Now a dropped object, site S0726.
 		fn.Inputs.Fields = fn.Inputs.Fields[:1]
 	} else {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+		// Now a dropped object, site S0727.
 		fn.Inputs.Fields = nil
 	}
 
@@ -107,10 +118,14 @@ func FunctionAddParameters(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inpu
 }
 
 func isParseOp(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0728.
 	exprAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0729.
 	exprAtomicOpOperator := prgrm.GetFunctionFromArray(exprAtomicOp.Operator)
 	if exprAtomicOpOperator != nil && exprAtomicOpOperator.AtomicOPCode > constants.START_PARSE_OPS && exprAtomicOpOperator.AtomicOPCode < constants.END_PARSE_OPS {
 		return true
@@ -123,6 +138,8 @@ func isParseOp(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 // the expression `sa + sb` is not valid if they are struct instances.
 func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	expressionIdx := exprs[currIndex].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0730.
 	expressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[expressionIdx].Operator)
 	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, &exprs[currIndex]) {
 		println(ast.CompilationError(exprLine(prgrm, exprs, currIndex)), fmt.Sprintf("invalid argument types for '%s' operator", ast.OpNames[expressionOperator.AtomicOPCode]))
@@ -144,6 +161,8 @@ func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currInde
 //	 fnIdx - the index of the function in the main CXFunction array.
 //	 params - function parameters to be processed.
 func ProcessFunctionParameters(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionIndex, params []ast.CXTypeSignatureIndex) {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0731.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
 	for _, paramIdx := range params {
@@ -159,9 +178,13 @@ func ProcessFunctionParameters(prgrm *ast.CXProgram, symbolsData *SymbolsData, o
 		GiveOffset(prgrm, symbolsData, paramIdx)
 		AddPointer(prgrm, fn, paramIdx)
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0732.
 		typeSig := prgrm.GetCXTypeSignatureFromArray(paramIdx)
 		var param *ast.CXArgument
 		if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0733.
 			param = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
 		} else {
 			continue
@@ -196,7 +219,9 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		// corresponds to a different scope. The innermost scope is
 		// the last element of the slice.
 		symbolsIndex: symIndex,
-		symbols:      make([]*ast.CXTypeSignature, 0),
+		// OBJMODEL: state.CXTypeSignatureMng (manager storage) or []CXTypeSignatureGid, phase 4 #331.
+		// Now a slice of objects, site S0734.
+		symbols: make([]*ast.CXTypeSignature, 0),
 	}
 
 	pkg, err := prgrm.GetCurrentPackage()
@@ -205,6 +230,8 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	}
 
 	pkg.CurrentFunction = fnIdx
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0735.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
 	FunctionAddParameters(prgrm, fnIdx, inputs, outputs)
@@ -217,6 +244,8 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		if expr.Type == ast.CX_LINE {
 			continue
 		}
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0736.
 		exprAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
 		if err != nil {
 			panic(err)
@@ -260,11 +289,15 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
 //	expr - the expression.
 func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0737.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0738.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	if expressionOperator == nil {
 		return
@@ -285,6 +318,8 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 // operatorOperandType returns the type an operator dispatches on for one
 // operand. A pointer that is not dereferenced dispatches as types.POINTER.
 func operatorOperandType(prgrm *ast.CXProgram, sigIdx ast.CXTypeSignatureIndex) types.Code {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0739.
 	sig := prgrm.GetCXTypeSignatureFromArray(sigIdx)
 	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 		if sig.Type == ast.TYPE_POINTER_ATOMIC {
@@ -293,6 +328,8 @@ func operatorOperandType(prgrm *ast.CXProgram, sigIdx ast.CXTypeSignatureIndex) 
 		return sig.GetType(prgrm)
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S0740.
 	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
 	if declaredAsPointer(arg.GetAssignmentElement(prgrm).DeclarationSpecifiers) {
 		return types.POINTER
@@ -345,6 +382,8 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0741.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	if expressionOperator == nil || !ast.IsOperator(expressionOperator.AtomicOPCode) || len(expression.GetInputs(prgrm)) == 0 {
 		return
@@ -376,6 +415,8 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	}
 
 	file, line := exprLine(prgrm, exprs, currIndex)
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0742.
 	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != nil && sig.ArgDetails.FileLine > 0 {
 		file, line = sig.ArgDetails.FileName, sig.ArgDetails.FileLine
 	}
@@ -392,25 +433,37 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXExpression) []ast.CXExpression {
 	expr := exprs[len(exprs)-1]
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0743.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0744.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	if expressionOperator == nil {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0745.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0746.
 		var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0747.
 			expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 		} else {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a heap literal, site S0748.
 			expressionOutputArg = &ast.CXArgument{}
 		}
 
 		opName := expressionOutputTypeSig.Name
 		opPkgIdx := expressionOutputTypeSig.Package
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0749.
 		opPkg, err := prgrm.GetPackageFromArray(opPkgIdx)
 		if err != nil {
 			panic(err)
@@ -437,10 +490,14 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 			continue
 		}
 
+		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+		// Now an arena getter, site S0750.
 		inpExprAtomicOp, err := prgrm.GetCXAtomicOp(inpExpr.Index)
 		if err != nil {
 			panic(err)
 		}
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0751.
 		inpExprAtomicOpOperator := prgrm.GetFunctionFromArray(inpExprAtomicOp.Operator)
 
 		inpExprCXLine, _ := prgrm.GetPreviousCXLine(args, i)
@@ -473,27 +530,40 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 		} else {
 			// then it's a function call
 			if len(inpExprAtomicOp.GetOutputs(prgrm)) < 1 {
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a heap literal, site S0752.
 				var out *ast.CXArgument = &ast.CXArgument{}
 
 				inpExprAtomicOpOperatorOutputs := inpExprAtomicOpOperator.GetOutputs(prgrm)
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0753.
 				inpExprAtomicOpOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(inpExprAtomicOpOperatorOutputs[0])
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a heap literal, site S0754.
 				var inpExprAtomicOpOperatorOutputArg *ast.CXArgument = &ast.CXArgument{}
 				if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0755.
 					inpExprAtomicOpOperatorOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inpExprAtomicOpOperatorOutputTypeSig.Meta))
 
 					var typeSigIdx ast.CXTypeSignatureIndex
 
 					// if undefined type, then adopt argument's type
 					if inpExprAtomicOpOperatorOutputArg.Type == types.UNDEFINED {
+						// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+						// Now an arena getter, site S0756.
 						inpExprAtomicOpInputTypeSig := prgrm.GetCXTypeSignatureFromArray(inpExprAtomicOp.GetInputs(prgrm)[0])
 
-						// VIOLATION: created outside manager; phase 1.
+						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+						// Now a heap literal, site S0757.
 						var inpExprAtomicOpInputArg *ast.CXArgument = &ast.CXArgument{}
 						if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+							// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+							// Now an arena getter, site S0758.
 							inpExprAtomicOpInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inpExprAtomicOpInputTypeSig.Meta))
 
+							// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+							// Now a constructor call, site S0759.
 							out = ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpInputArg.Type)
 							out.StructType = inpExprAtomicOpInputArg.StructType
 							out.Size = inpExprAtomicOpInputArg.Size
@@ -504,9 +574,12 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							out.Package = inpExprAtomicOp.Package
 
 							typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
+							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+							// Now an arena insert, site S0760.
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC {
-							// VIOLATION: created outside manager; phase 1.
+							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+							// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0761 S0762.
 							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_ATOMIC
@@ -514,9 +587,12 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							outTypeSig.Package = inpExprAtomicOpInputTypeSig.Package
 							outTypeSig.Offset = inpExprAtomicOpInputTypeSig.Offset
 
+							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+							// Now an arena insert, site S0763.
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(outTypeSig)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-							// VIOLATION: created outside manager; phase 1.
+							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+							// Also state.CXArgumentDebugMng.CXArgumentDebugAlloc(), phase 4 #306. Site S0764 S0765.
 							outTypeSig := &ast.CXTypeSignature{ArgDetails: &ast.CXArgumentDebug{FileName: CurrentFile, FileLine: inpExprCXLine.LineNumber}}
 							outTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_POINTER_ATOMIC
@@ -524,18 +600,24 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							outTypeSig.Package = inpExprAtomicOpInputTypeSig.Package
 							outTypeSig.Offset = inpExprAtomicOpInputTypeSig.Offset
 
+							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+							// Now an arena insert, site S0766.
 							typeSigIdx = prgrm.AddCXTypeSignatureInArray(outTypeSig)
 						} else {
 							panic("type is not known")
 						}
 
 					} else {
+						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+						// Now a constructor call, site S0767.
 						out = ast.MakeArgument(generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpOperatorOutputArg.Type)
 						out.DeclarationSpecifiers = inpExprAtomicOpOperatorOutputArg.DeclarationSpecifiers
 
 						out.StructType = inpExprAtomicOpOperatorOutputArg.StructType
 
 						if inpExprAtomicOpOperatorOutputArg.StructType != nil {
+							// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+							// Now an arena getter, site S0768.
 							inpExprPkg, err := prgrm.GetPackageFromArray(inpExprAtomicOp.Package)
 							if err != nil {
 								panic(err)
@@ -553,31 +635,45 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 						out.Package = inpExprAtomicOp.Package
 
 						typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, out)
+						// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+						// Now an arena insert, site S0769.
 						typeSigIdx = prgrm.AddCXTypeSignatureInArray(typeSig)
 					}
 
 					inpExprAtomicOp.AddOutput(prgrm, typeSigIdx)
 					expression.AddInput(prgrm, typeSigIdx)
 				} else if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an object copy, site S0770.
 					newTypeSig := *inpExprAtomicOpOperatorOutputTypeSig
 					newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 					newTypeSig.Package = inpExprAtomicOp.Package
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an arena insert, site S0771.
 					newTypeSigIdx := prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 
 					inpExprAtomicOp.AddOutput(prgrm, newTypeSigIdx)
 					expression.AddInput(prgrm, newTypeSigIdx)
 				} else if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an object copy, site S0772.
 					newTypeSig := *inpExprAtomicOpOperatorOutputTypeSig
 					newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 					newTypeSig.Package = inpExprAtomicOp.Package
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an arena insert, site S0773.
 					newTypeSigIdx := prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 
 					inpExprAtomicOp.AddOutput(prgrm, newTypeSigIdx)
 					expression.AddInput(prgrm, newTypeSigIdx)
 				} else if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_STRUCT {
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an object copy, site S0774.
 					newTypeSig := *inpExprAtomicOpOperatorOutputTypeSig
 					newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
 					newTypeSig.Package = inpExprAtomicOp.Package
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+					// Now an arena insert, site S0775.
 					newTypeSigIdx := prgrm.AddCXTypeSignatureInArray(&newTypeSig)
 
 					inpExprAtomicOp.AddOutput(prgrm, newTypeSigIdx)
@@ -601,6 +697,8 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 // checkSameNativeType checks if all the inputs of an expression are of the same type.
 // It is used mainly to prevent implicit castings in arithmetic operations
 func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0776.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
@@ -611,8 +709,12 @@ func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
 	}
 
 	var typeCode types.Code
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0777.
 	expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 	if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0778.
 		expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 		typeCode = expressionInputArg.Type
@@ -624,10 +726,14 @@ func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
 	}
 
 	for _, inputIdx := range expression.GetInputs(prgrm) {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0779.
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 
 		var inpType types.Code
 		if input.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0780.
 			inp := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
 
 			inpType = inp.Type
@@ -656,10 +762,14 @@ func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
 //	expr - the operator expression.
 func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0781.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0782.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) {
@@ -669,21 +779,30 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	}
 	if expr.IsUndType(prgrm) {
 		for _, outputIdx := range expression.GetOutputs(prgrm) {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0783.
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 
 			var outIdx ast.CXArgumentIndex
 			if output.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				outIdx = ast.CXArgumentIndex(output.Meta)
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0784.
 				out := prgrm.GetCXArgFromArray(outIdx)
 
 				size := types.Pointer(1)
 				if !ast.IsComparisonOperator(expressionOperator.AtomicOPCode) {
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+					// Now an arena getter, site S0785.
 					expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 
-					// VIOLATION: created outside manager; phase 1.
+					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+					// Now a heap literal, site S0786.
 					var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
 					if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S0787.
 						expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 						size = ast.GetArgSize(prgrm, expressionInputArg.GetAssignmentElement(prgrm))
@@ -711,17 +830,24 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
 //	expr - the operator expression.
 func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0788.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, argTypeSigIdx := range append(expression.GetInputs(prgrm), expression.GetOutputs(prgrm)...) {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0789.
 		argTypeSig := prgrm.GetCXTypeSignatureFromArray(argTypeSigIdx)
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0790.
 		var arg *ast.CXArgument = &ast.CXArgument{}
 		if argTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0791.
 			arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSig.Meta))
 		} else if argTypeSig.Type == ast.TYPE_ATOMIC || argTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			continue
@@ -736,11 +862,15 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		} else if argTypeSig.Type == ast.TYPE_STRUCT {
 			continue
 		} else if argTypeSig.Type == ast.TYPE_POINTER_STRUCT {
+			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+			// Now an arena getter, site S0792.
 			structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 			if len(structDetails.Fields) > 0 {
 				argTypeSig.IsDeref = true
 
 				for _, fldIdx := range structDetails.Fields {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0793.
 					fld := prgrm.GetCXArgFromArray(fldIdx)
 					doesFieldHaveDerefPointer := false
 					for _, deref := range fld.DereferenceOperations {
@@ -758,6 +888,8 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		}
 
 		for _, fldIdx := range arg.Fields {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0794.
 			fld := prgrm.GetCXArgFromArray(fldIdx)
 			doesFieldHaveDerefPointer := false
 			for _, deref := range fld.DereferenceOperations {
@@ -792,11 +924,15 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 //	exprs - the function's expressions.
 //	currIndex - the index of the operator expression in exprs.
 func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0795.
 	expression, err := prgrm.GetCXAtomicOp(exprs[currIndex].Index)
 	if err != nil {
 		panic(err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0796.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	if expressionOperator != nil {
@@ -804,9 +940,13 @@ func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 		if opCode == constants.OP_ASSERT || opCode == constants.OP_TEST || opCode == constants.OP_PANIC {
 			var inp1Type, inp2Type string
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0797.
 			expressionInputFirstTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 			inp1Type = ast.GetFormattedType(prgrm, expressionInputFirstTypeSig)
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0798.
 			expressionInputSecondTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[1])
 			inp2Type = ast.GetFormattedType(prgrm, expressionInputSecondTypeSig)
 			if inp1Type != inp2Type {
@@ -818,6 +958,8 @@ func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 
 // checkIndexType throws an error if the type of `idx` is not `i32` or `i64`.
 func checkIndexType(prgrm *ast.CXProgram, idxIdx ast.CXTypeSignatureIndex) {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0799.
 	idxTypeSig := prgrm.GetCXTypeSignatureFromArray(idxIdx)
 	var idxType string
 
@@ -845,9 +987,13 @@ func checkIndexType(prgrm *ast.CXProgram, idxIdx ast.CXTypeSignatureIndex) {
 //	 expr - the expression.
 //	 isInput - true if args are input arguments, false if they are output args.
 func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionIndex, args []ast.CXTypeSignatureIndex, expr *ast.CXExpression, isInput bool) {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0800.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
 	for _, typeSignatureIdx := range args {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0801.
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		var argIdx ast.CXArgumentIndex
 		if typeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -856,6 +1002,8 @@ func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, 
 			argIdx = -1
 		}
 
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0802.
 		arg := prgrm.GetCXArgFromArray(argIdx)
 
 		if !isInput {
@@ -887,6 +1035,8 @@ func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, 
 				checkIndexType(prgrm, idxIdx)
 			}
 			for _, fldIdx := range arg.Fields {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0803.
 				fld := prgrm.GetCXArgFromArray(fldIdx)
 				for _, idxIdx := range fld.Indexes {
 					UpdateSymbolsTable(prgrm, symbolsData, idxIdx, offset, true)
@@ -933,10 +1083,15 @@ func isPointerAdded(prgrm *ast.CXProgram, fn *ast.CXFunction, sym *ast.CXArgumen
 //		fn - the function the sym belongs.
 //	 typeSigIdx - the index of the type signature from the main CXTypeSignature array.
 func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeSignatureIndex) {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0804.
 	typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0805.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0806.
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
 	} else {
 		// panic("type is not cx arg deprecate\n\n)")
@@ -957,6 +1112,8 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	// Checking if it is a pointer candidate and if it was already
 	// added to the list.
 	if len(sym.Fields) > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0807.
 		field := prgrm.GetCXArgFromArray(sym.Fields[len(sym.Fields)-1])
 		if field.IsPointer() && !isPointerAdded(prgrm, fn, sym) {
 			fn.ListOfPointers = append(fn.ListOfPointers, sym)
@@ -967,9 +1124,12 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	// added to the list.
 	if sym.IsPointer() && !isPointerAdded(prgrm, fn, sym) {
 		if len(sym.Fields) > 0 {
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a value literal, site S0808.
 			tmp := ast.CXArgument{}
 			copier.Copy(&tmp, sym)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+			// Now a dropped object, site S0809.
 			tmp.Fields = nil
 			fn.ListOfPointers = append(fn.ListOfPointers, &tmp)
 		} else {
@@ -991,17 +1151,25 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 //	 expr - the expression.
 //	 typeSigIdx - the index of the type signature from the main CXTypeSignature array.
 func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.CXExpression, typeSigIdx ast.CXTypeSignatureIndex) {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0810.
 	typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0811.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0812.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	if expressionOperator == nil && len(expression.GetOutputs(prgrm)) > 0 && len(expression.GetInputs(prgrm)) == 0 {
 		lastIdx := len(symbolsData.symbolsIndex) - 1
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0813.
 		symPkg, err := prgrm.GetPackageFromArray(typeSig.Package)
 		if err != nil {
 			panic(err)
@@ -1026,6 +1194,8 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 		if err != nil {
 			panic(err)
 		}
+		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+		// Now an arena getter, site S0814.
 		expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 		expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
@@ -1055,6 +1225,8 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 
 // AddExprsToFunction add all expressions to the function.
 func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, exprs []ast.CXExpression) {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0815.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 	for _, expr := range exprs {
 		fn.AddExpression(prgrm, &expr)
@@ -1062,19 +1234,28 @@ func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, exprs [
 }
 
 func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected, received []ast.CXTypeSignatureIndex, isInputs bool) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0816.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0817.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	for i, expectedTypeSigIdx := range expected {
 		var receivedType, expectedType string
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0818.
 		expectedTypeSig := prgrm.GetCXTypeSignatureFromArray(expectedTypeSigIdx)
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0819.
 		var expectedArg *ast.CXArgument = &ast.CXArgument{}
 		if expectedTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0820.
 			expectedArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expectedTypeSig.Meta))
 		}
 		expectedType = ast.GetFormattedType(prgrm, expectedTypeSig)
@@ -1088,6 +1269,8 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			}
 		}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0821.
 		receivedTypeSig := prgrm.GetCXTypeSignatureFromArray(received[i])
 		receivedType = ast.GetFormattedType(prgrm, receivedTypeSig)
 
@@ -1102,6 +1285,8 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			if isInputs {
 				println(ast.CompilationError(receivedTypeSig.ArgDetails.FileName, receivedTypeSig.ArgDetails.FileLine), fmt.Sprintf("function '%s' expected input argument of type '%s'; '%s' was provided", opName, expectedType, receivedType))
 			} else {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0822.
 				expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
 				println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("function '%s' expected receiving variable of type '%s'; '%s' was provided", opName, expectedType, receivedType))
 
@@ -1111,6 +1296,8 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 
 		var expressionOutputTypeSig *ast.CXTypeSignature
 		if expressionOperator.AtomicOPCode == constants.OP_IDENTITY {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0823.
 			expressionOutputTypeSig = prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
 		}
 		// In the case of assignment we need to check that the input's type matches the output's type.
@@ -1120,13 +1307,18 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 		if expressionOperator.AtomicOPCode == constants.OP_IDENTITY && !IsTempVar(expressionOutputTypeSig.Name) {
 			var outType, inpType string
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0824.
 			expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 			inpType = ast.GetFormattedType(prgrm, expressionInputTypeSig)
 
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a heap literal, site S0825.
 			var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 			expressionOutputTypeSigName := expressionOutputTypeSig.Name
 			if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0826.
 				expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 				expressionOutputTypeSigName = expressionOutputArg.GetAssignmentElement(prgrm).Name
 			}
@@ -1156,9 +1348,13 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 
 	// if the last input is of type undefined then it might be a variadic function, such as printf
 	if len(expressionOperatorInputs) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0827.
 		lastTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorInputs[len(expressionOperatorInputs)-1])
 		switch lastTypeSig.Type {
 		case ast.TYPE_CXARGUMENT_DEPRECATE:
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0828.
 			if prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastTypeSig.Meta)).Type == types.UNDEFINED {
 				return
 			}
@@ -1188,6 +1384,8 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0829.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	exprCXLine, _ := prgrm.GetPreviousCXLine(exprs, currIndex)
 
@@ -1207,8 +1405,12 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 			var expectedType string
 			var receivedType string
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0830.
 			expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[i])
 			if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0831.
 				expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 				if expressionInputArg.GetAssignmentElement(prgrm).StructType != nil {
@@ -1227,10 +1429,15 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 				receivedType = expressionInputTypeSig.GetTypeString(prgrm)
 			}
 
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0832.
 			expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
-			// VIOLATION: created outside manager; phase 1.
+			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+			// Now a heap literal, site S0833.
 			var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 			if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0834.
 				expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 				expressionOutputArg = expressionOutputArg.GetAssignmentElement(prgrm)
 
@@ -1251,6 +1458,8 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 
 			if receivedType != expectedType {
 				if exprs[currIndex].IsStructLiteral() {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0835.
 					println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided", prgrm.GetCXArgFromArray(expressionOutputArg.Fields[0]).Name, expressionOutputArg.StructType.Name, expectedType, receivedType))
 				} else {
 					println(ast.CompilationError(expressionOutputTypeSig.ArgDetails.FileName, expressionOutputTypeSig.ArgDetails.FileLine), fmt.Sprintf("trying to assign argument of type '%s' to symbol '%s' of type '%s'", receivedType, expressionOutputTypeSig.Name, expectedType))
@@ -1272,10 +1481,14 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 
 // ProcessStringAssignment sets the args PassBy to PASSBY_VALUE if the type is string.
 func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0836.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0837.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
@@ -1287,19 +1500,27 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	}
 	if isOpIdent {
 		for i, outputIdx := range expression.GetOutputs(prgrm) {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0838.
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 
 			// Only a CXArgument can hold a str or aff value, typed signatures are never strings.
 			if output.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 				continue
 			}
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0839.
 			out := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta))
 
 			if len(expression.GetInputs(prgrm)) > i {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0840.
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[i])
 				if expressionInputTypeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 					continue
 				}
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0841.
 				expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 				out = out.GetAssignmentElement(prgrm)
@@ -1340,6 +1561,8 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		return
 	}
 
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0842.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
@@ -1347,8 +1570,12 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 
 	var expressionOutputArgType types.Code
 	if len(expression.GetOutputs(prgrm)) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0843.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0844.
 			expressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 			expressionOutputArgType = expressionOutputArg.Type
 		} else {
@@ -1367,11 +1594,17 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		var argSize types.Pointer
 		if expr.IsMethodCall() {
 
+			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+			// Now an arena getter, site S0845.
 			expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 			expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0846.
 			expressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorOutputs[0])
 
 			if expressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0847.
 				expressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOperatorOutputTypeSig.Meta))
 				argType = expressionOperatorOutputArg.Type
 				argPointerTargetType = expressionOperatorOutputArg.PointerTargetType
@@ -1386,8 +1619,12 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 				panic("type is not known")
 			}
 		} else {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0848.
 			expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 			if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0849.
 				expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 				argType = expressionInputArg.Type
 				argPointerTargetType = expressionInputArg.PointerTargetType
@@ -1399,10 +1636,14 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 				argType = types.Code(expressionInputTypeSig.Meta)
 				argSize = types.Code(expressionInputTypeSig.Meta).Size()
 			} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+				// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+				// Now an arena getter, site S0850.
 				arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 				argType = types.Code(arrDetails.Meta)
 				argSize = types.Code(arrDetails.Meta).Size()
 			} else if expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+				// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+				// Now an arena getter, site S0851.
 				sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 				argType = types.Code(sliceDetails.Meta)
 				argSize = types.Code(sliceDetails.Meta).Size()
@@ -1411,6 +1652,8 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			}
 		}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0852.
 		prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
 		var prevExpressionOutputIdx ast.CXArgumentIndex
 		if prevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -1424,10 +1667,14 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		} else if prevExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			prevExpressionOutputTypeSig.Meta = int(argType)
 		} else if prevExpressionOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+			// Now an arena getter, site S0853.
 			arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(prevExpressionOutputTypeSig.Meta)
 			arrDetails.Meta = int(argType)
 
 		} else if prevExpressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+			// Now an arena getter, site S0854.
 			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(prevExpressionOutputTypeSig.Meta)
 			sliceDetails.Meta = int(argType)
 
@@ -1435,6 +1682,8 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			panic("type is not known")
 		}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0855.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expressionOutputIdx := ast.CXArgumentIndex(expressionOutputTypeSig.Meta)
@@ -1447,9 +1696,13 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		} else if expressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			expressionOutputTypeSig.Meta = int(argType)
 		} else if expressionOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+			// Now an arena getter, site S0856.
 			arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
 			arrDetails.Meta = int(argType)
 		} else if expressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+			// Now an arena getter, site S0857.
 			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
 			sliceDetails.Meta = int(argType)
 		} else {
@@ -1464,11 +1717,16 @@ func ProcessSlice(prgrm *ast.CXProgram, inpIdx ast.CXArgumentIndex) {
 		return
 	}
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S0858.
 	inp := prgrm.GetCXArgFromArray(inpIdx)
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0859.
 	var elt *ast.CXArgument = &ast.CXArgument{}
 	if len(inp.Fields) > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0860.
 		elt = prgrm.GetCXArgFromArray(inp.Fields[len(inp.Fields)-1])
 	} else {
 		elt = inp
@@ -1487,10 +1745,14 @@ func ProcessSlice(prgrm *ast.CXProgram, inpIdx ast.CXArgumentIndex) {
 
 // ProcessSliceAssignent sets correct values for slice assignment expressions.
 func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0861.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0862.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
@@ -1502,25 +1764,37 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	}
 
 	if isOpIdent {
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0863.
 		var inp *ast.CXArgument = &ast.CXArgument{}
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0864.
 		var out *ast.CXArgument = &ast.CXArgument{}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0865.
 		expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0866.
 		var expressionInputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0867.
 			expressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 		} else {
 			// panic("type is not cx argument deprecate\n\n")
 			return
 		}
 
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0868.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0869.
 		var expressionOutputArg *ast.CXArgument = &ast.CXArgument{}
 		if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0870.
 			expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
 		} else {
 			// panic("type is not cx argument deprecate\n\n")
@@ -1537,12 +1811,16 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	if expressionOperator != nil && !expressionOperator.IsBuiltIn() {
 		// then it's a function call
 		for _, inputIdx := range expression.GetInputs(prgrm) {
+			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+			// Now an arena getter, site S0871.
 			input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 
 			// Only a CXArgument slice needs its PassBy changed here.
 			if input.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 				continue
 			}
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0872.
 			inp := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(input.Meta))
 
 			assignElt := inp.GetAssignmentElement(prgrm)
@@ -1579,11 +1857,16 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 	}
 	// Then we found a function by that name. Let's create a `cxcore.CXArgument` of
 	// type `func` with that name.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a constructor call, site S0873.
 	fnArg := ast.MakeArgument(ident, fn.FileName, fn.FileLine).SetType(types.FUNC)
 	fnArg.Package = ast.CXPackageIndex(pkg.Index)
 
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now an arena insert, site S0874.
 	fnArgIdx := prgrm.AddCXArgInArray(fnArg)
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+	// Now a heap literal, site S0875.
 	fnArgTypeSig := &ast.CXTypeSignature{
 		Name:       fnArg.Name,
 		Offset:     fnArg.Offset,
@@ -1598,11 +1881,16 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 
 // UpdateSymbolsTable adds `sym` to the innermost scope (last element of slice) in `symbols`.
 func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.CXTypeSignatureIndex, offset *types.Pointer, shouldAlreadyExist bool) {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0876.
 	typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0877.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0878.
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
 		if sym.Type == types.UNDEFINED && !IsTempVar(typeSig.Name) {
 			return
@@ -1614,6 +1902,8 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 	}
 
 	if typeSig.Name != "" {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0879.
 		typeSigPkg, err := prgrm.GetPackageFromArray(typeSig.Package)
 		if err != nil {
 			panic(err)
@@ -1687,6 +1977,8 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 
 // TODO: improve structure ASAP
 func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData *SymbolsData) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0880.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
@@ -1700,6 +1992,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	var outIdx ast.CXArgumentIndex = -1
 
 	if len(expression.GetInputs(prgrm)) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0881.
 		expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 		if expressionInputTypeSig.Name != "" && expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			inpIdx = ast.CXArgumentIndex(expressionInputTypeSig.Meta)
@@ -1709,6 +2003,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	}
 
 	if len(expression.GetOutputs(prgrm)) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0882.
 		expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
 		if expressionOutputTypeSig.Name != "" && expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			outIdx = ast.CXArgumentIndex(expressionOutputTypeSig.Meta)
@@ -1716,6 +2012,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	}
 
 	if inpIdx != -1 {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0883.
 		inpPkg, err := prgrm.GetPackageFromArray(prgrm.CXArgs[inpIdx].Package)
 		if err != nil {
 			panic(err)
@@ -1724,10 +2022,14 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		if argInpTypeSignature, err := lookupSymbol(prgrm, inpPkg.Name, prgrm.CXArgs[inpIdx].Name, symbolsData); err == nil {
 			var argInpStructType *ast.CXStruct
 			if argInpTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0884.
 				argInp := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argInpTypeSignature.Meta))
 				argInpStructType = argInp.StructType
 			} else if argInpTypeSignature.Type == ast.TYPE_ATOMIC || argInpTypeSignature.Type == ast.TYPE_POINTER_ATOMIC {
 			} else if argInpTypeSignature.Type == ast.TYPE_STRUCT {
+				// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+				// Now an arena getter, site S0885.
 				structDetails := prgrm.GetCXTypeSignatureStructFromArray(argInpTypeSignature.Meta)
 				argInpStructType = structDetails.StructType
 			} else {
@@ -1739,6 +2041,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				strct := argInpStructType
 
 				for _, fldIdx := range prgrm.CXArgs[inpIdx].Fields {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0886.
 					field := prgrm.GetCXArgFromArray(fldIdx)
 					if inFld, err := strct.GetField(prgrm, field.Name); err == nil {
 						if inFld.StructType != nil {
@@ -1747,19 +2051,27 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					}
 				}
 
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0887.
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 				if err != nil {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0888.
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name+"."+prgrm.GetCXArgFromArray(prgrm.CXArgs[inpIdx].Fields[len(prgrm.CXArgs[inpIdx].Fields)-1]).Name, strct.Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+				// Now a dropped object, site S0889.
 				prgrm.CXArgs[inpIdx].Fields = prgrm.CXArgs[inpIdx].Fields[:len(prgrm.CXArgs[inpIdx].Fields)-1]
 			} else if len(prgrm.CXArgs[outIdx].Fields) > 0 {
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0890.
 				outPkg, err := prgrm.GetPackageFromArray(prgrm.CXArgs[outIdx].Package)
 				if err != nil {
 					panic(err)
@@ -1769,10 +2081,13 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					panic(err)
 				}
 
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a heap literal, site S0891.
 				var argOut *ast.CXArgument = &ast.CXArgument{StructType: nil}
 				var argOutType string
 				if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0892.
 					argOut = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argOutTypeSignature.Meta))
 					argOutType = argOut.Type.Name()
 				} else {
@@ -1785,20 +2100,30 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+				// Now a dropped object, site S0893.
 				prgrm.CXAtomicOps[expr.Index].Inputs.Fields = append(prgrm.CXAtomicOps[expr.Index].Outputs.Fields[:1], prgrm.CXAtomicOps[expr.Index].Inputs.Fields...)
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+				// Now a dropped object, site S0894.
 				prgrm.CXAtomicOps[expr.Index].Outputs.Fields = prgrm.CXAtomicOps[expr.Index].Outputs.Fields[:len(prgrm.CXAtomicOps[expr.Index].Outputs.Fields)-1]
 
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0895.
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 				if err != nil {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0896.
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name+"."+prgrm.GetCXArgFromArray(prgrm.CXArgs[outIdx].Fields[len(prgrm.CXArgs[outIdx].Fields)-1]).Name, strct.Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+				// Now a dropped object, site S0897.
 				prgrm.CXArgs[outIdx].Fields = prgrm.CXArgs[outIdx].Fields[:len(prgrm.CXArgs[outIdx].Fields)-1]
 			}
 		} else {
@@ -1806,6 +2131,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				panic("")
 			}
 
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S0898.
 			outPkg, err := prgrm.GetPackageFromArray(prgrm.CXArgs[outIdx].Package)
 			if err != nil {
 				panic(err)
@@ -1818,30 +2145,45 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			}
 			// then we found an output
 			if len(prgrm.CXArgs[outIdx].Fields) > 0 {
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+				// Now a heap literal, site S0899.
 				var argOut *ast.CXArgument = &ast.CXArgument{}
 				if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0900.
 					argOut = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argOutTypeSignature.Meta))
 				} else {
 					panic("type is cx argument deprecate\n\n")
 				}
 
 				strct := argOut.StructType
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0901.
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 				if err != nil {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0902.
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name+"."+prgrm.GetCXArgFromArray(prgrm.CXArgs[outIdx].Fields[len(prgrm.CXArgs[outIdx].Fields)-1]).Name, strct.Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
 					panic("")
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now a pointer into an arena, site S0903.
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, &prgrm.CXArgs[outIdx])
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+				// Now an arena insert, site S0904.
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
 				prgrm.CXAtomicOps[expr.Index].Inputs.Fields = append([]ast.CXTypeSignatureIndex{typeSigIdx}, prgrm.CXAtomicOps[expr.Index].Inputs.Fields...)
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+				// Now a dropped object, site S0905.
 				prgrm.CXAtomicOps[expr.Index].Outputs.Fields = prgrm.CXAtomicOps[expr.Index].Outputs.Fields[1:]
+				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+				// Now a dropped object, site S0906.
 				prgrm.CXArgs[outIdx].Fields = prgrm.CXArgs[outIdx].Fields[:len(prgrm.CXArgs[outIdx].Fields)-1]
 			}
 		}
@@ -1850,6 +2192,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			panic("")
 		}
 
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0907.
 		outPkg, err := prgrm.GetPackageFromArray(prgrm.CXArgs[outIdx].Package)
 		if err != nil {
 			panic(err)
@@ -1861,9 +2205,12 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			os.Exit(types.CX_COMPILATION_ERROR)
 		}
 
-		// VIOLATION: created outside manager; phase 1.
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a heap literal, site S0908.
 		var argOut *ast.CXArgument = &ast.CXArgument{}
 		if argOutTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0909.
 			argOut = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argOutTypeSignature.Meta))
 
 			// then we found an output
@@ -1875,20 +2222,29 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0910.
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 				if err != nil {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0911.
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name+"."+prgrm.GetCXArgFromArray(prgrm.CXArgs[outIdx].Fields[len(prgrm.CXArgs[outIdx].Fields)-1]).Name, strct.Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
 					panic("")
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now a pointer into an arena, site S0912.
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, &prgrm.CXArgs[outIdx])
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+				// Now an arena insert, site S0913.
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a heap literal, site S0914.
 				newInputs := &ast.CXStruct{Fields: []ast.CXTypeSignatureIndex{typeSigIdx}}
 				if prgrm.CXAtomicOps[expr.Index].Inputs != nil {
 					for _, typeSig := range prgrm.CXAtomicOps[expr.Index].Inputs.Fields {
@@ -1896,7 +2252,11 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					}
 				}
 				prgrm.CXAtomicOps[expr.Index].Inputs = newInputs
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+				// Now a dropped object, site S0915.
 				prgrm.CXAtomicOps[expr.Index].Outputs.Fields = prgrm.CXAtomicOps[expr.Index].Outputs.Fields[1:]
+				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+				// Now a dropped object, site S0916.
 				prgrm.CXArgs[outIdx].Fields = prgrm.CXArgs[outIdx].Fields[:len(prgrm.CXArgs[outIdx].Fields)-1]
 			}
 		} else if argOutTypeSignature.Type == ast.TYPE_ATOMIC || argOutTypeSignature.Type == ast.TYPE_POINTER_ATOMIC {
@@ -1905,6 +2265,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 			// of type atomics and pointers are always zero
 		} else if argOutTypeSignature.Type == ast.TYPE_STRUCT || argOutTypeSignature.Type == ast.TYPE_POINTER_STRUCT {
 			// TODO: improve this ASAP
+			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+			// Now an arena getter, site S0917.
 			structDetails := prgrm.GetCXTypeSignatureStructFromArray(argOutTypeSignature.Meta)
 
 			// then we found an output
@@ -1917,20 +2279,29 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					os.Exit(types.CX_COMPILATION_ERROR)
 				}
 
+				// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+				// Now an arena getter, site S0918.
 				strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 				if err != nil {
 					panic(err)
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0919.
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name+"."+prgrm.GetCXArgFromArray(prgrm.CXArgs[outIdx].Fields[len(prgrm.CXArgs[outIdx].Fields)-1]).Name, strct.Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
 					panic("")
 				}
 
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now a pointer into an arena, site S0920.
 				typeSig := ast.GetCXTypeSignatureRepresentationOfCXArg(prgrm, &prgrm.CXArgs[outIdx])
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
+				// Now an arena insert, site S0921.
 				typeSigIdx := prgrm.AddCXTypeSignatureInArray(typeSig)
-				// VIOLATION: created outside manager; phase 1.
+				// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+				// Now a heap literal, site S0922.
 				newInputs := &ast.CXStruct{Fields: []ast.CXTypeSignatureIndex{typeSigIdx}}
 				if prgrm.CXAtomicOps[expr.Index].Inputs != nil {
 					for _, typeSig := range prgrm.CXAtomicOps[expr.Index].Inputs.Fields {
@@ -1938,7 +2309,11 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 					}
 				}
 				prgrm.CXAtomicOps[expr.Index].Inputs = newInputs
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
+				// Now a dropped object, site S0923.
 				prgrm.CXAtomicOps[expr.Index].Outputs.Fields = prgrm.CXAtomicOps[expr.Index].Outputs.Fields[1:]
+				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
+				// Now a dropped object, site S0924.
 				prgrm.CXArgs[outIdx].Fields = prgrm.CXArgs[outIdx].Fields[:len(prgrm.CXArgs[outIdx].Fields)-1]
 			}
 		} else {
@@ -1950,9 +2325,13 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 
 // GiveOffset
 func GiveOffset(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.CXTypeSignatureIndex) {
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0925.
 	symTypeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 	symTypeSigName := StripNameNumber(symTypeSig.Name)
 	if symTypeSigName != "" {
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0926.
 		symPkg, err := prgrm.GetPackageFromArray(symTypeSig.Package)
 		if err != nil {
 			panic(err)
@@ -1978,10 +2357,14 @@ func GiveOffset(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.C
 
 // ProcessTempVariable completes the temp variable expression.
 func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
+	// Now an arena getter, site S0927.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
 	if err != nil {
 		panic(err)
 	}
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0928.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
@@ -1993,13 +2376,19 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	}
 
 	if expressionOperator != nil && (isOpIdent || ast.IsArithmeticOperator(expressionOperator.AtomicOPCode)) && len(expression.GetOutputs(prgrm)) > 0 && len(expression.GetInputs(prgrm)) > 0 {
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0929.
 		outputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
 		if IsTempVar(outputTypeSig.Name) {
 			if outputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				outputArgIdx := ast.CXArgumentIndex(outputTypeSig.Meta)
 
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0930.
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 				if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0931.
 					expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
 					expressionInput := expressionInputArg
@@ -2015,6 +2404,8 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 					prgrm.CXArgs[outputArgIdx].Type = expressionInputTypeSig.GetType(prgrm)
 					prgrm.CXArgs[outputArgIdx].Size = types.Code(expressionInputTypeSig.Meta).Size()
 				} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+					// Now an arena getter, site S0932.
 					arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 					prgrm.CXArgs[outputArgIdx].Type = expressionInputTypeSig.GetType(prgrm)
 					prgrm.CXArgs[outputArgIdx].Size = types.Code(arrDetails.Meta).Size()
@@ -2026,8 +2417,12 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				}
 
 			} else if outputTypeSig.Type == ast.TYPE_ATOMIC || outputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0933.
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 				if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0934.
 					expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 					outputTypeSig.Meta = int(expressionInputArg.Type)
 				} else if expressionInputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -2035,15 +2430,23 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				} else if expressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 					outputTypeSig.Meta = expressionInputTypeSig.Meta
 				} else if expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+					// Now an arena getter, site S0935.
 					sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 					outputTypeSig.Meta = sliceDetails.Meta
 				} else {
 					panic("type is not known")
 				}
 			} else if outputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+				// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+				// Now an arena getter, site S0936.
 				outputArrDetails := prgrm.GetCXTypeSignatureArrayFromArray(outputTypeSig.Meta)
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0937.
 				expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
 				if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S0938.
 					expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 					outputArrDetails.Meta = int(expressionInputArg.Type)
 				} else if expressionInputTypeSig.Type == ast.TYPE_ATOMIC {
@@ -2051,6 +2454,8 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				} else if expressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 					outputArrDetails.Meta = expressionInputTypeSig.Meta
 				} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+					// Now an arena getter, site S0939.
 					arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 					outputArrDetails.Meta = arrDetails.Meta
 				} else {
@@ -2065,17 +2470,23 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 
 // CopyArgFields copies 'arg' fields to 'sym' fields.
 func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0940.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0941.
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(symTypeSignature.Meta))
 	} else {
 		sym = nil
 	}
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0942.
 	var arg *ast.CXArgument = &ast.CXArgument{}
 	if argTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0943.
 		arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSignature.Meta))
 	} else {
 		arg = nil
@@ -2130,9 +2541,15 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && (len(sym.DeclarationSpecifiers) > 0 || len(sym.DereferenceOperations) > 0) && argTypeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0944.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an object copy, site S0945.
 		newArrDetails := *arrDetails
 		newArrDetails.Indexes = sym.Indexes
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0946.
 		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
 
 		symTypeSignature.Name = argTypeSignature.Name
@@ -2144,10 +2561,16 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && (len(sym.DeclarationSpecifiers) > 0 || len(sym.DereferenceOperations) > 0) && argTypeSignature.Type == ast.TYPE_POINTER_ARRAY_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0947.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an object copy, site S0948.
 		newArrDetails := *arrDetails
 		newArrDetails.Indexes = sym.Indexes
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0949.
 		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
 
 		symTypeSignature.Name = argTypeSignature.Name
@@ -2165,10 +2588,16 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0950.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an object copy, site S0951.
 		newArrDetails := *arrDetails
 		newArrDetails.Indexes = sym.Indexes
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0952.
 		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
 
 		symTypeSignature.Name = argTypeSignature.Name
@@ -2194,10 +2623,16 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+		// Now an arena getter, site S0953.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSignature.Meta)
 
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an object copy, site S0954.
 		newArrDetails := *arrDetails
 		newArrDetails.Indexes = sym.Indexes
+		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc(), phase 4 #316.
+		// Now an arena insert, site S0955.
 		newArrDetailsIdx := prgrm.AddCXTypeSignatureArrayInArray(&newArrDetails)
 
 		symTypeSignature.Name = argTypeSignature.Name
@@ -2223,10 +2658,16 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_STRUCT || argTypeSignature.Type == ast.TYPE_POINTER_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0956.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSignature.Meta)
 
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an object copy, site S0957.
 		newStructDetails := *structDetails
 		newStructDetails.Fields = sym.Fields
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc(), phase 4 #321.
+		// Now an arena insert, site S0958.
 		newStructDetailsIdx := prgrm.AddCXTypeSignatureStructInArray(&newStructDetails)
 
 		symTypeSignature.Name = argTypeSignature.Name
@@ -2419,6 +2860,8 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	}
 
 	if len(sym.Fields) > 0 {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0959.
 		symField := prgrm.GetCXArgFromArray(sym.Fields[len(sym.Fields)-1])
 		if sym.Type == types.POINTER && arg.StructType != nil {
 			sym.PointerTargetType = symField.Type
@@ -2436,12 +2879,18 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
 	var argStructType *ast.CXStruct
 	if argTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0960.
 		arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSignature.Meta))
 		argStructType = arg.StructType
 	} else if argTypeSignature.Type == ast.TYPE_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0961.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSignature.Meta)
 		argStructType = structDetails.StructType
 	} else if argTypeSignature.Type == ast.TYPE_POINTER_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0962.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSignature.Meta)
 		argStructType = structDetails.StructType
 	} else {
@@ -2451,16 +2900,23 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 		return
 	}
 
-	// VIOLATION: created outside manager; phase 1.
+	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+	// Now a heap literal, site S0963.
 	var sym *ast.CXArgument = &ast.CXArgument{}
 	var symFields []ast.CXArgumentIndex
 	if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0964.
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(symTypeSignature.Meta))
 		symFields = sym.Fields
 	} else if symTypeSignature.Type == ast.TYPE_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0965.
 		symStructDetails := prgrm.GetCXTypeSignatureStructFromArray(symTypeSignature.Meta)
 		symFields = symStructDetails.Fields
 	} else if symTypeSignature.Type == ast.TYPE_POINTER_STRUCT {
+		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+		// Now an arena getter, site S0966.
 		symStructDetails := prgrm.GetCXTypeSignatureStructFromArray(symTypeSignature.Meta)
 		symFields = symStructDetails.Fields
 	} else {
@@ -2479,12 +2935,16 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 		// checking if fields do exist in their StructType
 		// and assigning that StructType to the sym.Field
 		strct := argStructType
+		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+		// Now an arena getter, site S0967.
 		strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
 		if err != nil {
 			panic(err)
 		}
 
 		for _, fldIdx := range symFields {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0968.
 			field := prgrm.GetCXArgFromArray(fldIdx)
 			if inFld, err := strct.GetField(prgrm, field.Name); err == nil {
 				if inFld.StructType != nil {
@@ -2492,17 +2952,26 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 					strct = inFld.StructType
 				}
 			} else {
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S0969.
 				methodName := prgrm.GetCXArgFromArray(symFields[len(symFields)-1]).Name
 				receiverType := strct.Name
 
 				if methodIdx, methodErr := strctPkg.GetMethod(prgrm, receiverType+"."+methodName, receiverType); methodErr == nil {
+					// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+					// Now an arena getter, site S0970.
 					method := prgrm.GetFunctionFromArray(methodIdx)
 					methodOutputs := method.GetOutputs(prgrm)
+					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+					// Now an arena getter, site S0971.
 					methodOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(methodOutputs[0])
 
-					// VIOLATION: created outside manager; phase 1.
+					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+					// Now a heap literal, site S0972.
 					var methodOutputArg *ast.CXArgument = &ast.CXArgument{}
 					if methodOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S0973.
 						methodOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(methodOutputTypeSig.Meta))
 
 						field.Type = methodOutputArg.Type
@@ -2520,12 +2989,16 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 		// then we copy all the type struct fields
 		// to the respective symFields
 		for _, nameFldIdx := range symFields {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0974.
 			nameField := prgrm.GetCXArgFromArray(nameFldIdx)
 			if nameField.StructType != nil {
 				strct = nameField.StructType
 			}
 
 			for _, typeSignatureIdx := range strct.Fields {
+				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+				// Now an arena getter, site S0975.
 				typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 
 				if typeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -2581,6 +3054,8 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
+					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+					// Now an arena getter, site S0976.
 					typeSignatureArray := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 					nameField.Type = types.Code(typeSignatureArray.Meta)
 					nameField.StructType = nil
@@ -2596,6 +3071,8 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 					}
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_SLICE_ATOMIC {
+					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
+					// Now an arena getter, site S0977.
 					sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
 					nameField.Type = types.Code(sliceDetails.Meta)
 					nameField.StructType = nil
@@ -2614,6 +3091,8 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_STRUCT {
+					// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+					// Now an arena getter, site S0978.
 					structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 					nameField.Type = types.STRUCT
 					nameField.Size = typeSignature.GetSize(prgrm, false)
@@ -2631,6 +3110,8 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_POINTER_STRUCT {
+					// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+					// Now an arena getter, site S0979.
 					structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
 					nameField.Type = types.POINTER
 					nameField.Size = typeSignature.GetSize(prgrm, false)

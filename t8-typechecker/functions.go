@@ -23,8 +23,14 @@ func ParseFuncHeaders(files []*loader.File, funcs []declaration_extractor.FuncDe
 		// If package not in AST
 		if err != nil || pkg == nil {
 
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now a constructor call, site S1505.
 			newPkg := ast.MakePackage(fun.PackageID)
+			// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+			// Now an arena insert, site S1506.
 			pkgIdx := actions.AST.AddPackage(newPkg)
+			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
+			// Now an arena getter, site S1507.
 			newPkg, err := actions.AST.GetPackageFromArray(pkgIdx)
 
 			if err != nil {
@@ -52,6 +58,8 @@ func ParseFuncHeaders(files []*loader.File, funcs []declaration_extractor.FuncDe
 				return err
 			}
 
+			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
+			// Now a slice of objects, site S1508.
 			fnIdx := actions.FunctionHeader(actions.AST, fun.FuncName, []*ast.CXArgument{receiverArg}, true)
 
 			var inputs []*ast.CXArgument
@@ -120,6 +128,8 @@ func ParseFuncParameters(paramBytes []byte, pkg *ast.CXPackage, fileName string,
 }
 
 func PreFunctionDeclaration(fnIdx ast.CXFunctionIndex, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S1509.
 	fn := actions.AST.GetFunctionFromArray(fnIdx)
 	// adding inputs, outputs
 	for _, inp := range inputs {

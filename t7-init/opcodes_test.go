@@ -11,6 +11,8 @@ import (
 // Every registered opcode sits on its live row of OpcodeLifecycleTable, and
 // no deprecated number has a handler or a name.
 func TestRegisteredOpcodesMatchLifecycleTable(t *testing.T) {
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S1465.
 	prgrm := MakeProgram()
 	RegisterPackages(prgrm)
 	opcodes.RegisterOpcodes(prgrm)

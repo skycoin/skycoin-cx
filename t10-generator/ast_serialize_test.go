@@ -89,14 +89,20 @@ func generateSampleProgramFromCXEvolves(t *testing.T, withLiteral bool) *cxast.C
 	// Needed for AddNativeExpressionToFunction
 	// because of dependency on cxast.OpNames
 	cxparsingcompletor.InitCXCore()
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, site S0013.
 	cxProgram = cxinit.MakeProgram()
 	cxinit.RegisterPackages(cxProgram)
 
+	// OBJMODEL: state.CXPackageMng.CXPackageAlloc(), phase 4 #361.
+	// Now an arena insert, site S0014.
 	err := astapi.AddEmptyPackage(cxProgram, "main")
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
+	// Now an arena insert, site S0015.
 	err = astapi.AddEmptyFunctionToPackage(cxProgram, "main", "TestFunction")
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
