@@ -45,6 +45,5 @@ func (f *File) saveToDatabase(hash [64]byte) error {
 	if err := bolt.Add(key, value); err != nil {
 		return fmt.Errorf("save file %s: %w", f.FileName, err)
 	}
-	FileHashMap[f.FileName] = key
 	return nil
 }

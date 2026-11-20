@@ -571,3 +571,62 @@ func TestLoadCXProgramBuiltinImports(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadCXProgramSameFileNames(t *testing.T) {
+	src := filepath.Join(t.TempDir(), "src")
+	files := map[string]string{
+		"x.cx":   "package main\nimport \"a\"\nimport \"b\"\nfunc main() {\n}\n",
+		"a/x.cx": "package a\n",
+		"b/x.cx": "package b\n",
+	}
+	for path, content := range files {
+		path = filepath.Join(src, path)
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, sourceCodes, _, err := util.ParseArgsForCX([]string{src}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := loader.LoadCXProgram("samenames", sourceCodes); err != nil {
+		t.Fatal(err)
+	}
+	listBytes, err := bolt.Get("samenames")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var list loader.PackageList
+	if err := list.UnmarshalBinary(listBytes); err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, packageKey := range list.Packages {
+		packageBytes, err := bolt.Get(packageKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var pkg loader.Package
+		if err := pkg.UnmarshalBinary(packageBytes); err != nil {
+			t.Fatal(err)
+		}
+		for _, fileKey := range pkg.Files {
+			fileBytes, err := bolt.Get(fileKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var file loader.File
+			if err := file.UnmarshalBinary(fileBytes); err != nil {
+				t.Fatal(err)
+			}
+			got[pkg.PackageName] = file.FileName + ": " + string(file.Content)
+		}
+	}
+	want := map[string]string{"main": "x.cx: " + files["x.cx"], "a": "x.cx: " + files["a/x.cx"], "b": "x.cx: " + files["b/x.cx"]}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("stored files:\n got %q\nwant %q", got, want)
+	}
+}

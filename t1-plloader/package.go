@@ -62,6 +62,5 @@ func (p *Package) saveToDatabase(hash [64]byte) error {
 	if err := bolt.Add(key, value); err != nil {
 		return fmt.Errorf("save package %s: %w", p.PackageName, err)
 	}
-	PackageHashMap[p.PackageName] = key
 	return nil
 }

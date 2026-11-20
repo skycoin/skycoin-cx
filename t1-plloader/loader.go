@@ -18,15 +18,6 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// VIOLATION: state outside State. Owner: t1-plloader; moves to PackageFileMng in phase 1.
-// NOTE: written but never read, and keyed by base file name, so files in different
-// packages overwrite each other. See #94.
-var FileHashMap = make(map[string]string)
-
-// VIOLATION: state outside State. Owner: t1-plloader; moves to PackageFileMng in phase 1.
-// NOTE: written but never read. See #94.
-var PackageHashMap = make(map[string]string)
-
 func LoadCXProgram(programName string, sourceCode []*os.File) (err error) {
 	if programName == "" {
 		return errors.New("load program: empty program name")
