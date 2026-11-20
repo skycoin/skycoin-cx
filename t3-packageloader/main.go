@@ -32,9 +32,8 @@ func main() {
 	}
 	defer bolt.Close()
 
-	// NOTE: counts set flags rather than what an action needs. See #102.
-	if flag.NFlag()+flag.NArg() > 4 || flag.NFlag()+flag.NArg() < 2 {
-		log.Fatal("Wrong number of arguments. Type -help for more information")
+	if flag.NArg() > 0 {
+		log.Fatalf("Unexpected arguments %q. Type -help for more information", flag.Args())
 	}
 	actions := 0
 	for _, set := range []bool{*loadFlag, *saveFlag, *treeFlag, *graphFlag} {
