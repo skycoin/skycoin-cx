@@ -14,6 +14,7 @@
 
 #### Added
 
+- `BenchmarkRun` in `t11-cx` times `execute.RunCompiled` alone over count, fib and bubble sort programs and the `BenchmarkCompile` programs, compiling outside the timer. `TestRunAllocs` fails when the allocations per run of any of them go above the counts recorded when it was added. The target is 0 (#407, #417)
 - The object model managers grow only at grow boundaries between compile stages and REPL iterations, to the next power of two when less than half of a manager is free, and print a warning on stderr when they do. Alloc on a full manager between two boundaries is an assert, see the Growth section of docs/ObjectModel.md (#299)
 - The object model managers, stage 3 of #299. Package `objmodel` (`t1-cx-core-objmodel`) holds the Gid layout and checks, and `t3-ast` has a generated `<obj>_gid.go`, `<obj>_mng.go` and manager test for each of the 14 IR object types, plus `CxIrState` with every manager. Nothing in the compiler uses them yet (#299)
 - `t0-cx-core-objmodelgen` generates the Gid and manager files from one template, `make generate-objmodel` runs it, and `make check-objmodel`, part of `make check`, fails on stale generated files, a Def file with more than its struct, or a Fon or Fof file that names a manager or `CxIrState` (#299)
