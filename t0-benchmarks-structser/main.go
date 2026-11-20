@@ -8,18 +8,18 @@ import (
 )
 
 type Point struct {
-	x int32
-	y int32
+	X int32
+	Y int32
 }
 
 type Arrays struct {
-	ints   []int32
-	floats []float32
+	Ints   []int32
+	Floats []float32
 }
 
 type Structs struct {
-	points []Point
-	arrays []Arrays
+	Points []Point
+	Arrays []Arrays
 }
 
 func main() {
@@ -31,8 +31,8 @@ func main() {
 	*/
 
 	testPoint := Point{
-		x: 10,
-		y: 20,
+		X: 10,
+		Y: 20,
 	}
 	_ = testPoint
 
@@ -43,8 +43,8 @@ func main() {
 	// ints := make([]int32, 200000, 200000)
 	// floats := make([]float32, 200000, 200000)
 	testArrays := Arrays{
-		ints:   []int32{1, 2, 3},
-		floats: []float32{1.0, 2.0, 3.0},
+		Ints:   []int32{1, 2, 3},
+		Floats: []float32{1.0, 2.0, 3.0},
 	}
 	// testArrays := Arrays{
 	// 	ints: ints,
@@ -56,18 +56,18 @@ func main() {
 	*/
 
 	point1 := Point{
-		x: 10,
-		y: 20,
+		X: 10,
+		Y: 20,
 	}
 
 	point2 := Point{
-		x: 20,
-		y: 30,
+		X: 20,
+		Y: 30,
 	}
 
 	arrays1 := Arrays{
-		ints:   []int32{1, 2, 3},
-		floats: []float32{1.0, 2.0, 3.0},
+		Ints:   []int32{1, 2, 3},
+		Floats: []float32{1.0, 2.0, 3.0},
 	}
 
 	var points []Point
@@ -78,8 +78,8 @@ func main() {
 	arrays = append(arrays, arrays1)
 
 	var testStructs Structs
-	testStructs.points = points
-	testStructs.arrays = arrays
+	testStructs.Points = points
+	testStructs.Arrays = arrays
 
 	// /*
 	//     Point

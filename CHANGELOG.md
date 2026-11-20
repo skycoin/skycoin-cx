@@ -26,6 +26,7 @@
 
 #### Fixed
 
+- The structser benchmark wrote 0-byte files and timed empty output, because its structs had only unexported fields, which the encoder skips (#178)
 - The `t0-util` file helpers joined the working dir three different ways, so with one set `CXCreateFile` doubled it and the others dropped the separator. All six now use `filepath.Join` (#89)
 - `os.Run` with an empty command returned `OS_RUN_START_FAILED` instead of `OS_RUN_EMPTY_CMD`. It split the command on single spaces, so two spaces passed an empty argument and quotes were passed through. It now splits on runs of spaces and tabs, and single or double quotes group a word (#118)
 - Every `regexp.Compile`, `regexp.MustCompile` and `Regexp.Find` call added an argument to the program, so a loop grew it without bound. A failed `regexp.Compile` stored a nil `Regexp`, and `Find` on it was a Go nil dereference. It is now a `CX_RUNTIME_ERROR` (#120)
