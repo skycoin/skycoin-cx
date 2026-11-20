@@ -77,8 +77,8 @@ it. `<obj>` is the type name in lower case with underscores removed, so
 | File | Holds | Required |
 | --- | --- | --- |
 | `<obj>_def.go` | The struct `<Obj>` and nothing else | yes |
-| `<obj>_mng.go` | The manager `<Obj>Mng` and its methods | yes |
-| `<obj>_gid.go` | The index type `<Obj>Gid`, its type tag and nil constants | yes |
+| `<obj>_mng.go` | The manager `<Obj>Mng` and its methods, generated | yes |
+| `<obj>_gid.go` | The index type `<Obj>Gid`, its type tag and nil constants, generated | yes |
 | `<obj>_fon.go` | Function-on, helpers that write to one object | no, may be empty |
 | `<obj>_fof.go` | Function-of, helpers that only read one object | no, may be empty |
 
@@ -159,9 +159,14 @@ const (
 	GidTypeTagLast  TypeTag = 0x7F
 
 	GidNil int64 = 0
+
+	// GidCapMax is the largest Cap of a manager, so a slot count fits in uint32.
+	GidCapMax uint64 = GidIndexMask
 )
 
-// GidCompose builds a Gid. It asserts the tag, generation and index ranges.
+// GidCompose builds a Gid. It asserts the tag range and a generation from
+// GidGenerationFirst to GidGenerationLast - 1, the generations a live object
+// can have. Every uint32 is a valid index.
 func GidCompose(typeTag TypeTag, generation uint32, index uint32) int64
 
 // GidIndex returns bits 0 to 31.
@@ -172,6 +177,10 @@ func GidGeneration(gid int64) uint32
 
 // GidTypeTag returns bits 56 to 63.
 func GidTypeTag(gid int64) TypeTag
+
+// GidCheck asserts checks 1 and 2 below, and that gid is positive. The
+// manager does checks 3 and 4 against its own slots.
+func GidCheck(gid int64, typeTag TypeTag, typeName string, capacity int)
 ```
 
 The bit operations work on `uint64(gid)`, so the masks are `uint64`
@@ -211,6 +220,7 @@ type CXArgumentMng struct {
 	CXArgumentMngLive        []bool       // slot holds a live object
 	CXArgumentMngFree        []uint32     // released slots that can be reused
 	CXArgumentMngNext        uint32       // first slot never used
+	CXArgumentMngRetired     uint32       // slots retired at GidGenerationLast
 	CXArgumentMngLen         int          // live objects
 	CXArgumentMngGrowable    bool         // grow when full instead of asserting
 }
@@ -228,8 +238,8 @@ func (manager *CXArgumentMng) CXArgumentMngTeardown()
   only after Init, and Init on a manager that holds objects is an assert.
 * `Alloc` takes a free slot, or the next never used one, sets its object to
   the zero value, marks it live, raises Len by one and returns its Gid. When
-  every slot is used, a growable manager doubles its Cap. A manager that
-  cannot grow asserts.
+  every slot is used, a growable manager doubles its Cap, from 0 to 1 and
+  never past `GidCapMax`. A manager that cannot grow asserts.
 * `Release` checks the Gid, sets the object to the zero value so its slices
   and strings can be collected, marks the slot free, raises its generation
   and lowers Len by one. It puts the slot on the free list unless its
@@ -237,7 +247,8 @@ func (manager *CXArgumentMng) CXArgumentMngTeardown()
   retired.
 * `Get` checks the Gid and returns a pointer to the object in its slot. The
   pointer is borrowed, see [Rules](#rules).
-* `Len` is the number of live objects. `Cap` is the number of slots.
+* `Len` is the number of live objects. `Cap` is the number of slots,
+  retired ones included, at most `GidCapMax`.
 * `MngTeardown` asserts that Len is 0 and drops the arrays, which leaves Cap
   at 0.
 
@@ -248,6 +259,27 @@ takes field values.
 Growing copies the array, so every pointer Get returned before is stale
 after the next Alloc on the same manager. That is why a Get pointer is never
 held across an Alloc.
+
+Len is checked against the slots in O(1) after every Alloc and Release, as
+`Next - len(Free) - Retired`, which is why the manager counts retired slots.
+Counting the live flags would make every Alloc O(Cap).
+
+Every check builds its message only when it fails, `if !ok {
+assert.AssertPreconditionTrue(false, fmt.Sprintf(...)) }`, because Get and
+Alloc are on the compiler's hot path once the sites use them.
+
+### Generated
+
+The 14 managers differ only in their type, so `<obj>_gid.go`,
+`<obj>_mng.go` and the test `<obj>_mng_test.go` are generated from one
+template by `t0-cx-core-objmodelgen` (`make generate-objmodel`), a tier 0
+`package main` that holds the type table above. The generated files are
+committed and start with a `Code generated ... DO NOT EDIT.` line.
+`make check-objmodel` fails when one is stale, when a generated file is no
+longer in the table, or when a `<obj>_def.go` has no table entry. A new
+object type is a new row in that table. The generator was picked over 14
+written copies because a fix to the manager is one template change that
+reaches every type, and the check keeps the copies from drifting.
 
 ## Fon and Fof, helper functions
 
@@ -261,7 +293,8 @@ object's own fields.
 * It does not use any manager or `CxIrState`. It never calls Alloc, Release
   or Get, of its own type or any other. In Go terms it names no `*Mng` type
   and no `CxIrState`, which is what "cannot import the manager" means inside
-  one package. `make check-objmodel` checks this once the files exist.
+  one package. `make check-objmodel` checks it on every `_fon.go` and
+  `_fof.go`, and also that every `_def.go` holds one type and no function.
 * A Fof function does not write to the object or anything it reaches.
 * Both files may be empty, or absent.
 
@@ -296,13 +329,21 @@ func (state *CxIrState) CxIrStateInit()
 func (state *CxIrState) CxIrStateTeardown1()
 func (state *CxIrState) CxIrStateTeardown2()
 func (state *CxIrState) CxIrStateManagerLens() []CxIrStateManagerLen
+
+type CxIrStateManagerLen struct {
+	Name string
+	Len  int
+}
 ```
 
 * A manager is a value field of `CxIrState`, never a pointer, and no manager
-  exists outside a `CxIrState`.
+  exists outside a `CxIrState`. The manager unit tests are the one exception.
+  They test one manager on its own.
 * One `CxIrState` holds one program, so `CXProgramMng` has a Cap of 1 and
-  cannot grow. A process that compiles several programs, such as the REPL or
-  a test, makes one `CxIrState` for each.
+  cannot grow. `CXCallMng` has the fixed Cap `constants.CALLSTACK_SIZE`,
+  the call stack. Every other manager starts at Cap 0 and grows, as the
+  arena slices it replaces do. A process that compiles several programs,
+  such as the REPL or a test, makes one `CxIrState` for each.
 * `*CxIrState` is passed down as a parameter, the way `prgrm *CXProgram` is
   passed today. A value that lives for one call, such as the lexer of one
   parse, may hold it for that call.
@@ -339,7 +380,8 @@ Teardown is the release of every object, and it has two steps.
 
 1. **Teardown1** (`CxIrStateTeardown1`) releases the program and, through it,
    every object it owns, by walking the owner relations below. Afterwards
-   every manager's Len must be 0.
+   every manager's Len must be 0. Until #300 Teardown1 releases only the
+   program, because the owner fields are not Gids yet.
 2. **Teardown2** (`CxIrStateTeardown2`) calls every manager's `MngTeardown`,
    which asserts Len is 0 and drops the arrays.
 
@@ -421,7 +463,7 @@ Every object model failure is a programming error, class B in
 | Alloc on a full manager that cannot grow | `AssertPreconditionTrue` in Alloc |
 | Init on a manager that holds objects | `AssertPreconditionTrue` in Init |
 | Len is not 0 at teardown | `AssertInvariantTrue` in `MngTeardown` and the teardown test |
-| Len is not the number of live slots | `AssertInvariantTrue` in Alloc and Release |
+| Len is not `Next - len(Free) - Retired`, the live slot count | `AssertInvariantTrue` in Alloc and Release |
 
 No object model function returns an error value.
 
@@ -500,9 +542,9 @@ constructors create it.
 
 
 
-Phases 1 and 2 add files and touch no existing site, about 14 Def moves and
-28 new Mng and Gid files. Phase 3 comments every site in the table, in one
-PR. Phase 6 adds the teardown functions and their test.
+Phases 1 and 2 add files and touch no existing site, 14 Def moves and 28
+Mng and Gid files, generated, see [Generated](#generated). Phase 3 comments
+every site in the table, in one PR. Phase 6 adds the teardown functions and their test.
 
 
 ## Inventory

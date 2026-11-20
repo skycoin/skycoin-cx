@@ -103,8 +103,9 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 
 ## Tests
 
-- `make check` runs the tier, init, interface and recover checks, `go vet`, the Go
-  tests and the stable CX program tests. CI runs it on Linux, macOS and Windows.
+- `make check` runs the tier, init, interface, recover and object model
+  checks, `go vet`, the Go tests and the stable CX program tests. CI runs it
+  on Linux, macOS and Windows.
 - `make test` runs only the stable CX program tests.
 - `make test-all` also runs the tests for known issues. These are expected to
   fail, and each one names its issue in `t1-cxtest/main.go`.
