@@ -1,7 +1,6 @@
 package execute
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -9,32 +8,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
-
-func getLastLine(cxprogram *ast.CXProgram) ast.CXExpression {
-	// CallCounter is unsigned, so count down from it and index with c = n-1.
-	for n := cxprogram.CallCounter; n > 0; n-- {
-		c := n - 1
-		if cxprogram.CallStack[c].Line+1 >= len(cxprogram.CallStack[c].Operator.Expressions) {
-			// then it'll also return from this function call; continue
-			continue
-		}
-		return cxprogram.CallStack[c].Operator.Expressions[cxprogram.CallStack[c].Line+1]
-		// cxprogram.CallStack[c].Operator.Expressions[cxprogram.CallStack[cxprogram.CallCounter-1].Line + 1]
-	}
-
-	// VIOLATION: created outside manager; phase 1.
-	cxAtomicOp := &ast.CXAtomicOperator{
-		Operator: -1,
-		Function: -1,
-	}
-
-	index := cxprogram.AddCXAtomicOp(cxAtomicOp)
-	// VIOLATION: created outside manager; phase 1.
-	return ast.CXExpression{
-		Index: index,
-		Type:  ast.CX_ATOMIC_OPERATOR,
-	}
-}
 
 func RunCxAst(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall types.Pointer) error {
 	defer ast.RuntimeError(cxprogram)
@@ -50,63 +23,7 @@ func RunCxAst(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall typ
 			panic(constants.STACK_OVERFLOW_ERROR)
 		}
 
-		if !untilEnd {
-			var inName string
-			var toCallName string
-			var toCall ast.CXExpression
-
-			if call.Line >= call.Operator.LineCount && cxprogram.CallCounter == 0 {
-				cxprogram.Terminated = true
-				cxprogram.CallStack[0].Operator = nil
-				cxprogram.CallCounter = 0
-				fmt.Println("in:terminated")
-				return nil
-			}
-
-			if call.Line >= call.Operator.LineCount && cxprogram.CallCounter != 0 {
-				toCall = getLastLine(cxprogram)
-				// toCall = cxprogram.CallStack[cxprogram.CallCounter-1].Operator.Expressions[cxprogram.CallStack[cxprogram.CallCounter-1].Line + 1]
-				inName = cxprogram.CallStack[cxprogram.CallCounter-1].Operator.Name
-			} else {
-				toCall = call.Operator.Expressions[call.Line]
-				inName = call.Operator.Name
-			}
-
-			if toCall.Type == ast.CX_LINE {
-				call.Line++
-				opCount++
-				continue
-			}
-
-			cxAtomicOp, err := cxprogram.GetCXAtomicOp(toCall.Index)
-			if err != nil {
-				panic(err)
-			}
-
-			cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
-
-			if cxAtomicOpOperator == nil {
-				// then it's a declaration
-				toCallName = "declaration"
-			} else if cxAtomicOpOperator.IsBuiltIn() {
-				toCallName = ast.OpNames[cxAtomicOpOperator.AtomicOPCode]
-			} else {
-				if cxAtomicOpOperator.Name != "" {
-					opPkg := cxprogram.CXPackages[cxAtomicOpOperator.Package]
-					toCallName = opPkg.Name + "." + cxAtomicOpOperator.Name
-				} else {
-					// then it's the end of the program got from nested function calls
-					cxprogram.Terminated = true
-					cxprogram.CallStack[0].Operator = nil
-					cxprogram.CallCounter = 0
-					fmt.Println("in:terminated")
-					return nil
-				}
-			}
-
-			fmt.Printf("in:%s, expr#:%d, calling:%s()\n", inName, call.Line+1, toCallName)
-			opCount++
-		}
+		opCount++
 
 		err := call.Call(cxprogram, &inputs, &outputs)
 		if err != nil {
