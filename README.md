@@ -28,6 +28,12 @@ before the run loop. `make check-inits` fails on `func init()` outside package
 main. The files that still break the rule are listed in `init-allowlist.txt`,
 which only shrinks, and each one is marked `// VIOLATION: init chaining`.
 
+No interface chaining. An interface does not embed another interface, so
+`type ReadCloser interface { io.Reader; Close() error }` is not allowed. List
+the methods instead. `make check-ifaces` runs `t0-ifacecheck` and fails on an
+embedded interface. The ones that still break the rule are listed in
+`iface-allowlist.txt`, which only shrinks.
+
 State lives in one place. One State object holds every manager, and no
 state lives anywhere else, so there are no mutable package level variables.
 Each object type has an `<Obj>Def` file, a 64 bit generational index
@@ -84,8 +90,8 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 
 ## Tests
 
-- `make check` runs the tier and init checks, `go vet`, the Go tests and the
-  stable CX program tests. CI runs it on Linux, macOS and Windows.
+- `make check` runs the tier, init and interface checks, `go vet`, the Go
+  tests and the stable CX program tests. CI runs it on Linux, macOS and Windows.
 - `make test` runs only the stable CX program tests.
 - `make test-all` also runs the tests for known issues. These are expected to
   fail, and each one names its issue in `t1-cxtest/main.go`.
