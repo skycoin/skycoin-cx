@@ -168,10 +168,10 @@ func (s *Lexer) next() {
 redonext:
 	s.stop()
 	s.tok = &yySymType{}
-	s.tok.line = s.l + 1
 	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !nlsemi || s.ch == '\r' {
 		s.nextch()
 	}
+	s.tok.line = s.l + 1
 
 	s.start()
 	if isLetter(s.ch) || s.ch >= utf8.RuneSelf && s.atIdentChar(true) {
@@ -445,7 +445,7 @@ func (s *Lexer) ident() {
 
 	// possibly a keyword
 	lit := s.segment()
-	s.tok = &yySymType{}
+	s.tok = &yySymType{line: s.tok.line}
 	if len(lit) >= 2 {
 		if tok := KeywordMap[string(lit)]; tok != 0 {
 			switch tok {
@@ -658,7 +658,7 @@ func (s *Lexer) number(seenPoint bool) {
 		ok = false
 	}
 
-	s.tok = &yySymType{}
+	s.tok = &yySymType{line: s.tok.line}
 	switch kind {
 	case INT_LITERAL:
 		result, err := strconv.ParseInt(yylex, base, 32)
