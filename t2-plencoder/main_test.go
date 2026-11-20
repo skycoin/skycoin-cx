@@ -3,15 +3,27 @@ package encoder
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-plbolt"
 )
 
 func TestMain(m *testing.M) {
-	if err := bolt.Init(); err != nil {
+	os.Exit(run(m))
+}
+
+func run(m *testing.M) int {
+	dir, err := os.MkdirTemp("", "plbolt")
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return 1
 	}
-	os.Exit(m.Run())
+	defer os.RemoveAll(dir)
+	if err := bolt.Init(filepath.Join(dir, "program_list.db")); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer bolt.Close()
+	return m.Run()
 }

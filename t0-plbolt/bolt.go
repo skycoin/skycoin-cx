@@ -3,51 +3,54 @@ package bolt
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	bolt "go.etcd.io/bbolt"
 )
 
 // VIOLATION: state outside State. Owner: t0-plbolt; moves to PackageDBMng in phase 2.
-var DBPath string
+var db *bolt.DB
 
-// Init is init 1 of the package loader tools. It points DBPath at the
-// executable directory and creates the program bucket in program_list.db there.
-// t3-packageloader main and the test mains call it before Add or Get.
-func Init() error {
-	path, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("bolt: find executable: %w", err)
+// Init is init 1 of the package loader tools. It opens the database file at
+// path, creating it and the program bucket if needed, and keeps it open until
+// Close. There is no default path, the caller chooses where the file lives.
+func Init(path string) error {
+	if path == "" {
+		return errors.New("bolt: empty database path")
 	}
-	DBPath = filepath.Dir(path)
-	return withDB(func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte("program"))
-			return err
-		})
+	if db != nil {
+		return fmt.Errorf("bolt: %s is already open, call Close first", db.Path())
+	}
+	opened, err := bolt.Open(path, 0644, nil)
+	if err != nil {
+		return fmt.Errorf("bolt: open %s: %w", path, err)
+	}
+	err = opened.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("program"))
+		return err
 	})
+	if err != nil {
+		opened.Close()
+		return fmt.Errorf("bolt: create bucket in %s: %w", path, err)
+	}
+	db = opened
+	return nil
 }
 
-// withDB opens the database, runs fn and closes it again. A close error is
-// returned when fn itself succeeded.
-// NOTE: the database is opened on every call and lives in the executable directory.
-// See #99.
-func withDB(fn func(db *bolt.DB) error) (err error) {
-	if DBPath == "" {
-		return errors.New("bolt: DBPath is not set, call Init first")
+// Close closes the database opened by Init.
+func Close() error {
+	if db == nil {
+		return errors.New("bolt: database is not open")
 	}
-	file := filepath.Join(DBPath, "program_list.db")
-	db, err := bolt.Open(file, 0644, nil)
-	if err != nil {
-		return fmt.Errorf("bolt: open %s: %w", file, err)
+	err := db.Close()
+	db = nil
+	return err
+}
+
+func open() (*bolt.DB, error) {
+	if db == nil {
+		return nil, errors.New("bolt: database is not open, call Init first")
 	}
-	defer func() {
-		if cerr := db.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("bolt: close %s: %w", file, cerr)
-		}
-	}()
-	return fn(db)
+	return db, nil
 }
 
 // Add stores value under key in the program bucket.
@@ -55,17 +58,19 @@ func Add(key string, value []byte) error {
 	if key == "" {
 		return errors.New("bolt: put: empty key")
 	}
-	return withDB(func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			bucket := tx.Bucket([]byte("program"))
-			if bucket == nil {
-				return errors.New("bolt: bucket program was not found")
-			}
-			if err := bucket.Put([]byte(key), value); err != nil {
-				return fmt.Errorf("bolt: put %q: %w", key, err)
-			}
-			return nil
-		})
+	db, err := open()
+	if err != nil {
+		return err
+	}
+	return db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("program"))
+		if bucket == nil {
+			return errors.New("bolt: bucket program was not found")
+		}
+		if err := bucket.Put([]byte(key), value); err != nil {
+			return fmt.Errorf("bolt: put %q: %w", key, err)
+		}
+		return nil
 	})
 }
 
@@ -74,21 +79,23 @@ func Get(key string) ([]byte, error) {
 	if key == "" {
 		return nil, errors.New("bolt: get: empty key")
 	}
+	db, err := open()
+	if err != nil {
+		return nil, err
+	}
 	var ret []byte
-	err := withDB(func(db *bolt.DB) error {
-		return db.View(func(tx *bolt.Tx) error {
-			bucket := tx.Bucket([]byte("program"))
-			if bucket == nil {
-				return errors.New("bolt: bucket program was not found")
-			}
-			value := bucket.Get([]byte(key))
-			if value == nil {
-				return fmt.Errorf("bolt: no value for key %q", key)
-			}
-			ret = make([]byte, len(value))
-			copy(ret, value)
-			return nil
-		})
+	err = db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("program"))
+		if bucket == nil {
+			return errors.New("bolt: bucket program was not found")
+		}
+		value := bucket.Get([]byte(key))
+		if value == nil {
+			return fmt.Errorf("bolt: no value for key %q", key)
+		}
+		ret = make([]byte, len(value))
+		copy(ret, value)
+		return nil
 	})
 	if err != nil {
 		return nil, err

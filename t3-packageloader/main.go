@@ -6,7 +6,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Init; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-plbolt" // thin: only Init and Close; no depth gain
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-plloader"  // thin: only LoadCXProgram; no depth gain
 	"github.com/skycoin/skycoin-cx/t2-plencoder" // thin: only SavePackagesToDisk; no depth gain
@@ -21,11 +21,16 @@ func main() {
 	graphFlag := flag.Bool("graph", false, "OPTION: Print the import dependencies for each module in a program on the database")
 	nameFlag := flag.String("name", "", "The name of the program to load or save")
 	pathFlag := flag.String("path", "", "The path to the program to load or save")
+	dbFlag := flag.String("db", "", "The path to the database file, created if missing")
 	flag.Parse()
 
-	if err := bolt.Init(); err != nil {
+	if *dbFlag == "" {
+		log.Fatal("-db is required")
+	}
+	if err := bolt.Init(*dbFlag); err != nil {
 		log.Fatal(err)
 	}
+	defer bolt.Close()
 
 	// NOTE: counts set flags rather than what an action needs. See #102.
 	if flag.NFlag()+flag.NArg() > 4 || flag.NFlag()+flag.NArg() < 2 {
