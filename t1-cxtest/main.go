@@ -190,6 +190,17 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
 	t.Run("test-slices-of-slices-literal.cx", types.CX_SUCCESS, "slice of slices literal with two inner literals")
+	t.RunWant("test-printf-v.cx", types.CX_SUCCESS, "printf %v of structs, arrays and slices of structs and array pointers (skycoin-cx#256)",
+		"pa [1, 2, 3]\n",
+		"p {x: 5, y: 6}\n",
+		"ps [{x: 0, y: 0}, {x: 0, y: 7}]\n",
+		"sp [{x: 5, y: 6}]\n",
+		"g [0, 4, 0]\n",
+		"l {a: {x: 1, y: 0}, b: {x: 0, y: 2}, n: hi, v: [0, 3], s: [4]}\n",
+		"l.b {x: 0, y: 2}\n",
+		"ss [[8] [8]]\n",
+		"a[1] 2\n",
+	)
 	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
 		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",
@@ -335,9 +346,9 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-302.cx", types.CX_SUCCESS, "Trying to determine the length of a slice of struct instances throws an error.")
 	t.RunEx("issue-68.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when passing increment expression as argument", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#18
 	t.RunEx("issue-67.cx", types.CX_COMPILATION_ERROR, "Panic when using void return value of a function in a for loop expression", runner.TestIssue, 0)
-	t.RunEx("issue-66.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when printing boolean values with %v", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#19
-	t.RunEx("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed", runner.TestIssue, 0)                       // known failing, skycoin/skycoin-cx#20
-	t.RunEx("issue-64.cx", types.CX_SUCCESS, "for loop using boolean value is not compiling", runner.TestIssue, 0)                // known failing, skycoin/skycoin-cx#21
+	t.Run("issue-66.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when printing boolean values with %v")
+	t.RunEx("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed", runner.TestIssue, 0)        // known failing, skycoin/skycoin-cx#20
+	t.RunEx("issue-64.cx", types.CX_SUCCESS, "for loop using boolean value is not compiling", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#21
 	t.Run("issue-303.cx", types.CX_SUCCESS, "Concatenation of str variables with + operator doesn't work")
 	t.Run("issue-304.cx", types.CX_SUCCESS, "Short declaration doesn't compile with opcode return value")
 	t.Run("issue-305.cx", types.CX_SUCCESS, "Compilation error when struct field is named 'input' or 'output'")

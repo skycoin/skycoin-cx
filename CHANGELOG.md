@@ -31,6 +31,7 @@
 
 #### Fixed
 
+- `printf("%v")` printed wrong values for structs, arrays and slices of structs, global arrays, struct fields reached through a field path and a dereferenced array pointer, and panicked on a struct with an array or struct field. Assigning `&array` to an array pointer copied the first element instead of the address (#256, #19)
 - A failing `test()` printed the line of the statement before it, or no file and line 0 when it was the first statement. Every expression statement now starts with its own line marker (#254)
 - `StartCPUProfile(path, rate)` in CX wrote `<argv0>_<path>_cpu.pprof` next to the cx executable instead of `path`. It now writes the path it is given (#118)
 - A failing `test()`, `assert` or `panic` printed the raw bytes of both values to stdout before its message. Only the message is printed now (#239)

@@ -1,0 +1,54 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Line struct {
+	a Point
+	b Point
+	n str
+	v [2]i32
+	s []i32
+}
+
+var g [3]i32
+
+func main() {
+	var a [3]i32
+	a[0] = 1
+	a[1] = 2
+	a[2] = 3
+	var pa *[3]i32
+	pa = &a
+	printf("pa %v\n", *pa)
+	var p Point
+	p.x = 5
+	p.y = 6
+	printf("p %v\n", p)
+	var ps [2]Point
+	ps[1].y = 7
+	printf("ps %v\n", ps)
+	var sp []Point
+	sp = append(sp, p)
+	printf("sp %v\n", sp)
+
+	g[1] = 4
+	printf("g %v\n", g)
+	var l Line
+	l.a.x = 1
+	l.b.y = 2
+	l.n = "hi"
+	l.v[1] = 3
+	l.s = append(l.s, 4)
+	printf("l %v\n", l)
+	printf("l.b %v\n", l.b)
+	var ss [][]i32
+	var r []i32
+	r = append(r, 8)
+	ss = append(ss, r)
+	ss = append(ss, r)
+	printf("ss %v\n", ss)
+	printf("a[1] %v\n", a[1])
+}
