@@ -63,8 +63,8 @@ func MarkAndCompact(prgrm *CXProgram) {
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-						// Now a pointer into an arena, site S0341.
-						fld = &prgrm.CXArgs[fldIdx]
+						// Now an arena getter, site S0341.
+						fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
 					} else {
 						fld = typeSignature.GetCXArgFormat(prgrm)
 					}
@@ -127,8 +127,8 @@ func MarkAndCompact(prgrm *CXProgram) {
 							if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 								fldIdx := typeSignature.Meta
 								// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-								// Now a pointer into an arena, site S0344.
-								fld = &prgrm.CXArgs[fldIdx]
+								// Now an arena getter, site S0344.
+								fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
 							} else {
 								fld = typeSignature.GetCXArgFormat(prgrm)
 							}
@@ -309,8 +309,8 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-						// Now a pointer into an arena, site S0353.
-						fld = &prgrm.CXArgs[fldIdx]
+						// Now an arena getter, site S0353.
+						fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
 					} else {
 						fld = typeSignature.GetCXArgFormat(prgrm)
 					}
@@ -499,8 +499,8 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 					if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 						fldIdx := typeSignature.Meta
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-						// Now a pointer into an arena, site S0360.
-						fld = &prgrm.CXArgs[fldIdx]
+						// Now an arena getter, site S0360.
+						fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
 					} else {
 						fld = typeSignature.GetCXArgFormat(prgrm)
 					}
@@ -569,8 +569,8 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 								if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 									fldIdx := typeSignature.Meta
 									// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-									// Now a pointer into an arena, site S0363.
-									fld = &prgrm.CXArgs[fldIdx]
+									// Now an arena getter, site S0363.
+									fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
 								} else {
 									fld = typeSignature.GetCXArgFormat(prgrm)
 								}

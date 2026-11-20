@@ -52,7 +52,7 @@ func TestRegexpCallsDoNotGrowProgram(t *testing.T) {
 	// Now a heap literal, site S1423.
 	errOut := ast.CXValue{Offset: 400, TypeSignature: &ast.CXTypeSignature{Offset: 400}}
 
-	before := len(prgrm.CXArgs)
+	before := prgrm.CxIrState.CXArgumentMng.CXArgumentLen()
 	for i := 0; i < 100; i++ {
 		opRegexpCompile(prgrm, []ast.CXValue{strValue(prgrm, 0, "b+")}, []ast.CXValue{reg, errOut})
 		opRegexpFind(prgrm, []ast.CXValue{reg, in}, []ast.CXValue{out})
@@ -60,7 +60,7 @@ func TestRegexpCallsDoNotGrowProgram(t *testing.T) {
 	if got := out.Get_str(prgrm); got != "bbb" {
 		t.Fatalf("Find returned %q, want %q", got, "bbb")
 	}
-	if after := len(prgrm.CXArgs); after != before {
+	if after := prgrm.CxIrState.CXArgumentMng.CXArgumentLen(); after != before {
 		t.Errorf("CXArgs grew from %d to %d", before, after)
 	}
 }

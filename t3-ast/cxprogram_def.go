@@ -36,7 +36,6 @@ type CXProgram struct {
 
 	// For new CX AST arrays
 	CXAtomicOps      []CXAtomicOperator
-	CXArgs           []CXArgument
 	CXPackages       []CXPackage
 	CXFunctions      []CXFunction
 	CXStructs        []CXStruct

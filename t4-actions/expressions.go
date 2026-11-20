@@ -147,8 +147,12 @@ func IterationExpressions(prgrm *ast.CXProgram,
 		var predicateIdx ast.CXArgumentIndex
 		if predicateTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			predicateIdx = ast.CXArgumentIndex(predicateTypeSig.Meta)
-			prgrm.CXArgs[predicateIdx].Package = ast.CXPackageIndex(pkg.Index)
-			prgrm.CXArgs[predicateIdx].PreviouslyDeclared = true
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1675.
+			prgrm.GetCXArg(ast.CXArgumentIndex(predicateIdx)).Package = ast.CXPackageIndex(pkg.Index)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1676.
+			prgrm.GetCXArg(ast.CXArgumentIndex(predicateIdx)).PreviouslyDeclared = true
 		} else if predicateTypeSig.Type == ast.TYPE_ATOMIC || predicateTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			// do nothing
 		} else {

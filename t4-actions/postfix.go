@@ -217,7 +217,9 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 		if postExpressionOperator == nil {
 			postExpressionOutputIndex := prgrm.CXAtomicOps[postExpressionIdx].GetOutputs(prgrm)[0]
-			prgrm.CXArgs[fldIdx].Indexes = append(prgrm.CXArgs[fldIdx].Indexes, postExpressionOutputIndex)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1756.
+			prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).Indexes = append(prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).Indexes, postExpressionOutputIndex)
 		} else {
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S1124.
@@ -247,7 +249,9 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 			prevExprs = append(postExprs, prevExprs...)
 
-			prgrm.CXArgs[fldIdx].Indexes = append(prgrm.CXArgs[fldIdx].Indexes, typeSigIdx)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1757.
+			prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).Indexes = append(prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).Indexes, typeSigIdx)
 		}
 	} else {
 		if len(prgrm.CXAtomicOps[postExpressionIdx].GetOutputs(prgrm)) < 1 {
@@ -339,7 +343,9 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				prevOutsIdx := ast.CXArgumentIndex(prevOutsTypeSig.Meta)
 
 				postOutsIndex := prgrm.CXAtomicOps[postExpressionIdx].GetOutputs(prgrm)[0]
-				prgrm.CXArgs[prevOutsIdx].Indexes = append(prgrm.CXArgs[prevOutsIdx].Indexes, postOutsIndex)
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1758.
+				prgrm.GetCXArg(ast.CXArgumentIndex(prevOutsIdx)).Indexes = append(prgrm.GetCXArg(ast.CXArgumentIndex(prevOutsIdx)).Indexes, postOutsIndex)
 			} else if prevOutsTypeSig.Type == ast.TYPE_ATOMIC || prevOutsTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 				panic("type is not cx argument deprecate\n\n")
 			} else if prevOutsTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
@@ -814,7 +820,9 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				leftExprOutputTypeSig.Name = leftExprOutputTypeSigName
 				if leftExprOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 					leftExprIdx := leftExprOutputTypeSig.Meta
-					prgrm.CXArgs[leftExprIdx].Name = leftExprOutputTypeSigName
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1759.
+					prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Name = leftExprOutputTypeSigName
 				}
 
 				return prevExprs
@@ -824,7 +832,9 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		leftExprOutputTypeSig.Package = ast.CXPackageIndex(imp.Index)
 		if leftExprOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			leftExprIdx := leftExprOutputTypeSig.Meta
-			prgrm.CXArgs[leftExprIdx].Package = ast.CXPackageIndex(imp.Index)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1760.
+			prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Package = ast.CXPackageIndex(imp.Index)
 		}
 
 		if glbl, err := imp.GetGlobal(prgrm, ident); err == nil {
@@ -938,7 +948,9 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		if leftExprOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			leftExprIdx = leftExprOutputTypeSig.Meta
 
-			prgrm.CXArgs[leftExprIdx].Fields = append(prgrm.CXArgs[leftExprIdx].Fields, leftExprFieldIdx)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1761.
+			prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Fields = append(prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Fields, leftExprFieldIdx)
 		} else if leftExprOutputTypeSig.Type == ast.TYPE_ATOMIC || leftExprOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			// TODO: implement correct way when it is possible
 			// temporarily return back to cx arg deprecate
@@ -958,7 +970,9 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			leftExprOutputTypeSig.Meta = int(argIdx)
 
 			leftExprIdx = int(argIdx)
-			prgrm.CXArgs[leftExprIdx].Fields = append(prgrm.CXArgs[leftExprIdx].Fields, leftExprFieldIdx)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1762.
+			prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Fields = append(prgrm.GetCXArg(ast.CXArgumentIndex(leftExprIdx)).Fields, leftExprFieldIdx)
 		} else if leftExprOutputTypeSig.Type == ast.TYPE_STRUCT {
 			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 			// Now an arena getter, site S1204.

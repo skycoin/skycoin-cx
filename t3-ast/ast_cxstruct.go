@@ -63,8 +63,8 @@ func (strct *CXStruct) GetField(prgrm *CXProgram, name string) (*CXArgument, err
 			// If type is cxargument deprecate
 			fldIdx := typeSignature.Meta
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now a pointer into an arena, site S0260.
-			return &prgrm.CXArgs[fldIdx], nil
+			// Now an arena getter, site S0260.
+			return prgrm.GetCXArg(CXArgumentIndex(fldIdx)), nil
 		}
 	}
 
@@ -115,13 +115,13 @@ func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStr
 	// 	if lastTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE && currentTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 	// 		lastFldIdx := lastTypeSignature.Meta
 	// 		currFldIdx := currentTypeSignature.Meta
-	// 		prgrm.CXArgs[currFldIdx].Offset = prgrm.CXArgs[lastFldIdx].Offset + prgrm.CXArgs[lastFldIdx].TotalSize
+	// 		prgrm.GetCXArg(CXArgumentIndex(currFldIdx)).Offset = prgrm.GetCXArg(CXArgumentIndex(lastFldIdx)).Offset + prgrm.GetCXArg(CXArgumentIndex(lastFldIdx)).TotalSize
 	// 	} else if lastTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE && currentTypeSignature.Type != TYPE_CXARGUMENT_DEPRECATE {
 	// 		lastFldIdx := lastTypeSignature.Meta
-	// 		currentTypeSignature.Offset = prgrm.CXArgs[lastFldIdx].Offset + prgrm.CXArgs[lastFldIdx].TotalSize
+	// 		currentTypeSignature.Offset = prgrm.GetCXArg(CXArgumentIndex(lastFldIdx)).Offset + prgrm.GetCXArg(CXArgumentIndex(lastFldIdx)).TotalSize
 	// 	} else if lastTypeSignature.Type != TYPE_CXARGUMENT_DEPRECATE && currentTypeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 	// 		currFldIdx := currentTypeSignature.Meta
-	// 		prgrm.CXArgs[currFldIdx].Offset = lastTypeSignature.Offset + lastTypeSignature.GetSize(prgrm, false)
+	// 		prgrm.GetCXArg(CXArgumentIndex(currFldIdx)).Offset = lastTypeSignature.Offset + lastTypeSignature.GetSize(prgrm, false)
 	// 	} else if lastTypeSignature.Type != TYPE_CXARGUMENT_DEPRECATE && currentTypeSignature.Type != TYPE_CXARGUMENT_DEPRECATE {
 	// 		currentTypeSignature.Offset = lastTypeSignature.Offset + lastTypeSignature.GetSize(prgrm, false)
 	// 	}
@@ -187,7 +187,7 @@ func (strct *CXStruct) AddField_Globals_CXAtomicOps(prgrm *CXProgram, cxArgIdx C
 // 	if len(strct.Fields) > 0 {
 // 		lenFlds := len(strct.Fields)
 // 		for i, fldIdx := range strct.Fields {
-// 			if prgrm.CXArgs[fldIdx].Name == fldName {
+// 			if prgrm.GetCXArg(CXArgumentIndex(fldIdx)).Name == fldName {
 // 				if i == lenFlds-1 {
 // 					strct.Fields = strct.Fields[:len(strct.Fields)-1]
 // 				} else {

@@ -45,7 +45,7 @@ free one.
 | `CXExpression` | `0x06` | none, held by value in `CXFunction.Expressions` and `CXProgram.SysInitExprs` | none |
 | `CXAtomicOperator` | `0x07` | `CXProgram.CXAtomicOps` | `int` |
 | `CXLine` | `0x08` | `CxIrState.CXLineMng` since #311 | `int`, the slot index |
-| `CXArgument` | `0x09` | `CXProgram.CXArgs` | `CXArgumentIndex` |
+| `CXArgument` | `0x09` | `CxIrState.CXArgumentMng` since #326 | `CXArgumentIndex`, the slot index |
 | `CXArgumentDebug` | `0x0A` | `CxIrState.CXArgumentDebugMng` since #306 | `CXArgumentDebugGid` |
 | `CXTypeSignature` | `0x0B` | `CXProgram.CXTypeSignatures` | `CXTypeSignatureIndex` |
 | `CXTypeSignature_Array` | `0x0C` | `CxIrState.CXTypeSignature_ArrayMng` since #316 | `int`, the slot index |

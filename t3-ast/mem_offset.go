@@ -147,8 +147,8 @@ func GetFinalOffset(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, argT
 		arg = oldArg
 	} else if argTypeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-		// Now a pointer into an arena, site S0372.
-		arg = &prgrm.CXArgs[argTypeSig.Meta]
+		// Now an arena getter, site S0372.
+		arg = prgrm.GetCXArg(CXArgumentIndex(argTypeSig.Meta))
 	} else if argTypeSig.Type == TYPE_ATOMIC {
 		argTypeSigOffset := argTypeSig.Offset
 

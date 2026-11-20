@@ -76,7 +76,9 @@ func wipeDeclarationMemory(prgrm *CXProgram, expr *CXExpression) error {
 	size := cxAtomicOutputTypeSig.GetSize(prgrm, false)
 	var offset types.Pointer
 	if cxAtomicOutputTypeSig.Type == TYPE_CXARGUMENT_DEPRECATE {
-		offset = prgrm.CXArgs[cxAtomicOutputTypeSig.Meta].Offset
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1630.
+		offset = prgrm.GetCXArg(CXArgumentIndex(cxAtomicOutputTypeSig.Meta)).Offset
 	} else if cxAtomicOutputTypeSig.Type == TYPE_ATOMIC || cxAtomicOutputTypeSig.Type == TYPE_POINTER_ATOMIC {
 		offset = cxAtomicOutputTypeSig.Offset
 	} else if cxAtomicOutputTypeSig.Type == TYPE_ARRAY_ATOMIC {

@@ -232,14 +232,17 @@ func (cxprogram *CXProgram) GetCXLine(index int) (*CXLine, error) {
 	return manager.CXLineGet(CXLineGid(gid)), nil
 }
 
+// GetCXArg returns the argument in slot index of the program's
+// CXArgumentMng. An argument is named by its slot index, not its Gid, until
+// phase 5 of CXArgument.
 func (cxprogram *CXProgram) GetCXArg(index CXArgumentIndex) *CXArgument {
-	if int(index) > (len(cxprogram.CXArgs) - 1) {
+	manager := &cxprogram.CxIrState.CXArgumentMng
+	if index < 0 || int(index) >= int(manager.CXArgumentMngNext) {
 		panic(fmt.Errorf("error: CXArgs[%d]: index out of bounds", index))
 	}
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-	// Now a pointer into an arena, site S0206.
-	return &cxprogram.CXArgs[index]
+	gid := objmodel.GidCompose(CXArgumentGidTypeTag, manager.CXArgumentMngGenerations[index], uint32(index))
+	return manager.CXArgumentGet(CXArgumentGid(gid))
 }
 
 func (cxprogram *CXProgram) GetCXAtomicOp(index int) (*CXAtomicOperator, error) {
@@ -251,12 +254,6 @@ func (cxprogram *CXProgram) GetCXAtomicOp(index int) (*CXAtomicOperator, error) 
 	// Now a pointer into an arena, site S0207.
 	return &cxprogram.CXAtomicOps[index], nil
 }
-
-// func (cxprogram *CXProgram) AddCXArg(CXArg *CXArgument) int {
-// 	cxprogram.CXArgs = append(cxprogram.CXArgs, *CXArg)
-
-// 	return len(cxprogram.CXArgs) - 1
-// }
 
 func (cxprogram *CXProgram) AddCXAtomicOp(CXAtomicOp *CXAtomicOperator) int {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
@@ -339,12 +336,16 @@ func (cxprogram *CXProgram) GetCXTypeSignatureStructFromArray(index int) *CXType
 // ----------------------------------------------------------------
 //
 //	`CXProgram` CXArgument handling
+
+// AddCXArgInArray allocates an argument in the program's CXArgumentMng and
+// copies cxArg into it. cxArg.Index is set to the slot index, which it
+// returns.
 func (cxprogram *CXProgram) AddCXArgInArray(cxArg *CXArgument) CXArgumentIndex {
-	// The index of fn after it will be added in the array
-	cxArg.Index = len(cxprogram.CXArgs)
+	gid := cxprogram.CxIrState.CXArgumentMng.CXArgumentAlloc()
+	cxArg.Index = int(objmodel.GidIndex(int64(gid)))
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena append, site S0216.
-	cxprogram.CXArgs = append(cxprogram.CXArgs, *cxArg)
+	// Now an object copy, site S1632.
+	*cxprogram.CxIrState.CXArgumentMng.CXArgumentGet(gid) = *cxArg
 
 	return CXArgumentIndex(cxArg.Index)
 }
@@ -354,13 +355,9 @@ func (cxprogram *CXProgram) GetCXArgFromArray(index CXArgumentIndex) *CXArgument
 		return nil
 	}
 
-	if int(index) > (len(cxprogram.CXArgs) - 1) {
-		panic(fmt.Errorf("error: CXArgument[%d]: index out of bounds", index))
-	}
-
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-	// Now a pointer into an arena, site S0217.
-	return &cxprogram.CXArgs[index]
+	// Now an arena getter, site S1633.
+	return cxprogram.GetCXArg(index)
 }
 
 func (cxprogram *CXProgram) ConvertIndexArgsToPointerArgs(idxs []CXArgumentIndex) []*CXArgument {

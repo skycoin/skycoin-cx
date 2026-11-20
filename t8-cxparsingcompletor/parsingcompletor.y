@@ -1099,7 +1099,9 @@ assignment_expression:
                                                                         // Now an arena getter, site S1494.
                                                                         fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
                                                                         fromExpressionOutputIdx:= fromExpressionOutputTypeSig.Meta
-                                                                        actions.AST.CXArgs[fromExpressionOutputIdx].PreviouslyDeclared = true
+                                                                        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+                                                                        // Now an arena getter, site S1773.
+                                                                        actions.AST.GetCXArg(ast.CXArgumentIndex(fromExpressionOutputIdx)).PreviouslyDeclared = true
                                                                 }
                                                         }
                                                         $$ = actions.ArrayLiteralAssignment(actions.AST,$1, $3)
@@ -1124,7 +1126,9 @@ assignment_expression:
                                                                         // Now an arena getter, site S1496.
                                                                         fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
                                                                         fromExpressionOutputIdx:=fromExpressionOutputTypeSig.Meta
-                                                                        actions.AST.CXArgs[fromExpressionOutputIdx].PreviouslyDeclared = true
+                                                                        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+                                                                        // Now an arena getter, site S1774.
+                                                                        actions.AST.GetCXArg(ast.CXArgumentIndex(fromExpressionOutputIdx)).PreviouslyDeclared = true
                                                                 }
                                                         }
                                                         $$ = actions.StructLiteralAssignment(actions.AST,$1, $3)

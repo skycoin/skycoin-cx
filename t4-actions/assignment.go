@@ -44,7 +44,9 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 		if expressionOutput.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			expressionOutputIdx := ast.CXArgumentIndex(expressionOutput.Meta)
 
-			prgrm.CXArgs[expressionOutputIdx].Name = structLiteralName
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1634.
+			prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Name = structLiteralName
 			expressionOutput.Name = structLiteralName
 
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -66,12 +68,20 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 			}
 
 			if len(toExpressionOutput.Indexes) > 0 {
-				prgrm.CXArgs[expressionOutputIdx].Lengths = toExpressionOutput.Lengths
-				prgrm.CXArgs[expressionOutputIdx].Indexes = toExpressionOutput.Indexes
-				prgrm.CXArgs[expressionOutputIdx].DereferenceOperations = append(prgrm.CXArgs[expressionOutputIdx].DereferenceOperations, constants.DEREF_ARRAY)
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1635.
+				prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Lengths = toExpressionOutput.Lengths
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1636.
+				prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Indexes = toExpressionOutput.Indexes
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1637.
+				prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations = append(prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations, constants.DEREF_ARRAY)
 			}
 
-			prgrm.CXArgs[expressionOutputIdx].DereferenceOperations = append(prgrm.CXArgs[expressionOutputIdx].DereferenceOperations, constants.DEREF_FIELD)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1638.
+			prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations = append(prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations, constants.DEREF_FIELD)
 		} else {
 			panic("type is not type cx argument deprecate\n\n")
 		}
@@ -227,9 +237,13 @@ func ArrayLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fr
 			panic("type is not type cx argument deprecate\n\n")
 		}
 
-		prgrm.CXArgs[expressionOutputIdx].Name = toExpressionOutput.Name
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1639.
+		prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Name = toExpressionOutput.Name
 		expressionOutput.Name = toExpressionOutput.Name
-		prgrm.CXArgs[expressionOutputIdx].DereferenceOperations = append(prgrm.CXArgs[expressionOutputIdx].DereferenceOperations, constants.DEREF_ARRAY)
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1640.
+		prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations = append(prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).DereferenceOperations, constants.DEREF_ARRAY)
 	}
 
 	return fromExprs
@@ -556,11 +570,19 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			panic("type is not type cx argument deprecate\n\n")
 		}
 
-		prgrm.CXArgs[toExprAtomicOpOutputIdx].PreviouslyDeclared = true
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1641.
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).PreviouslyDeclared = true
 
-		prgrm.CXArgs[toExprAtomicOpOutputIdx].Type = sym.Type
-		prgrm.CXArgs[toExprAtomicOpOutputIdx].PointerTargetType = sym.PointerTargetType
-		prgrm.CXArgs[toExprAtomicOpOutputIdx].Size = sym.Size
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1642.
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Type = sym.Type
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1643.
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).PointerTargetType = sym.PointerTargetType
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S1644.
+		prgrm.GetCXArg(ast.CXArgumentIndex(toExprAtomicOpOutputIdx)).Size = sym.Size
 	}
 
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
@@ -604,18 +626,38 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 			// Now an arena getter, site S0583.
 			fromExpressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionOutputTypeSig.Meta))
 
-			prgrm.CXArgs[toExpressionOutputIdx].Size = fromExpressionOutputArg.Size
-			prgrm.CXArgs[toExpressionOutputIdx].Type = fromExpressionOutputArg.Type
-			prgrm.CXArgs[toExpressionOutputIdx].PointerTargetType = fromExpressionOutputArg.PointerTargetType
-			prgrm.CXArgs[toExpressionOutputIdx].Lengths = fromExpressionOutputArg.Lengths
-			prgrm.CXArgs[toExpressionOutputIdx].PassBy = fromExpressionOutputArg.PassBy
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1645.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = fromExpressionOutputArg.Size
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1646.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = fromExpressionOutputArg.Type
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1647.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = fromExpressionOutputArg.PointerTargetType
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1648.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Lengths = fromExpressionOutputArg.Lengths
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1649.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PassBy = fromExpressionOutputArg.PassBy
 		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			prgrm.CXArgs[toExpressionOutputIdx].Size = types.Code(fromExpressionOutputTypeSig.Meta).Size()
-			prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(fromExpressionOutputTypeSig.Meta)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1650.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = types.Code(fromExpressionOutputTypeSig.Meta).Size()
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1651.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(fromExpressionOutputTypeSig.Meta)
 		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			prgrm.CXArgs[toExpressionOutputIdx].Size = types.Code(fromExpressionOutputTypeSig.Meta).Size()
-			prgrm.CXArgs[toExpressionOutputIdx].Type = types.POINTER
-			prgrm.CXArgs[toExpressionOutputIdx].PointerTargetType = types.Code(fromExpressionOutputTypeSig.Meta)
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1652.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = types.Code(fromExpressionOutputTypeSig.Meta).Size()
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1653.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.POINTER
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1654.
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = types.Code(fromExpressionOutputTypeSig.Meta)
 		} else {
 			panic("type is not known")
 		}
@@ -656,42 +698,72 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 					// only assigning as if the operator had only one output defined
 					if fromExpressionOperator.AtomicOPCode != constants.OP_IDENTITY {
 						// it's a short variable declaration
-						prgrm.CXArgs[toExpressionOutputIdx].Size = fromCXAtomicOpOperatorOutput.Size
-						prgrm.CXArgs[toExpressionOutputIdx].Type = fromCXAtomicOpOperatorOutput.Type
-						prgrm.CXArgs[toExpressionOutputIdx].PointerTargetType = fromCXAtomicOpOperatorOutput.PointerTargetType
-						prgrm.CXArgs[toExpressionOutputIdx].Lengths = fromCXAtomicOpOperatorOutput.Lengths
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S1655.
+						prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = fromCXAtomicOpOperatorOutput.Size
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S1656.
+						prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = fromCXAtomicOpOperatorOutput.Type
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S1657.
+						prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = fromCXAtomicOpOperatorOutput.PointerTargetType
+						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+						// Now an arena getter, site S1658.
+						prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Lengths = fromCXAtomicOpOperatorOutput.Lengths
 					}
 
-					prgrm.CXArgs[toExpressionOutputIdx].PassBy = fromCXAtomicOpOperatorOutput.PassBy
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1659.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PassBy = fromCXAtomicOpOperatorOutput.PassBy
 				} else {
 					// we'll delegate multiple-value returns to the 'expression' grammar rule
 					// only assigning as if the operator had only one output defined
-					prgrm.CXArgs[toExpressionOutputIdx].Size = fromCXAtomicOpOperatorOutput.Size
-					prgrm.CXArgs[toExpressionOutputIdx].Type = fromCXAtomicOpOperatorOutput.Type
-					prgrm.CXArgs[toExpressionOutputIdx].PointerTargetType = fromCXAtomicOpOperatorOutput.PointerTargetType
-					prgrm.CXArgs[toExpressionOutputIdx].Lengths = fromCXAtomicOpOperatorOutput.Lengths
-					prgrm.CXArgs[toExpressionOutputIdx].PassBy = fromCXAtomicOpOperatorOutput.PassBy
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1660.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = fromCXAtomicOpOperatorOutput.Size
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1661.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = fromCXAtomicOpOperatorOutput.Type
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1662.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = fromCXAtomicOpOperatorOutput.PointerTargetType
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1663.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Lengths = fromCXAtomicOpOperatorOutput.Lengths
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1664.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PassBy = fromCXAtomicOpOperatorOutput.PassBy
 				}
 			} else if fromExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 				// only assigning as if the operator had only one output defined
 				if fromExpressionOperator.IsBuiltIn() && fromExpressionOperator.AtomicOPCode != constants.OP_IDENTITY {
 					// it's a short variable declaration
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1665.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
 				} else {
 					// we'll delegate multiple-value returns to the 'expression' grammar rule
 					// only assigning as if the operator had only one output defined
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1666.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
 				}
 			} else if fromExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 				// only assigning as if the operator had only one output defined
 				if fromExpressionOperator.IsBuiltIn() && fromExpressionOperator.AtomicOPCode != constants.OP_IDENTITY {
 					// it's a short variable declaration
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1667.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
 				} else {
 					// we'll delegate multiple-value returns to the 'expression' grammar rule
 					// only assigning as if the operator had only one output defined
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.POINTER
-					prgrm.CXArgs[toExpressionOutputIdx].PointerTargetType = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1668.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.POINTER
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1669.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = types.Code(fromExpressionOperatorOutputTypeSig.Meta)
 				}
 			} else if fromExpressionOperatorOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 				// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
@@ -701,17 +773,27 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 				// only assigning as if the operator had only one output defined
 				if fromExpressionOperator.IsBuiltIn() && fromExpressionOperator.AtomicOPCode != constants.OP_IDENTITY {
 					// it's a short variable declaration
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(sliceDetails.Meta)
-					prgrm.CXArgs[toExpressionOutputIdx].Lengths = sliceDetails.Lengths
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1670.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(sliceDetails.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1671.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Lengths = sliceDetails.Lengths
 				} else {
 					// we'll delegate multiple-value returns to the 'expression' grammar rule
 					// only assigning as if the operator had only one output defined
-					prgrm.CXArgs[toExpressionOutputIdx].Type = types.Code(sliceDetails.Meta)
-					prgrm.CXArgs[toExpressionOutputIdx].Lengths = sliceDetails.Lengths
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1672.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.Code(sliceDetails.Meta)
+					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+					// Now an arena getter, site S1673.
+					prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Lengths = sliceDetails.Lengths
 				}
 			} else if fromExpressionOperatorOutputTypeSig.Type == ast.TYPE_STRUCT {
 				// it's a short variable declaration
-				prgrm.CXArgs[toExpressionOutputIdx].Type = types.STRUCT
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1674.
+				prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.STRUCT
 			} else {
 				panic("type is not known")
 			}

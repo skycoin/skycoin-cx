@@ -104,8 +104,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now a pointer into an arena, site S0278.
-			return GetArgSize(prgrm, &prgrm.CXArgs[structDetails.Fields[lenFlds-1]])
+			// Now an arena getter, site S0278.
+			return GetArgSize(prgrm, prgrm.GetCXArg(CXArgumentIndex(structDetails.Fields[lenFlds-1])))
 		}
 		return structDetails.StructType.GetStructSize(prgrm)
 	case TYPE_POINTER_STRUCT:
@@ -116,8 +116,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 		lenFlds := len(structDetails.Fields)
 		if lenFlds > 0 {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now a pointer into an arena, site S0280.
-			return GetArgSize(prgrm, &prgrm.CXArgs[structDetails.Fields[lenFlds-1]])
+			// Now an arena getter, site S0280.
+			return GetArgSize(prgrm, prgrm.GetCXArg(CXArgumentIndex(structDetails.Fields[lenFlds-1])))
 		}
 
 		if typeSignature.IsDeref {
@@ -140,8 +140,8 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 	case TYPE_CXARGUMENT_DEPRECATE:
 		argIdx := typeSignature.Meta
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-		// Now a pointer into an arena, site S0281.
-		return GetArgSize(prgrm, &prgrm.CXArgs[argIdx])
+		// Now an arena getter, site S0281.
+		return GetArgSize(prgrm, prgrm.GetCXArg(CXArgumentIndex(argIdx)))
 	}
 
 	return 0

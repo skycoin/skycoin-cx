@@ -273,7 +273,9 @@ func (pkg *CXPackage) AddGlobal(prgrm *CXProgram, defIdx CXArgumentIndex) *CXPac
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S0182.
 	defArg := prgrm.GetCXArgFromArray(defIdx)
-	prgrm.CXArgs[defIdx].Package = CXPackageIndex(pkg.Index)
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S1631.
+	prgrm.GetCXArg(CXArgumentIndex(defIdx)).Package = CXPackageIndex(pkg.Index)
 
 	for _, fieldIdx := range pkg.Globals.Fields {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.

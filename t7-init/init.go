@@ -54,9 +54,6 @@ func MakeProgram() *ast.CXProgram {
 			Size:    minHeapSize,
 			Pointer: constants.NULL_HEAP_ADDRESS_OFFSET, // We can start adding objects to the heap after the NULL (nil) bytes.
 		},
-		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
-		// Now a slice of objects, site S1464.
-		CXArgs:    make([]ast.CXArgument, 0),
 		Version:   constants.LanguageVersionCurrent,
 		CxIrState: state,
 	}

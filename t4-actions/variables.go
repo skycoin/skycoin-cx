@@ -208,19 +208,33 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			}
 
 			if glblCXArg.Size == 0 || totalSize == 0 {
-				prgrm.CXArgs[glblIdx].Offset = glblArg.Offset
-				prgrm.CXArgs[glblIdx].PassBy = glblArg.PassBy
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1763.
+				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Offset = glblArg.Offset
+				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+				// Now an arena getter, site S1764.
+				prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).PassBy = glblArg.PassBy
 			}
 
-			declaration_specifiers.Name = prgrm.CXArgs[glblIdx].Name
-			declaration_specifiers.Offset = prgrm.CXArgs[glblIdx].Offset
-			declaration_specifiers.PassBy = prgrm.CXArgs[glblIdx].PassBy
-			declaration_specifiers.Package = prgrm.CXArgs[glblIdx].Package
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1765.
+			declaration_specifiers.Name = prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Name
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1766.
+			declaration_specifiers.Offset = prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Offset
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1767.
+			declaration_specifiers.PassBy = prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).PassBy
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1768.
+			declaration_specifiers.Package = prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Package
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now an object copy, site S1226.
-			prgrm.CXArgs[glblIdx] = *declaration_specifiers
-			prgrm.CXArgs[glblIdx].Index = glblIdx
+			// Now an object copy, site S1226. Also CXArgumentGet, phase 5 #327, site S1770.
+			*prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)) = *declaration_specifiers
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1771.
+			prgrm.GetCXArg(ast.CXArgumentIndex(glblIdx)).Index = glblIdx
 
 		}
 
@@ -304,7 +318,9 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 			// CX checks the output of an expression to determine if it's being passed
 			// by value or by reference, so we copy this property from the initializer's
 			// output, in case of something like var foo *i32 = &bar
-			prgrm.CXArgs[declSpecIdx].PassBy = initOut.PassBy
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S1772.
+			prgrm.GetCXArg(ast.CXArgumentIndex(declSpecIdx)).PassBy = initOut.PassBy
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1234.
