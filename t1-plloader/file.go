@@ -11,11 +11,10 @@ import (
 )
 
 type File struct {
-	FileName string
-	Length   uint32
-	Content  []byte
-	// NOTE: raw hash bytes in a string do not survive the JSON encoding. See #93.
-	Blake2Hash string
+	FileName   string
+	Length     uint32
+	Content    []byte
+	Blake2Hash string // hex encoded
 }
 
 func (f File) MarshalBinary() ([]byte, error) {

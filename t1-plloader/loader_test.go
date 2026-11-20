@@ -12,6 +12,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-plbolt"
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-plloader"
+	"golang.org/x/crypto/blake2b"
 )
 
 const TEST_SRC_PATH_INVALID = "test_folder/test_invalid_program/src/"
@@ -487,5 +488,35 @@ func TestLoadCXProgramImportLoop(t *testing.T) {
 	}
 	if err := loader.LoadCXProgram("loop", sourceCodes); err == nil {
 		t.Error("want a dependency loop error, got nil")
+	}
+}
+
+func TestBlake2HashSurvivesRoundTrip(t *testing.T) {
+	file, err := os.Open(TEST_PACKAGE_FILE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	fileStruct, err := loader.FileStructFromFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := fileStruct.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got loader.File
+	if err := got.UnmarshalBinary(data); err != nil {
+		t.Fatal(err)
+	}
+	if got.Blake2Hash != fileStruct.Blake2Hash {
+		t.Errorf("Blake2Hash changed in the round trip: stored %d bytes, read back %d bytes", len(fileStruct.Blake2Hash), len(got.Blake2Hash))
+	}
+	content, err := os.ReadFile(TEST_PACKAGE_FILE)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := fmt.Sprintf("%x", blake2b.Sum512(content)); got.Blake2Hash != want {
+		t.Errorf("Blake2Hash = %q, want the hex hash of the content %q", got.Blake2Hash, want)
 	}
 }

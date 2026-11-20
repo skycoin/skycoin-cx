@@ -26,6 +26,7 @@
 
 #### Fixed
 
+- The package loader stored `Blake2Hash` as raw bytes in a JSON string, so it read back changed. It is now hex encoded, which changes stored data (#93)
 - The structser benchmark wrote 0-byte files and timed empty output, because its structs had only unexported fields, which the encoder skips (#178)
 - The `t0-util` file helpers joined the working dir three different ways, so with one set `CXCreateFile` doubled it and the others dropped the separator. All six now use `filepath.Join` (#89)
 - `os.Run` with an empty command returned `OS_RUN_START_FAILED` instead of `OS_RUN_EMPTY_CMD`. It split the command on single spaces, so two spaces passed an empty argument and quotes were passed through. It now splits on runs of spaces and tabs, and single or double quotes group a word (#118)

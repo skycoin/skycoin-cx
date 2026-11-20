@@ -234,7 +234,7 @@ func fileStructFromFile(file *os.File) (File, error) {
 		FileName:   fileName,
 		Length:     uint32(len(fileBytes)),
 		Content:    fileBytes,
-		Blake2Hash: string(fileHash[:]),
+		Blake2Hash: fmt.Sprintf("%x", fileHash[:]),
 	}
 
 	return fileStruct, nil
@@ -292,7 +292,7 @@ func createPackageStruct(name string, files []*os.File, packageStruct Package) (
 			return packageStruct, err
 		}
 
-		packageStruct.Blake2Hash = string(hash[:])
+		packageStruct.Blake2Hash = fmt.Sprintf("%x", hash[:])
 	}
 
 	return createPackageStruct(name, newFiles, packageStruct)
