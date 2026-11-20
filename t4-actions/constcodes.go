@@ -12,6 +12,9 @@ var (
 	Constants = map[int]CXConstant{} //Todo: Only used once in actions/postfix.go
 )
 
+// constPointerSize is the code of cx.POINTER_SIZE, after the exit codes.
+const constPointerSize = types.CX_RUNTIME_NOT_IMPLEMENTED + 1
+
 // nolint typecheck
 // InitConstants registers the cx.* constants in ConstCodes and Constants.
 func InitConstants() {
@@ -27,7 +30,7 @@ func InitConstants() {
 	AddConstI32(types.CX_RUNTIME_INVALID_ARGUMENT, "cx.RUNTIME_INVALID_ARGUMENT", types.CX_RUNTIME_INVALID_ARGUMENT)
 	AddConstI32(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "cx.RUNTIME_SLICE_INDEX_OUT_OF_RANGE", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 	AddConstI32(types.CX_RUNTIME_NOT_IMPLEMENTED, "cx.RUNTIME_NOT_IMPLEMENTED", types.CX_RUNTIME_NOT_IMPLEMENTED)
-	AddConstI32(types.Cast_ptr_to_int(types.POINTER_SIZE), "cx.POINTER_SIZE", types.Cast_ptr_to_i32(types.POINTER_SIZE))
+	AddConstI32(constPointerSize, "cx.POINTER_SIZE", types.Cast_ptr_to_i32(types.POINTER_SIZE))
 }
 
 // AddConstCode ...

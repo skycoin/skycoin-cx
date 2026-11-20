@@ -30,6 +30,7 @@
 
 #### Fixed
 
+- `cx.POINTER_SIZE` used the pointer size as its constant code, so it overwrote `cx.ASSERT` (4) or, with ptr64, `cx.RUNTIME_INVALID_ARGUMENT` (8). It now has its own code after the exit codes (#193)
 - `SerializeCXProgram` gave different bytes for the same program on each call, and a round trip could move functions and structs to another package. Packages, structs, functions and imports are now walked in name order, and the scratch name maps are left out of the bytes (#186, #250)
 - `packageloader` ignored a stray positional argument and rejected extra ones only by counting flags. Any positional argument is now an error (#102)
 - `packageloader -graph` listed an external import such as `os` once for every package that imported it, each time under a new id. It now gets one id (#105)
