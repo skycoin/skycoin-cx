@@ -28,7 +28,7 @@ func ParseParameterDeclaration(prgrm *ast.CXProgram, parameterString []byte, pkg
 	// Set the declarator or the name of the param
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1560.
-	declarator := ast.MakeArgument(prgrm, "", fileName, lineno)
+	_, declarator := ast.MakeArgument(prgrm, "", fileName, lineno)
 	declarator.SetType(types.UNDEFINED)
 	declarator.Package = ast.CXPackageIndex(pkg.Index)
 	declarator.Name = string(parameterDeclarationTokens[1])
@@ -36,12 +36,14 @@ func ParseParameterDeclaration(prgrm *ast.CXProgram, parameterString []byte, pkg
 	//Set the decalaration type
 	parameterDeclaration, err := ParseDeclarationSpecifier(prgrm, parameterDeclarationTokens[2], fileName, lineno, parameterDeclaration)
 	if err != nil {
+		prgrm.ReleaseCXArgBuilder(declarator)
 		return nil, err
 	}
 
 	// Merge both CXArgs
 	parameterDeclaration.Name = declarator.Name
 	parameterDeclaration.Package = declarator.Package
+	prgrm.ReleaseCXArgBuilder(declarator)
 
 	return parameterDeclaration, nil
 }

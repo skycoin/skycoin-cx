@@ -133,7 +133,7 @@ func TestASTAPI_Arguments(t *testing.T) {
 	t.Run("add global", func(t *testing.T) {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S1588.
-		arg := cxast.MakeGlobal(cxprogram, "testGlobal", types.I16, "", -1)
+		_, arg := cxast.MakeGlobal(cxprogram, "testGlobal", types.I16, "", -1)
 
 		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
 		// Now an arena getter, site S1589.

@@ -367,10 +367,26 @@ func (cxprogram *CXProgram) GetCXTypeSignatureStructFromArray(index int) *CXType
 //
 //	`CXProgram` CXArgument handling
 
-// AddCXArgInArray allocates an argument in the program's CXArgumentMng and
-// copies cxArg into it. cxArg.Index is set to the slot index, which it
-// returns.
+// AllocCXArgument allocates an argument in the program's CXArgumentMng, sets
+// its Index to the slot and returns its Gid and the pointer to fill it
+// through.
+func (cxprogram *CXProgram) AllocCXArgument() (CXArgumentGid, *CXArgument) {
+	manager := &cxprogram.CxIrState.CXArgumentMng
+	gid := manager.CXArgumentAlloc()
+	arg := manager.CXArgumentGet(gid)
+	arg.Index = int(objmodel.GidIndex(int64(gid)))
+	return gid, arg
+}
+
+// AddCXArgInArray returns the slot of cxArg. An argument that already lives
+// in the program's CXArgumentMng is not copied. A heap argument, which only
+// the natives, serialization and tests still make, is copied into a new slot
+// and cxArg.Index is set to it.
 func (cxprogram *CXProgram) AddCXArgInArray(cxArg *CXArgument) CXArgumentIndex {
+	if cxprogram.cxArgumentManaged(cxArg) {
+		return CXArgumentIndex(cxArg.Index)
+	}
+
 	gid := cxprogram.CxIrState.CXArgumentMng.CXArgumentAlloc()
 	cxArg.Index = int(objmodel.GidIndex(int64(gid)))
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -388,6 +404,42 @@ func (cxprogram *CXProgram) ReleaseCXArg(index CXArgumentIndex) {
 	manager.CXArgumentRelease(CXArgumentGid(gid))
 }
 
+// ReleaseCXArgWithDebug releases the argument in slot index and its debug
+// record, for an argument that is dropped before anything borrowed the
+// record.
+func (cxprogram *CXProgram) ReleaseCXArgWithDebug(index CXArgumentIndex) {
+	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+	// Now an arena getter, site S1782.
+	argDetails := cxprogram.GetCXArg(index).ArgDetails
+	cxprogram.ReleaseCXArg(index)
+	if argDetails != CXArgumentDebugGidNil {
+		cxprogram.CxIrState.CXArgumentDebugMng.CXArgumentDebugRelease(argDetails)
+	}
+}
+
+// ReleaseCXArgBuilder releases the managed builder cxArg and its debug record,
+// when nothing took it. A heap argument is left alone.
+func (cxprogram *CXProgram) ReleaseCXArgBuilder(cxArg *CXArgument) {
+	if cxprogram.cxArgumentManaged(cxArg) {
+		cxprogram.ReleaseCXArgWithDebug(CXArgumentIndex(cxArg.Index))
+	}
+}
+
+// ReleaseCXArgUnlessNamed releases the managed argument cxArg unless the type
+// signature in slot typeSigIdx names it. The signature keeps the debug
+// record. A heap argument is left alone.
+func (cxprogram *CXProgram) ReleaseCXArgUnlessNamed(cxArg *CXArgument, typeSigIdx CXTypeSignatureIndex) {
+	if !cxprogram.cxArgumentManaged(cxArg) {
+		return
+	}
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S1783.
+	typeSig := cxprogram.GetCXTypeSignatureFromArray(typeSigIdx)
+	if typeSig.Type != TYPE_CXARGUMENT_DEPRECATE || typeSig.Meta != cxArg.Index {
+		cxprogram.ReleaseCXArg(CXArgumentIndex(cxArg.Index))
+	}
+}
+
 // ReleaseCXTypeSignature releases the type signature in slot index of the
 // program's CXTypeSignatureMng, the counterpart of
 // GetCXTypeSignatureFromArray.
@@ -400,6 +452,9 @@ func (cxprogram *CXProgram) ReleaseCXTypeSignature(index CXTypeSignatureIndex) {
 // cxArgumentManaged reports whether cxArg is the object in its own slot of the
 // program's CXArgumentMng, as opposed to an argument on the heap.
 func (cxprogram *CXProgram) cxArgumentManaged(cxArg *CXArgument) bool {
+	if cxArg == nil {
+		return false
+	}
 	objects := cxprogram.CxIrState.CXArgumentMng.CXArgumentMngObjects
 	return cxArg.Index >= 0 && cxArg.Index < len(objects) && &objects[cxArg.Index] == cxArg
 }

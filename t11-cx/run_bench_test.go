@@ -108,7 +108,7 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 func compileRunProgram(tb testing.TB, p runBenchProgram) {
 	types.Allocator = ast.AllocateSeq
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
-	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371.
+	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1780 S1781.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	opcodes.RegisterOpcodes(actions.AST)

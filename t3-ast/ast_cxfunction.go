@@ -83,7 +83,8 @@ func (fn *CXFunction) GetExpressionByLine(line int) (*CXExpression, error) {
 // ----------------------------------------------------------------
 //                     `CXFunction` Member handling
 
-// AddInput ...
+// AddInput adds param to the inputs of fn. It takes a managed param, which it
+// releases when the signature does not name it or the input exists.
 func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction {
 	fnInputs := fn.GetInputs(prgrm)
 	for _, inputIdx := range fnInputs {
@@ -91,12 +92,13 @@ func (fn *CXFunction) AddInput(prgrm *CXProgram, param *CXArgument) *CXFunction 
 		// Now an arena getter, site S0136.
 		input := prgrm.GetCXTypeSignatureFromArray(inputIdx)
 		if input.Name == param.Name {
+			prgrm.ReleaseCXArgBuilder(param)
 			return fn
 		}
 	}
 
 	param.Package = fn.Package
-	newFieldIdx := AllocCXTypeSignatureOfCXArg(prgrm, param)
+	newFieldIdx := AllocCXTypeSignatureOfCXArgBuilder(prgrm, param)
 
 	if fn.Inputs == nil {
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
@@ -135,7 +137,7 @@ func (fn *CXFunction) GetInputs(prgrm *CXProgram) []CXTypeSignatureIndex {
 // 	}
 // }
 
-// AddOutput ...
+// AddOutput adds param to the outputs of fn like AddInput.
 func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction {
 	fnOutputs := fn.GetOutputs(prgrm)
 	for _, outputIdx := range fnOutputs {
@@ -143,13 +145,14 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 		// Now an arena getter, site S0139.
 		output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 		if output.Name == param.Name {
+			prgrm.ReleaseCXArgBuilder(param)
 			return fn
 		}
 	}
 
 	param.Package = fn.Package
 
-	newFieldIdx := AllocCXTypeSignatureOfCXArg(prgrm, param)
+	newFieldIdx := AllocCXTypeSignatureOfCXArgBuilder(prgrm, param)
 
 	if fn.Outputs == nil {
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.

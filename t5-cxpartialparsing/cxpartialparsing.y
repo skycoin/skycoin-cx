@@ -321,6 +321,7 @@ parameter_declaration:
                 {
 			$2.Name = $1.Name
 			$2.Package = $1.Package
+			Program.ReleaseCXArgBuilder($1)
                         
 			$$ = $2
                 }
@@ -340,7 +341,7 @@ direct_declarator:
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1404.
-				arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo)
+				_, arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = $1
 				arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -395,7 +396,8 @@ declaration_specifiers:
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1407.
-			arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
+			_, arg := ast.MakeArgument(Program, "", actions.CurrentFile, actions.LineNo)
+			arg.SetType(types.FUNC)
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now an arena insert, site S1408.
 			arg.Inputs = Program.AddPointerArgsToCXArgsArray($2)
@@ -741,7 +743,15 @@ constant_expression:
 
 declaration:
                 VAR declarator declaration_specifiers SEMICOLON
+                {
+			Program.ReleaseCXArgBuilder($2)
+			Program.ReleaseCXArgBuilder($3)
+                }
         |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
+                {
+			Program.ReleaseCXArgBuilder($2)
+			Program.ReleaseCXArgBuilder($3)
+                }
                 ;
 
 initializer:

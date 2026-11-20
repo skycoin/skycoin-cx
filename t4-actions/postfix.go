@@ -52,7 +52,8 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			prevExpressionOperatorOutput := prevExpressionOperatorOutputArg
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1099.
-			out := ast.MakeArgument(prgrm, genName, prevExprCXLine.FileName, prevExprCXLine.LineNumber-1).SetType(prevExpressionOperatorOutput.Type)
+			_, out := ast.MakeArgument(prgrm, genName, prevExprCXLine.FileName, prevExprCXLine.LineNumber-1)
+			out.SetType(prevExpressionOperatorOutput.Type)
 
 			out.DeclarationSpecifiers = prevExpressionOperatorOutput.DeclarationSpecifiers
 			out.StructType = prevExpressionOperatorOutput.StructType
@@ -61,12 +62,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			out.PreviouslyDeclared = true
 			out.Package = prevExpressionOperatorOutput.Package
 
-			typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+			typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 			prgrm.CXAtomicOps[prevExpressionIdx].AddOutput(prgrm, typeSigIdx)
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1101.
-			inp := ast.MakeArgument(prgrm, genName, prevExprCXLine.FileName, prevExprCXLine.LineNumber).SetType(prevExpressionOperatorOutput.Type)
+			_, inp := ast.MakeArgument(prgrm, genName, prevExprCXLine.FileName, prevExprCXLine.LineNumber)
+			inp.SetType(prevExpressionOperatorOutput.Type)
 
 			inp.DeclarationSpecifiers = prevExpressionOperatorOutput.DeclarationSpecifiers
 			inp.StructType = prevExpressionOperatorOutput.StructType
@@ -74,7 +76,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			inp.Lengths = prevExpressionOperatorOutput.Lengths
 			inp.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, inp)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, inp)
 			prgrm.CXAtomicOps[useExpressionIdx].AddOutput(prgrm, typeSigIdx)
 		} else if prevExpressionOperatorOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
@@ -158,15 +160,13 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		// temporarily return back to cx arg deprecate
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S1118.
-		arg := ast.MakeArgument(prgrm, prevExpressionOutputTypeSig.Name, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
+		_, arg := ast.MakeArgument(prgrm, prevExpressionOutputTypeSig.Name, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
 		arg.SetType(types.IDENTIFIER)
 		arg.Name = prevExpressionOutputTypeSig.Name
 		arg.Package = prevExpressionOutputTypeSig.Package
 		arg.PassBy = prevExpressionOutputTypeSig.PassBy
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now an arena insert, site S1119.
-		argIdx := prgrm.AddCXArgInArray(arg)
+		argIdx := ast.CXArgumentIndex(arg.Index)
 		prevExpressionOutputTypeSig.Type = ast.TYPE_CXARGUMENT_DEPRECATE
 		prevExpressionOutputTypeSig.Meta = int(argIdx)
 
@@ -213,11 +213,12 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1127.
-			sym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(postExpressionOperatorOutputArg.Type)
+			_, sym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			sym.SetType(postExpressionOperatorOutputArg.Type)
 			sym.Package = prgrm.CXAtomicOps[postExpressionIdx].Package
 			sym.PreviouslyDeclared = true
 
-			typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
+			typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, sym)
 			prgrm.CXAtomicOps[postExpressionIdx].AddOutput(prgrm, typeSigIdx)
 
 			prevExprs = append(postExprs, prevExprs...)
@@ -241,13 +242,14 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				postExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(postExpressionOperatorOutputTypeSig.Meta))
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1131.
-				idxSym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(postExpressionOperatorOutputArg.Type)
+				_, idxSym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+				idxSym.SetType(postExpressionOperatorOutputArg.Type)
 				idxSym.Size = postExpressionOperatorOutputArg.Size
 
 				idxSym.Package = prgrm.CXAtomicOps[postExpressionIdx].Package
 				idxSym.PreviouslyDeclared = true
 
-				typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, idxSym)
+				typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, idxSym)
 			} else if postExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 				argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 				argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
@@ -544,7 +546,7 @@ func PostfixExpressionIncDec(prgrm *ast.CXProgram, prevExprs []ast.CXExpression,
 	typeSigIdx := lastPrevExpression.GetOutputs(prgrm)[0]
 	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 
-	typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, valArg)
+	typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, valArg)
 	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 
 	typeSigIdx = lastPrevExpression.GetOutputs(prgrm)[0]
@@ -595,7 +597,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// we associate the result of the function call to the aux variable
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1168.
-			out := ast.MakeArgument(prgrm, symName, lastExprCXLine.FileName, lastExprCXLine.LineNumber)
+			_, out := ast.MakeArgument(prgrm, symName, lastExprCXLine.FileName, lastExprCXLine.LineNumber)
 			out.SetType(opOut.Type)
 			out.DeclarationSpecifiers = opOut.DeclarationSpecifiers
 			out.StructType = opOut.StructType
@@ -606,14 +608,14 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			out.Package = prgrm.CXAtomicOps[lastExpressionIdx].Package
 			out.PreviouslyDeclared = true
 
-			typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+			typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 			prgrm.CXAtomicOps[lastExpressionIdx].AddOutput(prgrm, typeSigIdx)
 
 			// we need to create an expression to hold all the modifications
 			// that will take place after this if statement
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1170.
-			inp := ast.MakeArgument(prgrm, symName, lastExprCXLine.FileName, lastExprCXLine.LineNumber)
+			_, inp := ast.MakeArgument(prgrm, symName, lastExprCXLine.FileName, lastExprCXLine.LineNumber)
 			inp.SetType(opOut.Type)
 			inp.DeclarationSpecifiers = opOut.DeclarationSpecifiers
 			inp.StructType = opOut.StructType
@@ -635,7 +637,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			}
 
 			expression.Package = prgrm.CXAtomicOps[lastExpressionIdx].Package
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, inp)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, inp)
 			expression.AddOutput(prgrm, typeSigIdx)
 			prevExprs = append(prevExprs, *exprCXLine, *expr)
 
@@ -734,6 +736,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S1778.
 					prgrm.GetCXTypeSignatureFromArray(typeSigIdx).Offset = valArg.Offset
+					prgrm.ReleaseCXArgUnlessNamed(valArg, typeSigIdx)
 
 					prgrm.CXAtomicOps[lastExpressionIdx].Outputs.Fields[0] = typeSigIdx
 				} else if lastExpressionOutputFieldTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
@@ -742,6 +745,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S1779.
 					prgrm.GetCXTypeSignatureFromArray(typeSigIdx).Offset = valArg.Offset
+					prgrm.ReleaseCXArgUnlessNamed(valArg, typeSigIdx)
 
 					prgrm.CXAtomicOps[lastExpressionIdx].Outputs.Fields[0] = typeSigIdx
 				} else {
@@ -864,7 +868,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		// then it's a struct
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S1199.
-		leftExprField := ast.MakeArgument(prgrm, ident, CurrentFile, LineNo)
+		_, leftExprField := ast.MakeArgument(prgrm, ident, CurrentFile, LineNo)
 		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
 		// Now an arena getter, site S1200.
 		leftPkg, err := prgrm.GetPackageFromArray(leftExprOutputTypeSig.Package)
@@ -873,9 +877,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		}
 		leftExprField.SetType(types.IDENTIFIER)
 		leftExprField.SetPackage(leftPkg)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now an arena insert, site S1201.
-		leftExprFieldIdx := prgrm.AddCXArgInArray(leftExprField)
+		leftExprFieldIdx := ast.CXArgumentIndex(leftExprField.Index)
 
 		var leftExprIdx int
 		if leftExprOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -890,15 +892,13 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			// since the arg will become a struct
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1202.
-			arg := ast.MakeArgument(prgrm, leftExprOutputTypeSig.Name, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
+			_, arg := ast.MakeArgument(prgrm, leftExprOutputTypeSig.Name, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
 			arg.SetType(types.IDENTIFIER)
 			arg.Name = leftExprOutputTypeSig.Name
 			arg.Package = leftExprOutputTypeSig.Package
 			arg.PassBy = leftExprOutputTypeSig.PassBy
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now an arena insert, site S1203.
-			argIdx := prgrm.AddCXArgInArray(arg)
+			argIdx := ast.CXArgumentIndex(arg.Index)
 			leftExprOutputTypeSig.Type = ast.TYPE_CXARGUMENT_DEPRECATE
 			leftExprOutputTypeSig.Meta = int(argIdx)
 

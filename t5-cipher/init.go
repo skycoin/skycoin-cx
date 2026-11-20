@@ -30,7 +30,8 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	// PubKey
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1364.
-	pubkeyFld := ast.MakeArgument(prgrm, "PubKey", "", -1).SetType(types.UI8).SetPackage(cPkg)
+	_, pubkeyFld := ast.MakeArgument(prgrm, "PubKey", "", -1)
+	pubkeyFld.SetType(types.UI8).SetPackage(cPkg)
 	pubkeyFld.DeclarationSpecifiers = append(pubkeyFld.DeclarationSpecifiers, constants.DECL_ARRAY)
 	// pubkeyFld.IsArray = true
 	pubkeyFld.Lengths = []types.Pointer{33} // Yes, PubKey is 33 bytes long.
@@ -39,7 +40,8 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	// SecKey
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1365.
-	seckeyFld := ast.MakeArgument(prgrm, "SecKey", "", -1).SetType(types.UI8).SetPackage(cPkg)
+	_, seckeyFld := ast.MakeArgument(prgrm, "SecKey", "", -1)
+	seckeyFld.SetType(types.UI8).SetPackage(cPkg)
 	seckeyFld.DeclarationSpecifiers = append(seckeyFld.DeclarationSpecifiers, constants.DECL_ARRAY)
 	// seckeyFld.IsArray = true
 	seckeyFld.Lengths = []types.Pointer{32} // Yes, SecKey is 32 bytes long.

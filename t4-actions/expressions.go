@@ -58,7 +58,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	downLines := 0
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, trueArg)
 	prgrm.CXAtomicOps[upExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[upExpressionIdx].ThenLines = upLines
 	prgrm.CXAtomicOps[upExpressionIdx].ElseLines = downLines
@@ -96,11 +96,12 @@ func IterationExpressions(prgrm *ast.CXProgram,
 			lastCondExpressionOperatorOutputType = lastCondExpressionOperatorOutputArg.Type
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0616.
-			predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(lastCondExpressionOperatorOutputType)
+			_, predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			predicate.SetType(lastCondExpressionOperatorOutputType)
 			predicate.Package = ast.CXPackageIndex(pkg.Index)
 			predicate.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, predicate)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, predicate)
 		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(lastCondExpressionOperatorOutputTypeSig)
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
@@ -199,7 +200,7 @@ func trueJmpExpressions(prgrm *ast.CXProgram, opcode int) []ast.CXExpression {
 	expressionIdx := expr.Index
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, trueArg)
 	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
@@ -269,7 +270,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		// then it's an expression
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0632.
-		predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+		_, predicate := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 		if conditionExprs[len(conditionExprs)-1].IsMethodCall() {
 			// we'll change this once we have access to method's types in
 			// ProcessMethodCall
@@ -300,7 +301,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		predicate.PreviouslyDeclared = true
 		predicate.Package = ast.CXPackageIndex(pkg.Index)
 
-		predicateTypeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, predicate)
+		predicateTypeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, predicate)
 		prgrm.CXAtomicOps[lastCondExpressionIdx].AddOutput(prgrm, predicateTypeSigIdx)
 	}
 	prgrm.CXAtomicOps[ifExpressionIdx].AddInput(prgrm, predicateTypeSigIdx)
@@ -325,7 +326,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	skipLines := len(elseExprs)
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
-	typeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, trueArg)
+	typeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, trueArg)
 	prgrm.CXAtomicOps[skipExpressionIdx].AddInput(prgrm, typeSigIdx)
 	prgrm.CXAtomicOps[skipExpressionIdx].ThenLines = skipLines
 	prgrm.CXAtomicOps[skipExpressionIdx].ElseLines = 0
@@ -477,7 +478,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0650.
-			out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			_, out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &leftExprs[len(leftExprs)-1]))
 			out.Size = lastLeftExpressionOperatorOutputArg.Size
 			out.Type = lastLeftExpressionOperatorOutputArg.Type
@@ -485,7 +486,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.Package = ast.CXPackageIndex(pkg.Index)
 			out.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
@@ -540,7 +541,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0662.
-			out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			_, out := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			out.SetType(resolveTypeForUnd(prgrm, &rightExprs[len(rightExprs)-1]))
 			out.Size = lastRightExpressionOperatorOutputArg.Size
 			out.Type = lastRightExpressionOperatorOutputArg.Type
@@ -548,7 +549,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 			out.Package = ast.CXPackageIndex(pkg.Index)
 			out.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
@@ -849,12 +850,12 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0702.
-		out := ast.MakeArgument(prgrm, outParam.Name, CurrentFile, LineNo)
+		_, out := ast.MakeArgument(prgrm, outParam.Name, CurrentFile, LineNo)
 		out.SetType(outParam.Type)
 		out.StructType = outParam.StructType
 		out.PreviouslyDeclared = true
 
-		typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+		typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)

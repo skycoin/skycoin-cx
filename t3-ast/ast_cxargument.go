@@ -104,34 +104,6 @@ func (arg *CXArgument) SetType(typeCode types.Code) *CXArgument {
 	return arg
 }
 
-// AddInput adds input parameters to `arg` in case arg is of type `TYPE_FUNC`.
-func (arg *CXArgument) AddInput(prgrm *CXProgram, inp *CXArgument) *CXArgument {
-	if inp.Package == -1 {
-		inp.Package = arg.Package
-	}
-
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S0070.
-	inpIdx := prgrm.AddCXArgInArray(inp)
-	arg.Inputs = append(arg.Inputs, inpIdx)
-
-	return arg
-}
-
-// AddOutput adds output parameters to `arg` in case arg is of type `TYPE_FUNC`.
-func (arg *CXArgument) AddOutput(prgrm *CXProgram, out *CXArgument) *CXArgument {
-	if out.Package == -1 {
-		out.Package = arg.Package
-	}
-
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S0071.
-	outIdx := prgrm.AddCXArgInArray(out)
-	arg.Outputs = append(arg.Outputs, outIdx)
-
-	return arg
-}
-
 // MakePointer takes an already defined `CXArgument` and turns it into a pointer.
 // Only used once, deprecate
 // TODO: only used by HTTP, create a better module system
@@ -163,7 +135,7 @@ func MakeStructParameter(prgrm *CXProgram, pkgName, strctName, argName string) *
 	// Natives are shared by every program, so this argument belongs to none.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0073.
-	arg := MakeArgument(nil, argName, "", -1).SetType(types.STRUCT)
+	arg := nativeArgument(argName).SetType(types.STRUCT)
 	// arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_STRUCT)
 	arg.Size = strct.GetStructSize(prgrm)
 	arg.StructType = strct
@@ -200,61 +172,52 @@ func Param(typeCode types.Code) *CXArgument {
 	// Natives are shared by every program, so this argument belongs to none.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0077.
-	arg := MakeArgument(nil, "", "", -1).SetType(typeCode)
+	arg := nativeArgument("").SetType(typeCode)
 	// arg.IsLocalDeclaration = true
 	return arg
 }
 
-// MakeArgument makes an argument of prgrm. The natives are shared by every
-// program, so Param and MakeStructParameter pass nil and the argument gets
-// no debug record.
+// nativeArgument makes an argument for a native. The natives are shared by
+// every program, so it lives on the heap, belongs to none and has no debug
+// record.
 // OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 // Now a constructor, site S0078.
-func MakeArgument(prgrm *CXProgram, name string, fileName string, fileLine int) *CXArgument {
-	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
+func nativeArgument(name string) *CXArgument {
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a heap literal, site S0079.
 	return &CXArgument{
-		Name:       name,
-		Package:    -1,
-		ArgDetails: argDetailsGid,
-	}
-
-}
-
-// MakeField ...
-// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-// Now a constructor, site S0081.
-func MakeField(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
-	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0082.
-	return &CXArgument{
-		Name:       name,
-		Package:    -1,
-		ArgDetails: argDetailsGid,
-		Type:       typeCode,
+		Name:    name,
+		Package: -1,
 	}
 }
 
-// MakeGlobal ...
-// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-// Now a constructor, site S0084.
-func MakeGlobal(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) *CXArgument {
+// MakeArgument allocates an argument named name in the CXArgumentMng of
+// prgrm, with a debug record for fileName and fileLine, and returns its Gid
+// and the pointer to fill it through.
+func MakeArgument(prgrm *CXProgram, name string, fileName string, fileLine int) (CXArgumentGid, *CXArgument) {
 	argDetailsGid := argumentDebugAlloc(prgrm, fileName, fileLine)
-	size := typeCode.Size()
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a heap literal, site S0085.
-	global := &CXArgument{
-		Name:       name,
-		Package:    -1,
-		ArgDetails: argDetailsGid,
-		Type:       typeCode,
-		Size:       size,
-		Offset:     globals.HeapOffset,
-	}
-	globals.HeapOffset += size
-	return global
+	gid, arg := prgrm.AllocCXArgument()
+	arg.Name = name
+	arg.Package = -1
+	arg.ArgDetails = argDetailsGid
+	return gid, arg
+}
+
+// MakeField allocates an argument of type typeCode like MakeArgument.
+func MakeField(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) (CXArgumentGid, *CXArgument) {
+	gid, arg := MakeArgument(prgrm, name, fileName, fileLine)
+	arg.Type = typeCode
+	return gid, arg
+}
+
+// MakeGlobal allocates a global of type typeCode like MakeArgument and gives
+// it the next offset in the heap segment.
+func MakeGlobal(prgrm *CXProgram, name string, typeCode types.Code, fileName string, fileLine int) (CXArgumentGid, *CXArgument) {
+	gid, global := MakeField(prgrm, name, typeCode, fileName, fileLine)
+	global.Size = typeCode.Size()
+	global.Offset = globals.HeapOffset
+	globals.HeapOffset += global.Size
+	return gid, global
 }
 
 // ------------------------------------------------------------------------------------------

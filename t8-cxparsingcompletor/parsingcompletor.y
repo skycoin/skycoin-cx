@@ -350,6 +350,7 @@ parameter_declaration:
                 {
 			$2.Name = $1.Name
 			$2.Package = $1.Package
+			actions.AST.ReleaseCXArgBuilder($1)
 
 			$$ = $2
                 }
@@ -364,7 +365,7 @@ direct_declarator:
 			if pkg, err := actions.AST.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1476.
-				arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo)
+				_, arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = $1
 				arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -425,7 +426,8 @@ declaration_specifiers:
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1479.
-			arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo).SetType(types.FUNC)
+			_, arg := ast.MakeArgument(actions.AST, "", actions.CurrentFile, actions.LineNo)
+			arg.SetType(types.FUNC)
                        
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now an arena insert, site S1480.

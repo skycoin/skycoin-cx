@@ -58,12 +58,10 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 		// add Global as CX Argument to CX Package
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S1513.
-		globalArg := ast.MakeArgument(prgrm, global.GlobalVariableName, global.FileID, global.LineNumber)
+		_, globalArg := ast.MakeArgument(prgrm, global.GlobalVariableName, global.FileID, global.LineNumber)
 		globalArg.Offset = types.InvalidPointer
 		globalArg.Package = ast.CXPackageIndex(pkg.Index)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now an arena insert, site S1514.
-		globalArgIdx := actions.AST.AddCXArgInArray(globalArg)
+		globalArgIdx := ast.CXArgumentIndex(globalArg.Index)
 
 		pkg.AddGlobal(actions.AST, globalArgIdx)
 

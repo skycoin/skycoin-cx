@@ -95,6 +95,8 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 	}
 
+	// ParseGlobals passes the argument the global already names as declarator.
+	declaratorTaken := false
 	// Treat the name a bit different whether it's defined already or not.
 	if glbl, err := pkg.GetGlobal(prgrm, declarator.Name); err == nil {
 		// then it was only added a reference to the symbol
@@ -114,6 +116,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			}
 			glblArgOffset = glblArg.Offset
 			glblArgPassBy = glblArg.PassBy
+			prgrm.ReleaseCXArgBuilder(glblArg)
 		}
 
 		if ast.IsTypeAtomic(declaration_specifiers) {
@@ -238,6 +241,16 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 		}
 
+		declaratorTaken = glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE && glbl.Meta == declarator.Index
+
+		// The global took a copy of the declaration, and of its debug record when
+		// it names an argument.
+		if glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			prgrm.ReleaseCXArgUnlessNamed(declaration_specifiers, glbl.Index)
+		} else {
+			prgrm.ReleaseCXArgBuilder(declaration_specifiers)
+		}
+
 		// Checking if something is supposed to be initialized
 		// and if `initializer` actually contains something.
 		// If `initializer` is `nil`, this means that an expression
@@ -259,9 +272,10 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declaration_specifiers.ArgDetails).FileLine = declaratorLine
 		declaration_specifiers.Offset = glblArg.Offset
 		declaration_specifiers.Size = glblArg.Size
+		prgrm.ReleaseCXArgBuilder(glblArg)
 		declaration_specifiers.Package = ast.CXPackageIndex(pkg.Index)
 
-		typeSignatureIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, declaration_specifiers)
+		typeSignatureIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, declaration_specifiers)
 		pkg.AddGlobal_TypeSignature(prgrm, typeSignatureIdx)
 
 		// Checking if something is supposed to be initialized
@@ -273,6 +287,10 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 	}
 
+	// Otherwise only the name and line of the declarator are used.
+	if !declaratorTaken {
+		prgrm.ReleaseCXArgBuilder(declarator)
+	}
 }
 
 func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initializer *[]ast.CXExpression, localVarIdx ast.CXTypeSignatureIndex, declSpecIdx ast.CXArgumentIndex) {
@@ -411,14 +429,14 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declarationSpecifiers.ArgDetails).FileLine = declaratorLine
 	declarationSpecifiers.Package = ast.CXPackageIndex(pkg.Index)
 	declarationSpecifiers.PreviouslyDeclared = true
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S1241.
-	declSpecIdx := prgrm.AddCXArgInArray(declarationSpecifiers)
+	declSpecIdx := ast.CXArgumentIndex(declarationSpecifiers.Index)
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1242.
 	localVarTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(declSpecIdx))
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, localVarTypeSigIdx)
+	// Only the name and line of the declarator are used.
+	prgrm.ReleaseCXArgBuilder(declarator)
 
 	// Checking if something is supposed to be initialized
 	// and if `initializer` actually contains something.
@@ -426,6 +444,7 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	// equivalent to nil was used, such as `[]i32{}`.
 	if doesInitialize && initializer != nil {
 		processLocalInitialization(prgrm, pkg, &initializer, localVarTypeSigIdx, declSpecIdx)
+		prgrm.ReleaseCXArgUnlessNamed(declarationSpecifiers, localVarTypeSigIdx)
 
 		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 		// Now a slice of objects, site S1244.
@@ -438,6 +457,7 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 		cxAtomicOpIdx := expr.Index
 		prgrm.CXAtomicOps[cxAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
 		prgrm.CXAtomicOps[cxAtomicOpIdx].AddOutput(prgrm, localVarTypeSigIdx)
+		prgrm.ReleaseCXArgUnlessNamed(declarationSpecifiers, localVarTypeSigIdx)
 
 		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 		// Now a slice of objects, site S1246.

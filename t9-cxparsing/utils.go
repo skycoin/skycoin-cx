@@ -281,12 +281,10 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 						// then it hasn't been added
 						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 						// Now a constructor call, site S1627.
-						arg := ast.MakeArgument(actions.AST, match[len(match)-1], "", 0)
+						_, arg := ast.MakeArgument(actions.AST, match[len(match)-1], "", 0)
 						arg.Offset = types.InvalidPointer
 						arg.Package = ast.CXPackageIndex(prePkg.Index)
-						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-						// Now an arena insert, site S1628.
-						argIdx := actions.AST.AddCXArgInArray(arg)
+						argIdx := ast.CXArgumentIndex(arg.Index)
 
 						prePkg.AddGlobal(actions.AST, argIdx)
 					}

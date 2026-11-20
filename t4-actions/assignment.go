@@ -143,7 +143,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		auxName := generateTempVarName(constants.LOCAL_PREFIX)
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0522.
-		aux := ast.MakeArgument(prgrm, auxName, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
+		_, aux := ast.MakeArgument(prgrm, auxName, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
 		aux.SetType(outField.Type)
 		aux.DeclarationSpecifiers = append(aux.DeclarationSpecifiers, constants.DECL_POINTER)
 		aux.StructType = outField.StructType
@@ -151,7 +151,7 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		aux.PreviouslyDeclared = true
 		aux.Package = lastFromExpression.Package
 
-		auxTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, aux)
+		auxTypeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, aux)
 
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 		// Now a constructor call, site S0524.
@@ -166,9 +166,9 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0526.
-		out := ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
+		_, out := ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
 		out.Package = lastFromExpression.Package
-		outTypeSigIdx := ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+		outTypeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 		// Now a constructor call, site S0528.
@@ -288,11 +288,12 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0538.
-			sym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo).SetType(fromExpressionInputArg.Type)
+			_, sym := ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, LineNo)
+			sym.SetType(fromExpressionInputArg.Type)
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, sym)
 		} else if fromExpressionInputTypeSig.Type == ast.TYPE_ATOMIC || fromExpressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(fromExpressionInputTypeSig)
 			newTypeSig.Name = generateTempVarName(constants.LOCAL_PREFIX)
@@ -413,7 +414,8 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			// then it's a literal
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0556.
-			sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo).SetType(fromExpressionOutputArg.Type)
+			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
+			sym.SetType(fromExpressionOutputArg.Type)
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
@@ -442,7 +444,8 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0565.
-			sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo).SetType(outType)
+			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
+			sym.SetType(outType)
 
 			if fromExprs[lastFromExpressionIdx].IsArrayLiteral() {
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -496,6 +499,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 		symType = sym.Type
 		symPointerTargetType = sym.PointerTargetType
 		symSize = sym.Size
+		prgrm.ReleaseCXArgUnlessNamed(sym, typeSigIdx)
 	}
 
 	for _, toExpr := range toExprs {

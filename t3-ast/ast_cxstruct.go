@@ -85,7 +85,8 @@ func MakeStruct(name string) *CXStruct {
 	}
 }
 
-// AddField ...
+// AddField adds the field cxArgument to strct. It takes a managed cxArgument,
+// which it releases when the signature does not name it.
 func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStruct {
 	// Check if field already exist
 	for _, typeSignatureIdx := range strct.Fields {
@@ -99,6 +100,7 @@ func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStr
 	}
 
 	typeSignatureIdx := AllocCXTypeSignatureOfCXArgForStructs(prgrm, cxArgument)
+	prgrm.ReleaseCXArgUnlessNamed(cxArgument, typeSignatureIdx)
 	strct.Fields = append(strct.Fields, typeSignatureIdx)
 
 	// TODO: Found out the effect and completely remove this.
@@ -171,6 +173,7 @@ func (strct *CXStruct) AddField_Globals_CXAtomicOps(prgrm *CXProgram, cxArgIdx C
 	}
 
 	newCXTypeSignatureIdx := AllocCXTypeSignatureOfCXArg(prgrm, cxArgument)
+	prgrm.ReleaseCXArgUnlessNamed(cxArgument, newCXTypeSignatureIdx)
 	strct.Fields = append(strct.Fields, newCXTypeSignatureIdx)
 
 	return strct

@@ -55,11 +55,10 @@ func AddNativeInputToExpression(cxprogram *cxast.CXProgram, packageName, functio
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1561.
-	arg := cxast.MakeField(cxprogram, inputName, inputType, "", -1).SetType(types.Code(inputType))
+	_, arg := cxast.MakeField(cxprogram, inputName, inputType, "", -1)
+	arg.SetType(types.Code(inputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S1562.
-	argIdx := cxprogram.AddCXArgInArray(arg)
+	argIdx := cxast.CXArgumentIndex(arg.Index)
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1563.
 	cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
@@ -69,7 +68,7 @@ func AddNativeInputToExpression(cxprogram *cxast.CXProgram, packageName, functio
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1564.
-	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArgBuilder(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
 	cxAtomicOp.AddInput(cxprogram, typeSigIdx)
 
 	return nil
@@ -164,11 +163,10 @@ func AddNativeOutputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1566.
-	arg := cxast.MakeField(cxprogram, outputName, outputType, "", -1).SetType(types.Code(outputType))
+	_, arg := cxast.MakeField(cxprogram, outputName, outputType, "", -1)
+	arg.SetType(types.Code(outputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S1567.
-	argIdx := cxprogram.AddCXArgInArray(arg)
+	argIdx := cxast.CXArgumentIndex(arg.Index)
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1568.
 	cxAtomicOp, err := cxprogram.GetCXAtomicOp(expr.Index)
@@ -178,7 +176,7 @@ func AddNativeOutputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1569.
-	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArgBuilder(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(argIdx)))
 	cxAtomicOp.AddOutput(cxprogram, typeSigIdx)
 
 	return nil
@@ -468,7 +466,7 @@ func AddLiteralInputToExpression(cxprogram *cxast.CXProgram, packageName, functi
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 	// Now an arena getter, site S1583.
-	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArg(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(litArg.Index)))
+	typeSigIdx := cxast.AllocCXTypeSignatureOfCXArgBuilder(cxprogram, cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(litArg.Index)))
 	cxAtomicOp2.AddInput(cxprogram, typeSigIdx)
 
 	return nil

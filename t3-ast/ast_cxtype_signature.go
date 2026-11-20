@@ -694,3 +694,12 @@ func GetCXTypeSignatureRepresentationOfCXArg(prgrm *CXProgram, cxArgument *CXArg
 
 	return &newCXTypeSignature
 }
+
+// AllocCXTypeSignatureOfCXArgBuilder is AllocCXTypeSignatureOfCXArg for a
+// builder that nothing else holds. The signature takes it, and when the
+// signature does not name it the builder is released.
+func AllocCXTypeSignatureOfCXArgBuilder(prgrm *CXProgram, cxArgument *CXArgument) CXTypeSignatureIndex {
+	typeSigIdx := AllocCXTypeSignatureOfCXArg(prgrm, cxArgument)
+	prgrm.ReleaseCXArgUnlessNamed(cxArgument, typeSigIdx)
+	return typeSigIdx
+}

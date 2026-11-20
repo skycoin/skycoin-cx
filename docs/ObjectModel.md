@@ -397,10 +397,14 @@ and two programs in one process never share a manager.
 The field points at the state, not at a managed object, so rule 3 does not
 apply to it. It goes in phase 5 of `CXProgram`, when `state *CxIrState`
 replaces `prgrm *CXProgram` as the parameter and the program becomes the
-one object in `state.CXProgramMng`. A constructor that had no program in scope
+one object in `state.CXProgramMng`. A builder that had no program in scope
 takes one, so `MakeArgument`, `MakeField` and `MakeGlobal` take `prgrm`
-first. `Param` passes nil, because the natives it makes are shared by every
-program until the `CXNativeFunction` allocation phase.
+first. They allocate in `CXArgumentMng` and return the Gid and the pointer
+from the one Get after the Alloc, like `AllocCXArgument`,
+`AllocCXTypeSignature` and `AllocCXTypeSignatureOfCXArg`. A builder that
+ends up named by nothing is released. `Param` and `MakeStructParameter` use
+the heap builder `nativeArgument`, because the natives they make are shared
+by every program until the `CXNativeFunction` allocation phase.
 
 ## Rules
 
@@ -470,7 +474,7 @@ before Teardown1 is written.
 | `CXTypeSignature` | the `CXStruct` whose `Fields` it is in |
 | `CXTypeSignature_Array`, `CXTypeSignature_Struct` | the `CXTypeSignature` whose `Meta` names it |
 | `CXArgument` | the `CXTypeSignature` whose `Meta` names it (`TYPE_CXARGUMENT_DEPRECATE`), or the `CXArgument` whose `Fields`, `Indexes`, `Inputs` or `Outputs` hold it |
-| `CXArgumentDebug` | the `CXArgument` it was made for. A `CXTypeSignature` that names it borrows it |
+| `CXArgumentDebug` | the `CXArgument` it was made for. A `CXTypeSignature` that names it borrows it, and owns it once that argument, a builder nothing else named, is released |
 | `CXCall` | `CXProgram`, a fixed stack of `constants.CALLSTACK_SIZE` slots |
 
 ## Fixed size

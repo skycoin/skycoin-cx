@@ -557,7 +557,8 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 
 							// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 							// Now a constructor call, site S0759.
-							out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpInputArg.Type)
+							_, out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber)
+							out.SetType(inpExprAtomicOpInputArg.Type)
 							out.StructType = inpExprAtomicOpInputArg.StructType
 							out.Size = inpExprAtomicOpInputArg.Size
 							out.Type = inpExprAtomicOpInputArg.Type
@@ -566,7 +567,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 
 							out.Package = inpExprAtomicOp.Package
 
-							typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+							typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC {
 							argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
@@ -602,7 +603,8 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 					} else {
 						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 						// Now a constructor call, site S0767.
-						out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber).SetType(inpExprAtomicOpOperatorOutputArg.Type)
+						_, out = ast.MakeArgument(prgrm, generateTempVarName(constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber)
+						out.SetType(inpExprAtomicOpOperatorOutputArg.Type)
 						out.DeclarationSpecifiers = inpExprAtomicOpOperatorOutputArg.DeclarationSpecifiers
 
 						out.StructType = inpExprAtomicOpOperatorOutputArg.StructType
@@ -626,7 +628,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 						out.PreviouslyDeclared = true
 						out.Package = inpExprAtomicOp.Package
 
-						typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, out)
+						typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 					}
 
 					inpExprAtomicOp.AddOutput(prgrm, typeSigIdx)
@@ -1104,14 +1106,15 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	// added to the list.
 	if sym.IsPointer() && !isPointerAdded(prgrm, fn, sym) {
 		if len(sym.Fields) > 0 {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a value literal, site S0808.
-			tmp := ast.CXArgument{}
-			copier.Copy(&tmp, sym)
+			// A copy of sym without its fields, owned by fn.
+			_, tmp := prgrm.AllocCXArgument()
+			tmpIndex := tmp.Index
+			copier.Copy(tmp, sym)
+			tmp.Index = tmpIndex
 			// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
 			// Now a dropped object, site S0809.
 			tmp.Fields = nil
-			fn.ListOfPointers = append(fn.ListOfPointers, &tmp)
+			fn.ListOfPointers = append(fn.ListOfPointers, tmp)
 		} else {
 			fn.ListOfPointers = append(fn.ListOfPointers, sym)
 		}
@@ -1840,12 +1843,11 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName, ident string, symbolsData *Symb
 	// type `func` with that name.
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S0873.
-	fnArg := ast.MakeArgument(prgrm, ident, fn.FileName, fn.FileLine).SetType(types.FUNC)
+	_, fnArg := ast.MakeArgument(prgrm, ident, fn.FileName, fn.FileLine)
+	fnArg.SetType(types.FUNC)
 	fnArg.Package = ast.CXPackageIndex(pkg.Index)
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now an arena insert, site S0874.
-	fnArgIdx := prgrm.AddCXArgInArray(fnArg)
+	fnArgIdx := ast.CXArgumentIndex(fnArg.Index)
 	_, fnArgTypeSig := prgrm.AllocCXTypeSignature()
 	fnArgTypeSig.Name = fnArg.Name
 	fnArgTypeSig.Offset = fnArg.Offset
