@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- CX programs can call the `regexp` package. Using a package type without importing the package is now a compile error, not a compiler panic, and a runtime error in a function with a struct local no longer panics while printing the stack (#188)
 - The REPL `Eval` ran a program that failed to compile and returned whatever it printed. It now returns `compilation error` (#189)
 - The REPL leaked operator state from one `Eval` into the next, so an unrelated second program failed to type check (#174)
 - Slices of slices were wrong with ptr64 builds, and `append(s, a, b, c)` wrote `a` three times. `make check` now also runs the CX tests with a ptr64 build (#176)

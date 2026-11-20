@@ -147,8 +147,6 @@ func (cxprogram *CXProgram) PrintStack() {
 
 					dupNames = append(dupNames, outputPkg.Name+output.Name)
 
-				} else {
-					panic("type is not known")
 				}
 
 			}

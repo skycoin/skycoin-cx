@@ -81,7 +81,9 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		// custom type in an imported package
 		imp, err := pkg.GetImport(prgrm, pkgName)
 		if err != nil {
-			panic(err)
+			println(ast.CompilationError(currentFile, lineNo), err.Error())
+
+			return nil
 		}
 
 		strct, err = prgrm.GetStruct(ident, imp.Name)

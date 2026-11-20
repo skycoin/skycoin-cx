@@ -207,11 +207,11 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
-	// t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")
-	// t.Run("test-regexp-compile-fail.cx", types.CX_SUCCESS, "ProgramError in regexp lib - error thrown by regexp.Compile does not matches expected error.")
-	// t.Run("test-regexp.cx", types.CX_SUCCESS, "ProgramError in regexp lib.")
+	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")
+	t.Run("test-regexp-compile-fail.cx", types.CX_SUCCESS, "ProgramError in regexp lib - error thrown by regexp.Compile does not matches expected error.")
+	t.Run("test-regexp.cx", types.CX_SUCCESS, "ProgramError in regexp lib.")
+	t.Run("test-regexp-not-imported.cx", types.CX_COMPILATION_ERROR, "regexp used without importing it")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
-	// t.RunEx("test-regexp.cx", types.CX_COMPILATION_ERROR, "Panic when calling gl.BindBuffer with only one argument.", TestGui|TestStable, 0)
 
 	// issues
 	t.Run("issue-207.cx", types.CX_COMPILATION_ERROR, "Type casting error not reported.")
@@ -393,7 +393,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("./examples/packages.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	// t.RunEx("./examples/program.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	// t.RunEx("./examples/read-string.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
-	// t.RunEx("./examples/regexp.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
+	t.RunEx("./examples/regexp.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/return.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/sum-digits-integer.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/temp-converter.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
