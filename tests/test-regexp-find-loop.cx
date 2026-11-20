@@ -1,0 +1,13 @@
+package main
+
+import "regexp"
+
+func main() {
+	var r regexp.Regexp
+	r = regexp.MustCompile("b+")
+	var s str
+	for i := 0; i < 1000; i++ {
+		s = r.Find("abbbc")
+	}
+	test(s, "bbb", "")
+}

@@ -24,6 +24,7 @@
 
 #### Fixed
 
+- Every `regexp.Compile`, `regexp.MustCompile` and `Regexp.Find` call added an argument to the program, so a loop grew it without bound. A failed `regexp.Compile` stored a nil `Regexp`, and `Find` on it was a Go nil dereference. It is now a `CX_RUNTIME_ERROR` (#120)
 - Running with an op limit (`RunCompiled` with `maxOps` above 0) printed a step trace into the program's output, grew the program, and could stop an unfinished program as terminated. The limit now only counts operations, and the tracer is removed (#110)
 - Some compile errors and runtime errors reported line 0, because identifier and number tokens lost their line in the lexer (#217)
 - A slice of slices literal with exactly two inner literals, such as `[][]i32{[]i32{0, 1}, []i32{2, 3}}`, left the second inner slice empty (#216)

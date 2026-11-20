@@ -1,0 +1,14 @@
+package main
+
+import "regexp"
+
+func main() {
+	var r regexp.Regexp
+	var err str
+	r, err = regexp.Compile("a(")
+	test(err, "error parsing regexp: missing closing ): `a(`", "")
+
+	// Find on a Regexp that did not compile is a runtime error.
+	var s str
+	s = r.Find("abc")
+}
