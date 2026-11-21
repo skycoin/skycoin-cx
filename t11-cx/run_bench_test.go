@@ -10,6 +10,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t2-globals"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
+	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-execute"
 	"github.com/skycoin/skycoin-cx/t4-opcodes"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
@@ -106,6 +107,12 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 
 // compileRunProgram compiles source into a fresh actions.AST, ready to run.
 func compileRunProgram(tb testing.TB, p runBenchProgram) {
+	compileRunSources(tb, []string{p.name}, []string{p.source})
+}
+
+// compileRunSources compiles the files of one program into a fresh
+// actions.AST, ready to run.
+func compileRunSources(tb testing.TB, names []string, sources []string) {
 	types.Allocator = ast.AllocateSeq
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1780 S1781.
@@ -114,11 +121,11 @@ func compileRunProgram(tb testing.TB, p runBenchProgram) {
 	opcodes.RegisterOpcodes(actions.AST)
 	globals.FoundCompileErrors = false
 	globals.HeapOffset = 0
-	if err := cxparsing.ParseSourceStrings([]string{p.source}, []string{p.name}); err != nil {
-		tb.Fatalf("%s: %v", p.name, err)
+	if err := cxparsing.ParseSourceStrings(sources, names); err != nil {
+		tb.Fatalf("%s: %v", names, err)
 	}
 	if err := cxparsing.AddInitFunction(actions.AST); err != nil {
-		tb.Fatalf("%s: %v", p.name, err)
+		tb.Fatalf("%s: %v", names, err)
 	}
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 }
@@ -188,5 +195,66 @@ func TestRunAllocs(t *testing.T) {
 				t.Errorf("%s: %.0f allocations per run, ceiling %.0f (#407)", p.name, allocs, p.maxAllocs)
 			}
 		})
+	}
+}
+
+// referenceBenchMachine compiles and lowers p for the reference machine. It
+// returns nil when a function of p does not lower.
+func referenceBenchMachine(tb testing.TB, p runBenchProgram) *referenceMachine {
+	compileRunProgram(tb, p)
+	image, failures := lower.Program(actions.AST)
+	if len(failures) > 0 {
+		return nil
+	}
+	return referenceMachineNew(&image)
+}
+
+// BenchmarkRunReference times the reference machine of step 4 of #408 on
+// the BenchmarkRun programs that lower. Each iteration resets the memory,
+// which BenchmarkRun gets from a fresh compile.
+func BenchmarkRunReference(b *testing.B) {
+	initProgram()
+	for _, p := range runBenchPrograms(b) {
+		b.Run(p.name, func(b *testing.B) {
+			machine := referenceBenchMachine(b, p)
+			if machine == nil {
+				b.Skipf("%s does not lower", p.name)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				referenceReset(machine)
+				if code := referenceRun(machine); code != types.CX_SUCCESS {
+					b.Fatalf("%s: code %d", p.name, code)
+				}
+			}
+		})
+	}
+}
+
+// TestRunReferenceAllocs fails when a run of the reference machine
+// allocates. The new loop must not allocate (#407, #408).
+func TestRunReferenceAllocs(t *testing.T) {
+	defer debug.SetGCPercent(debug.SetGCPercent(-1))
+	initProgram()
+	lowered := 0
+	for _, p := range runBenchPrograms(t) {
+		machine := referenceBenchMachine(t, p)
+		if machine == nil {
+			continue
+		}
+		lowered++
+		allocs := testing.AllocsPerRun(3, func() {
+			referenceReset(machine)
+			if code := referenceRun(machine); code != types.CX_SUCCESS {
+				t.Fatalf("%s: code %d", p.name, code)
+			}
+		})
+		if allocs != 0 {
+			t.Errorf("%s: %.0f allocations per run, want 0", p.name, allocs)
+		}
+	}
+	if lowered < 2 {
+		t.Errorf("%d of the run programs lower, count and fib at least should", lowered)
 	}
 }

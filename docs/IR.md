@@ -21,6 +21,7 @@ numbers quoted below are the same in every build. See [Opcodes](#opcodes).
 * [Worked example](#worked-example)
 * [Serialized form](#serialized-form)
 * [Opcodes](#opcodes)
+* [The runtime image](#the-runtime-image)
 * [Known oddities](#known-oddities)
 
 ## Pipeline
@@ -658,6 +659,46 @@ Before [#297](https://github.com/skycoin/skycoin-cx/pull/297) the
 numbers above `END_OF_NAMED_OPCODES` came from registration order and
 moved with build tags
 ([#296](https://github.com/skycoin/skycoin-cx/issues/296)).
+
+## The runtime image
+
+`lower.Program` (`t4-cx-compiler-lower`) turns a compiled program into an
+`ir.Image` (`t2-cx-runtime-ir`), the flat form step 5 of
+[#408](https://github.com/skycoin/skycoin-cx/issues/408) will run. The old
+loop still runs every program. Nothing executes an image yet except the
+reference interpreter in `t11-cx/lower_reference_test.go`.
+
+* `ir.Instr` is a fixed 32 byte record. `InstrOpcode` is an `ir.Opcode`,
+  `InstrA` to `InstrD` are operand byte offsets, `InstrN` and `InstrM` hold
+  a size, a jump target or a function id, and `InstrAux` indexes a side
+  table. Bit i of `InstrMode` adds the frame pointer to operand i.
+* `ir.Opcode` numbers are dense and grouped by family, and exist only in an
+  image. They are not the language opcode numbers above, which are sparse,
+  fixed for serialized programs and have no number for moves, calls or
+  returns. The lowering maps a language opcode to an image opcode by its
+  live name.
+* `ir.Func` holds the code, the frame size and the input and output slots.
+  `ImageFuncs` is indexed like `CXProgram.CXFunctions`, so a function id is
+  the same in both. A function that does not lower has no code.
+* `ir.Image` holds the data segment bytes and where they start, the stack
+  size, the ids of `*init` and `main`, and the line and name tables. It
+  holds no pointer to an IR object.
+* `CX_LINE` expressions become `ir.Line` entries, a pc where a source line
+  starts. A jump target, counted in expressions by `ThenLines` and
+  `ElseLines`, becomes a pc. A target at or past `LineCount` becomes the
+  final `OpcodeReturn`.
+* A call becomes `OpcodeCallFrame` (zero the callee frame at the stack
+  pointer), one `OpcodeCallArg` per input, `OpcodeCall`, then one
+  `OpcodeCallResult` per output the caller receives, the same copies
+  `processNonAtomicOperators` and `popStack` make.
+
+The subset is the bool, integer and float operators, conversions and print,
+identity by value, declarations, the jumps, `test` on non-string values and
+calls, with every operand a variable or literal whose address is its offset
+plus, for a stack offset, the frame pointer. Anything else gives a
+`lower.Failure` with a `ReasonCode`. `TestLowerCompare` lowers every program
+in `tests/` and compares memory and stdout after the old loop and the
+reference interpreter for each one that lowers completely.
 
 ## Known oddities
 
