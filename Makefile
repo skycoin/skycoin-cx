@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel check build-parser clean help
+.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel check build-parser clean help
 
 CXEXE := cx
 EXE :=
@@ -21,6 +21,13 @@ build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/G
 
 build-debug: ## Build cx without optimizations
 	go build -gcflags="all=-N -l" -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
+
+build-wasm: ## Compile check cx for js/wasm with the default tags, as the playground builds it
+	GOOS=js GOARCH=wasm go build -tags="$(TAGS)" -o /dev/null ./t11-cx
+
+test-wasm: ## Build cx for js/wasm and run the hello world example under Node
+	GOOS=js GOARCH=wasm go build -tags="$(TAGS)" -o ./bin/cx.wasm ./t11-cx
+	node "$$(go env GOROOT)/lib/wasm/wasm_exec_node.js" ./bin/cx.wasm tests/examples/hello-world.cx | grep -qx "Hello World!"
 
 build-tests: build ## Build the cx program test runner
 	go build -o ./bin/cxtest ./t1-cxtest

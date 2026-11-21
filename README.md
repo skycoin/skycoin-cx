@@ -113,6 +113,8 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 - `make test-all` also runs the tests for known issues. These are expected to
   fail, and each one names its issue in `t1-cxtest/main.go`.
 - `make vet-gui` vets the cxfx build.
+- `make build-wasm` compiles `cx` for js/wasm as the playground does, and
+  `make test-wasm` runs the hello world example under Node. CI runs both.
 
 ## Status
 
