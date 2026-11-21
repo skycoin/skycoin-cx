@@ -67,12 +67,13 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorAlloc() CXAtomicOperatorGid 
 // generation goes up by one, and a slot reaching objmodel.GidGenerationLast
 // is retired instead of reused.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorRelease(gid CXAtomicOperatorGid) {
-	objmodel.GidCheck(int64(gid), CXAtomicOperatorGidTypeTag, "CXAtomicOperator", len(manager.CXAtomicOperatorMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXAtomicOperatorMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorRelease of slot %d, which is not live, a double release", index))
-	}
-	if manager.CXAtomicOperatorMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXAtomicOperatorGidTypeTag || uint64(index) >= uint64(len(manager.CXAtomicOperatorMngObjects)) ||
+		!manager.CXAtomicOperatorMngLive[index] || manager.CXAtomicOperatorMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXAtomicOperatorGidTypeTag, len(manager.CXAtomicOperatorMngObjects))
+		if !manager.CXAtomicOperatorMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorRelease of slot %d, which is not live, a double release", index))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorRelease of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXAtomicOperatorMngGenerations[index]))
 	}
 	manager.CXAtomicOperatorMngObjects[index] = CXAtomicOperator{}
@@ -92,12 +93,13 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorRelease(gid CXAtomicOperator
 // CXAtomicOperatorGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorGet(gid CXAtomicOperatorGid) *CXAtomicOperator {
-	objmodel.GidCheck(int64(gid), CXAtomicOperatorGidTypeTag, "CXAtomicOperator", len(manager.CXAtomicOperatorMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXAtomicOperatorMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-	}
-	if manager.CXAtomicOperatorMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXAtomicOperatorGidTypeTag || uint64(index) >= uint64(len(manager.CXAtomicOperatorMngObjects)) ||
+		!manager.CXAtomicOperatorMngLive[index] || manager.CXAtomicOperatorMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXAtomicOperatorGidTypeTag, len(manager.CXAtomicOperatorMngObjects))
+		if !manager.CXAtomicOperatorMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXAtomicOperatorMngGenerations[index]))
 	}
 	return &manager.CXAtomicOperatorMngObjects[index]

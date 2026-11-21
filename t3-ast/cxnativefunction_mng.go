@@ -67,12 +67,13 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionAlloc() CXNativeFunctionGid 
 // generation goes up by one, and a slot reaching objmodel.GidGenerationLast
 // is retired instead of reused.
 func (manager *CXNativeFunctionMng) CXNativeFunctionRelease(gid CXNativeFunctionGid) {
-	objmodel.GidCheck(int64(gid), CXNativeFunctionGidTypeTag, "CXNativeFunction", len(manager.CXNativeFunctionMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXNativeFunctionMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionRelease of slot %d, which is not live, a double release", index))
-	}
-	if manager.CXNativeFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXNativeFunctionGidTypeTag || uint64(index) >= uint64(len(manager.CXNativeFunctionMngObjects)) ||
+		!manager.CXNativeFunctionMngLive[index] || manager.CXNativeFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXNativeFunctionGidTypeTag, len(manager.CXNativeFunctionMngObjects))
+		if !manager.CXNativeFunctionMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionRelease of slot %d, which is not live, a double release", index))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionRelease of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXNativeFunctionMngGenerations[index]))
 	}
 	manager.CXNativeFunctionMngObjects[index] = CXNativeFunction{}
@@ -92,12 +93,13 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionRelease(gid CXNativeFunction
 // CXNativeFunctionGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
 func (manager *CXNativeFunctionMng) CXNativeFunctionGet(gid CXNativeFunctionGid) *CXNativeFunction {
-	objmodel.GidCheck(int64(gid), CXNativeFunctionGidTypeTag, "CXNativeFunction", len(manager.CXNativeFunctionMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXNativeFunctionMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-	}
-	if manager.CXNativeFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXNativeFunctionGidTypeTag || uint64(index) >= uint64(len(manager.CXNativeFunctionMngObjects)) ||
+		!manager.CXNativeFunctionMngLive[index] || manager.CXNativeFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXNativeFunctionGidTypeTag, len(manager.CXNativeFunctionMngObjects))
+		if !manager.CXNativeFunctionMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXNativeFunctionGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXNativeFunctionMngGenerations[index]))
 	}
 	return &manager.CXNativeFunctionMngObjects[index]

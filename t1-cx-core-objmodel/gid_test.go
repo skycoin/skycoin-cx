@@ -58,10 +58,10 @@ var gidTestCases = map[string]func(){
 	"tag high":       func() { GidCompose(0x80, 1, 0) },
 	"generation 0":   func() { GidCompose(1, 0, 0) },
 	"generation max": func() { GidCompose(1, GidGenerationLast, 0) },
-	"check nil":      func() { GidCheck(GidNil, 1, "T", 4) },
-	"check negative": func() { GidCheck(-5, 1, "T", 4) },
-	"check tag":      func() { GidCheck(GidCompose(2, 1, 0), 1, "T", 4) },
-	"check index":    func() { GidCheck(GidCompose(1, 1, 4), 1, "T", 4) },
+	"check nil":      func() { GidAssertFailure(GidNil, 1, 4) },
+	"check negative": func() { GidAssertFailure(-5, 1, 4) },
+	"check tag":      func() { GidAssertFailure(GidCompose(2, 1, 0), 1, 4) },
+	"check index":    func() { GidAssertFailure(GidCompose(1, 1, 4), 1, 4) },
 }
 
 func TestGidAssertChild(t *testing.T) {
@@ -89,6 +89,13 @@ func TestGidAssert(t *testing.T) {
 			if !strings.Contains(stderr.String(), "assert failed: precondition") {
 				t.Errorf("stderr lacks the precondition assert:\n%s", stderr.String())
 			}
+			if strings.HasPrefix(name, "check ") && !strings.Contains(stderr.String(), "CXProgram Gid") {
+				t.Errorf("stderr lacks the type name of tag 1:\n%s", stderr.String())
+			}
 		})
 	}
+}
+
+func TestGidAssertFailureReturnsOnAWellFormedGid(t *testing.T) {
+	GidAssertFailure(GidCompose(1, 7, 3), 1, 4)
 }

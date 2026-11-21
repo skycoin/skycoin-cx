@@ -67,12 +67,13 @@ func (manager *CXTypeSignatureMng) CXTypeSignatureAlloc() CXTypeSignatureGid {
 // generation goes up by one, and a slot reaching objmodel.GidGenerationLast
 // is retired instead of reused.
 func (manager *CXTypeSignatureMng) CXTypeSignatureRelease(gid CXTypeSignatureGid) {
-	objmodel.GidCheck(int64(gid), CXTypeSignatureGidTypeTag, "CXTypeSignature", len(manager.CXTypeSignatureMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXTypeSignatureMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureRelease of slot %d, which is not live, a double release", index))
-	}
-	if manager.CXTypeSignatureMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXTypeSignatureGidTypeTag || uint64(index) >= uint64(len(manager.CXTypeSignatureMngObjects)) ||
+		!manager.CXTypeSignatureMngLive[index] || manager.CXTypeSignatureMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXTypeSignatureGidTypeTag, len(manager.CXTypeSignatureMngObjects))
+		if !manager.CXTypeSignatureMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureRelease of slot %d, which is not live, a double release", index))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureRelease of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXTypeSignatureMngGenerations[index]))
 	}
 	manager.CXTypeSignatureMngObjects[index] = CXTypeSignature{}
@@ -92,12 +93,13 @@ func (manager *CXTypeSignatureMng) CXTypeSignatureRelease(gid CXTypeSignatureGid
 // CXTypeSignatureGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
 func (manager *CXTypeSignatureMng) CXTypeSignatureGet(gid CXTypeSignatureGid) *CXTypeSignature {
-	objmodel.GidCheck(int64(gid), CXTypeSignatureGidTypeTag, "CXTypeSignature", len(manager.CXTypeSignatureMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXTypeSignatureMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-	}
-	if manager.CXTypeSignatureMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXTypeSignatureGidTypeTag || uint64(index) >= uint64(len(manager.CXTypeSignatureMngObjects)) ||
+		!manager.CXTypeSignatureMngLive[index] || manager.CXTypeSignatureMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXTypeSignatureGidTypeTag, len(manager.CXTypeSignatureMngObjects))
+		if !manager.CXTypeSignatureMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXTypeSignatureGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXTypeSignatureMngGenerations[index]))
 	}
 	return &manager.CXTypeSignatureMngObjects[index]

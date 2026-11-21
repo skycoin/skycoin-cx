@@ -67,12 +67,13 @@ func (manager *CXLineMng) CXLineAlloc() CXLineGid {
 // generation goes up by one, and a slot reaching objmodel.GidGenerationLast
 // is retired instead of reused.
 func (manager *CXLineMng) CXLineRelease(gid CXLineGid) {
-	objmodel.GidCheck(int64(gid), CXLineGidTypeTag, "CXLine", len(manager.CXLineMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXLineMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineRelease of slot %d, which is not live, a double release", index))
-	}
-	if manager.CXLineMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXLineGidTypeTag || uint64(index) >= uint64(len(manager.CXLineMngObjects)) ||
+		!manager.CXLineMngLive[index] || manager.CXLineMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXLineGidTypeTag, len(manager.CXLineMngObjects))
+		if !manager.CXLineMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineRelease of slot %d, which is not live, a double release", index))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineRelease of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXLineMngGenerations[index]))
 	}
 	manager.CXLineMngObjects[index] = CXLine{}
@@ -92,12 +93,13 @@ func (manager *CXLineMng) CXLineRelease(gid CXLineGid) {
 // CXLineGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
 func (manager *CXLineMng) CXLineGet(gid CXLineGid) *CXLine {
-	objmodel.GidCheck(int64(gid), CXLineGidTypeTag, "CXLine", len(manager.CXLineMngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.CXLineMngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-	}
-	if manager.CXLineMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != CXLineGidTypeTag || uint64(index) >= uint64(len(manager.CXLineMngObjects)) ||
+		!manager.CXLineMngLive[index] || manager.CXLineMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), CXLineGidTypeTag, len(manager.CXLineMngObjects))
+		if !manager.CXLineMngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("CXLineGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXLineMngGenerations[index]))
 	}
 	return &manager.CXLineMngObjects[index]

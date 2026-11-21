@@ -1,6 +1,7 @@
 // Command objmodelgen writes the Gid file, the manager and the manager test of
-// every IR object type into t3-ast, see docs/ObjectModel.md. The 14 managers
-// differ only in their type, so one template is kept instead of 14 copies.
+// every IR object type into t3-ast, and the type tag name table into
+// t1-cx-core-objmodel, see docs/ObjectModel.md. The 14 managers differ only in
+// their type, so one template is kept instead of 14 copies.
 //
 //	go run ./t0-cx-core-objmodelgen -dir t3-ast         write the files
 //	go run ./t0-cx-core-objmodelgen -dir t3-ast -check  fail if a file is stale
@@ -84,8 +85,11 @@ func objmodelgenRender(tmpl *template.Template, name string, object objmodelgenO
 	return src, nil
 }
 
-// objmodelgenFiles returns every generated file by name.
-func objmodelgenFiles() (map[string][]byte, error) {
+// objmodelgenTypeTagNameFile is the generated file of package objmodel.
+const objmodelgenTypeTagNameFile = "gid_typetagname.go"
+
+// objmodelgenFiles returns every generated file by path.
+func objmodelgenFiles(dir string, objmodelDir string) (map[string][]byte, error) {
 	tmpl, err := template.New("objmodelgen").Parse(objmodelgenTemplates)
 	if err != nil {
 		return nil, err
@@ -106,9 +110,23 @@ func objmodelgenFiles() (map[string][]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			files[base+suffix] = src
+			files[filepath.Join(dir, base+suffix)] = src
 		}
 	}
+	names, err := template.New("typetagname").Parse(objmodelgenTypeTagNameTemplate)
+	if err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	buf.WriteString(objmodelgenHeader)
+	if err := names.Execute(&buf, objmodelgenObjects); err != nil {
+		return nil, err
+	}
+	src, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w\n%s", objmodelgenTypeTagNameFile, err, buf.Bytes())
+	}
+	files[filepath.Join(objmodelDir, objmodelgenTypeTagNameFile)] = src
 	return files, nil
 }
 
@@ -123,7 +141,7 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 	}
 	for _, def := range defs {
 		base := strings.TrimSuffix(filepath.Base(def), "_def.go")
-		if _, ok := files[base+"_mng.go"]; !ok {
+		if _, ok := files[filepath.Join(dir, base+"_mng.go")]; !ok {
 			problems = append(problems, def+" has no entry in the t0-cx-core-objmodelgen table")
 		}
 	}
@@ -133,7 +151,7 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 	}
 	for _, entry := range entries {
 		name := entry.Name()
-		if _, ok := files[name]; ok || !strings.HasSuffix(name, ".go") {
+		if _, ok := files[filepath.Join(dir, name)]; ok || !strings.HasSuffix(name, ".go") {
 			continue
 		}
 		data, err := os.ReadFile(filepath.Join(dir, name))
@@ -144,14 +162,14 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 			problems = append(problems, filepath.Join(dir, name)+" is generated but no longer in the table")
 		}
 	}
-	for name, want := range files {
-		have, err := os.ReadFile(filepath.Join(dir, name))
+	for path, want := range files {
+		have, err := os.ReadFile(path)
 		if err != nil {
 			problems = append(problems, err.Error())
 			continue
 		}
 		if !bytes.Equal(bytes.ReplaceAll(have, []byte("\r\n"), []byte("\n")), want) {
-			problems = append(problems, filepath.Join(dir, name)+" is stale")
+			problems = append(problems, path+" is stale")
 		}
 	}
 	sort.Strings(problems)
@@ -160,9 +178,10 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 
 func main() {
 	dir := flag.String("dir", "t3-ast", "directory of package ast")
+	objmodelDir := flag.String("objmodeldir", "t1-cx-core-objmodel", "directory of package objmodel")
 	check := flag.Bool("check", false, "report stale files instead of writing them")
 	flag.Parse()
-	files, err := objmodelgenFiles()
+	files, err := objmodelgenFiles(*dir, *objmodelDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "objmodelgen:", err)
 		os.Exit(1)
@@ -183,8 +202,8 @@ func main() {
 		fmt.Printf("%d generated object model files up to date\n", len(files))
 		return
 	}
-	for name, src := range files {
-		if err := os.WriteFile(filepath.Join(*dir, name), src, 0o644); err != nil {
+	for path, src := range files {
+		if err := os.WriteFile(path, src, 0o644); err != nil {
 			fmt.Fprintln(os.Stderr, "objmodelgen:", err)
 			os.Exit(1)
 		}

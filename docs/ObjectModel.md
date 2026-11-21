@@ -178,9 +178,17 @@ func GidGeneration(gid int64) uint32
 // GidTypeTag returns bits 56 to 63.
 func GidTypeTag(gid int64) TypeTag
 
-// GidCheck asserts checks 1 and 2 below, and that gid is positive. The
-// manager does checks 3 and 4 against its own slots.
-func GidCheck(gid int64, typeTag TypeTag, typeName string, capacity int)
+// GidAssertFailure is the cold path of a manager's Get and Release. It asserts
+// the first failed check of gid and returns when gid is positive, carries
+// typeTag and indexes a slot below capacity, so the manager then reports a
+// slot that is not live or a stale generation.
+//
+//go:noinline
+func GidAssertFailure(gid int64, typeTag TypeTag, capacity int)
+
+// GidTypeTagNameTable names the object type of each type tag, for the
+// assert messages. It is generated from the type table.
+var GidTypeTagNameTable = [256]string{0x01: "CXProgram" /* ... */}
 ```
 
 The bit operations work on `uint64(gid)`, so the masks are `uint64`
@@ -206,6 +214,13 @@ class B assert.
 2. `GidIndex(gid)` is below the manager's Cap.
 3. The slot at that index holds a live object.
 4. `GidGeneration(gid)` equals the slot's generation.
+
+Get and Release write the four compares inline in one `if`, so the hot
+path makes no call. Check 1 also rejects 0 and every negative value, whose
+tag is 0 or above `GidTypeTagLast`. The failure branch calls
+`GidAssertFailure`, which reports a bad Gid with its type name from
+`GidTypeTagNameTable`, and then the manager reports a slot that is not live
+or a stale generation. No string is passed on this path.
 
 ## Mng, the manager
 
@@ -330,8 +345,10 @@ closest, at 85% of half its Cap.
 The 14 managers differ only in their type, so `<obj>_gid.go`,
 `<obj>_mng.go` and the test `<obj>_mng_test.go` are generated from one
 template by `t0-cx-core-objmodelgen` (`make generate-objmodel`), a tier 0
-`package main` that holds the type table above. The generated files are
-committed and start with a `Code generated ... DO NOT EDIT.` line.
+`package main` that holds the type table above. It also writes
+`GidTypeTagNameTable` into `t1-cx-core-objmodel/gid_typetagname.go`. The
+generated files are committed and start with a `Code generated ... DO NOT
+EDIT.` line.
 `make check-objmodel` fails when one is stale, when a generated file is no
 longer in the table, or when a `<obj>_def.go` has no table entry. A new
 object type is a new row in that table. The generator was picked over 14

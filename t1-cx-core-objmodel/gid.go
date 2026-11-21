@@ -63,18 +63,22 @@ func GidTypeTag(gid int64) TypeTag {
 	return TypeTag((uint64(gid) & GidTypeTagMask) >> GidTypeTagShift)
 }
 
-// GidCheck asserts that gid is positive, carries typeTag and indexes a slot
-// below capacity. The manager checks liveness and generation itself.
-func GidCheck(gid int64, typeTag TypeTag, typeName string, capacity int) {
+// GidAssertFailure is the cold path of a manager's Get and Release. It asserts
+// the first failed check of gid and returns when gid is positive, carries
+// typeTag and indexes a slot below capacity, so the manager then reports a
+// slot that is not live or a stale generation.
+//
+//go:noinline
+func GidAssertFailure(gid int64, typeTag TypeTag, capacity int) {
 	if gid <= GidNil {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("%s Gid %#x is nil or negative", typeName, gid))
+		assert.AssertPreconditionTrue(false, fmt.Sprintf("%s Gid %#x is nil or negative", GidTypeTagNameTable[typeTag], gid))
 	}
 	if GidTypeTag(gid) != typeTag {
 		assert.AssertPreconditionTrue(false,
-			fmt.Sprintf("%s Gid %#x has type tag %#x, want %#x", typeName, gid, GidTypeTag(gid), typeTag))
+			fmt.Sprintf("%s Gid %#x has type tag %#x, want %#x", GidTypeTagNameTable[typeTag], gid, GidTypeTag(gid), typeTag))
 	}
 	if uint64(GidIndex(gid)) >= uint64(capacity) {
 		assert.AssertPreconditionTrue(false,
-			fmt.Sprintf("%s Gid %#x has index %d, Cap is %d", typeName, gid, GidIndex(gid), capacity))
+			fmt.Sprintf("%s Gid %#x has index %d, Cap is %d", GidTypeTagNameTable[typeTag], gid, GidIndex(gid), capacity))
 	}
 }

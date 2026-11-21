@@ -85,12 +85,13 @@ func (manager *{{.Obj}}Mng) {{.Obj}}Alloc() {{.Obj}}Gid {
 // generation goes up by one, and a slot reaching objmodel.GidGenerationLast
 // is retired instead of reused.
 func (manager *{{.Obj}}Mng) {{.Obj}}Release(gid {{.Obj}}Gid) {
-	objmodel.GidCheck(int64(gid), {{.Obj}}GidTypeTag, "{{.Obj}}", len(manager.{{.Obj}}MngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.{{.Obj}}MngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Release of slot %d, which is not live, a double release", index))
-	}
-	if manager.{{.Obj}}MngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != {{.Obj}}GidTypeTag || uint64(index) >= uint64(len(manager.{{.Obj}}MngObjects)) ||
+		!manager.{{.Obj}}MngLive[index] || manager.{{.Obj}}MngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), {{.Obj}}GidTypeTag, len(manager.{{.Obj}}MngObjects))
+		if !manager.{{.Obj}}MngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Release of slot %d, which is not live, a double release", index))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Release of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.{{.Obj}}MngGenerations[index]))
 	}
 	manager.{{.Obj}}MngObjects[index] = {{.Obj}}{}
@@ -110,12 +111,13 @@ func (manager *{{.Obj}}Mng) {{.Obj}}Release(gid {{.Obj}}Gid) {
 // {{.Obj}}Get returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
 func (manager *{{.Obj}}Mng) {{.Obj}}Get(gid {{.Obj}}Gid) *{{.Obj}} {
-	objmodel.GidCheck(int64(gid), {{.Obj}}GidTypeTag, "{{.Obj}}", len(manager.{{.Obj}}MngObjects))
 	index := objmodel.GidIndex(int64(gid))
-	if !manager.{{.Obj}}MngLive[index] {
-		assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Get of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-	}
-	if manager.{{.Obj}}MngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+	if objmodel.GidTypeTag(int64(gid)) != {{.Obj}}GidTypeTag || uint64(index) >= uint64(len(manager.{{.Obj}}MngObjects)) ||
+		!manager.{{.Obj}}MngLive[index] || manager.{{.Obj}}MngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
+		objmodel.GidAssertFailure(int64(gid), {{.Obj}}GidTypeTag, len(manager.{{.Obj}}MngObjects))
+		if !manager.{{.Obj}}MngLive[index] {
+			assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Get of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
+		}
 		assert.AssertPreconditionTrue(false, fmt.Sprintf("{{.Obj}}Get of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.{{.Obj}}MngGenerations[index]))
 	}
 	return &manager.{{.Obj}}MngObjects[index]
@@ -373,4 +375,18 @@ func Test{{.Obj}}MngAsserts(t *testing.T) {
 	}
 }
 {{end}}
+`
+
+// objmodelgenTypeTagNameTemplate writes the type name table of package
+// objmodel, which names a type tag in an assert message without a string
+// parameter on the Get and Release path.
+const objmodelgenTypeTagNameTemplate = `package objmodel
+
+// GidTypeTagNameTable names the object type of each type tag. An unused tag
+// has an empty name.
+var GidTypeTagNameTable = [256]string{
+{{- range .}}
+	{{printf "0x%02X" .TypeTag}}: "{{.Obj}}",
+{{- end}}
+}
 `
