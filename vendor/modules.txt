@@ -30,7 +30,7 @@ github.com/jinzhu/copier
 # github.com/madelynnblue/go-dsp v1.0.0
 ## explicit; go 1.25.5
 github.com/madelynnblue/go-dsp/wav
-# github.com/pierrec/lz4/v4 v4.1.33
+# github.com/pierrec/lz4/v4 v4.1.34
 ## explicit; go 1.22
 github.com/pierrec/lz4/v4
 github.com/pierrec/lz4/v4/internal/lz4block
@@ -43,7 +43,7 @@ github.com/skycoin/encodertest
 # github.com/skycoin/gltext v0.0.0-20200425002731-afdd8ff94e14
 ## explicit
 github.com/skycoin/gltext
-# github.com/skycoin/skycoin v0.28.8-0.20261117145039-38b3036d50d8
+# github.com/skycoin/skycoin v0.28.8-0.20261119210838-81b60ec8a9b5
 ## explicit; go 1.27.3
 github.com/skycoin/skycoin/src/cipher
 github.com/skycoin/skycoin/src/cipher/base58
@@ -64,7 +64,7 @@ go.etcd.io/bbolt/internal/freelist
 # golang.org/x/crypto v0.59.0
 ## explicit; go 1.26.0
 golang.org/x/crypto/blake2b
-# golang.org/x/exp/shiny v0.0.0-20261119141654-b15d094f3610
+# golang.org/x/exp/shiny v0.0.0-20261121134650-e1094eeca1b5
 ## explicit; go 1.26.0
 golang.org/x/exp/shiny/driver/gldriver
 golang.org/x/exp/shiny/driver/internal/drawer
