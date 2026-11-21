@@ -56,6 +56,7 @@
 
 #### Fixed
 
+- A block whose first or last statement was another block or a method call lost a scope or the method call, so valid programs crashed the compiler or got a false redeclared error, and a one statement block had no scope. Scope starts and ends are now counted per expression in `ExpressionScopeOpenCount` and `ExpressionScopeCloseCount`
 - The f64 `%` operator was registered under the name `f32.mod`, so calling `f32.mod` by name ran the f64 handler. It is `f64.mod` now (#296)
 - Taking the address of a slice, `ps = &s`, panicked the compiler with "type is not known", and so did passing `&s` to a function. Assigning through and from `*ps` now works, and `printf("%v", *ps)` prints the slice (#262)
 - `*p` on a struct pointer kept the pointer type, so `q = *p`, `*p = q` and passing `*p` as a struct were compile errors, and `printf("%v", *p)` printed the address. It is now the struct value (#261)

@@ -15,13 +15,11 @@ const (
 	CXEXPR_METHOD_CALL
 	CXEXPR_STRUCT_LITERAL
 	CXEXPR_ARRAY_LITERAL
-	CXEXPR_SCOPE_NEW
-	CXEXPR_SCOPE_DEL
 )
 
 // String returns alias for constants defined for cx edpression type
 func (cxet CXEXPR_TYPE) String() string {
-	return [...]string{"Unused", "MethodCall", "StructLiteral", "ArrayLiteral", "ScopeNew", "ScopeDel"}[int(cxet)]
+	return [...]string{"Unused", "MethodCall", "StructLiteral", "ArrayLiteral"}[int(cxet)]
 }
 
 // IsMethodCall checks if expression type is method call
@@ -83,16 +81,6 @@ func (cxe CXExpression) IsUndType(prgrm *CXProgram) bool {
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 	return expressionOperator != nil && IsOperator(expressionOperator.AtomicOPCode)
 
-}
-
-// IsScopeNew checks if expression type is scope new
-func (cxe CXExpression) IsScopeNew() bool {
-	return cxe.ExpressionType == CXEXPR_SCOPE_NEW
-}
-
-// IsScopeDel checks if expression type is scope del
-func (cxe CXExpression) IsScopeDel() bool {
-	return cxe.ExpressionType == CXEXPR_SCOPE_DEL
 }
 
 // ----------------------------------------------------------------

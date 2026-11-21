@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/copier"
+	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
@@ -261,7 +262,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 			panic(err)
 		}
 
-		if expr.IsScopeNew() {
+		for s := uint8(0); s < expr.ExpressionScopeOpenCount; s++ {
 			symbolsData.symbolsIndex = append(symbolsData.symbolsIndex, make(map[SymbolsDataKey]int))
 		}
 
@@ -282,9 +283,8 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		CheckUndValidTypes(prgrm, fn.Expressions, i)
 		checkOperatorOperands(prgrm, fn.Expressions, i)
 		ProcessTypedOperator(prgrm, &expr)
-		if expr.IsScopeDel() {
-			symbolsData.symbolsIndex = (symbolsData.symbolsIndex)[:len(symbolsData.symbolsIndex)-1]
-		}
+		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > int(expr.ExpressionScopeCloseCount), "FunctionDeclaration: scope close without a matching open")
+		symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
 	}
 
 	fn.LineCount = len(fn.Expressions)
@@ -1160,6 +1160,7 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
 	if expressionOperator == nil && len(expression.GetOutputs(prgrm)) > 0 && len(expression.GetInputs(prgrm)) == 0 {
+		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > 0, "CheckRedeclared: symbol scope stack is empty")
 		lastIdx := len(symbolsData.symbolsIndex) - 1
 
 		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
@@ -1908,6 +1909,7 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 			GetGlobalSymbol(prgrm, symbolsData, typeSigPkg, typeSig.Name)
 		}
 
+		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > 0, "UpdateSymbolsTable: symbol scope stack is empty")
 		lastIdx := len(symbolsData.symbolsIndex) - 1
 		fullName := SymbolsDataKey{SymbolsDataKeyPackage: typeSigPkg.Name, SymbolsDataKeyName: StripNameNumber(prgrm, typeSig.Name)}
 

@@ -290,6 +290,12 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-parse.cx", types.CX_SUCCESS, "parse")
 	t.Run("test-collection-functions.cx", types.CX_SUCCESS, "collection functions")
 	t.Run("test-scopes.cx", types.CX_SUCCESS, "ProgramError in scopes.")
+	t.RunWant("test-scope-block-starts-with-block.cx", types.CX_SUCCESS, "a block whose first statement is a block", "2\n")
+	t.RunWant("test-scope-shadow-after-block.cx", types.CX_SUCCESS, "shadowing after a nested block", "2\n1\n")
+	t.RunWant("test-scope-one-statement-block.cx", types.CX_SUCCESS, "a one statement block has its own scope", "0\n")
+	t.RunWant("test-scope-method-call-first.cx", types.CX_SUCCESS, "a method call as the first statement of a block", "7\n1\n2\n")
+	t.RunWant("test-scope-nested-shadow.cx", types.CX_SUCCESS, "shadowing in nested if, for and else blocks", "3\n4\n2\n5\n1\n")
+	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
 	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")

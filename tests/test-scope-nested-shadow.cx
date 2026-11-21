@@ -1,0 +1,23 @@
+package main
+
+func main() {
+	x := 1
+	if true {
+		if true {
+			x := 3
+			i32.print(x)
+		}
+		x := 2
+		for i := 0; i < 1; i++ {
+			x := 4
+			i32.print(x)
+		}
+		i32.print(x)
+		if false {
+		} else {
+			x := 5
+			i32.print(x)
+		}
+	}
+	i32.print(x)
+}

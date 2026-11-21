@@ -1,0 +1,16 @@
+package main
+type P struct {
+	v i32
+}
+func (p P) Show() {
+	i32.print(p.v)
+}
+func main() {
+	var p P
+	p.v = 7
+	if true {
+		p.Show()
+		i32.print(1)
+		i32.print(2)
+	}
+}
