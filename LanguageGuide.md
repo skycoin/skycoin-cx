@@ -1,9 +1,10 @@
 # Table of Contents
+
 * [Syntax](#syntax)
   * [Comments](#comments)
   * [Declarations](#declarations)
     * [Allowed Names](#allowed-names)
-    * [Strict Type System](#strict-type-system-1)
+    * [Strict Type System](#strict-type-system)
     * [Primitive Types](#primitive-types)
     * [Global variables](#global-variables)
     * [Local variables](#local-variables)
@@ -74,10 +75,10 @@ interpreter. Just like in C, Golang and many other programming
 languages, single line comments are created by placing double slashes
 (//) before the text being commented. For example:
 
-```
+```cx
 // Example of adding two 32 bit integers in CX
 
-i32.add(3, 4)       // This will be ignored
+i32.print(i32.add(3, 4))       // This will be ignored
 
 // End of the program
 ```
@@ -85,7 +86,7 @@ i32.add(3, 4)       // This will be ignored
 Mult-line comments are opened by writing slash-asterisk (/\*), and are
 closed by writing asterisk-slash (\*/).
 
-```
+```cx
 /* This code won't be executed
 string.PrintLine("Hello world!")
 */
@@ -136,11 +137,12 @@ need to parse one of them to match the other's type, either
 
 ### [Primitive Types](#table-of-contents)
 
-There are seven primitive types in CX: *bool*, *str*, *byte*, *i32*,
-*i64*, *f32*, and *f64*. Those represent Booleans (*true*
-or *false*), character strings, bytes, 32-bit integers, 64-bit
-integers, single precision and double precision floating-point
-numbers, respectively.
+There are twelve primitive types in CX: *bool*, *str*, the signed
+integers *i8*, *i16*, *i32* and *i64*, the unsigned integers *ui8*,
+*ui16*, *ui32* and *ui64*, and *f32* and *f64*. Those represent
+Booleans (*true* or *false*), character strings, integers of 8, 16, 32
+and 64 bits, and single and double precision floating-point numbers.
+There is no *byte* type any more. Use *ui8* or *i8*.
 
 ### [Global variables](#table-of-contents)
 
@@ -150,7 +152,7 @@ package, and to any package that is importing the package that
 contains that global declaration. An example of some global variables
 is shown below.
 
-```
+```cx
 package main
 
 var global1 i32
@@ -181,7 +183,7 @@ In contrast to global variables, local variables are constrained to
 the function where they are declared. This means that is not possible
 for another function to call a variable defined in another function.
 
-```
+```cx compile-error
 package main
 
 func foo () {
@@ -209,7 +211,7 @@ could make it to the runtime, CX would not print 5 when running
 Arrays (or vectors) and multi-dimensional arrays (or matrices) can be
 declared using a syntax similar to C's.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -223,7 +225,8 @@ func main () {
     var arr3 [2][2]f32
 
     arr1[0] = 10
-    arr2[1] = 20
+    arr2[1] = Point{x: 20, y: 30}
+    arr3[1][0] = 1.5
 }
 ```
 
@@ -233,7 +236,7 @@ type *Point*, which is a custom type. Custom types are discussed in a
 later section. Lastly, we see an example of a 2x2 matrix of type
 *f32*.
 
-Lastly, we can see how we can initialize an array using the bracket
+Lastly, we can see how we can set array elements using the bracket
 notation, e.g. `arr1[0] = 10`.
 
 ### [Slices](#table-of-contents)
@@ -242,7 +245,7 @@ Golang-like slices exist in CX (dynamic arrays). Slices are declared
 similarly to arrays, with the only difference that the size is
 omitted.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -263,7 +266,7 @@ first). You can use the bracket notation to reassign values to a
 slice, once an element associated to the index that you want to use
 already exists, as shown in the example below.
 
-```
+```cx
 package main
 
 func main () {
@@ -289,7 +292,7 @@ variable yet. For example: `1`, `true`, `[]i32{1, 2, 3}`, `Point{x:
 Particularly, it is worth noting the cases of array, slice and struct
 literals.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -319,7 +322,7 @@ Functions in CX are similar in syntax to functions in Go. The only
 exception is that named outputs are enforced at the moment (this will
 most likely change in the future).
 
-```
+```cx
 package main
 
 func foo () {
@@ -337,7 +340,7 @@ declaration, and then we have `main`, which is defined by a single
 call to `foo`. Functions can also receive inputs and return outputs,
 as in the example below.
 
-```
+```cx
 package main
 
 func foo (in i32) {
@@ -366,7 +369,7 @@ If primitive types are not enough, you can define your own custom
 types by combining the primitive types and other constructs like
 slices, arrays, and even other custom types.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -394,7 +397,7 @@ type anywhere in the package where it was declared in. The code in
 A variation of functions that are associated to custom types are
 *methods*.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -452,7 +455,7 @@ In the previous examples we have always been using a single package:
 code into different packages.
 
 
-```
+```cx
 package foo
 
 func fn (in i32) {
@@ -475,7 +478,7 @@ func main () {
     var num i32
     num = bar.fn()
 
-    i32.print(num) // prints
+    i32.print(num) // prints 5
 }
 ```
 
@@ -493,7 +496,7 @@ lives under `sys/` and is marked as built in where it is documented. A
 program still imports it explicitly, by its `sys/` path, and calls it by
 the last element of the path.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -522,7 +525,7 @@ program.
 The most basic statement is the *if* statement, which is going to
 execute a block of code only if a condition is true.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -537,7 +540,7 @@ func main () {
 The example above won't do anything, as the condition for the *if*
 statement is always going to evaluate to *false*.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -551,7 +554,7 @@ func main () {
 
 In contrast, the example above will always print.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -577,7 +580,7 @@ of *else if* blocks, which check for as many different conditions as you like.
 Giving you similar functionality as Go's *switch*/*select* blocks (containing
 various conditions/cases).
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -604,13 +607,13 @@ CX's only looping statement is the *for* loop. Similar to Go, the
 *for* loop in CX can be used as the *while* statement in other
 programming languages, and as a traditional *for* statement.
 
-```
+```cx
 package main
 
 import "sys/string"
 
 func main () {
-	for true {
+	for 1 == 1 {
 		string.PrintLine("forever")
 	}
 }
@@ -621,7 +624,13 @@ the example above. In this case, the loop will print the character
 string "forever" indefinitely. If you try this code, remember that you
 can cancel the program's execution by hitting `Ctrl-C`.
 
-```
+The usual way to write this loop is `for true { ... }`, but that form
+does not run its body at all. This is an open bug
+([skycoin-cx#20](https://github.com/skycoin/skycoin-cx/issues/20)). A
+bare boolean variable as the condition, `for running { ... }`, is a
+syntax error. Use a comparison such as `for running == true { ... }`.
+
+```cx
 package main
 
 import "sys/string"
@@ -638,7 +647,7 @@ as its predicate, rather than a literal `true` or `false`. It is worth
 mentioning that strings have no `==` operator, see [Language versions](#language-versions).
 
 
-```
+```cx
 package main
 
 func main () {
@@ -658,7 +667,7 @@ counter. Nevertheless, just like in C, there's nothing stopping you
 from doing whatever you want in the first and last parts. However, the
 predicate part needs to be an expression that evaluates to a Boolean.
 
-```
+```cx
 package main
 
 func main () {
@@ -671,7 +680,7 @@ func main () {
 A more Go-ish way of declaring and initializing the counter is to use
 an inline declaration, as seen in the example above.
 
-```
+```cx
 package main
 
 func main () {
@@ -691,7 +700,7 @@ as seen above.
 `goto` can be used to immediately jump the execution of a program to
 the corresponding labeled expression.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -716,11 +725,11 @@ takes into consideration the variables that are receiving the
 function's output arguments, the input arguments, and any dereference
 operations.
 
-```
+```cx
 package main
 
-func foo () (arr [2]i32) {
-    arr = [2]i32{10, 20}
+func foo () (slc []i32) {
+    slc = []i32{10, 20}
 }
 
 func main () {
@@ -729,15 +738,17 @@ func main () {
 ```
 
 For example, the expression `i32.print(foo()[0])` in the code above
-consists of two function calls, and the array returned by the call
-to `foo` is "dereferenced" to its *0th* element.
+consists of two function calls, and the slice returned by the call
+to `foo` is "dereferenced" to its *0th* element. The example returns
+a slice because of an open bug: a function that returns an array, such
+as `[2]i32`, makes the compiler panic with "type is not known".
 
 ## [Assignments and Initializations](#table-of-contents)
 
 As in many other C-like languages, assignments are done using the
 equal (`=`) sign.
 
-```
+```cx
 package main
 
 func main () {
@@ -751,7 +762,7 @@ In the case of the code above, the variable `foo` is declared and then
 initialized to `5` using the `=` sign. Then we reassign the `foo`
 variable to the value `50`.
 
-```
+```cx
 package main
 
 func main () {
@@ -767,59 +778,17 @@ in the example above.
 
 ## [Affordances](#table-of-contents)
 
-The affordance system in CX uses a special operator: `->`.  This
-operator takes a series of statements that have the form of function
-calls, and transforms them to a series of instructions that can be
-internally interpreted by the affordance system.
+The affordance system lets a program ask, at run time, what can be
+done with one of its own objects, such as an expression, a function or
+a package, and filter the answers with predicate functions. A block
+written `#{ ... }` holds the target and the filters, and functions of
+the `aff` package, such as `aff.query`, run the query.
 
-
-```
-package main
-
-import "sys/string"
-
-func exprPredicate (expr Expression) (res bool) {
-	if string.EqualityByByteValue(expr.Operator, "i32.add") {
-		res = true
-	}
-}
-
-func prgrmPredicate (prgrm Program) () {
-	if prgrm.FreeHeap > 50 {
-		res = true
-	}
-}
-
-func main () {
-	num1 := 5
-	num2 := 10
-
-targetExpr:
-	sum := i32.add(0, 0)
-
-	tgt := ->{
-		pkg(main)
-		fn(main)
-		expr(targetExpr)
-	}
-
-	fltrs := ->{
-		filter(exprPredicate)
-		filter(prgrmPredicate)
-	}
-
-	aff.print(tgt)
-	aff.print(fltrs)
-
-	affs := aff.query(fltrs, tgt)
-
-	aff.on(affs, tgt)
-	aff.of(affs, tgt)
-
-	aff.inform(affs, 0, tgt)
-	aff.request(affs, 0, tgt)
-}
-```
+Affordances cannot be used right now, which is an open bug. Their
+opcodes are still in the compiler, but `aff` is not in the list of
+built-in packages, so `import "aff"` fails and `import "sys/aff"` is an
+unknown built-in package. The programs in `tests/examples/affordances`
+fail to load for the same reason.
 
 # [Runtime](#table-of-contents)
 
@@ -857,7 +826,7 @@ variable yet. For example: `1`, `true`, `[]i32{1, 2, 3}`, `Point{x:
 It's important to make a distinction, particularly with *arrays*,
 *slices* and *struct instances*.
 
-```
+```cx
 package main
 
 type Point struct {
@@ -886,7 +855,7 @@ created. CX creates an anonymous struct instance as soon as it
 encounters `Points{x: 11, y: 21}`, and then it proceeds to assign that
 literal to the `p2` variable, using *short variable declarations*.
 
-```
+```cx
 package main
 
 func main () {
@@ -895,11 +864,12 @@ func main () {
 	arr1[1] = 2
 	arr1[2] = 3
 
-	arr2 := [3]i32{10, 20, 30}
+	var arr2 [3]i32
+	arr2 = [3]i32{10, 20, 30}
 }
 ```
 
-```
+```cx
 package main
 
 func main () {
@@ -908,7 +878,8 @@ func main () {
 	slc1 = append(slc1, 2)
 	slc1 = append(slc1, 3)
 
-	slc2 := []i32{10, 20, 30}
+	var slc2 []i32
+	slc2 = []i32{10, 20, 30}
 }
 ```
 Similarly, in the two examples above we can see how we can declare
@@ -916,16 +887,21 @@ array and slice variables and then we initialize them. In the case of
 arrays, we use the bracket notation, and for slices we have to use
 `append`, as `slc1` starts with a size and capacity of 0. In the cases
 of `arr2` and `slc2`, we use literals to initialize them more
-conveniently.
+conveniently. A short variable declaration works with a struct
+literal, as `p2` shows above. Because of an open bug it does not work
+with an array or slice literal: `arr2 := [3]i32{10, 20, 30}` is a
+compile error that takes `arr2` to be an *i32*.
 
 Regarding numbers, you need to be aware that implicit casting does not
 exist in CX. This means that the number `34` cannot be assigned to a
 variable of type *i64*. In order to assign it, you need to either
 parse it using the native function `i32.i64` or you can create a
-64-bit integer literal. To create a number literal of a type other
-than *i32*, you can use different suffixes: `B`, `L` and `D`, for
-*byte*, *i64* (long) and *f64*, respectively. So, assuming `foo` is of
-type *i64*, you can do this assignment: `foo = 34L`.
+64-bit integer literal. An integer literal without a suffix is an
+*i32* and a floating-point literal without a suffix is an *f32*. For
+other types, use these suffixes: `B` for *i8*, `H` for *i16*, `L` for
+*i64*, `UB` for *ui8*, `UH` for *ui16*, `U` for *ui32*, `UL` for
+*ui64* and `D` for *f64*. So, assuming `foo` is of type *i64*, you can
+do this assignment: `foo = 34L`.
 
 ### [Variables](#table-of-contents)
 
@@ -934,7 +910,7 @@ reserved in the stack for each of the functions. CX can know this
 thanks to variable declarations.
 
 
-```
+```cx
 package main
 
 type Point struct {
@@ -963,7 +939,7 @@ to reserve bytes for two local variables: a 32-bit integer and a
 single-precision floating point number, where each of them require 4
 bytes.
 
-```
+```cx
 package main
 
 var global1 i32
@@ -984,7 +960,7 @@ A global scope means that variables of this type are accessible to any
 function declared in the same package where the variable is declared,
 and to any function of other packages that are importing this package.
 
-```
+```cx
 package main
 
 func main () {
@@ -1009,16 +985,16 @@ pointer is located in the heap memory segment, instead of the stack.
 
 ### [Primitive types](#table-of-contents)
 
-There are seven primitive types in CX: *bool*, *str*, *byte*, *i32*,
-*i64*, *f32*, and *f64*. These types can be used to construct other
-more complex types, as will be seen in the next sections.
+There are twelve primitive types in CX: *bool*, *str*, *i8*, *i16*,
+*i32*, *i64*, *ui8*, *ui16*, *ui32*, *ui64*, *f32* and *f64*. These
+types can be used to construct other more complex types, as will be
+seen in the next sections.
 
-*bool* and *byte* both require a single byte to represent their
+*bool*, *i8* and *ui8* require a single byte to represent their
  values. In the case of *bool*, there are only two possible values:
- `true` or `false`. In the case of *byte* you can represent up to 256
- values, which range from 0 to 255. Next in size, we have *i32* and
- *f32* , where both of them require 4 bytes, and then we have *i64*
- and *f64*, which require 8 bytes each.
+ `true` or `false`. A *ui8* holds 256 values, from 0 to 255. *i16* and
+ *ui16* take 2 bytes, *i32*, *ui32* and *f32* take 4 bytes, and
+ *i64*, *ui64* and *f64* take 8 bytes each.
 
 Now, strings are special as they are static and dynamic sized at the
 same time. If you have a look at how a variable of type *str* reserves
@@ -1027,7 +1003,7 @@ of what text it's pointing to. The explanation behind this is that any
 *str* in CX actually behaves like a pointer behind the scenes, and the
 actual string gets stored in the heap memory segment.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1059,7 +1035,7 @@ collections of data structures. These data structures can be primitive
 types, custom types or even arrays or slices.
 
 
-```
+```cx
 package main
 
 type Point struct {
@@ -1068,8 +1044,8 @@ type Point struct {
 }
 
 func main () {
-    var [5]i32
-    var [5]Point
+    var nums [5]i32
+    var points [5]Point
 }
 ```
 
@@ -1096,7 +1072,7 @@ lot. A way to avoid this is to either use pointers to arrays or slices.
 Dynamic arrays don't exist in CX. This means that the following
 code is not a valid CX program:
 
-```
+```cx compile-error
 package main
 
 func main () {
@@ -1122,7 +1098,7 @@ capacity of 0. The size represents how many elements are in a given
 slice, while the capacity represents how many elements can be
 allocated in that slice without having to be relocated in the heap.
 
-```
+```cx
 package main
 
 func main () {
@@ -1174,7 +1150,7 @@ overflow it. This is why slices keep track of two metrics: *size* and
 *capacity*, i.e. how many actual elements are in the slice, and how
 many elements the currently allocated slice can hold, respectively.
 
-```
+```cx
 package main
 
 func main () {
@@ -1208,7 +1184,7 @@ type `Point`, you can use a structure that contains two fields of type
 *i32*, one for `x` and another for `y`, as in the example below.
 
 
-```
+```cx
 package main
 
 type Point struct {
@@ -1229,7 +1205,7 @@ reserves memory to hold space for all the fields defined in the
 structure declaration. Like in C, the bytes are reserved depending on
 the order of the fields in the structure declaration.
 
-```
+```cx
 package main
 
 type struct1 struct {
@@ -1264,7 +1240,7 @@ of fields and of the same type, the byte layout changes.
 Sometimes it's useful to pass variables to functions by reference
 instead of by value.
 
-```
+```cx
 package main
 import "sys/time"
 
@@ -1294,7 +1270,7 @@ The example above is very inefficient, as CX is going to be sending a
 called, every byte of that matrix needs to be copied for `foo`. In my
 computer the example above takes around 638 milliseconds to run.
 
-```
+```cx
 package main
 import "sys/time"
 
@@ -1321,13 +1297,12 @@ func main () {
 
 A new version of the last program is shown above. In contrast to the
 last program, the code above sends a pointer to the matrix to
-`foo`. A pointer in CX uses only 4 bytes (in the future, pointers will
-use 8 bytes in 64-bit systems and 4 bytes in 32-bit systems), so
-instead of copying 10,000 bytes, we only copy 4 bytes to `foo` every
-time we call it. This version of the program takes only 3 milliseconds
+`foo`. A pointer in CX uses 4 bytes, or 8 bytes in a `cx` built with
+`make build TAGS=ptr64`, so instead of copying 40,000 bytes, we only
+copy 4 bytes to `foo` every time we call it. This version of the program takes only 3 milliseconds
 to run in my computer.
 
-```
+```cx
 package main
 
 func foo (inp i32) {
@@ -1348,7 +1323,7 @@ the input's value to `10`. If we print the value of `num` before and
 after calling `foo`, we can see that in both instances `15` will be
 printed to the console.
 
-```
+```cx
 package main
 
 func foo (num *i32) {
@@ -1374,7 +1349,7 @@ you'll notice that, this time, `foo` is now changing `num`'s value.
 
 Consider the following example:
 
-```
+```cx
 package main
 
 func foo () (pNum *i32) {
@@ -1400,12 +1375,16 @@ func main () {
 
 If we store `foo`'s `num`'s value (`5`) in the stack, and then we call
 `stackDestroyer`, isn't `arr` going to overwrite the bytes storing the
-`5`? This doesn't happen, because that `5` is now in the heap. But
+`5`? The design says this doesn't happen, because that `5` is moved to
+the heap. Because of an open escape analysis bug it does happen: the program prints `0`,
+not `5`, so a pointer returned from a function can point at stack
+memory that a later call overwrites. The rest of this section
+describes the intended behavior. But
 this doesn't mean that any value being pointed to is going to be moved
 to the heap. For example, let's re-examine one of the examples
 presented in the *Pointers* section:
 
-```
+```cx
 package main
 
 func foo (num *i32) {
@@ -1425,12 +1404,11 @@ If any value being pointed to by a pointer was sent to the heap, we
 wouldn't be able to change `num`s value, which is stored in the stack;
 we would be changing the heap's copied value.
 
-```
+```cx
 package main
 
 func foo () (pNum *i32) {
 	var num i32
-	var pNum *i32
 
 	num = 5
 
@@ -1441,7 +1419,7 @@ func main () {
 	var pNum *i32
 	pNum = foo()
 
-	i32.print(*pNum) // prints 5, which is stored in the heap
+	i32.print(*pNum) // prints 5
 }
 ```
 
@@ -1451,12 +1429,11 @@ the heap. In the example above, we can see that `num`'s value is going
 to be preserved by escaping to the heap, as we are returning a pointer
 to it from `foo`.
 
-```
+```cx
 package main
 
 func foo () (pNum *i32) {
 	var num i32
-	var pNum *i32
 
 	num = 5 // this is in the stack
 
@@ -1472,16 +1449,18 @@ func main () {
 	pNum = foo()
 	stackDestroyer() // if 5 does not escape, it would be destroyed by this function
 
-	i32.print(*pNum) // prints 5, which is stored in the heap
+	i32.print(*pNum) // should print 5, prints 0 (escape analysis bug)
 }
 ```
 
 We can check this behavior even further in the example above. After
 calling `foo`, we call `stackDestroyer`, which overwrites the
-following 20 bytes after `main`'s stack frame. Yet, when we call
-`i32.print(*pNum)`, we'll see that we still have access to a `5`. This
-`5` is not the one created in `foo`, though, but a copy of it that was
-allocated in the heap.
+following 20 bytes after `main`'s stack frame. If `num` escaped, the
+call `i32.print(*pNum)` would still find a `5`, a copy of it that was
+allocated in the heap. Because of the same bug it prints `0`, which shows
+that the value stayed on the stack. The previous example prints `5`
+only because nothing overwrites that part of the stack before the
+print.
 
 ## [Control Flow](#table-of-contents)
 
@@ -1496,7 +1475,7 @@ frequently calling. In addition to encapsulating a series of
 expressions and statements, we can also receive input parameters and
 return output parameters, just like mathematical functions.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1524,7 +1503,7 @@ repetitive. We can fix this by creating a function, as seen in the
 example below.
 
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1551,7 +1530,7 @@ Methods are useful when we want to associate a particular function to
 a particular custom type (associating functions to primitive types is
 not allowed). This allows us to create more readable code.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1631,7 +1610,7 @@ that we're using to call it.
  where *n* is the number of instructions in the *if* block of
  instructions.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1645,18 +1624,23 @@ func main () {
 ```
 
 ```
-Program
 0.- Package: main
+	Imports
+		0.- Import: string
 	Functions
 		0.- Function: main () ()
-			0.- Expression: jmp(true bool)
-			1.- Expression: string.PrintLine("" str)
-			2.- Expression: jmp(true bool)
-			3.- Expression: string.PrintLine("" str)
-		1.- Function: *init () ()
+			0.- Line: 8: }
+			1.- Expression: jmp(*lit bool)
+			2.- Line: 7: string.PrintLine("hi")
+			3.- Expression: string.PrintLine(*lit str)
+			4.- Line: 8: }
+			5.- Expression: jmp(*lit bool)
+			6.- Line: 9: string.PrintLine("bye")
+			7.- Expression: string.PrintLine(*lit str)
 ```
 
-In the two code snippets above we can see how an if statement is
+In the two code snippets above, the second printed by `cx -ast`, we
+can see how an if statement is
 translated by the parser to a set of two `jmp` instructions. These
 `jmp` instructions have some meta data in them that is not shown in
 the second snippet: how many lines to jump if its predicate is true
@@ -1664,7 +1648,7 @@ and how many lines to jump if the predicate is false. `jmp` is
 not meant to be used by CX programmers (it's only part of the CX base
 language), so you don't need to worry about it.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1726,7 +1710,7 @@ The *for* loop is the only looping mechanism in CX. Just like *if* and
 *if/else* statements are constructed using `jmp` statements, *for*
 loop statements are also constructed the same way.
 
-```
+```cx
 package main
 
 func main () {
@@ -1737,25 +1721,29 @@ func main () {
 ```
 
 ```
-Program
 0.- Package: main
 	Functions
 		0.- Function: main () ()
-			0.- Declaration: c i32
-			1.- Expression: c i32 = identity(0 i32)
-			2.- Expression: *lcl_0 bool = lt(c i32, 10 i32)
-			3.- Expression: jmp(*lcl_0 bool)
-			4.- Expression: i32.print(c i32)
-			5.- Declaration: c i32
-			6.- Expression: c i32 = i32.add(c i32, 1 i32)
-			7.- Expression: jmp(true bool)
-		1.- Function: *init () ()
+			0.- Line: 4: for c := 0;
+			1.- Declaration: 1:c i32
+			2.- Expression: 1:c i32 = identity(*lit i32)
+			3.- Line: 4: for c := 0; c < 10;
+			4.- Expression: *tmp_0 bool = i32.lt(1:c i32, *lit i32)
+			5.- Line: 6: }
+			6.- Expression: jmp(*tmp_0 bool)
+			7.- Line: 5: i32.print
+			8.- Expression: i32.print(1:c i32)
+			9.- Line: 4: for c := 0; c < 10; c++
+			10.- Expression: 1:c i32 = i32.add(1:c i32, *lit i32)
+			11.- Line: 6: }
+			12.- Expression: jmp(*lit bool)
 ```
 
-The code snippets above illustrate how a *for* loop that counts from 0
+The code snippets above, the second printed by `cx -ast`, illustrate
+how a *for* loop that counts from 0
 to 9 is translated to a set of of `jmp` instructions.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1802,7 +1790,7 @@ func (monster Monster) draw () {
 ▔▔╰━╯╰━╯▔▔`))
 }
 
-func (player Player) attack (cmd str, monster *Monster) {
+func playerAttack (player Player, cmd str, monster *Monster) {
 	if bool.or(string.EqualityByByteValue(cmd, "M"), string.EqualityByByteValue(cmd, "m")) {
 		var dmg i32
 		dmg = i32.rand(1, 4)
@@ -1816,7 +1804,7 @@ func (player Player) attack (cmd str, monster *Monster) {
 	}
 }
 
-func (monster Monster) attack (cmd str, player *Player) {
+func monsterAttack (monster Monster, cmd str, player *Player) {
 	var dmg i32
 	dmg = i32.rand(1, 5)
 	(*player).HP = (*player).HP - dmg
@@ -1863,11 +1851,7 @@ func main () {
 	player.draw()
 	monster.draw()
 
-	for true {
-		if player.HP < 1 || monster.HP < 1 {
-			return
-		}
-
+	for player.HP > 0 && monster.HP > 0 {
 		printf("Command? (M)agic; (P)hysical; (E)xit\t")
 		var cmd str
 		cmd = read()
@@ -1879,8 +1863,8 @@ func main () {
 		player.draw()
 		monster.draw()
 
-		player.attack(cmd, &monster)
-		monster.attack(cmd, &player)
+		playerAttack(player, cmd, &monster)
+		monsterAttack(monster, cmd, &player)
 		battleStatus(player, monster)
 	}
 }
@@ -1889,13 +1873,20 @@ func main () {
 Lastly, we can see how we use a *for* loop to create something similar
 to a REPL for the program that we have been building in the last few sections.
 
+The attacks are plain functions rather than methods because of an
+open bug. A method call whose first argument is not a literal, such
+as `player.attack(cmd, &monster)` or `p.move(&q)`, fails to compile
+with "illegal method call or field access". A second open bug: when
+several lines are piped into this program at once, the second `read`
+fails with a runtime error. Typing the commands works.
+
 ### [Go-to](#table-of-contents)
 
 The last control flow mechanism is *go-to*, which is achieved through
 the `goto` statement.
 
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1937,11 +1928,14 @@ expression depending on the command.
 
 ## [Affordances](#table-of-contents)
 
-![CX Affordances](documentation/images/affordances.png)
+![CX Affordances](docs/images/affordances.png)
+
+The diagram shows the design. See [Affordances](#affordances) above for
+why they cannot be used yet.
 
 # [Native Functions](#table-of-contents)
 
-## Type-inferenced Functions
+## [Type-inferenced Functions](#table-of-contents)
 
 CX has a small set of functions that are not associated to a single
 type signature. For example, instead of using `i32.add` to add two
@@ -1960,14 +1954,14 @@ below, we list the compatible types for the corresponding functions.
 ### `uneq`
 
 Note: the preceding functions only work with arguments of type
-*bool*, *byte*, *i32*, *i64*, *f32*, *f64* or a pointer. Two pointers
+*bool*, any integer type, *f32*, *f64* or a pointer. Two pointers
 are equal when they hold the same address. Strings are compared with
 `string.EqualityByByteValue` or `string.EqualityByHeapPointer`, see
 [Language versions](#language-versions).
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -1988,14 +1982,14 @@ func main () {
 ### `lteq`
 ### `gteq`
 
-Note: the preceding function only works with arguments of type *byte*,
-*bool*, *i32*, *i64*, *f32* or *f64*. Pointers cannot be ordered.
+Note: the preceding functions only work with arguments of an integer
+type, *f32* or *f64*. Booleans and pointers cannot be ordered.
 Strings are ordered with `string.OrderingByByteValue`, which returns -1, 0
 or 1, see [Language versions](#language-versions).
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2021,12 +2015,12 @@ func main () {
 ### `bitshl`
 ### `bitshr`
 
-Note: the preceding functions only work with arguments of type *i32*
-or *i64*.
+Note: the preceding functions only work with arguments of an integer
+type: *i8*, *i16*, *i32*, *i64*, *ui8*, *ui16*, *ui32* or *ui64*.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2056,16 +2050,16 @@ func main () {
 ### `div`
 
 Note: the preceding functions only work with arguments of type
-*byte*, *i32*, *i64*, *f32* or *f64*.
+an integer type, *f32* or *f64*.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
-	byte.print(add(5B, 10B))
-	byte.print(5B + 10B) // alternative
+	i8.print(add(5B, 10B))
+	i8.print(5B + 10B) // alternative
 
 	i32.print(sub(3, 7))
 	i32.print(3 - 7) // alternative
@@ -2078,30 +2072,30 @@ func main () {
 }
 ```
 
-### [`mod`](#table-of-contents)
+### `mod`
 
-Note: the preceding function only works with arguments of type *byte*,
-*i32* or *i64*.
+Note: the preceding function works with arguments of an integer type,
+*f32* or *f64*.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
-	byte.print(mod(5B, 3B))
-	byte.print(5B % 3B) // alternative
+	i8.print(mod(5B, 3B))
+	i8.print(5B % 3B) // alternative
 }
 ```
 
-### [`len`](#table-of-contents)
+### `len`
 
 Note: the preceding function only works with arguments of type *str*,
 *arrays* or *slices*.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2119,7 +2113,7 @@ func main () {
 }
 ```
 
-### [`printf`](#table-of-contents)
+### `printf`
 
 Note: the preceding function requires a format *str* as its first
 argument, followed by any number of arguments of type *str*, *i32*,
@@ -2129,7 +2123,7 @@ point numbers.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2147,7 +2141,7 @@ func main () {
 }
 ```
 
-### [`sprintf`](#table-of-contents)
+### `sprintf`
 
 Note: the preceding function requires a format *str* as its first
 argument, followed by any number of arguments of type *str*, *i32*,
@@ -2155,7 +2149,7 @@ argument, followed by any number of arguments of type *str*, *i32*,
 directives: `%s` for strings, `%d` for integers and `%f` for floating
 point numbers.
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2180,7 +2174,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2204,9 +2198,11 @@ print output to a terminal.
 
 ### `read`
 
+`read` reads one line from standard input.
+
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2214,21 +2210,21 @@ import "sys/string"
 func main () {
 	var password str
 
-	for true {
+	printf("What's the password, kid? ")
+	password = read()
+
+	for bool.not(string.EqualityByByteValue(password, "123")) {
+		string.PrintLine("Wrong, but you'll get another chance.")
 		printf("What's the password, kid? ")
 		password = read()
-
-		if string.EqualityByByteValue(password, "123") {
-			string.PrintLine("Welcome back.")
-			return
-		} else {
-			string.PrintLine("Wrong, but you'll get another chance.")
-		}
 	}
+
+	string.PrintLine("Welcome back.")
 }
 ```
 
-### `byte.print`
+### `i8.print`
+### `ui8.print`
 ### `bool.print`
 ### `string.PrintLine`
 ### `i32.print`
@@ -2237,22 +2233,26 @@ func main () {
 ### `f64.print`
 ### `printf`
 
+Every integer type has its own print function, from `i8.print` to
+`ui64.print`.
+
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
 
 func main () {
-    byte.print(5B)
+    i8.print(5B)
+    ui8.print(5UB)
     bool.print(true)
     string.PrintLine("Hello!")
     i32.print(5)
     i64.print(5L)
     f32.print(5.0)
     f64.print(5.0D)
-    printf("For a better example, check section Type-inferenced Functions'")
+    printf("For a better example, check section Type-inferenced Functions\n")
 }
 ```
 
@@ -2260,35 +2260,37 @@ func main () {
 
 All parse functions follow the same pattern: `XXX.YYY` where *XXX* is
 the receiving type and *YYY* is the target type. You can read these
-functions as "parse XXX to YYY".
+functions as "parse XXX to YYY". Every numeric type can be parsed to
+every other numeric type and to *str*, so besides the ones listed
+below there are, for example, `i16.f64` and `ui32.i8`. Strings are
+parsed with the `string.Parse...` functions of `sys/string`.
 
-### `byte.str`
-### `byte.i32`
-### `byte.i64`
-### `byte.f32`
-### `byte.f64`
-
+### `ui8.str`
+### `ui8.i32`
+### `ui8.i64`
+### `ui8.f32`
+### `ui8.f64`
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
 
 func main () {
-	var b byte
-	b = 30B
+	var b ui8
+	b = 30UB
 
-	string.PrintLine(string.Concatenation("Hello, ", byte.str(b)))
-	i32.print(5 + byte.i32(b))
-	i64.print(10L + byte.i64(b))
-	f32.print(33.3 + byte.f32(b))
-	f64.print(50.111D + byte.f64(b))
+	string.PrintLine(string.Concatenation("Hello, ", ui8.str(b)))
+	i32.print(5 + ui8.i32(b))
+	i64.print(10L + ui8.i64(b))
+	f32.print(33.3 + ui8.f32(b))
+	f64.print(50.111D + ui8.f64(b))
 }
 ```
 
-### `i32.byte`
+### `i32.ui8`
 ### `i32.str`
 ### `i32.i64`
 ### `i32.f32`
@@ -2296,7 +2298,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2306,14 +2308,14 @@ func main () {
 	num = 43
 
 	string.PrintLine(string.Concatenation("Hello, ", i32.str(num)))
-	byte.print(5B + i32.byte(num))
+	ui8.print(5UB + i32.ui8(num))
 	i64.print(10L + i32.i64(num))
 	f32.print(33.3 + i32.f32(num))
 	f64.print(50.111D + i32.f64(num))
 }
 ```
 
-### `i64.byte`
+### `i64.ui8`
 ### `i64.str`
 ### `i64.i32`
 ### `i64.f32`
@@ -2321,7 +2323,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2331,14 +2333,14 @@ func main () {
 	num = 43L
 
 	string.PrintLine(string.Concatenation("Hello, ", i64.str(num)))
-	byte.print(5B + i64.byte(num))
-	i64.print(10L + i64.i64(num))
+	ui8.print(5UB + i64.ui8(num))
+	i32.print(10 + i64.i32(num))
 	f32.print(33.3 + i64.f32(num))
 	f64.print(50.111D + i64.f64(num))
 }
 ```
 
-### `f32.byte`
+### `f32.ui8`
 ### `f32.str`
 ### `f32.i32`
 ### `f32.i64`
@@ -2346,7 +2348,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2356,14 +2358,14 @@ func main () {
 	num = 43.33
 
 	string.PrintLine(string.Concatenation("Hello, ", f32.str(num)))
-	byte.print(5B + f32.byte(num))
-	i32.print(33 + f32.f32(num))
+	ui8.print(5UB + f32.ui8(num))
+	i32.print(33 + f32.i32(num))
 	i64.print(10L + f32.i64(num))
 	f64.print(50.111D + f32.f64(num))
 }
 ```
 
-### `f64.byte`
+### `f64.ui8`
 ### `f64.str`
 ### `f64.i32`
 ### `f64.i64`
@@ -2371,7 +2373,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2381,14 +2383,14 @@ func main () {
 	num = 43.33D
 
 	string.PrintLine(string.Concatenation("Hello, ", f64.str(num)))
-	byte.print(5B + f64.byte(num))
-	i32.print(33 + f64.f32(num))
+	ui8.print(5UB + f64.ui8(num))
+	i32.print(33 + f64.i32(num))
 	i64.print(10L + f64.i64(num))
 	f32.print(50.111 + f64.f32(num))
 }
 ```
 
-### `str.byte`
+### `string.ParseDecimalUI8`
 ### `string.ParseDecimalI32`
 ### `string.ParseDecimalI64`
 ### `string.ParseFloatF32`
@@ -2396,7 +2398,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2405,11 +2407,11 @@ func main () {
 	var num str
 	num = "33"
 
-	byte.print(5B + str.byte(num))
-	i32.print(33 + string.ParseFloatF32(num))
+	ui8.print(5UB + string.ParseDecimalUI8(num))
+	i32.print(33 + string.ParseDecimalI32(num))
 	i64.print(10L + string.ParseDecimalI64(num))
 	f32.print(50.111 + string.ParseFloatF32(num))
-	f64.print(50.111D + string.ParseFloatF32(num))
+	f64.print(50.111D + string.ParseFloatF64(num))
 }
 ```
 
@@ -2423,7 +2425,7 @@ package is working as intended.
 
 #### Example
 
-```
+```cx
 package main
 
 func foo() (res str) {
@@ -2460,7 +2462,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2493,7 +2495,7 @@ functions raise a runtime error when `s` does not parse.
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2516,7 +2518,7 @@ see [Language versions](#language-versions).
 
 #### Example
 
-```
+```cx
 package main
 
 import "sys/string"
@@ -2535,7 +2537,9 @@ func main () {
 ## [`i32` Type Functions](#table-of-contents)
 
 The following functions are of general purpose and are restricted to
-work with data structures of type *i32* where it makes sense.
+work with data structures of type *i32* where it makes sense. There are
+no `log`, `pow` or `sqrt` functions for integer types. Parse to *f32*
+or *f64* and use theirs.
 
 ### `i32.print`
 ### `i32.add`
@@ -2547,7 +2551,7 @@ work with data structures of type *i32* where it makes sense.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2560,26 +2564,6 @@ func main () {
 }
 ```
 
-### `i32.log`
-### `i32.log2`
-### `i32.log10`
-### `i32.pow`
-### `i32.sqrt`
-
-#### Example
-
-```
-package main
-
-func main () {
-	i32.print(i32.log(13))
-	i32.print(i32.log2(3))
-	i32.print(i32.log10(12))
-	i32.print(i32.pow(4, 4))
-	i32.print(i32.sqrt(2))
-}
-```
-
 ### `i32.gt`
 ### `i32.gteq`
 ### `i32.lt`
@@ -2589,7 +2573,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2611,7 +2595,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2629,7 +2613,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2642,7 +2626,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2653,7 +2637,9 @@ func main () {
 ## [`i64` Type Functions](#table-of-contents)
 
 The following functions are of general purpose and are restricted to
-work with data structures of type *i64* where it makes sense.
+work with data structures of type *i64* where it makes sense. There are
+no `log`, `pow` or `sqrt` functions for integer types. Parse to *f32*
+or *f64* and use theirs.
 
 ### `i64.print`
 ### `i64.add`
@@ -2665,7 +2651,7 @@ work with data structures of type *i64* where it makes sense.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2678,26 +2664,6 @@ func main () {
 }
 ```
 
-### `i64.log`
-### `i64.log2`
-### `i64.log10`
-### `i64.pow`
-### `i64.sqrt`
-
-#### Example
-
-```
-package main
-
-func main () {
-	i64.print(i64.log(13L))
-	i64.print(i64.log2(3L))
-	i64.print(i64.log10(12L))
-	i64.print(i64.pow(4L, 4L))
-	i64.print(i64.sqrt(2L))
-}
-```
-
 ### `i64.gt`
 ### `i64.gteq`
 ### `i64.lt`
@@ -2707,7 +2673,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2729,7 +2695,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2747,7 +2713,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2760,7 +2726,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2782,7 +2748,7 @@ work with data structures of type *f32* where it makes sense.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2802,7 +2768,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2819,7 +2785,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2837,7 +2803,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2855,7 +2821,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2878,7 +2844,7 @@ work with data structures of type *f64* where it makes sense.
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2898,7 +2864,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2915,7 +2881,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2933,7 +2899,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2951,7 +2917,7 @@ func main () {
 
 #### Example
 
-```
+```cx
 package main
 
 func main () {
@@ -2974,7 +2940,7 @@ the import is a compile error.
 
 #### Example
 
-```
+```cx
 package main
 import "sys/time"
 
@@ -2996,7 +2962,7 @@ func main () {
 }
 ```
 
-## `os` Package Functions
+## [`os` Package Functions](#table-of-contents)
 
 Built in, import with `import "sys/os"`. The `json` functions are built
 in too and are imported with `import "sys/json"`.
@@ -3015,16 +2981,22 @@ file, `os.Open` returns -1 (#433).
 ### `os.Open`
 ### `os.Close`
 
+`os.Open` returns a handle, or -1 when the file cannot be opened.
+`os.Close` returns `true` when it closed the handle.
+
 #### Example
 
-```
+```cx
 package main
 import "sys/os"
 
 func main () {
 	var handle i32
 	handle = os.Open("testing.cx")
-	os.Close(handle)
+
+	var closed bool
+	closed = os.Close(handle)
+	bool.print(closed)
 }
 ```
 
@@ -3202,14 +3174,14 @@ its reassignable version.
 Reassignable is the deprecated version plus one year, same month and day,
 release 0001. Deprecated `2611200001` is reassignable from `2711200001`. A
 29 February deprecation moves to 1 March. `t1-constants/opcodes_history.go`
+lists every lifecycle event in version order. See
+[docs/Conventions.md](docs/Conventions.md).
+
 A renamed opcode keeps its number and its row, which takes the new name.
 The old name and the version of the rename are kept in
 `OpcodeRenameTable` and in the `former_names` column of the CSV, the
 old name can no longer be called, and using it is a compile error that
 names the new one. An old name is never given to another opcode.
-
-lists every lifecycle event in version order. See
-[docs/Conventions.md](docs/Conventions.md).
 
 ## Version 2611200001, 2026-11-20
 

@@ -65,7 +65,7 @@ CXOperation have the following fields:
     * CXEXPR_SCOPE_DEL
 
 ## CXFunction
-[CXFunctions](https://github.com/skycoin/cx/blob/develop/cx/cxfunction.go) are the operators in CX, whether they be custom operations, internal library operations, opcodes, or functions defined in CX. The Inputs and Outputs of the CXFunction differ from the CXExpression Inputs and Outputs because the ones the CXFunction have are parameters, not arguments. So CXExpressions store CXArguments that represent the actual input and output data during evaluation, while CXFunctions store inputs and outputs corresponding to: what kind of data types they accept; what kind of named parameters to declare; or otherwise, just type.
+[CXFunctions](../t3-ast/cxfunction_def.go) are the operators in CX, whether they be custom operations, internal library operations, opcodes, or functions defined in CX. The Inputs and Outputs of the CXFunction differ from the CXExpression Inputs and Outputs because the ones the CXFunction have are parameters, not arguments. So CXExpressions store CXArguments that represent the actual input and output data during evaluation, while CXFunctions store inputs and outputs corresponding to: what kind of data types they accept; what kind of named parameters to declare; or otherwise, just type.
 
 They have the following fields:
 * Name - name of the function, if named.
@@ -92,13 +92,13 @@ Functions/Methods (first two are functions, rest are methods):
 
 ## CXStruct
 
-[CXStructs](https://github.com/skycoin/cx/blob/develop/cx/cxstruct.go) are the custom struct types in CX, albeit all struct types in CX are currently custom types. They have a Name, a Package they reside in, an array of CXArguments which represent the field names and types, and a Size, which is the precomputed CXStruct’s size in memory. They have a MakeStruct which takes in a name and outputs a blank CXStruct with said name, and also GetFields(), GetField(name), and more:
+[CXStructs](../t3-ast/cxstruct_def.go) are the custom struct types in CX, albeit all struct types in CX are currently custom types. They have a Name, a Package they reside in, an array of CXArguments which represent the field names and types, and a Size, which is the precomputed CXStruct’s size in memory. They have a MakeStruct which takes in a name and outputs a blank CXStruct with said name, and also GetFields(), GetField(name), and more:
 * AddField - tries to add the CXArgument input to Fields. If the input’s name shares the name of another field, then CX panics. Otherwise, the input’s Offset is set to the previous field’s Offset (or zero if there are no other fields), plus the last field’s * TotalSize (or zero, if nonexistent). Size is incremented by the size of the input.
 * RemoveField - same thing as previous, but forgets to update the offset, Size, and other things.
 
 ## CXPackage
 
-[CXPackages](https://github.com/skycoin/cx/blob/develop/cx/cxpackage.go) are just like Go packages, and store globals and other things:
+[CXPackages](../t3-ast/cxpackage_def.go) are just like Go packages, and store globals and other things:
 * Name - name of the package.
 * Imports - CXPackages which this CXPackage imports.
 * Functions, Structs, Globals - exactly what you think they are. Globals has CXArguments.
@@ -106,7 +106,7 @@ Functions/Methods (first two are functions, rest are methods):
 
 ## CXProgram / Runtime
 
-The CX Runtime consists mainly of a [CXProgram](https://github.com/skycoin/cx/blob/develop/cx/cxprogram.go) object, which itself is composed of:
+The CX Runtime consists mainly of a [CXProgram](../t3-ast/cxprogram_def.go) object, which itself is composed of:
 * An array of bytes - the program memory (code, data, stack, heap segments)
 * A callstack of CXCalls, consisting of the operator (a CXFunction) and frame pointer
 * Several state registers:

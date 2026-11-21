@@ -15,7 +15,7 @@ func main () {
 }
 ```
 
-Running `cx hello-world.cx` prints out `Hello, world!`. More basic CX patterns and examples can be found in the `examples` directory. 
+Running `cx hello-world.cx` prints out `Hello, World!`. More basic CX patterns and examples can be found in the [`tests/examples`](../tests/examples) directory. 
 
 ## Basic Options
 
@@ -33,8 +33,8 @@ Once CX has been successfully installed, running `cx` should print
 this in your terminal:
 
 ```
-CX 0.5.13
-More information about CX is available at http://cx.skycoin.com/ and https://github.com/skycoin/cx/
+CX 0.8.0
+More information about CX is available at https://github.com/skycoin/skycoin-cx
 :func main {...
 	*
 ```

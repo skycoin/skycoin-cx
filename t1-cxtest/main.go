@@ -116,6 +116,7 @@ func Execute(c *cli.Command) error {
 
 	fmt.Printf("Running CX tests in dir: '%s'\n", workingDir)
 	runTestCases(tester)
+	runGuideSnippetTests(tester, workingDir)
 	end := time.Now().Unix()
 
 	if runner.Has(logMask, runner.LogTime) {
@@ -264,7 +265,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-printf-extra-values.cx", types.CX_SUCCESS, "printf prints arrays, structs and fields past the last verb as %!(EXTRA ...)",
 		"1\n%!(EXTRA i32=[0, 7, 0], point={x: 0, y: 9}, i32=9)",
 	)
-	t.RunWant("test-test-type-line.cx",types.CX_COMPILATION_ERROR, "a test(), panic or operator type error names the line of the call (skycoin-cx#259)",
+	t.RunWant("test-test-type-line.cx", types.CX_COMPILATION_ERROR, "a test(), panic or operator type error names the line of the call (skycoin-cx#259)",
 		"test-test-type-line.cx:8 first and second input arguments' types are not equal in 'test' call",
 		"test-test-type-line.cx:11 first and second input arguments' types are not equal in 'panic' call",
 		"test-test-type-line.cx:15 invalid argument types for 'add' operator",

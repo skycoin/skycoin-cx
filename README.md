@@ -61,8 +61,8 @@ only go away.
 
 ## Install
 
-CX needs Go 1.27 or newer and `make`. On Windows use Git Bash or MSYS2, so
-`make` and the check scripts have a shell.
+CX needs Go 1.27.3 or newer, as go.mod requires, and `make`. On Windows use
+Git Bash or MSYS2, so `make` and the check scripts have a shell.
 
 ```
 git clone https://github.com/skycoin/skycoin-cx
@@ -108,7 +108,8 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 - `make check` runs the tier, init, interface, recover and object model
   checks, `go vet`, the Go tests and the stable CX program tests. CI runs it
   on Linux, macOS and Windows.
-- `make test` runs only the stable CX program tests.
+- `make test` runs only the stable CX program tests, and compiles every
+  complete `cx` code block in `LanguageGuide.md`.
 - `make test-all` also runs the tests for known issues. These are expected to
   fail, and each one names its issue in `t1-cxtest/main.go`.
 - `make vet-gui` vets the cxfx build.
@@ -118,14 +119,15 @@ Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
 Works:
 
 - `make check` passes on Linux, macOS and Windows.
-- 175 stable CX program tests pass. `make test-all` passes 182 and fails the
-  20 known issue tests.
+- 231 stable CX program tests pass, and the 97 complete examples in
+  `LanguageGuide.md` compile. `make test-all` passes 238 program tests and
+  the 97 examples, and fails the 19 known issue tests.
 - The cxfx build compiles and `tests/examples/opengl/triangle.cx` draws its
   triangle under Xvfb on Linux. Other GUI programs have not been checked.
 
 Known broken:
 
-- 20 CX program tests fail, among them `for true {}`
+- 19 CX program tests fail, among them `for true {}`
   ([#20](https://github.com/skycoin/skycoin-cx/issues/20)), no short circuit
   evaluation ([#26](https://github.com/skycoin/skycoin-cx/issues/26)) and
   `-heap-max` not enforced

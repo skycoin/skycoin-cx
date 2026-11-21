@@ -16,7 +16,7 @@ process.  Without it, there can be no quality output.
 ### Register Issues
 
 If you find a bug in CX, the least you should do is to go to
-[https://github.com/skycoin/cx/issues] and register the bug.  But please try
+[https://github.com/skycoin/skycoin-cx/issues] and register the bug.  But please try
 to make sure that you have found a bug that is not already registered by
 browsing the headings of the already existing bugs.
 
@@ -38,12 +38,15 @@ In the `tests/` subdirectory, you can find a set of test programs that test
 various aspects of the CX implementation.  Currently there are two main groups
 of tests:
 
-* `issues-*.cx` which are tests which show errors that are registered as
-  issues on github.com. 
+* `issue-*.cx` which are tests which show errors that are registered as
+  issues on github.com.
 * `test-*.cx` which are more thorough tests that test specific aspects of CX.
 
-There is also a file `main.cx`, which is the starting point for running all
-tests.
+Every test is registered in `runTestCases` in `t1-cxtest/main.go`, which
+gives the expected exit code and a description. `make test` builds that
+runner and runs the stable tests. It also compiles every `cx` code block in
+`LanguageGuide.md` that has a `func main`. A block fenced as `cx compile-error`
+must fail to compile instead.
 
 The first group is known as the _regression tests_. These tests are failing
 for issues that are not yet fixed and they are passing for issues that have
@@ -162,7 +165,9 @@ the "Tour of Go" ([https://tour.golang.org/welcome/1]).
 
 All public Skycoin code is on GitHub, so that's where you will find CX.  If
 you are reading this guide, you probably already know this, but here is the
-link anyway: [https://github.com/skycoin/cx]
+link anyway: [https://github.com/skycoin/skycoin-cx]. The older
+[skycoin/cx](https://github.com/skycoin/cx) repository holds the history
+before November 2026.
 
 Skycoin uses the standard GitHub workflow where you fork the main repository,
 work in your own copy and then create pull requests to get your code into the
@@ -192,55 +197,43 @@ That will format the Go source file in place.
 ### Running the Test Suite
 
 The CX sources contain a sizable and growing test suite, containing regression
-tests from the registered issues and a product test suite.  The simplest way
-to run the test suite is running the following command in the top directory of
-the repository:
+tests from the registered issues and a product test suite. Run it from the top
+directory of the repository:
 
 ```
-cx lib/args.cx tests/main.cx ++wdir=tests
+make test       # the stable tests
+make test-all   # also the known issue tests, which are expected to fail
+make check      # every check CI runs, including the tests
 ```
 
-When you do that, you will get a list of tests that fail, looking something
-like this:
+Failing tests are listed like this:
 
 ```
-# 88 | FAILED  | 99ms | 'cx issue-141.cx' | expected cx.SUCCESS (0) | got cx.COMPILATION_ERROR (3) | Parser gets confused with `2 -2`
-# 89 | FAILED  | 127ms | 'cx issue-153.cx' | expected cx.SUCCESS (0) | got cx.PANIC (2) | Panic in when assigning an empty initializer list to a []i32 variable
+#  1 | FAILED  | na | '-heap-initial 0 test-gc.cx' | exec.Command exited with code 5, expected 0
+#  2 | FAILED  | na | 'issue-234.cx' | exec.Command exited with code 0, expected 1
 ```
 
-It should be easy to find an issue that you want to look at. If you think they
-are to many or taking to long to run, you can disable some of the tests with
-the `++disable-tests` option like this:
+To choose the tests or the logging yourself, run the runner directly:
 
 ```
-cx lib/args.cx tests/main.cx ++wdir=tests ++disable-tests=issue
+./bin/cxtest --cxpath=$PWD/bin/cx --wdir=./tests --disable-tests=gui,issue --log=fail,skip
 ```
 
-The available types of tests are `stable`, `issue` and `gui`.
+The test sets are `stable`, `issue`, `gui` and `examples`. The logging types
+are `success`, `stderr`, `fail`, `skip` and `time`, and they can be combined
+with commas.
 
-If you are using the tests while debugging, you can add more information by
-adding the `++log` option.
-
-```
-cx lib/args.cx tests/main.cx ++wdir=tests ++log=fail,skip
-```
-
-The available types of extra logging are `success`, `stderr`, `fail` and
-`skip`.  You can use them individually or combine them by separating them with
-a comma.
-
-And finally, you do not always have to run all of the test suite. You can also
-run a single test like this:
+You can also run a single test like this:
 
 ```
-cx tests/issue-141.cx
+./bin/cx tests/issue-234.cx
 ```
 
 ### Internal Documentation
 
-Documentation of the inner workings of CX can be found in the `documentation/`
-subdirectory.  At the time of writing this directory, does not contain a lot
-of such documentation, but we are working on adding more.
+Documentation of the inner workings of CX is in the `docs/` subdirectory. Start
+with [docs/Conventions.md](docs/Conventions.md), [docs/IR.md](docs/IR.md) and
+[docs/ObjectModel.md](docs/ObjectModel.md).
 
 ### Register Issues
 
@@ -251,11 +244,12 @@ find a bug in CX, please do the following:
 1. Register an issue in the Github issue tracker as above. Make note of the
    issue number.
 2. Write a new test in the `tests/` subdirectory that fails, showing the
-   issue. Name the test file as issue-<xx>.cx, where <xx> is the actual issue
-   number from step 1.   Don't forget to add the test to the list in
-   `tests/main.cx`, and tag it as `TEST_ISSUE` to group it together with the
-   other tests for Github issues.
-3. Create a pull request for the new test and new call in `tests/main.cx`.
+   issue. Name the test file issue-<xx>.cx, where <xx> is the actual issue
+   number from step 1.
+3. Register it in `runTestCases` in `t1-cxtest/main.go` with
+   `t.RunEx(..., runner.TestIssue, 0)` and a comment that names the issue,
+   so `make test` skips it and `make test-all` runs it.
+4. Create a pull request for the new test.
 
 # Other Types of Help
 

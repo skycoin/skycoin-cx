@@ -6,11 +6,11 @@
 
 ## CX Examples:
 
-* https://github.com/skycoin/cx/tree/develop/examples
+* [tests/examples](../tests/examples) in this repository
 
 ## CX Libraries:
 
-* https://github.com/skycoin/cxfx [video game library]
+* https://github.com/skycoin/cxfx [video game library, now built in as t6-cxfx, see `make build-gui`]
 * https://github.com/ReewassSquared/cxm [math library]
 * https://github.com/ReewassSquared/CXSL [general utilities library]
 * https://github.com/ReewassSquared/CXCIPHER [crypto library]
@@ -31,4 +31,4 @@
 
 ## Miscellaneous:
 
-* https://github.com/skycoin/cx-website [cx.skycoin.com]
+* https://github.com/skycoin/cx-website [the old cx.skycoin.com site, last updated 2023]

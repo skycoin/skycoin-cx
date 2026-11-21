@@ -168,7 +168,7 @@ func Eval(code string) string {
 
 func Repl() {
 	fmt.Println("CX", VERSION)
-	fmt.Println("More information about CX is available at http://cx.skycoin.com/ and https://github.com/skycoin/cx/")
+	fmt.Println("More information about CX is available at https://github.com/skycoin/skycoin-cx")
 
 	ast.InREPL = true
 

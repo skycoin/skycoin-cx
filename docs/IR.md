@@ -100,7 +100,7 @@ A function is finished by `actions.FunctionHeader`, which adds the
 | `CallStack` | `[]CXCall` | `constants.CALLSTACK_SIZE` (1000) frames, outside `Memory` |
 | `CallCounter` | `types.Pointer` | Index of the running frame in `CallStack` |
 | `Terminated` | `bool` | Set by `popStack` when `main` returns |
-| `Version` | `string` | `constants.LANGUAGE_REVISION`, see [Serialized form](#serialized-form) |
+| `Version` | `int64` | `constants.LanguageVersionCurrent`, see [Serialized form](#serialized-form) |
 | `CurrentPackage` | `CXPackageIndex` | Package being parsed, or the REPL's package |
 | `SysInitExprs` | `[]CXExpression` | Global initializers, the body of `*init` |
 

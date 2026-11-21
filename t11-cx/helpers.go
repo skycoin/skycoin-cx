@@ -212,9 +212,8 @@ type SourceCode struct {
 	Code string //Unused?
 }
 
-// GetCXPath checks if the user has set the environment variable
-// `CXPATH`. If not, CX creates a workspace at $HOME/cx, along with $HOME/cx/bin,
-// $HOME/cx/pkg and $HOME/cx/src
+// GetCXPath sets the bin, pkg and src paths from -cxpath, else CXPATH, else
+// $HOME/cx. It does not create the directories.
 func GetCXPath(options cxCmdFlags) {
 	var err error
 	CXPATH := ""
@@ -239,25 +238,4 @@ func GetCXPath(options cxCmdFlags) {
 	globals.BINPATH = filepath.Join(CXPATH, "bin/")
 	globals.PKGPATH = filepath.Join(CXPATH, "pkg/")
 	globals.SRCPATH = filepath.Join(CXPATH, "src/")
-	//why would we create directories on executing every CX program?
-	//directory creation should be on installation
-	//CreateCxDirectories(CXPATH)
 }
-
-/*
-func CreateCxDirectories(CXPATH string) {
-		// Creating directories in case they do not exist.
-		if _, err := cxcore.CXStatFile(CXPATH); os.IsNotExist(err) {
-			cxcore.CXMkdirAll(CXPATH, 0755)
-		}
-		if _, err := cxcore.CXStatFile(cxcore.BINPATH); os.IsNotExist(err) {
-			cxcore.CXMkdirAll(cxcore.BINPATH, 0755)
-		}
-		if _, err := cxcore.CXStatFile(cxcore.PKGPATH); os.IsNotExist(err) {
-			cxcore.CXMkdirAll(cxcore.PKGPATH, 0755)
-		}
-		if _, err := cxcore.CXStatFile(cxcore.SRCPATH); os.IsNotExist(err) {
-			cxcore.CXMkdirAll(cxcore.SRCPATH, 0755)
-		}
-	}
-*/

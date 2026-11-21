@@ -15,7 +15,7 @@ When submitting changes to CX core, the development team uses Git pull requests 
 
 # CX Lexer
 CX in house `lexer` generates a chain of tokens which is used by yacc for parsing.
-(found in)[lex.go] (https://github.com/skycoin/cx/cxparser/cxpartialparsing/lex.go )
+Found in [t5-cxpartialparsing/lex.go](../t5-cxpartialparsing/lex.go).
 
 
 
@@ -23,7 +23,7 @@ CX in house `lexer` generates a chain of tokens which is used by yacc for parsin
 
 `Preliminarystage`
 
-The compiler creates an AST first by using regular expression parsing (found in [utils.go](https://github.com/skycoin/cx/blob/develop/cxparser/cxparsing/utils.go#L21) which structures the AST to include all package declarations, import chains, struct declarations, and globals, skipping over comments. 
+The compiler creates an AST first by using regular expression parsing (found in [utils.go](../t9-cxparsing/utils.go) which structures the AST to include all package declarations, import chains, struct declarations, and globals, skipping over comments. 
 This preliminary stage of parsing aids further stages since the structure of a CX repository and the names of custom types are already known. 
 
 `Passone`
@@ -37,7 +37,7 @@ The second parsing stage fully compiles functions and all expressions. This func
 Finally, the `main` function and invisible `*init` functions are created, the latter of which acts as an initializer for global variables. 
 
 The lifetime of a CX program in depth is given here:
-1.Preliminarystage ](https://github.com/skycoin/cx/blob/develop/cxparser/cxparsing/utils.go#L21) - here, a copy of the source code is passed in as an array of strings, along with the file names. A series of regular expressions are compiled to check for various things. Finally, the source code is iterated over, and for each file, we iterate over a scanner of the file. Then, for each successful scan:
+1. [Preliminarystage](../t9-cxparsing/utils.go) - here, a copy of the source code is passed in as an array of strings, along with the file names. A series of regular expressions are compiled to check for various things. Finally, the source code is iterated over, and for each file, we iterate over a scanner of the file. Then, for each successful scan:
     1. We first check if we’re in a comment or not. If we are, we continue scanning and ignore the following steps.
     2. Next, we check if this current line contains a package declaration. If so, then we check if the program has added a package with that name. If not, then we add that package to the CXProgram (PRGM0, basically the main program). Remember, now that package is the current package.
     3. We do the same thing for structures.
@@ -66,7 +66,7 @@ The CX AST, or abstract syntax tree, is the intermediate representation of a CX 
 
 ## CXArgument
 
-The atomic unit of data in a program is the [CXArgument](https://github.com/skycoin/cx/blob/develop/cx/cxargument.go), which stores a symbol and a type, as well as metadata regarding said type and the relationship with other CXArguments. The object is composed of the following fields:
+The atomic unit of data in a program is the [CXArgument](../t3-ast/cxargument_def.go), which stores a symbol and a type, as well as metadata regarding said type and the relationship with other CXArguments. The object is composed of the following fields:
 * Lengths - an array of integers which specify the dimensions of a multidimensional array (first element is the outermost array length, etc).
 * DereferenceOperations - an array of integers which specify, in bytes, how much in program memory this CXArgument is offsetted from its base CXArgument. For example, for a struct field, this is the struct field’s offset in bytes. For an array element in an array of an array, this is the first array’s offset times the second array’s size times the second array’s element type size, plus the offset in the second array times the second array’s element type size.
 * DeclarationSpecifiers - an array of integer constants which specify the type of the CXArgument. For type `[][]ui8`, this is `[]int{TYPE_SLICE, TYPE_SLICE, TYPE_UI8}`.
@@ -99,11 +99,11 @@ The methods CXArgument possesses are as follows:
 * AddType (typ) - Checks to see if typ is an existing TypeCode. If so, Type is changed to typ, Size and TotalSize are changed to GetArgSize of typ, and DeclarationSpecifiers appends TYPE_BASIC. If not, Type is changed to TYPE_UNDEFINED. Returns updated CXArgument.
 * AddInput, AddOutput (inp) - appends inp to Inputs or Outputs, then, if inp.Package is nil, sets inp.Package to Package, and returns updated CXArgument.
 
-It is worth noting that CXArguments contain all the necessary data for calculating dereferences at runtime, making dereference calculations not instructions themselves, but something that is expected to be possible just from the data in a single CXArgument. Moreover, CXArguments comprise the root pointers for the garbage collector, meaning the entire heap object tree for a single CXArgument should fully represent all heap objects referenced currently under this one CXArgument. Albeit the garbage collector relies on CXFunctions to store these root CXArguments in a ListOfPointers, when it comes to traversing these objects (MarkObjectsTree and updatePointerTree in [cx/op.go](https://github.com/skycoin/cx/blob/develop/cx/op.go), the GC logic), CXArgument needs to provide everything.
+It is worth noting that CXArguments contain all the necessary data for calculating dereferences at runtime, making dereference calculations not instructions themselves, but something that is expected to be possible just from the data in a single CXArgument. Moreover, CXArguments comprise the root pointers for the garbage collector, meaning the entire heap object tree for a single CXArgument should fully represent all heap objects referenced currently under this one CXArgument. Albeit the garbage collector relies on CXFunctions to store these root CXArguments in a ListOfPointers, when it comes to traversing these objects (MarkObjectsTree and updatePointerTree in [t3-ast/garbage_collector.go](../t3-ast/garbage_collector.go), the GC logic), CXArgument needs to provide everything.
 
 ## CXExpression
 
-The core of the CX program structure are [CXExpressions](https://github.com/skycoin/cx/blob/develop/cx/cxexpression.go), which each represent a single instruction (not the operation itself, but the operation, inputs, and outputs) to perform. They comprise user-declared functions, and are the muscles of a CX program. 
+The core of the CX program structure are [CXExpressions](../t3-ast/cxexpression_def.go), which each represent a single instruction (not the operation itself, but the operation, inputs, and outputs) to perform. They comprise user-declared functions, and are the muscles of a CX program. 
 
 CXExpressions have the following fields:
 * Inputs - an array of CXArguments which are the inputs to the instruction.
@@ -127,7 +127,7 @@ CXExpression functions/methods (first one is function, rest are methods):
 
 ## CXFunction
 
-[CXFunctions](https://github.com/skycoin/cx/blob/develop/cx/cxfunction.go) are the operators in CX, whether they be custom operations, internal library operations, opcodes, or functions defined in CX. The Inputs and Outputs of the CXFunction differ from the CXExpression Inputs and Outputs because the ones the CXFunction have are parameters, not arguments. So CXExpressions store CXArguments that represent the actual input and output data during evaluation, while CXFunctions store inputs and outputs corresponding to: what kind of data types they accept; what kind of named parameters to declare; or otherwise, just type.
+[CXFunctions](../t3-ast/cxfunction_def.go) are the operators in CX, whether they be custom operations, internal library operations, opcodes, or functions defined in CX. The Inputs and Outputs of the CXFunction differ from the CXExpression Inputs and Outputs because the ones the CXFunction have are parameters, not arguments. So CXExpressions store CXArguments that represent the actual input and output data during evaluation, while CXFunctions store inputs and outputs corresponding to: what kind of data types they accept; what kind of named parameters to declare; or otherwise, just type.
 
 They have the following fields:
 * Name - name of the function, if named.
@@ -154,13 +154,13 @@ Functions/Methods (first two are functions, rest are methods):
 
 ## CXStruct
 
-[CXStructs](https://github.com/skycoin/cx/blob/develop/cx/cxstruct.go) are the custom struct types in CX, albeit all struct types in CX are currently custom types. They have a Name, a Package they reside in, an array of CXArguments which represent the field names and types, and a Size, which is the precomputed CXStruct’s size in memory. They have a MakeStruct which takes in a name and outputs a blank CXStruct with said name, and also GetFields(), GetField(name), and more:
+[CXStructs](../t3-ast/cxstruct_def.go) are the custom struct types in CX, albeit all struct types in CX are currently custom types. They have a Name, a Package they reside in, an array of CXArguments which represent the field names and types, and a Size, which is the precomputed CXStruct’s size in memory. They have a MakeStruct which takes in a name and outputs a blank CXStruct with said name, and also GetFields(), GetField(name), and more:
 * AddField - tries to add the CXArgument input to Fields. If the input’s name shares the name of another field, then CX panics. Otherwise, the input’s Offset is set to the previous field’s Offset (or zero if there are no other fields), plus the last field’s * TotalSize (or zero, if nonexistent). Size is incremented by the size of the input.
 * RemoveField - same thing as previous, but forgets to update the offset, Size, and other things.
 
 ## CXPackage
 
-[CXPackages](https://github.com/skycoin/cx/blob/develop/cx/cxpackage.go) are just like Go packages, and store globals and other things:
+[CXPackages](../t3-ast/cxpackage_def.go) are just like Go packages, and store globals and other things:
 * Name - name of the package.
 * Imports - CXPackages which this CXPackage imports.
 * Functions, Structs, Globals - exactly what you think they are. Globals has CXArguments.
@@ -170,7 +170,7 @@ Additionally, CXPackages have the same behavior as the getters, setters, makers,
 
 ## CXProgram / Runtime
 
-The CX Runtime consists mainly of a [CXProgram](https://github.com/skycoin/cx/blob/develop/cx/cxprogram.go) object, which itself is composed of:
+The CX Runtime consists mainly of a [CXProgram](../t3-ast/cxprogram_def.go) object, which itself is composed of:
 * An array of bytes - the program memory (code, data, stack, heap segments)
 * A callstack of CXCalls, consisting of the operator (a CXFunction) and frame pointer
 * Several state registers:
@@ -198,7 +198,7 @@ There are also Selectors like previously defined for CXFunctions and CXPackages-
 
 Finally, there is PrintAllObjects, a printing algorithm used for printing the program state when debugging.
 
-Some miscellaneous makers in [cx/makers.go](https://github.com/skycoin/cx/blob/develop/cx/makers.go): generateTempVarName(name) (returns unique identifier with prefix name_); MakeDefaultValue (returns a blank `[]byte` the size of the specified type name), MakeValue (serializes the value and returns `*[]byte` of said value), MakeCall (returns a blank CXCall with the specified CXFunction as the Operator), and MakeIdentityOpName (used for making identity functions for storage).
+Two small makers remain. `generateTempVarName(name)` in [t4-actions/counter.go](../t4-actions/counter.go) returns a unique identifier with the prefix `name_`. `MakeCall` in [t4-execute/execute.go](../t4-execute/execute.go) returns a blank CXCall with the given CXFunction as the Operator.
 
-The specific opcodes used by the CX runtime, among many other utilities, are found in the `cx/` [directory](https://github.com/skycoin/cx/tree/develop/cx) of this repository. 
+The opcodes used by the CX runtime are in [t4-opcodes](../t4-opcodes), and their numbers are fixed in [t1-constants/opcodes.go](../t1-constants/opcodes.go).
 

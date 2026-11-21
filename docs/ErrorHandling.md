@@ -22,9 +22,9 @@ struct, nil on success. It does not return the Go `error` interface.
 Errors are plain structs. There is no interface, and there is no shared
 error package that every module imports.
 
-Each module or system area defines its own error struct in its own package,
-for example `FileError`, `PathError`, `NetworkingError` and
-`PackageLoaderError`. Its fields are
+Each module or system area defines its own error struct in its own package.
+`FileError` in `t0-util` is the only class A struct so far, see
+[Error records today](#error-records-today). Its fields are
 
 - the failure code, a specific code for each failure,
 - the operation code, which operation failed,
@@ -80,16 +80,20 @@ Each area has a block of 1000 codes. Failure codes use the lower half of the
 block and operation codes the upper half, so a code alone names its area.
 A new area takes the next free block and is added here in the same change.
 
-| Block | Area | Struct | Package |
-|---|---|---|---|
-| 0 - 999 | CX exit and runtime codes | none, `CX_*` constants | `t0-types` |
-| 1000 - 1999 | Files | `FileError` | `t0-util` |
-| 2000 - 2999 | Paths and the working directory | `PathError` | `t0-util` |
-| 3000 - 3999 | Networking | `NetworkingError` | `t5-tcp` |
-| 4000 - 4999 | Package store database | `PackageStoreError` | `t0-plbolt` |
-| 5000 - 5999 | Package loader | `PackageLoaderError` | `t1-plloader` |
-| 6000 - 6999 | LZ4 compression | `LZ4CodecError` | `t0-lz4codec` |
-| 7000 - 7999 | Compiler | `CompileErrorRecord`, held as a list | `t3-ast` |
+| Block | Area | Struct | Package | Status |
+|---|---|---|---|---|
+| 0 - 999 | CX exit and runtime codes | none, `CX_*` constants | `t0-types` | exists |
+| 1000 - 1999 | Files | `FileError` | `t0-util` | exists |
+| 2000 - 2999 | Paths and the working directory | `PathError` | `t0-util` | planned |
+| 3000 - 3999 | Networking | `NetworkingError` | `t5-tcp` | planned |
+| 4000 - 4999 | Package store database | `PackageStoreError` | `t0-plbolt` | planned |
+| 5000 - 5999 | Package loader | `PackageLoaderError` | `t1-plloader` | planned |
+| 6000 - 6999 | LZ4 compression | `LZ4CodecError` | `t0-lz4codec` | planned |
+| 7000 - 7999 | Compiler | `CompileErrorRecord`, held as a list | `t3-ast` | exists |
+
+A planned struct does not exist yet. Its block and name are reserved for the
+phases of #196. Until then those packages return a Go `error` or an error
+string.
 
 In the block starting at B, failure codes run from B+1 to B+499 and operation
 codes from B+500 to B+999, so files use 1001 to 1499 and 1500 to 1999. No
@@ -112,6 +116,28 @@ right where it is received, at the module boundary, with the failure and
 operation codes and the message. No Go `error` crosses the boundary.
 
 Only a binary's `main` turns a class A error into an exit code.
+
+## Error records today
+
+Three error records exist.
+
+- `FileError` in `t0-util/file_error.go` is the class A struct for file
+  calls. Its failure codes are `FileErrorCodeNotFound` (1001) to
+  `FileErrorCodeFileSystemCallFailure` (1006), and its operation codes are
+  `FileOperationOpen` (1501) to `FileOperationSandboxRootOpen` (1505).
+- `CompileErrorRecord` in `t3-ast/compileerror.go` holds one compile error.
+  Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
+  `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
+  `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
+  `CompileErrorCodeStructLiteralFieldType` (7035). 7000 is
+  `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
+  The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
+- `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the
+  old loop in `CXProgram.RuntimeError`. Its code is a `CX_RUNTIME_*` or
+  `CX_ASSERT` exit code from `t0-types`, and it also keeps the panic value,
+  the call stack position and the expression index.
+
+The two records are described in [CX programs](#cx-programs) below.
 
 ## Class B, everything else
 
@@ -139,14 +165,16 @@ constants use verbose, lexicographically prefixed, Java style names, so
 related names sort together.
 
 - An error struct is named for its area, `<Area>Error`, for example
-  `FileError`, `NetworkingError`, `PackageLoaderError`. A more specific
-  struct keeps the area prefix, for example `PackageLoaderImportCycleError`.
+  `FileError`. A more specific struct keeps the area prefix, so an import
+  cycle error of the planned package loader struct would be
+  `PackageLoaderImportCycleError`.
 - Failure constants are `<Area>ErrorCode<Failure>` and operation constants
   `<Area>Operation<Operation>`, for example `FileErrorCodeNotFound` and
   `FileOperationOpen`. Their types are `<Area>ErrorCode` and
   `<Area>OperationCode`.
 - Methods, where a struct needs any, are named `<Noun><Verb>` or
-  `<Noun><Noun><Verb>`, for example `ErrorCodeGet` or `ErrorMessageFormat`.
+  `<Noun><Noun><Verb>`, such as `ErrorCodeGet` or `ErrorMessageFormat`. No
+  error struct has methods yet.
 - `Error`, `Unwrap`, `Code`, `Is`, `As` and any other one word generic
   method name are banned on error structs.
 - No interface for errors. There is no `Coded` interface. Each caller names
@@ -223,6 +251,9 @@ Class B failures in a CX program crash it. Division by zero, an index out of
 range, a failed cast, stack overflow and heap exhaustion print the CX file and
 line, the CX call stack and the message to stderr, then end the process with
 the matching `CX_RUNTIME_*` exit code. The CX `assert`, `test` and `panic`
+builtins do the same with `CX_ASSERT` or `CX_PANIC`. This holds under the REPL
+and any embedding host too.
+
 A compile error is data too. The compiler appends a `CompileErrorRecord`, a
 `CompileErrorCode`, a `SourceFileGid`, a line and up to four `StringGid` or
 integer operands, to `CxIrState.CompileErrorList` without building text.
@@ -233,12 +264,9 @@ through the printer the program registered and exits, see #413. A Go error
 or lexer message that has no code of its own is the operand of
 `CompileErrorCodeMessage`.
 
-builtins do the same with `CX_ASSERT` or `CX_PANIC`. This holds under the REPL
-and any embedding host too.
-
 A runtime error is data until the run has returned. The old loop records the
-exit code, the panic value and the call stack position in
-`CXProgram.RuntimeError`, and vm returns a `Stop`. Package
+exit code, the panic value and the call stack position in a
+`RuntimeErrorRecord` in `CXProgram.RuntimeError`, and vm returns a `Stop`. Package
 `t5-cx-runtime-printer` then prints the text and the caller exits with the
 code, see #413. The old loop still unwinds by panic to the one recover at
 the run boundary, which the phases of #196 remove.

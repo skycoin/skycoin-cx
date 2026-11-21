@@ -1,11 +1,15 @@
 this is first draft
 
-cx grammer is define in [https://github.com/skycoin/cx/blob/develop/cxgo/cxgo0/cxgo0.y]
+The CX grammar is defined in two yacc files, [t5-cxpartialparsing/cxpartialparsing.y](../t5-cxpartialparsing/cxpartialparsing.y) for the first pass and [t8-cxparsingcompletor/parsingcompletor.y](../t8-cxparsingcompletor/parsingcompletor.y) for the second.
 
 cx grammer is used to generate cx parser which is used to generate program ast.
 
-the cx grammer is passed to yacc to generate parser for current cxgrammer.
-./bin/goyacc -o cxgo/cxgo0/cxgo0.go cxgo/cxgo0/cxgo0.y
+`make build-parser` passes them to goyacc to regenerate the parsers:
+
+```
+go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y
+go tool goyacc -o t8-cxparsingcompletor/parsingcompletor.go -v /dev/null t8-cxparsingcompletor/parsingcompletor.y
+```
 
 
 cx grammer is defined 
@@ -36,7 +40,7 @@ function_declaration:
 if we found grammer function_declaration at the time of parsing then its corresponding action is perform 
 actions.FunctionDeclaration()
 
-all  cx action are define in cxgo/actions/
+All CX actions are defined in [t4-actions](../t4-actions).
 
 
 at the end of ParseSourceCode() we get complete CXProgram as object.

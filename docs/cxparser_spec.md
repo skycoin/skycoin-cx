@@ -4,7 +4,7 @@
 * [Lexer](https://en.wikipedia.org/wiki/Lexical_analysis) - takes a text [or sequence of characters] as an input and breaks it up into a list of tokens.
 * [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) - An abstract syntax tree (AST) is a way of representing the syntax of a programming language as a hierarchical tree-like structure. The AST contains a final parsed output that can be executed.
 * [Type Signature](https://en.wikipedia.org/wiki/Type_signature) - A function signature (or type signature, or method signature) defines input and output of functions or methods. A signature can include: parameters and their types. a return value and type.
-* [Actions](https://github.com/skycoin/cx/tree/develop/cxparser/actions) - Actions package contains functions that are used to construct the AST. These functions are called stages of the parser.
+* [Actions](../t4-actions) - Actions package contains functions that are used to construct the AST. These functions are called stages of the parser.
 ---
 
 ## Sample Program
@@ -79,7 +79,7 @@ Output:
 `Package -> {Name: "main", LineNo: 2, FileName: "main.cx", SourceFiles: [{FileName: "main.cx", SourceCode: ...}]}`
 
 **Actions called**
- - [`actions.DeclarePackage`](https://github.com/skycoin/cx/blob/develop/cxparser/actions/declarations.go#L212)
+ - [`actions.DeclarePackage`](../t4-actions/packages.go)
 
 ### Stage 2: Parse Struct and Enum types
 
@@ -109,7 +109,7 @@ Output:
 `Struct -> { PackageName: "main", Name: "Entry", LineNo: 8, FileName: "main.cx", Fields: {Name: age, Type: i32} }`
 
 **Actions called**
- - [`actions.DeclareStruct`](https://github.com/skycoin/cx/blob/develop/cxparser/actions/declarations.go#L184)
+ - [`actions.DeclareStruct`](../t4-actions/structs.go)
 
 ### Stage 3: Declare Global Variables
 
@@ -137,7 +137,7 @@ Output:
 `GlobalVariable -> { PackageName: "main", Name: "a", Type: i32, LineNo: 12, FileName: "main.cx", Offset: -1 }`.
 
 **Actions called**
- - [`actions.DeclareGlobal`](https://github.com/skycoin/cx/blob/develop/cxparser/actions/declarations.go#L24)
+ - [`actions.DeclareGlobalInPackage`](../t4-actions/variables.go)
 
 ### Stage 4: Parse Function Type Signatures
 
@@ -170,8 +170,8 @@ Output:
 `Function -> {PackageName: "main", Name: "main", InputParams: {}, ReturnParams: {i32}, ParentStruct: nil, LineNo: 14, FileName: "main.cx"}`
 
 **Actions called**
- - [`actions.FunctionDeclaration`](https://github.com/skycoin/cx/blob/develop/cxparser/actions/functions.go#L117)
- - [`actions.FunctionHeader`](https://github.com/skycoin/cx/blob/develop/cxparser/actions/functions.go#L21)
+ - [`actions.FunctionDeclaration`](../t4-actions/functions.go)
+ - [`actions.FunctionHeader`](../t4-actions/functions.go)
 
 ### Stage 5: Initialize Global Variables
 
