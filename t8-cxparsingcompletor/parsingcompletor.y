@@ -196,6 +196,12 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   else_statement
 %type   <expressions>   labeled_statement
 %type   <expressions>   expression_statement
+%type   <expressions>   for_clause_assignment
+%type   <expressions>   for_clause_expression
+%type   <expressions>   for_clause_statement
+%type   <expressions>   for_init_assignment
+%type   <expressions>   for_init_expression
+%type   <expressions>   for_condition_statement
 %type   <expressions>   selection_statement
 %type   <expressions>   iteration_statement
 %type   <expressions>   jump_statement
@@ -1074,75 +1080,7 @@ assignment_expression:
                 struct_literal_expression
 	|       unary_expression assignment_operator assignment_expression
                 {
-                       
-			if $3 == nil {
-				$$ = nil
-			}
-			if $3 != nil {
-                                for i:=0;i<len($3);i++{
-                                        if $3[i].Type!=ast.CX_LINE{
-                                                if $3[i].IsArrayLiteral() {
-                                                        if $2 != "=" && $2 != ":=" {
-                                                                panic("")
-                                                        }
-                                                        if $2 == ":=" {
-                                                                for _, from := range $3 {
-                                                                        if from.Type==ast.CX_LINE{
-                                                                                continue
-                                                                        }
-
-                                                                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-                                                                        // Now an arena getter, site S1493.
-                                                                        fromExpression,err := actions.AST.GetCXAtomicOp(from.Index)
-                                                                        if err != nil {
-                                                                                panic(err)
-                                                                        }
-
-                                                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                                                                        // Now an arena getter, site S1494.
-                                                                        fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
-                                                                        fromExpressionOutputIdx:= fromExpressionOutputTypeSig.Meta
-                                                                        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-                                                                        // Now an arena getter, site S1773.
-                                                                        actions.AST.GetCXArg(ast.CXArgumentIndex(fromExpressionOutputIdx)).PreviouslyDeclared = true
-                                                                }
-                                                        }
-                                                        $$ = actions.ArrayLiteralAssignment(actions.AST,$1, $3)
-                                                } else if $3[len($3) - 1].IsStructLiteral() {
-                                                        if $2 != "=" && $2 != ":=" {
-                                                                panic("")
-                                                        }
-                                                        if $2 == ":=" {
-                                                                for _, from := range $3 {
-                                                                        if from.Type==ast.CX_LINE{
-                                                                                continue
-                                                                        }
-
-                                                                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-                                                                        // Now an arena getter, site S1495.
-                                                                        fromExpression, err := actions.AST.GetCXAtomicOp(from.Index)
-                                                                        if err != nil {
-                                                                                panic(err)
-                                                                        }
-
-                                                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                                                                        // Now an arena getter, site S1496.
-                                                                        fromExpressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(fromExpression.GetOutputs(actions.AST)[0])
-                                                                        fromExpressionOutputIdx:=fromExpressionOutputTypeSig.Meta
-                                                                        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-                                                                        // Now an arena getter, site S1774.
-                                                                        actions.AST.GetCXArg(ast.CXArgumentIndex(fromExpressionOutputIdx)).PreviouslyDeclared = true
-                                                                }
-                                                        }
-                                                        $$ = actions.StructLiteralAssignment(actions.AST,$1, $3)
-                                                } else {
-                                                        $$ = actions.Assignment(actions.AST,$1, $2, $3)
-                                                }
-
-                                                break
-                                        }
-                                }
-			}
+			$$ = ParserActionAssignmentExpression($1, $2, $3)
                 }
                 ;
 
@@ -1164,18 +1102,7 @@ assignment_operator:
 expression:     assignment_expression
 	|       expression COMMA assignment_expression
                 {               
-                        lastOfThirdAtomicOp, err := actions.AST.GetCXAtomicOpFromExpressions($3,len($3) - 1)
-                        if err != nil {
-                                panic(err)
-                        }
-
-                        lastOfFirstAtomicOp,err := actions.AST.GetCXAtomicOpFromExpressions($1,len($1) - 1)
-                        if err != nil {
-                                panic(err)
-                        }
-
-			lastOfThirdAtomicOp.Outputs.Fields = append(lastOfFirstAtomicOp.Outputs.Fields, lastOfThirdAtomicOp.Outputs.Fields...)
-                        $$ = $3
+			$$ = ParserActionExpressionList($1, $3)
                 }
                 ;
 
@@ -1200,6 +1127,10 @@ initializer:    assignment_expression
 // statements
 statement:      labeled_statement
 	|       compound_statement
+                {
+			actions.DefineNewScope($1)
+			$$ = $1
+                }
 	|       expression_statement
 	|       selection_statement
 	|       iteration_statement
@@ -1212,19 +1143,7 @@ statement:      labeled_statement
 labeled_statement:
                 IDENTIFIER COLON block_item
                 {
-			// it has to be the first expression so all the nested expressions are executed
-			// instead of only executing the last one
-			// UPDATE: I need to label all expressions. `goto` will jump to first occurrance anyway, so no problem
-			// I need this behavior for affordances
-			for _, expr := range $3 {
-                                if expr.Type==ast.CX_LINE{
-                                        continue
-                                }
-                                expressionIdx :=expr.Index
-				actions.AST.CXAtomicOps[expressionIdx].Label = actions.AST.CXProgramNameIntern($1)
-			}
-
-			$$ = $3
+			$$ = ParserActionLabeledStatement($1, $3)
                 }
 	|       CASE constant_expression COLON statement
                 { $$ = nil }
@@ -1258,41 +1177,7 @@ expression_statement:
                 { $$ = nil }
 	|       expression SEMICOLON
                 {          
-                        // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
-                        // Now a heap literal, site S1497.
-                        var lastFirstAtomicOp *ast.CXAtomicOperator= &ast.CXAtomicOperator{Operator:-1}
-                        var err error
-
-                        if len($1) > 0 {
-                                lastFirstAtomicOp, err = actions.AST.GetCXAtomicOpFromExpressions($1,len($1) - 1)
-                                if err != nil {
-                                        panic(err)
-                                }
-                        }
-                       // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-                       // Now an arena getter, site S1498.
-                       lastFirstAtomicOpOperator:=actions.AST.GetFunctionFromArray(lastFirstAtomicOp.Operator)
-
-			if len($1) > 0 && lastFirstAtomicOpOperator == nil  && !$1[len($1) - 1].IsMethodCall() {
-				outs := lastFirstAtomicOp.GetOutputs(actions.AST)
-                               
-				if len(outs) > 0 {
-                                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                                        // Now an arena getter, site S1499.
-                                        outTypeSig:=actions.AST.GetCXTypeSignatureFromArray(outs[0])
-					actions.AST.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidExpression, outTypeSig.ArgDetails, ast.CompileErrorOperands{})
-				} else {
-					actions.AST.CXProgramCompileErrorAdd(ast.CompileErrorCodeInvalidExpression, actions.CurrentFile, actions.LineNo, ast.CompileErrorOperands{})
-				}
-				$$ = nil
-			} else if len($1) > 0 && $1[0].Type != ast.CX_LINE {
-				// test() and assert report the CX_LINE before them (skycoin-cx#254)
-				// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
-				// Also state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346. Site S1500 S1501.
-				$$ = append([]ast.CXExpression{*actions.MakeCXLineExpressionCurrent(actions.AST)}, $1...)
-			} else {
-				$$ = $1
-			}
+			$$ = ParserActionExpressionStatement($1)
                 }
                 ;
 
@@ -1369,17 +1254,72 @@ else_statement:
         ;
 
 iteration_statement:
-                FOR expression compound_statement
+                FOR conditional_expression compound_statement
                 {
 			$$ = actions.IterationExpressions(actions.AST,nil, $2, nil, $3)
                 }
-        |       FOR expression_statement expression_statement compound_statement
+        |       FOR for_clause_statement for_condition_statement compound_statement
                 {			
 			$$ = actions.IterationExpressions(actions.AST,$2, $3, nil, $4)
                 }
-        |       FOR expression_statement expression_statement expression compound_statement
+        |       FOR for_clause_statement for_condition_statement for_clause_expression compound_statement
                 {
 			$$ = actions.IterationExpressions(actions.AST,$2, $3, $4, $5)
+                }
+                ;
+
+// A for header starts with no bare struct literal and its post statement holds
+// none, so `for b {` and `for ...; i = j {` reach the body (skycoin-cx#21).
+for_clause_assignment:
+                conditional_expression
+	|       unary_expression assignment_operator for_clause_assignment
+                {
+			$$ = ParserActionAssignmentExpression($1, $2, $3)
+                }
+                ;
+
+for_clause_expression:
+                for_clause_assignment
+	|       for_clause_expression COMMA for_clause_assignment
+                {
+			$$ = ParserActionExpressionList($1, $3)
+                }
+                ;
+
+for_init_assignment:
+                conditional_expression
+	|       unary_expression assignment_operator assignment_expression
+                {
+			$$ = ParserActionAssignmentExpression($1, $2, $3)
+                }
+                ;
+
+for_init_expression:
+                for_init_assignment
+	|       for_init_expression COMMA assignment_expression
+                {
+			$$ = ParserActionExpressionList($1, $3)
+                }
+                ;
+
+for_clause_statement:
+                SEMICOLON
+                { $$ = nil }
+	|       for_init_expression SEMICOLON
+                {
+			$$ = ParserActionExpressionStatement($1)
+                }
+                ;
+
+// An empty condition is true, as in Go.
+for_condition_statement:
+                SEMICOLON
+                {
+			$$ = actions.WritePrimaryExprs(actions.AST, types.BOOL, encoder.Serialize(true), false)
+                }
+	|       for_clause_expression SEMICOLON
+                {
+			$$ = ParserActionLoopCondition($1)
                 }
                 ;
 

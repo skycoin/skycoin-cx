@@ -54,6 +54,7 @@ const (
 	CompileErrorCodeMethodMissing
 	CompileErrorCodeDeclarationTooLarge
 	CompileErrorCodeStructRecursive
+	CompileErrorCodeLoopJumpOutsideLoop
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

@@ -4,7 +4,7 @@ package main
 
 func main()() {
 	var s []i32
-	for true {
+	for i := 0; i < 100; i++ {
 		s = []i32 { 0 }
 		s = append(s, 10)
 		printf("len %d\n", len(s))

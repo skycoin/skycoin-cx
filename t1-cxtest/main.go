@@ -296,6 +296,25 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-scope-one-statement-block.cx", types.CX_SUCCESS, "a one statement block has its own scope", "0\n")
 	t.RunWant("test-scope-method-call-first.cx", types.CX_SUCCESS, "a method call as the first statement of a block", "7\n1\n2\n")
 	t.RunWant("test-scope-nested-shadow.cx", types.CX_SUCCESS, "shadowing in nested if, for and else blocks", "3\n4\n2\n5\n1\n")
+	t.RunWant("test-scope-sibling-blocks.cx", types.CX_SUCCESS, "sibling blocks declare the same names (skycoin-cx#16)", "1\n2\n")
+	t.RunWant("test-loop-break-nested.cx", types.CX_SUCCESS, "break leaves only the innermost loop (skycoin-cx#39)",
+		"j: 0\nout of j loop\nj: 0\nout of j loop\nout of i loop\nj: 0\nout of j loop\nj: 0\nout of j loop\nout of i loop\nout of h loop\n")
+	t.RunWant("test-loop-continue-nested.cx", types.CX_SUCCESS, "continue goes on with the innermost loop (skycoin-cx#39)",
+		"j: 0\nj: 1\nj: 2\nout of j loop\nj: 0\nj: 1\nj: 2\nout of j loop\nout of h loop\n")
+	t.RunWant("test-loop-three-deep.cx", types.CX_SUCCESS, "break and continue three loops deep (skycoin-cx#39)",
+		"break 0 0 0\nbreak 0 1 0\nbreak 1 0 0\nbreak 1 1 0\n"+
+			"continue 0 0 0\ncontinue 0 0 2\ncontinue 0 1 0\ncontinue 0 1 2\nafter c 0 1\n"+
+			"continue 1 0 0\ncontinue 1 0 2\ncontinue 1 1 0\ncontinue 1 1 2\nafter c 1 1\nafter b 1\n")
+	t.RunWant("test-loop-if-else.cx", types.CX_SUCCESS, "break and continue inside if and else (skycoin-cx#39)", "odd 1\nodd 3\n3\n")
+	t.RunWant("test-loop-goto.cx", types.CX_SUCCESS, "goto out of and back into a labelled loop with break and continue", "1 0 0\n2 2 0\n3 0 0\n4\n")
+	t.RunWant("test-loop-for-true.cx", types.CX_SUCCESS, "for true runs its body (skycoin-cx#20)", "55\n4\n")
+	t.RunWant("test-loop-for-bool.cx", types.CX_SUCCESS, "for on a bool variable or expression, an empty condition and an assignment post statement (skycoin-cx#21)", "3\n20\n6\n6\n6\n")
+	t.RunWant("test-loop-break-outside.cx", types.CX_COMPILATION_ERROR, "break outside a loop (skycoin-cx#60)",
+		`test-loop-break-outside.cx:5 break is not in a loop`)
+	t.RunWant("test-loop-continue-outside.cx", types.CX_COMPILATION_ERROR, "continue outside a loop (skycoin-cx#60)",
+		`test-loop-continue-outside.cx:6 continue is not in a loop`)
+	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
+	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
 	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
@@ -410,7 +429,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-249.cx", types.CX_SUCCESS, "Return from a function doesnt work")
 	t.Run("issue-249b.cx", types.CX_COMPILATION_ERROR, "Mismatched number of returning arguments is not throwing an error")
 	t.Run("issue-250.cx", types.CX_COMPILATION_ERROR, "No compilation error when var is accessed outside of its declaring scope")
-	t.Run("issue-251.cx", types.CX_COMPILATION_ERROR, "Panic when a str var is shadowed by a struct var in another scope")
+	t.RunWant("issue-251.cx", types.CX_SUCCESS, "Panic when a str var is shadowed by a struct var in another scope", "test\n")
 	// FAILING: fails, glfw only exists with -tags cxfx; see #32
 	// t.RunEx("issue-252.cx", types.CX_SUCCESS, "glfw.GetCursorPos() throws error", runner.TestGui|runner.TestStable, 0)
 	t.Run("issue-253.cx", types.CX_SUCCESS, "Inline field and index 'dereferences' to function calls' outputs")
@@ -441,7 +460,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-277.cx", types.CX_SUCCESS, "same func names (but in different packages) collide")
 	t.Run("issue-278.cx", types.CX_COMPILATION_ERROR, "can use vars from other packages without a 'packageName.' prefix")
 	t.Run("issue-279.cx", types.CX_SUCCESS, "False positive when detecting variable redeclaration.")
-	t.RunEx("issue-279a.cx", types.CX_SUCCESS, "False positive when detecting variable redeclaration.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#16
+	t.Run("issue-279a.cx", types.CX_SUCCESS, "False positive when detecting variable redeclaration.")
 	t.Run("issue-280.cx", types.CX_SUCCESS, "Problem with struct literals in short variable declarations")
 	t.Run("issue-281.cx", types.CX_SUCCESS, "Panic when using the return value of a function in a short declaration")
 	t.Run("issue-282a.cx", types.CX_COMPILATION_ERROR, "Panic when inserting a new line in a string literal")
@@ -471,8 +490,8 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("issue-68.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when passing increment expression as argument", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#18
 	t.RunEx("issue-67.cx", types.CX_COMPILATION_ERROR, "Panic when using void return value of a function in a for loop expression", runner.TestIssue, 0)
 	t.Run("issue-66.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when printing boolean values with %v")
-	t.RunEx("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed", runner.TestIssue, 0)        // known failing, skycoin/skycoin-cx#20
-	t.RunEx("issue-64.cx", types.CX_SUCCESS, "for loop using boolean value is not compiling", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#21
+	t.Run("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed")
+	t.Run("issue-64.cx", types.CX_SUCCESS, "for loop using boolean value is not compiling")
 	t.Run("issue-303.cx", types.CX_SUCCESS, "Concatenation of str variables with + operator doesn't work")
 	t.Run("issue-304.cx", types.CX_SUCCESS, "Short declaration doesn't compile with opcode return value")
 	t.Run("issue-305.cx", types.CX_SUCCESS, "Compilation error when struct field is named 'input' or 'output'")

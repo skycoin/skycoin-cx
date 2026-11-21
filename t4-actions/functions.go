@@ -247,6 +247,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 
 	FunctionAddParameters(prgrm, fnIdx, inputs, outputs)
 	ProcessGoTos(prgrm, exprs)
+	ProcessLoopJumpsOutsideLoop(prgrm, exprs)
 	AddExprsToFunction(prgrm, fnIdx, exprs)
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetInputs(prgrm))
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetOutputs(prgrm))
@@ -3238,4 +3239,29 @@ func releaseFunctionSymbols(prgrm *ast.CXProgram, symbolsData *SymbolsData) {
 		prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugRelease(argDetails)
 	}
 	symbolsData.functionSymbols = nil
+}
+
+// ProcessLoopJumpsOutsideLoop reports a break or continue that no loop
+// resolved, since IterationExpressions turns every one it owns into a jmp.
+func ProcessLoopJumpsOutsideLoop(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
+	for i, expr := range exprs {
+		if expr.Type == ast.CX_LINE {
+			continue
+		}
+		var keyword string
+		if expr.IsBreak(prgrm) {
+			keyword = "break"
+		} else if expr.IsContinue(prgrm) {
+			keyword = "continue"
+		} else {
+			continue
+		}
+		file, line := CurrentFile, LineNo
+		if i > 0 && exprs[i-1].Type == ast.CX_LINE {
+			if cxLine, err := prgrm.GetCXLine(exprs[i-1].Index); err == nil {
+				file, line = cxLine.FileName, cxLine.LineNumber
+			}
+		}
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeLoopJumpOutsideLoop, file, line, ast.CompileErrorOperands{int64(prgrm.CXProgramNameIntern(keyword))})
+	}
 }

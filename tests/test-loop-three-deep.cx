@@ -1,0 +1,32 @@
+package main
+
+func main() {
+	for a := 0; a < 2; a++ {
+		for b := 0; b < 2; b++ {
+			for c := 0; c < 3; c++ {
+				if c == 1 {
+					break
+				}
+				printf("break %d %d %d\n", a, b, c)
+			}
+		}
+	}
+	for a := 0; a < 2; a++ {
+		for b := 0; b < 2; b++ {
+			for c := 0; c < 3; c++ {
+				if c == 1 {
+					continue
+				}
+				printf("continue %d %d %d\n", a, b, c)
+			}
+			if b == 0 {
+				continue
+			}
+			printf("after c %d %d\n", a, b)
+		}
+		if a == 0 {
+			continue
+		}
+		printf("after b %d\n", a)
+	}
+}

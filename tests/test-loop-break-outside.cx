@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	if true {
+		break
+		printf("after break\n")
+	}
+	printf("end\n")
+}

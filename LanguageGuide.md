@@ -613,7 +613,7 @@ package main
 import "sys/string"
 
 func main () {
-	for 1 == 1 {
+	for true {
 		string.PrintLine("forever")
 	}
 }
@@ -624,11 +624,10 @@ the example above. In this case, the loop will print the character
 string "forever" indefinitely. If you try this code, remember that you
 can cancel the program's execution by hitting `Ctrl-C`.
 
-The usual way to write this loop is `for true { ... }`, but that form
-does not run its body at all. This is an open bug
-([skycoin-cx#20](https://github.com/skycoin/skycoin-cx/issues/20)). A
-bare boolean variable as the condition, `for running { ... }`, is a
-syntax error. Use a comparison such as `for running == true { ... }`.
+A bare boolean variable works as the condition too, `for running { ... }`.
+A struct literal in the condition or the post statement needs parentheses.
+`break` leaves the innermost loop and `continue` starts its next iteration.
+Either one outside a loop is a compile error.
 
 ```cx
 package main

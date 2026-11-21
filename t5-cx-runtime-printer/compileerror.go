@@ -58,6 +58,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeMethodMissing - ast.CompileErrorCodeNil:              {Format: "%H type '%s' has no method '%s'\n"},
 	ast.CompileErrorCodeDeclarationTooLarge - ast.CompileErrorCodeNil:        {Format: "%H '%s' is too large\n"},
 	ast.CompileErrorCodeStructRecursive - ast.CompileErrorCodeNil:            {Format: "%H invalid recursive type '%s'\n"},
+	ast.CompileErrorCodeLoopJumpOutsideLoop - ast.CompileErrorCodeNil:        {Format: "%H %s is not in a loop\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

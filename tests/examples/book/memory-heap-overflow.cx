@@ -18,7 +18,8 @@ func CreatePoints () {
 }
 
 func main () {
-    for true {
+    // The tests run this example, so it stops after 100000 calls.
+    for i := 0; i < 100000; i++ {
         CreatePoints()
     }
 }

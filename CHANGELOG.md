@@ -56,6 +56,11 @@
 
 #### Fixed
 
+- `break` and `continue` in an inner loop left every enclosing loop, because each enclosing loop retargeted them. A loop now turns each one it resolves into a jump (#39)
+- `for true { ... }` never ran its body and `for b { ... }` on a bool variable was a syntax error. A literal or variable condition is read in place, and the for header no longer takes `b {` as a struct literal, so `for ...; i = j {` parses too. An empty condition, `for i := 0; ; i++`, is true instead of a host panic (#20, #21)
+- `break` or `continue` outside a loop compiled and ran on. It is the compile error `break is not in a loop`, `CompileErrorCodeLoopJumpOutsideLoop` (7039) (#60)
+- Two sibling `{ }` blocks that declared the same name reported a redeclaration (#16)
+- A `goto` inside a labelled loop jumped to the loop's own label, since the label overwrote the goto's target
 - Small invalid programs crashed the compiler with a Go panic, exit 2, instead of a compile error. An unknown type in an array, slice, pointer, global, field or parameter declaration, more indexes than an array has dimensions, indexing a scalar, `return` with more values than the function has outputs, an unknown function inside an operator or a condition, and `append(s)` without a value are compile errors now
 - A struct that holds itself by value, directly or through another struct, sent the compiler into unbounded recursion. It is the compile error `invalid recursive type`, `CompileErrorCodeStructRecursive` (7038)
 - An array, struct, frame or data segment past 4 GiB wrapped its size, so variables silently overlapped. It is the compile error `'name' is too large`, `CompileErrorCodeDeclarationTooLarge` (7037), in both pointer widths

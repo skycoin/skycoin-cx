@@ -1,0 +1,24 @@
+package main
+
+func main() {
+	n := 0
+again:
+	for i := 0; i < 3; i++ {
+		if i == 1 {
+			continue
+		}
+		n = n + 1
+		if n == 4 {
+			goto done
+		}
+		for j := 0; j < 3; j++ {
+			if j == 1 {
+				break
+			}
+			printf("%d %d %d\n", n, i, j)
+		}
+	}
+	goto again
+done:
+	i32.print(n)
+}

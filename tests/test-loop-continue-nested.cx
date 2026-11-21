@@ -1,0 +1,13 @@
+package main
+import "sys/string"
+func main() {
+	for h := 0; h < 2; h++ {
+		for j := 0; j < 3; j++ {
+			printf("j: %d\n", j)
+			continue
+			printf("skipped\n")
+		}
+		string.PrintLine("out of j loop")
+	}
+	string.PrintLine("out of h loop")
+}

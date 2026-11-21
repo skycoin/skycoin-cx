@@ -62,6 +62,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeMethodMissing, ast.CompileErrorOperands{text("T"), text("Nope")}, header + " type 'T' has no method 'Nope'\n"},
 		{ast.CompileErrorCodeDeclarationTooLarge, ast.CompileErrorOperands{text("a")}, header + " 'a' is too large\n"},
 		{ast.CompileErrorCodeStructRecursive, ast.CompileErrorOperands{text("T")}, header + " invalid recursive type 'T'\n"},
+		{ast.CompileErrorCodeLoopJumpOutsideLoop, ast.CompileErrorOperands{text("break")}, header + " break is not in a loop\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

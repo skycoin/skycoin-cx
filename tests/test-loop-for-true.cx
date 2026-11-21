@@ -1,0 +1,19 @@
+package main
+
+func main() {
+	var i i32
+	for true {
+		i = 55
+		break
+	}
+	i32.print(i)
+
+	var j i32
+	for true {
+		j = j + 1
+		if j > 3 {
+			break
+		}
+	}
+	i32.print(j)
+}

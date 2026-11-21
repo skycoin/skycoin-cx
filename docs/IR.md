@@ -239,9 +239,12 @@ with distance `n` continues at `i + n + 1`. `n = 0` falls through.
 * `for` (`actions.IterationExpressions`) emits a `jmp` at the top that
   leaves the loop when the condition is false, and a `jmp` on `true` at
   the bottom with a negative `ThenLines` back to the condition.
-  `break` and `continue` get their distances there too.
+  `break` and `continue` get their distances there and become a `jmp` on
+  `true`, so an enclosing loop leaves them alone. One that no loop resolved
+  is a compile error. A literal or variable condition is read in place.
 * `goto L` is an `OP_GOTO` expression whose `Label` is `L`, and the
-  statement labelled `L` has the same `Label`. `actions.ProcessGoTos`
+  statement labelled `L` has the same `Label` on each expression that has
+  none yet. `actions.ProcessGoTos`
   finds that expression at index `j` and sets `ThenLines = j - i - 1`.
 * `return` (`actions.AddJmpToReturnExpressions`) is an `OP_GOTO` with a
   generated label `*lbl_<n>` and `ThenLines = types.MAX_INT32`, which

@@ -3,7 +3,13 @@ package main
 import "sys/string"
 
 func main () () {
+    // The tests run this example, so it stops after three lines.
+    n := 0
     for true {
         string.PrintLine("Infinite loop!")
+        n++
+        if n == 3 {
+            break
+        }
     }
 }

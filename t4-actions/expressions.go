@@ -51,8 +51,19 @@ func IterationExpressions(prgrm *ast.CXProgram,
 
 	prgrm.CXAtomicOps[upExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
+	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, site S0613.
+	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
+	// A literal or variable condition is read in place, as in SelectionExpressions.
+	// Running it would zero it as a declaration (skycoin-cx#20).
+	loopConditionExprs := conditionExprs
+	if lastCondExpressionOperator == nil && !conditionExprs[len(conditionExprs)-1].IsMethodCall() {
+		loopConditionExprs = nil
+	}
+
 	// -2 for the cx line expression addition for up and down expr
-	upLines := ((len(statementExprs) + len(incrementExprs) + len(conditionExprs) + 2) * -1) - 2
+	upLines := ((len(statementExprs) + len(incrementExprs) + len(loopConditionExprs) + 2) * -1) - 2
 	downLines := 0
 
 	trueArg := WritePrimary(prgrm, types.BOOL, encoder.Serialize(true), false)
@@ -71,10 +82,6 @@ func IterationExpressions(prgrm *ast.CXProgram,
 
 	prgrm.CXAtomicOps[downExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
-	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0613.
-	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 	lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)) < 1 {
 		if len(lastCondExpressionOperatorOutputs) == 0 {
@@ -118,6 +125,8 @@ func IterationExpressions(prgrm *ast.CXProgram,
 
 		prgrm.CXAtomicOps[lastCondExpressionIdx].AddOutput(prgrm, typeSigIdx)
 		prgrm.CXAtomicOps[downExpressionIdx].AddInput(prgrm, typeSigIdx)
+	} else if loopConditionExprs == nil {
+		prgrm.CXAtomicOps[downExpressionIdx].AddInput(prgrm, prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0])
 	} else {
 		predicateTypeSigIdx := prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -145,19 +154,19 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	// + 1 for the cx line expression addition for the down expr jmp
 	elseLines := len(incrementExprs) + len(statementExprs) + 1 + 1
 
-	// processing possible breaks
+	// A resolved break or continue becomes a true jmp, so an enclosing loop
+	// does not retarget it (skycoin-cx#39).
 	for i, statementExpr := range statementExprs {
-		if statementExpr.IsBreak(prgrm) {
-			statementExpressionIdx := statementExpr.Index
-			prgrm.CXAtomicOps[statementExpressionIdx].ThenLines = elseLines - i - 1
+		if statementExpr.Type == ast.CX_LINE {
+			continue
 		}
-	}
-
-	// processing possible continues
-	for i, statementExpr := range statementExprs {
-		if statementExpr.IsContinue(prgrm) {
-			statementExpressionIdx := statementExpr.Index
+		statementExpressionIdx := statementExpr.Index
+		if statementExpr.IsBreak(prgrm) {
+			prgrm.CXAtomicOps[statementExpressionIdx].ThenLines = elseLines - i - 1
+			prgrm.CXAtomicOps[statementExpressionIdx].Operator = prgrm.AddNativeFunctionInArray(jmpFn)
+		} else if statementExpr.IsContinue(prgrm) {
 			prgrm.CXAtomicOps[statementExpressionIdx].ThenLines = len(statementExprs) - i - 1
+			prgrm.CXAtomicOps[statementExpressionIdx].Operator = prgrm.AddNativeFunctionInArray(jmpFn)
 		}
 	}
 
@@ -165,7 +174,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	prgrm.CXAtomicOps[downExpressionIdx].ElseLines = elseLines
 
 	exprs := initializeExprs
-	exprs = append(exprs, conditionExprs...)
+	exprs = append(exprs, loopConditionExprs...)
 	exprs = append(exprs, *downExprCXLine, *downExpr)
 	exprs = append(exprs, statementExprs...)
 	exprs = append(exprs, incrementExprs...)

@@ -4,7 +4,13 @@ package main
 
 func main()() {
 	var b bool = true
+	var n i32
 	for b {
 		printf("true\n")
+		n++
+		if n == 2 {
+			b = false
+		}
 	}
+	test(n, 2, "")
 }

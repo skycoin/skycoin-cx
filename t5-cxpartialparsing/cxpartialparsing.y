@@ -822,11 +822,42 @@ else_statement:
         ;
 
 iteration_statement:
-                FOR expression compound_statement
-        |       FOR expression_statement expression_statement compound_statement
-        |       FOR expression_statement expression_statement expression compound_statement
-        |       FOR declaration expression_statement compound_statement
-        |       FOR declaration expression_statement expression compound_statement
+                FOR conditional_expression compound_statement
+        |       FOR for_clause_statement for_condition_statement compound_statement
+        |       FOR for_clause_statement for_condition_statement for_clause_expression compound_statement
+        |       FOR declaration for_condition_statement compound_statement
+        |       FOR declaration for_condition_statement for_clause_expression compound_statement
+                ;
+
+// A for header starts with no bare struct literal (skycoin-cx#21).
+for_clause_assignment:
+                conditional_expression
+	|       unary_expression assignment_operator for_clause_assignment
+                ;
+
+for_clause_expression:
+                for_clause_assignment
+	|       for_clause_expression COMMA for_clause_assignment
+                ;
+
+for_init_assignment:
+                conditional_expression
+	|       unary_expression assignment_operator assignment_expression
+                ;
+
+for_init_expression:
+                for_init_assignment
+	|       for_init_expression COMMA assignment_expression
+                ;
+
+for_clause_statement:
+                SEMICOLON
+	|       for_init_expression SEMICOLON
+                ;
+
+for_condition_statement:
+                SEMICOLON
+	|       for_clause_expression SEMICOLON
                 ;
 
 jump_statement: GOTO IDENTIFIER SEMICOLON
