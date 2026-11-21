@@ -56,6 +56,14 @@
 
 #### Fixed
 
+- Small invalid programs crashed the compiler with a Go panic, exit 2, instead of a compile error. An unknown type in an array, slice, pointer, global, field or parameter declaration, more indexes than an array has dimensions, indexing a scalar, `return` with more values than the function has outputs, an unknown function inside an operator or a condition, and `append(s)` without a value are compile errors now
+- A struct that holds itself by value, directly or through another struct, sent the compiler into unbounded recursion. It is the compile error `invalid recursive type`, `CompileErrorCodeStructRecursive` (7038)
+- An array, struct, frame or data segment past 4 GiB wrapped its size, so variables silently overlapped. It is the compile error `'name' is too large`, `CompileErrorCodeDeclarationTooLarge` (7037), in both pointer widths
+- `lt(true, false)`, `true < false` and `bitand(6.0, 3.0)` compiled and then crashed at run time with exit 5. An operator on a type it has no version for is the compile error `invalid argument types`
+- A function that returns an array, `func f() (arr [2]i32)`, panicked the compiler with "type is not known". Assigning, declaring, returning, passing and indexing such a result now work
+- Assigning to a global of an imported package, `number.Num = 11`, panicked the compiler. It works, as the guide says globals are available to importing packages
+- A call of a method a struct does not have is the compile error `type 'T' has no method 'M'`, `CompileErrorCodeMethodMissing` (7036)
+- Errors on array element types, struct fields and return counts had no file or line
 - A block whose first or last statement was another block or a method call lost a scope or the method call, so valid programs crashed the compiler or got a false redeclared error, and a one statement block had no scope. Scope starts and ends are now counted per expression in `ExpressionScopeOpenCount` and `ExpressionScopeCloseCount`
 - The f64 `%` operator was registered under the name `f32.mod`, so calling `f32.mod` by name ran the f64 handler. It is `f64.mod` now (#296)
 - Taking the address of a slice, `ps = &s`, panicked the compiler with "type is not known", and so did passing `&s` to a function. Assigning through and from `*ps` now works, and `printf("%v", *ps)` prints the slice (#262)

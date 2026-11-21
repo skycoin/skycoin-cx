@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"math/bits"
+
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
@@ -87,14 +89,14 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		if err != nil {
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
-			return nil
+			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}
 
 		strct, err = prgrm.GetStruct(identGid, imp.Name)
 		if err != nil {
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
-			return nil
+			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}
 	} else {
 		// custom type in the current package
@@ -102,7 +104,7 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		if err != nil {
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
-			return nil
+			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}
 	}
 
@@ -116,4 +118,47 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 	arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_STRUCT)
 
 	return arg
+}
+
+// declarationSpecifiersPlaceholder stands in for a type that failed to resolve
+// after its compile error is recorded, so parsing goes on without a nil.
+func declarationSpecifiersPlaceholder(prgrm *ast.CXProgram, currentFile ast.SourceFileGid, lineNo int) *ast.CXArgument {
+	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, currentFile, lineNo)
+	arg.SetType(types.UNDEFINED)
+	arg.Size = 0
+	return arg
+}
+
+// declarationSizeLimit caps a declaration, a frame and the data segment at the
+// range of 32 bit pointers, so offsets never wrap in either build.
+const declarationSizeLimit = uint64(types.MAX_UINT32)
+
+// declarationArgSize returns the bytes a declaration of arg takes, and false
+// when they pass declarationSizeLimit. It follows ast.GetArgSize.
+func declarationArgSize(arg *ast.CXArgument) (types.Pointer, bool) {
+	for _, decl := range arg.DeclarationSpecifiers {
+		switch decl {
+		case constants.DECL_ARRAY:
+			total := uint64(arg.Size)
+			for _, length := range arg.Lengths {
+				high, low := bits.Mul64(total, uint64(length))
+				if high != 0 || low > declarationSizeLimit {
+					return 0, false
+				}
+				total = low
+			}
+			return types.Pointer(total), true
+		case constants.DECL_POINTER:
+			return arg.Size, true
+		case constants.DECL_SLICE:
+			return types.POINTER_SIZE, true
+		}
+	}
+	return arg.Size, uint64(arg.Size) <= declarationSizeLimit
+}
+
+// declarationSizeSumFits reports whether size bytes more after used stay
+// within declarationSizeLimit.
+func declarationSizeSumFits(used types.Pointer, size types.Pointer) bool {
+	return uint64(used)+uint64(size) <= declarationSizeLimit
 }

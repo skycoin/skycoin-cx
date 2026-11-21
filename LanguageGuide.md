@@ -728,8 +728,8 @@ operations.
 ```cx
 package main
 
-func foo () (slc []i32) {
-    slc = []i32{10, 20}
+func foo () (arr [2]i32) {
+    arr = [2]i32{10, 20}
 }
 
 func main () {
@@ -738,10 +738,8 @@ func main () {
 ```
 
 For example, the expression `i32.print(foo()[0])` in the code above
-consists of two function calls, and the slice returned by the call
-to `foo` is "dereferenced" to its *0th* element. The example returns
-a slice because of an open bug: a function that returns an array, such
-as `[2]i32`, makes the compiler panic with "type is not known".
+consists of two function calls, and the array returned by the call
+to `foo` is "dereferenced" to its *0th* element.
 
 ## [Assignments and Initializations](#table-of-contents)
 

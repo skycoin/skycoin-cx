@@ -1,0 +1,9 @@
+package main
+
+type T struct {
+	t T
+}
+
+func main() {
+	var x T
+}

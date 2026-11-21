@@ -1,0 +1,11 @@
+package main
+
+type S struct {
+	a [1073741823]i32
+	b [1073741823]i32
+}
+
+var g [1073741825]i32
+
+func main() {
+}

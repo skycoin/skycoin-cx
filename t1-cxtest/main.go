@@ -320,6 +320,48 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-sys-string-not-imported.cx", types.CX_COMPILATION_ERROR, "sys/string used without its import (skycoin-cx#382)",
 		`test-sys-string-not-imported.cx:4 built-in package string is used without importing it, add import "sys/string"`)
 	t.Run("test-unknown-native-function.cx", types.CX_COMPILATION_ERROR, "unknown function in an imported native package")
+	t.RunWant("test-unknown-type-declarations.cx", types.CX_COMPILATION_ERROR, "every unknown type in a declaration is reported, without a crash",
+		`test-unknown-type-declarations.cx:4 struct 'st' not found in package 'main'`,
+		`test-unknown-type-declarations.cx:7 struct 'i' not found in package 'main'`,
+		`test-unknown-type-declarations.cx:9 struct 'foo' not found in package 'main'`,
+		`test-unknown-type-declarations.cx:13 struct 'Nope' not found in package 'main'`,
+		`test-unknown-type-declarations.cx:14 struct 'Nope' not found in package 'main'`,
+		`test-unknown-type-declarations.cx:15 struct 'Nope' not found in package 'main'`)
+	t.RunWant("test-unknown-type-imported-array.cx", types.CX_COMPILATION_ERROR, "an array of a type from a package that is not imported",
+		`test-unknown-type-imported-array.cx:4: syntax error`)
+	t.RunWant("test-index-too-many.cx", types.CX_COMPILATION_ERROR, "more indexes than dimensions, and indexing a scalar",
+		`test-index-too-many.cx:5 invalid indexing`,
+		`test-index-too-many.cx:8 invalid indexing`,
+		`test-index-too-many.cx:10 invalid indexing`,
+		`test-index-too-many.cx:12 invalid indexing`)
+	t.RunWant("test-struct-recursive.cx", types.CX_COMPILATION_ERROR, "a struct that holds itself",
+		`test-struct-recursive.cx:4 invalid recursive type 'T'`)
+	t.RunWant("test-struct-recursive-mutual.cx", types.CX_COMPILATION_ERROR, "two structs that hold each other",
+		`test-struct-recursive-mutual.cx:8 invalid recursive type 'B'`)
+	t.RunWant("test-method-missing.cx", types.CX_COMPILATION_ERROR, "a call of a method the struct does not have",
+		`test-method-missing.cx:9 type 'T' has no method 'Nope'`)
+	t.RunWant("test-return-count.cx", types.CX_COMPILATION_ERROR, "return with the wrong number of values",
+		`test-return-count.cx:4 function 'f' expects to return 2 arguments, but 1 output argument was provided`,
+		`test-return-count.cx:8 function 'main' expects to return 0 argument, but 1 output argument was provided`)
+	t.RunWant("test-array-too-large.cx", types.CX_COMPILATION_ERROR, "a struct and a global past the 32 bit size range",
+		`test-array-too-large.cx:5 'b' is too large`,
+		`test-array-too-large.cx:8 'g' is too large`)
+	t.RunWant("test-array-too-large-local.cx", types.CX_COMPILATION_ERROR, "a local array whose size wraps",
+		`test-array-too-large-local.cx:4 'l' is too large`)
+	t.RunWant("test-array-too-large-frame.cx", types.CX_COMPILATION_ERROR, "locals whose frame passes the 32 bit size range",
+		`test-array-too-large-frame.cx:5 'c' is too large`)
+	t.RunWant("test-function-missing-in-expression.cx", types.CX_COMPILATION_ERROR, "an unknown native inside an operator",
+		`test-function-missing-in-expression.cx:4 function 'i32.nope' does not exist`)
+	t.RunWant("test-function-missing-in-condition.cx", types.CX_COMPILATION_ERROR, "an unknown function in a loop condition",
+		`test-function-missing-in-condition.cx:4 function 'nope' not found in package 'main' or its imports`)
+	t.RunWant("test-append-missing-value.cx", types.CX_COMPILATION_ERROR, "append without a value",
+		`test-append-missing-value.cx:5 operator 'append' expects 2 input/s, but 1 input argument`)
+	t.RunWant("test-operator-argument-types.cx", types.CX_COMPILATION_ERROR, "a type inferred operator on a type it does not support",
+		`test-operator-argument-types.cx:4 invalid argument types for 'lt' operator`,
+		`test-operator-argument-types.cx:5 invalid argument types for 'bitand' operator`,
+		`test-operator-argument-types.cx:6 invalid argument types for 'lt' operator`)
+	t.Run("test-function-return-array.cx", types.CX_SUCCESS, "functions that return arrays")
+	t.Run("test-imported-global-assign.cx", types.CX_SUCCESS, "assignment to a global of an imported package")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 
 	// issues

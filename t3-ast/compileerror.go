@@ -51,6 +51,9 @@ const (
 	CompileErrorCodeStructFieldDuplicate
 	CompileErrorCodeStructFieldMultiplyDefined
 	CompileErrorCodeStructLiteralFieldType
+	CompileErrorCodeMethodMissing
+	CompileErrorCodeDeclarationTooLarge
+	CompileErrorCodeStructRecursive
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

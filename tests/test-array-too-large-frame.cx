@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	var b [1073741823]i32
+	var c [1073741823]i32
+}

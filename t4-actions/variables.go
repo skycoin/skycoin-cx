@@ -94,6 +94,10 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 			totalSize = declaration_specifiers.Size * types.TotalLength(declaration_specifiers.Lengths)
 		}
 	}
+	if size, fits := declarationArgSize(declaration_specifiers); !fits || !declarationSizeSumFits(prgrm.Data.StartsAt+prgrm.Data.Size, size) {
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeDeclarationTooLarge, declarator.ArgDetails, ast.CompileErrorOperands{int64(declarator.Name)})
+		totalSize = 0
+	}
 
 	// ParseGlobals passes the argument the global already names as declarator.
 	declaratorTaken := false
@@ -395,6 +399,9 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	initializer []ast.CXExpression, doesInitialize bool) []ast.CXExpression {
 	if globals.FoundCompileErrors {
 		return nil
+	}
+	if _, fits := declarationArgSize(declarationSpecifiers); !fits {
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeDeclarationTooLarge, declarator.ArgDetails, ast.CompileErrorOperands{int64(declarator.Name)})
 	}
 
 	currFn, err := prgrm.GetCurrentFunction()

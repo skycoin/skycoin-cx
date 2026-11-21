@@ -452,6 +452,10 @@ func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 }
 
 func CalculateDereference_Array(prgrm *CXProgram, drfsStruct *DereferenceStruct) {
+	if drfsStruct.fault != nil && drfsStruct.idxCounter >= len(drfsStruct.arg.Lengths) {
+		*drfsStruct.fault = true
+		return
+	}
 	var subSize = types.Pointer(1)
 	for _, len := range drfsStruct.arg.Lengths[drfsStruct.idxCounter+1:] {
 		subSize *= len

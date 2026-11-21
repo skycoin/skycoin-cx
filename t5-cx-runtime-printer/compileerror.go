@@ -55,6 +55,9 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeStructFieldDuplicate - ast.CompileErrorCodeNil:       {Format: "%H : duplicate field", Stdout: true},
 	ast.CompileErrorCodeStructFieldMultiplyDefined - ast.CompileErrorCodeNil: {Format: "%H Multiply defined struct field: %s\n"},
 	ast.CompileErrorCodeStructLiteralFieldType - ast.CompileErrorCodeNil:     {Format: "%H field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided\n"},
+	ast.CompileErrorCodeMethodMissing - ast.CompileErrorCodeNil:              {Format: "%H type '%s' has no method '%s'\n"},
+	ast.CompileErrorCodeDeclarationTooLarge - ast.CompileErrorCodeNil:        {Format: "%H '%s' is too large\n"},
+	ast.CompileErrorCodeStructRecursive - ast.CompileErrorCodeNil:            {Format: "%H invalid recursive type '%s'\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

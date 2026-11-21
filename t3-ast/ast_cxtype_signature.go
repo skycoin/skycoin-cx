@@ -723,6 +723,20 @@ func AllocCXTypeSignatureOfCXArgBuilder(prgrm *CXProgram, cxArgument *CXArgument
 	return typeSigIdx
 }
 
+// AllocCXTypeSignatureOfCXArgDeprecate allocates a TYPE_CXARGUMENT_DEPRECATE
+// signature that names cxArgument, whatever its type.
+func AllocCXTypeSignatureOfCXArgDeprecate(prgrm *CXProgram, cxArgument *CXArgument) CXTypeSignatureIndex {
+	_, typeSig := prgrm.AllocCXTypeSignature()
+	typeSig.Name = cxArgument.Name
+	typeSig.Package = cxArgument.Package
+	typeSig.PassBy = cxArgument.PassBy
+	typeSig.ArgDetails = cxArgument.ArgDetails
+	typeSig.Type = TYPE_CXARGUMENT_DEPRECATE
+	typeSig.Meta = int(prgrm.cxArgumentSlot(cxArgument, false))
+	typeSig.Offset = cxArgument.Offset
+	return typeSig.Index
+}
+
 // GetStructType returns the struct type of the value typeSignature names,
 // or nil when it is not a struct or a pointer to one.
 func (typeSignature *CXTypeSignature) GetStructType(prgrm *CXProgram) *CXStruct {

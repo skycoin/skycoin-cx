@@ -282,7 +282,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		CheckTypes(prgrm, fn.Expressions, i)
 		CheckUndValidTypes(prgrm, fn.Expressions, i)
 		checkOperatorOperands(prgrm, fn.Expressions, i)
-		ProcessTypedOperator(prgrm, &expr)
+		ProcessTypedOperator(prgrm, fn.Expressions, i)
 		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > int(expr.ExpressionScopeCloseCount), "FunctionDeclaration: scope close without a matching open")
 		symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
 	}
@@ -299,8 +299,9 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 // Input arguments description:
 //
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
-//	expr - the expression.
-func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
+//	exprs, currIndex - the expressions and the index of the one to process.
+func ProcessTypedOperator(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expr := &exprs[currIndex]
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S0737.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
@@ -319,6 +320,10 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 
 		typedOp := ast.GetTypedOperator(atomicType, expressionOperator.AtomicOPCode)
 		if typedOp == nil {
+			if ast.OpcodeHandlers[expressionOperator.AtomicOPCode] == nil {
+				file, line := exprLine(prgrm, exprs, currIndex)
+				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
+			}
 			return
 		}
 
@@ -483,7 +488,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 		} else if fieldless {
 			// then it's not a possible method call
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
-			return nil
+			prgrm.CXProgramCompileErrorExit()
 		} else {
 			exprs[len(exprs)-1].ExpressionType = ast.CXEXPR_METHOD_CALL
 		}
@@ -616,6 +621,9 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 						_, out = ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber)
 						out.SetType(inpExprAtomicOpOperatorOutputArg.Type)
 						out.DeclarationSpecifiers = inpExprAtomicOpOperatorOutputArg.DeclarationSpecifiers
+						if ast.IsTypeArrayAtomic(inpExprAtomicOpOperatorOutputArg) {
+							out.Lengths = inpExprAtomicOpOperatorOutputArg.Lengths
+						}
 
 						out.StructType = inpExprAtomicOpOperatorOutputArg.StructType
 
@@ -1341,7 +1349,7 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 	}
 
 	// if the last input is of type undefined then it might be a variadic function, such as printf
-	if len(expressionOperatorInputs) > 0 {
+	if len(expressionOperatorInputs) > 0 && len(expression.GetInputs(prgrm)) > len(expressionOperatorInputs) {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0827.
 		lastTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorInputs[len(expressionOperatorInputs)-1])
@@ -1948,13 +1956,22 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 			if sym != nil {
 				sym.Name = typeSig.Name
 				sym.Offset = *offset
-				*offset += ast.GetArgSize(prgrm, sym)
+				updateSymbolsTableOffsetAdd(prgrm, typeSig, offset, ast.GetArgSize(prgrm, sym))
 			} else {
 				typeSig.Offset = *offset
-				*offset += typeSig.GetSize(prgrm, true)
+				updateSymbolsTableOffsetAdd(prgrm, typeSig, offset, typeSig.GetSize(prgrm, true))
 			}
 		}
 	}
+}
+
+// updateSymbolsTableOffsetAdd moves the frame offset past size bytes of
+// typeSig, recording a frame that does not fit declarationSizeLimit.
+func updateSymbolsTableOffsetAdd(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature, offset *types.Pointer, size types.Pointer) {
+	if !declarationSizeSumFits(*offset, size) {
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeDeclarationTooLarge, typeSig.ArgDetails, ast.CompileErrorOperands{int64(StripNameNumber(prgrm, typeSig.Name))})
+	}
+	*offset += size
 }
 
 // ProcessMethodCall completes the method call expression's inputs and outputs.
@@ -2061,7 +2078,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(inpIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(inpIdx)).Fields)-1]).Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
-					panic(err)
+					processMethodCallMissing(prgrm, strct, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(inpIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(inpIdx)).Fields)-1]))
 				}
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
@@ -2120,7 +2137,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]).Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
-					panic(err)
+					processMethodCallMissing(prgrm, strct, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]))
 				}
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
@@ -2174,7 +2191,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]).Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
-					panic("")
+					processMethodCallMissing(prgrm, strct, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]))
 				}
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -2240,7 +2257,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]).Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
-					panic("")
+					processMethodCallMissing(prgrm, strct, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]))
 				}
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -2296,7 +2313,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 				if fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]).Name); err == nil {
 					prgrm.CXAtomicOps[expr.Index].Operator = fnIdx
 				} else {
-					panic("")
+					processMethodCallMissing(prgrm, strct, prgrm.GetCXArgFromArray(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields[len(prgrm.GetCXArg(ast.CXArgumentIndex(outIdx)).Fields)-1]))
 				}
 
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -2323,6 +2340,13 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		}
 
 	}
+}
+
+// processMethodCallMissing records that strct has no method named by field
+// and exits, as the call cannot be built without it.
+func processMethodCallMissing(prgrm *ast.CXProgram, strct *ast.CXStruct, field *ast.CXArgument) {
+	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodMissing, field.ArgDetails, ast.CompileErrorOperands{int64(strct.Name), int64(field.Name)})
+	prgrm.CXProgramCompileErrorExit()
 }
 
 // GiveOffset
@@ -2495,6 +2519,24 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 }
 
 // CopyArgFields copies 'arg' fields to 'sym' fields.
+// copyArgFieldsIndexesCheck records indexes past the dimensions of the type
+// and drops them, so later passes never index past its lengths.
+func copyArgFieldsIndexesCheck(prgrm *ast.CXProgram, sym *ast.CXArgument, typeSig *ast.CXTypeSignature) {
+	dimensions := 0
+	switch typeSig.Type {
+	case ast.TYPE_ATOMIC:
+	case ast.TYPE_ARRAY_ATOMIC, ast.TYPE_POINTER_ARRAY_ATOMIC, ast.TYPE_SLICE_ATOMIC, ast.TYPE_POINTER_SLICE_ATOMIC:
+		dimensions = len(prgrm.GetCXTypeSignatureArrayFromArray(typeSig.Meta).Lengths)
+	default:
+		return
+	}
+	if len(sym.Indexes) <= dimensions {
+		return
+	}
+	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidIndexing, sym.ArgDetails, ast.CompileErrorOperands{})
+	sym.Indexes = sym.Indexes[:dimensions]
+}
+
 func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
 	var sym *ast.CXArgument
 	if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -2512,6 +2554,10 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		arg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(argTypeSignature.Meta))
 	} else {
 		arg = nil
+	}
+
+	if sym != nil && arg == nil {
+		copyArgFieldsIndexesCheck(prgrm, sym, argTypeSignature)
 	}
 
 	// TODO: check if this needs a change

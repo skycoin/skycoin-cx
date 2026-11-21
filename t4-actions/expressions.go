@@ -454,6 +454,10 @@ func IsTempVar(prgrm *ast.CXProgram, nameGid stringpool.StringGid) bool {
 //		rightExprs - exprs on the right side of the operator expression
 //		opcode - the opcode of the operator.
 func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, rightExprs []ast.CXExpression, opcode int) (out []ast.CXExpression) {
+	// An empty side failed to compile and its error is recorded.
+	if len(leftExprs) == 0 || len(rightExprs) == 0 {
+		return nil
+	}
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
@@ -834,9 +838,13 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		panic(err)
 	}
 
+	fnOutputs := fn.GetOutputs(prgrm)
+	// AddJmpToReturnExpressions reports a return count that does not match.
+	if idx >= len(fnOutputs) || len(retExprs) == 0 {
+		return retExprs
+	}
 	lastExpr := retExprs[len(retExprs)-1]
 
-	fnOutputs := fn.GetOutputs(prgrm)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0699.
 	fnOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnOutputs[idx])
@@ -969,9 +977,11 @@ func AddJmpToReturnExpressions(prgrm *ast.CXProgram, exprs ReturnExpressions) []
 	fnOutputs := fn.GetOutputs(prgrm)
 	if len(fnOutputs) != exprs.Size && exprs.Expressions != nil {
 		// lastExpr := retExprs[len(retExprs)-1]
-		lastExprCXLine, _ := prgrm.GetPreviousCXLine(retExprs, len(retExprs)-1)
-
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeFunctionReturnCount, lastExprCXLine.FileName, lastExprCXLine.LineNumber, ast.CompileErrorOperands{int64(fn.Name), int64(len(fnOutputs)), int64(exprs.Size)})
+		file, line := CurrentFile, LineNo
+		if lastExprCXLine, err := prgrm.GetPreviousCXLine(retExprs, len(retExprs)-1); err == nil {
+			file, line = lastExprCXLine.FileName, lastExprCXLine.LineNumber
+		}
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeFunctionReturnCount, file, line, ast.CompileErrorOperands{int64(fn.Name), int64(len(fnOutputs)), int64(exprs.Size)})
 	}
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.

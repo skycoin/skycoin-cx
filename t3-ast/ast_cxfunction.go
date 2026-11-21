@@ -153,7 +153,14 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 
 	param.Package = fn.Package
 
-	newFieldIdx := AllocCXTypeSignatureOfCXArgBuilder(prgrm, param)
+	// An array output stays a CXArgument, the call, return and assignment paths
+	// have no array signature case.
+	var newFieldIdx CXTypeSignatureIndex
+	if IsTypeArrayAtomic(param) {
+		newFieldIdx = AllocCXTypeSignatureOfCXArgDeprecate(prgrm, param)
+	} else {
+		newFieldIdx = AllocCXTypeSignatureOfCXArgBuilder(prgrm, param)
+	}
 
 	if fn.Outputs == nil {
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
@@ -357,3 +364,4 @@ func (fn *CXFunction) SelectExpression(line int) (*CXExpression, error) {
 
 	return &expr, nil
 }
+

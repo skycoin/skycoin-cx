@@ -1,0 +1,16 @@
+package main
+
+type S struct {
+	string st
+}
+
+var g i
+
+func f(x []foo) {
+}
+
+func main() {
+	var a [3]Nope
+	var b *Nope
+	var c []Nope
+}

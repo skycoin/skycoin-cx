@@ -1,0 +1,13 @@
+package main
+
+func main() {
+	var a [3]i32
+	i32.print(a[2][1])
+	var s []i32
+	s = append(s, 1)
+	i32.print(s[0][0])
+	var x i32
+	x = x[0]
+	var m [2]i32
+	m[0][1] = 3
+}

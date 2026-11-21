@@ -129,7 +129,7 @@ Three error records exist.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
   `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
   `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeStructLiteralFieldType` (7035). 7000 is
+  `CompileErrorCodeStructRecursive` (7038). 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the

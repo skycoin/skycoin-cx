@@ -321,6 +321,8 @@ parameter_list:
 parameter_declaration:
                 declarator declaration_specifiers
                 {
+			details := Program.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet($2.ArgDetails)
+			details.FileName, details.FileLine = CurrentFile, lineNo
 			$2.Name = $1.Name
 			$2.Package = $1.Package
 			Program.ReleaseCXArgBuilder($1)
@@ -343,7 +345,7 @@ direct_declarator:
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 				// Now a constructor call, site S1404.
-				_, arg := ast.MakeArgument(Program, stringpool.StringGidNil, actions.CurrentFile, actions.LineNo)
+				_, arg := ast.MakeArgument(Program, stringpool.StringGidNil, CurrentFile, lineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = Program.CXProgramNameIntern($1)
 				arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -358,7 +360,7 @@ direct_declarator:
 
 id_list:	IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(Program,$1, "", false, actions.CurrentFile, actions.LineNo)
+			arg := actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1405.
 			$$ = []*ast.CXArgument{arg}
@@ -372,7 +374,7 @@ id_list:	IDENTIFIER
 		}
 	|	id_list COMMA IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(Program,$3, "", false, actions.CurrentFile, actions.LineNo)
+			arg := actions.DeclarationSpecifiersStruct(Program,$3, "", false, CurrentFile, lineNo)
 			$$ = append($1, arg)
 		}
 	|	id_list COMMA type_specifier
@@ -435,7 +437,7 @@ declaration_specifiers:
                 }
         |       indexing_literal IDENTIFIER
                 {
-			strct := actions.DeclarationSpecifiersStruct(Program,$2, "", false, actions.CurrentFile, actions.LineNo)
+			strct := actions.DeclarationSpecifiersStruct(Program,$2, "", false, CurrentFile, lineNo)
 			$$ = actions.DeclarationSpecifiers(strct, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
                 }
         |       IDENTIFIER PERIOD IDENTIFIER

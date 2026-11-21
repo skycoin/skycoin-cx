@@ -1,0 +1,10 @@
+package main
+
+type T struct {
+	x i32
+}
+
+func main() {
+	var t T
+	t.Nope()
+}

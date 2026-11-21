@@ -42,6 +42,8 @@ func ParseParameterDeclaration(prgrm *ast.CXProgram, parameterString []byte, pkg
 	}
 
 	// Merge both CXArgs
+	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(parameterDeclaration.ArgDetails)
+	details.FileName, details.FileLine = fileName, lineno
 	parameterDeclaration.Name = declarator.Name
 	parameterDeclaration.Package = declarator.Package
 	prgrm.ReleaseCXArgBuilder(declarator)

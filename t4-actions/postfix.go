@@ -74,7 +74,11 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			inp.Lengths = prevExpressionOperatorOutput.Lengths
 			inp.PreviouslyDeclared = true
 
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, inp)
+			if ast.IsTypeArrayAtomic(inp) {
+				typeSigIdx = ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, inp)
+			} else {
+				typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, inp)
+			}
 			prgrm.CXAtomicOps[useExpressionIdx].AddOutput(prgrm, typeSigIdx)
 		} else if prevExpressionOperatorOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 			// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
@@ -340,11 +344,10 @@ func PostfixExpressionNative(prgrm *ast.CXProgram, typeCode types.Code, opStrCod
 	opCode, ok := ast.OpCodes[typeCode.Name()+"."+opStrCode]
 	if !ok {
 		if renamedOpcodeRecord(prgrm, CurrentFile, LineNo, typeCode.Name()+"."+opStrCode) {
-			return nil
+			prgrm.CXProgramCompileErrorExit()
 		}
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeFunctionMissing, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(typeCode.Name() + "." + opStrCode)})
-		return nil
-		// panic(ok)
+		prgrm.CXProgramCompileErrorExit()
 	}
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
@@ -847,10 +850,10 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				file, line = ast.CXArgumentDebugFileGidLine(prgrm, details)
 			}
 			if renamedOpcodeRecord(prgrm, file, line, prgrm.CXProgramNameText(imp.Name)+"."+ident) {
-				return nil
+				prgrm.CXProgramCompileErrorExit()
 			}
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodePackageIdentifierMissing, file, line, ast.CompileErrorOperands{int64(imp.Name), prgrm.CXProgramCompileErrorText(ident)})
-			return nil
+			prgrm.CXProgramCompileErrorExit()
 		}
 	} else {
 		// then left is not a package name

@@ -1,0 +1,22 @@
+package number
+
+var Num i32
+var F f64
+
+func Get() (r i32) {
+	r = Num
+}
+
+package main
+
+import "number"
+
+func main() {
+	number.Num = 11
+	test(number.Num, 11, "read back")
+	test(number.Get(), 11, "read in its package")
+	number.Num = number.Num + 1
+	test(number.Get(), 12, "expression")
+	number.F = 2.5D
+	test(number.F, 2.5D, "f64")
+}

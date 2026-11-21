@@ -59,6 +59,9 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeStructFieldDuplicate, ast.CompileErrorOperands{}, fmt.Sprintf("%s : duplicate field", header)},
 		{ast.CompileErrorCodeStructFieldMultiplyDefined, ast.CompileErrorOperands{text("x")}, header + " Multiply defined struct field: x\n"},
 		{ast.CompileErrorCodeStructLiteralFieldType, ast.CompileErrorOperands{text("x"), text("S"), text("i32"), text("str")}, header + " " + fmt.Sprintf("field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided", "x", "S", "i32", "str") + "\n"},
+		{ast.CompileErrorCodeMethodMissing, ast.CompileErrorOperands{text("T"), text("Nope")}, header + " type 'T' has no method 'Nope'\n"},
+		{ast.CompileErrorCodeDeclarationTooLarge, ast.CompileErrorOperands{text("a")}, header + " 'a' is too large\n"},
+		{ast.CompileErrorCodeStructRecursive, ast.CompileErrorOperands{text("T")}, header + " invalid recursive type 'T'\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

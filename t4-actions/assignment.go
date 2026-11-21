@@ -466,6 +466,9 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			if outTypeIsSlice {
 				sym.Lengths = append([]types.Pointer{0}, sym.Lengths...)
 				sym.DeclarationSpecifiers = append(sym.DeclarationSpecifiers, constants.DECL_SLICE)
+			} else if ast.IsTypeArrayAtomic(outTypeArg) {
+				sym.Lengths = outTypeArg.Lengths
+				sym.DeclarationSpecifiers = append([]int(nil), outTypeArg.DeclarationSpecifiers...)
 			}
 
 			sym.Package = ast.CXPackageIndex(pkg.Index)
@@ -563,17 +566,19 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0581.
 		toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0])
-		var toExpressionOutputIdx ast.CXArgumentIndex
+		var toExpressionOutputIdx ast.CXArgumentIndex = -1
 		if toExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			toExpressionOutputIdx = ast.CXArgumentIndex(toExpressionOutputTypeSig.Meta)
-		} else {
+		} else if toExpressionOutputTypeSig.Type != ast.TYPE_ATOMIC && toExpressionOutputTypeSig.Type != ast.TYPE_POINTER_ATOMIC {
 			panic("type is not type cx argument deprecate\n\n")
 		}
 
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0582.
 		fromExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0])
-		if fromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		if toExpressionOutputIdx == -1 {
+			// A typed target, such as a package global, keeps its type.
+		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0583.
 			fromExpressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionOutputTypeSig.Meta))
