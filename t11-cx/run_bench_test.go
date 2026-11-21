@@ -9,8 +9,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t2-globals"
 	"github.com/skycoin/skycoin-cx/t3-ast"
+	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-execute"
 	"github.com/skycoin/skycoin-cx/t4-opcodes"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
@@ -198,33 +198,33 @@ func TestRunAllocs(t *testing.T) {
 	}
 }
 
-// referenceBenchMachine compiles and lowers p for the reference machine. It
-// returns nil when a function of p does not lower.
-func referenceBenchMachine(tb testing.TB, p runBenchProgram) *referenceMachine {
+// vmBenchMachine compiles and lowers p for vm. It returns nil when p does not
+// lower.
+func vmBenchMachine(tb testing.TB, p runBenchProgram) *vm.Machine {
 	compileRunProgram(tb, p)
-	image, failures := lower.Program(actions.AST)
-	if len(failures) > 0 {
+	image, _, outside := executorLower(actions.AST)
+	if outside != "" {
 		return nil
 	}
-	return referenceMachineNew(&image)
+	return vm.MachineNew(&image, executorOutputSize)
 }
 
-// BenchmarkRunReference times the reference machine of step 4 of #408 on
-// the BenchmarkRun programs that lower. Each iteration resets the memory,
-// which BenchmarkRun gets from a fresh compile.
-func BenchmarkRunReference(b *testing.B) {
+// BenchmarkRunVm times vm on the BenchmarkRun programs that lower, as cx
+// runs them, output included. Each iteration resets the machine, which
+// BenchmarkRun gets from a fresh compile.
+func BenchmarkRunVm(b *testing.B) {
 	initProgram()
 	for _, p := range runBenchPrograms(b) {
 		b.Run(p.name, func(b *testing.B) {
-			machine := referenceBenchMachine(b, p)
+			machine := vmBenchMachine(b, p)
 			if machine == nil {
 				b.Skipf("%s does not lower", p.name)
 			}
+			discardStdout(b)
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				referenceReset(machine)
-				if code := referenceRun(machine); code != types.CX_SUCCESS {
+				if code := executorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
 					b.Fatalf("%s: code %d", p.name, code)
 				}
 			}
@@ -232,21 +232,20 @@ func BenchmarkRunReference(b *testing.B) {
 	}
 }
 
-// TestRunReferenceAllocs fails when a run of the reference machine
-// allocates. The new loop must not allocate (#407, #408).
-func TestRunReferenceAllocs(t *testing.T) {
+// TestRunVmAllocs fails when a run on vm allocates (#407, #408).
+func TestRunVmAllocs(t *testing.T) {
 	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 	initProgram()
 	lowered := 0
 	for _, p := range runBenchPrograms(t) {
-		machine := referenceBenchMachine(t, p)
+		machine := vmBenchMachine(t, p)
 		if machine == nil {
 			continue
 		}
 		lowered++
+		discardStdout(t)
 		allocs := testing.AllocsPerRun(3, func() {
-			referenceReset(machine)
-			if code := referenceRun(machine); code != types.CX_SUCCESS {
+			if code := executorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
 				t.Fatalf("%s: code %d", p.name, code)
 			}
 		})

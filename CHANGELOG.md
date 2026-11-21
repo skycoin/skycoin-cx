@@ -15,6 +15,7 @@
 
 #### Added
 
+- `t3-cx-runtime-vm` runs a lowered `ir.Image` in one switch loop with no allocation. cx runs a program on it when every function lowers and on the old loop otherwise, and `cx --executor=auto|old|vm` chooses. 71 of the 451 programs `TestLowerCompare` checks run on it (#408)
 - `BenchmarkRun` in `t11-cx` times `execute.RunCompiled` alone over count, fib and bubble sort programs and the `BenchmarkCompile` programs, compiling outside the timer. `TestRunAllocs` fails when the allocations per run of any of them go above the counts recorded when it was added. The target is 0 (#407, #417)
 - The object model managers grow only at grow boundaries between compile stages and REPL iterations, to the next power of two when less than half of a manager is free, and print a warning on stderr when they do. Alloc on a full manager between two boundaries is an assert, see the Growth section of docs/ObjectModel.md (#299)
 - The object model managers, stage 3 of #299. Package `objmodel` (`t1-cx-core-objmodel`) holds the Gid layout and checks, and `t3-ast` has a generated `<obj>_gid.go`, `<obj>_mng.go` and manager test for each of the 14 IR object types, plus `CxIrState` with every manager. Nothing in the compiler uses them yet (#299)

@@ -220,6 +220,25 @@ func runTestCases(t *runner.TestRunner) {
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",
 		"test-test-line.cx: 8: result was not equal to the expected value; after an assignment",
 	)
+	t.RunWant("test-vm-divide-callee.cx", types.CX_RUNTIME_ERROR, "a division by zero in a callee prints its line and the call stack (skycoin-cx#408)",
+		"5\nerror: test-vm-divide-callee.cx:8, CX_RUNTIME_ERROR, runtime error: integer divide by zero\n===Callstack===\n>>> divide()",
+		">>> middle()",
+		">>> main()",
+	)
+	t.RunWant("test-vm-test-callee.cx", types.CX_ASSERT, "a failed test in a callee prints its message (skycoin-cx#408)",
+		"1\ntest-vm-test-callee.cx: 8: result was not equal to the expected value; local message\n",
+		"test-vm-test-callee.cx: 9: result was not equal to the expected value\n",
+		"test-vm-test-callee.cx: 10: result was not equal to the expected value; literal message\n2\n",
+	)
+	t.RunWant("test-vm-stack-overflow.cx", types.CX_RUNTIME_STACK_OVERFLOW_ERROR, "large frames overflow the stack (skycoin-cx#408)",
+		"error: test-vm-stack-overflow.cx:143, CX_RUNTIME_STACK_OVERFLOW_ERROR, stack overflow\n===Callstack===\n>>> recur()",
+	)
+	t.RunWant("test-vm-call-depth.cx", types.CX_RUNTIME_STACK_OVERFLOW_ERROR, "the call depth limit is a stack overflow (skycoin-cx#408)",
+		"1\nerror: test-vm-call-depth.cx:7, CX_RUNTIME_STACK_OVERFLOW_ERROR, stack overflow\n===Callstack===\n>>> recur()",
+	)
+	t.RunWant("test-vm-init-divide.cx", types.CX_RUNTIME_ERROR, "a division by zero in a global initializer is a runtime error (skycoin-cx#408)",
+		"error: test-vm-init-divide.cx:7, CX_RUNTIME_ERROR, runtime error: integer divide by zero\n===Callstack===\n>>> *init()",
+	)
 	t.RunWant("test-test-type-line.cx", types.CX_COMPILATION_ERROR, "a test(), panic or operator type error names the line of the call (skycoin-cx#259)",
 		"test-test-type-line.cx:8 first and second input arguments' types are not equal in 'test' call",
 		"test-test-type-line.cx:11 first and second input arguments' types are not equal in 'panic' call",

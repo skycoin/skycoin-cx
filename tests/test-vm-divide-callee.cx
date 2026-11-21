@@ -1,0 +1,20 @@
+// An integer division by zero two calls deep prints the line and the call
+// stack, the same on both loops (skycoin-cx#408).
+package main
+
+func divide(a i32, b i32) (out i32) {
+	var unused i32
+	unused = 7
+	out = a / b
+}
+
+func middle(x i32) (y i32) {
+	y = divide(10, x)
+}
+
+func main() {
+	i32.print(5)
+	var q i32
+	q = middle(0)
+	i32.print(q)
+}

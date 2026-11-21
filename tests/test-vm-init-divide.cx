@@ -1,0 +1,11 @@
+// A division by zero in a global initializer runs in *init. vm prints a
+// runtime error. The old loop has no recover around *init and crashes
+// (skycoin-cx#408).
+package main
+
+var zero i32 = 0
+var g i32 = 10 / zero
+
+func main() {
+	i32.print(g)
+}

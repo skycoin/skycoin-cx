@@ -219,12 +219,32 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 
 	defer profiling.StopProfile("run")
 
+	if options.executor != executorAuto && options.executor != executorOld && options.executor != executorVm {
+		fmt.Fprintf(os.Stderr, "unknown --executor %q, want auto, old or vm\n", options.executor)
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
+
 	if options.replMode || len(sourceCode) == 0 {
 		repl.Repl()
 		return
 	}
 
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
+
+	if options.executor != executorOld {
+		image, _, outside := executorLower(actions.AST)
+		switch {
+		case outside == "":
+			if code := executorVmRun(actions.AST, &image); code != types.CX_SUCCESS {
+				os.Exit(int(code))
+			}
+			return
+		case options.executor == executorVm:
+			fmt.Fprintf(os.Stderr, "cannot run on vm: %s\n", outside)
+			os.Exit(types.CX_RUNTIME_NOT_IMPLEMENTED)
+		}
+	}
+
 	err := execute.RunCompiled(actions.AST, 0, cxArgs)
 
 	if err != nil {

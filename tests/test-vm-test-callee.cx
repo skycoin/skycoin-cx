@@ -1,0 +1,18 @@
+// A failed test inside a function prints its message, from a local str or a
+// literal, the same on both loops (skycoin-cx#408).
+package main
+
+func check(v i32) {
+	var message str
+	message = "local message"
+	test(v, 3, message)
+	test(v, 3, "")
+	test(v, 3, "literal message")
+}
+
+func main() {
+	check(3)
+	i32.print(1)
+	check(4)
+	i32.print(2)
+}

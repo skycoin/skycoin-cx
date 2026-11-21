@@ -22,6 +22,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
+	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-execute"
@@ -36,8 +37,11 @@ const lowerCompareProgramEnv = "CX_LOWER_COMPARE_PROGRAM"
 const lowerCompareMarker = "LOWERCOMPARE "
 
 // lowerCompareExcluded lists programs inside the subset whose results differ
-// for a reason other than a lowering bug, with that reason.
-var lowerCompareExcluded = map[string]string{}
+// for a reason other than a lowering or vm bug, with that reason.
+var lowerCompareExcluded = map[string]string{
+	"test-vm-call-depth.cx":  "the old loop crashes with an index out of range in ast.RuntimeError at the call depth limit",
+	"test-vm-init-divide.cx": "the old loop has no recover around *init and crashes on a runtime error there",
+}
 
 // lowerCompareStage is how far a child got with its program.
 type lowerCompareStage string
@@ -59,15 +63,24 @@ type lowerCompareFailure struct {
 
 // lowerCompareResult is one result line of a child.
 type lowerCompareResult struct {
-	Stage         lowerCompareStage
-	Failures      []lowerCompareFailure
-	ReferenceCode int32
-	Mismatch      string
+	Stage    lowerCompareStage
+	Failures []lowerCompareFailure
+	VmCode   int32
+	Mismatch string
+}
+
+// lowerCompareRun is one run of cx on a program.
+type lowerCompareRun struct {
+	stdout   []byte
+	exitCode int
+	timedOut bool
 }
 
 // TestLowerCompare lowers every CX program in tests/ and, for each program
-// whose functions all lower, compares the memory and stdout after the old
-// loop with the reference interpreter, step 4 of #408.
+// whose functions all lower, compares the old loop with vm, steps 4 and 5 of
+// #408. A child compares the memory after both loops. Then cx runs the
+// program with --executor=old and with --executor=vm, and stdout and the exit
+// code must be the same, runtime errors and failed tests included.
 func TestLowerCompare(t *testing.T) {
 	if program := os.Getenv(lowerCompareProgramEnv); program != "" {
 		lowerCompareChild(t, program)
@@ -80,6 +93,7 @@ func TestLowerCompare(t *testing.T) {
 		results  []lowerCompareResult
 		exitCode int
 		timedOut bool
+		old, vm  lowerCompareRun
 	}
 	outcomes := make([]outcome, len(programs))
 	limit := make(chan struct{}, runtime.NumCPU())
@@ -90,16 +104,10 @@ func TestLowerCompare(t *testing.T) {
 		go func() {
 			defer wait.Done()
 			defer func() { <-limit }()
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-			defer cancel()
-			cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestLowerCompare$")
-			cmd.Env = append(os.Environ(), lowerCompareProgramEnv+"="+program)
-			out, err := cmd.Output()
-			if exitError, ok := err.(*exec.ExitError); ok {
-				outcomes[i].exitCode = exitError.ExitCode()
-			}
-			outcomes[i].timedOut = ctx.Err() != nil
-			scanner := bufio.NewScanner(bytes.NewReader(out))
+			child := lowerCompareProcess(nil, []string{lowerCompareProgramEnv + "=" + program}, "", "-test.run=^TestLowerCompare$")
+			outcomes[i].exitCode = child.exitCode
+			outcomes[i].timedOut = child.timedOut
+			scanner := bufio.NewScanner(bytes.NewReader(child.stdout))
 			scanner.Buffer(make([]byte, 1<<20), 1<<20)
 			for scanner.Scan() {
 				line, found := strings.CutPrefix(scanner.Text(), lowerCompareMarker)
@@ -113,11 +121,18 @@ func TestLowerCompare(t *testing.T) {
 				}
 				outcomes[i].results = append(outcomes[i].results, result)
 			}
+			results := outcomes[i].results
+			if len(results) == 0 || results[len(results)-1].Stage == lowerCompareStageOutside {
+				return
+			}
+			files := strings.Fields(program)
+			outcomes[i].old = lowerCompareProcess(t, []string{"CX_TEST_RUN_MAIN=1"}, filepath.Join("..", "tests"), append([]string{"--executor=old"}, files...)...)
+			outcomes[i].vm = lowerCompareProcess(t, []string{"CX_TEST_RUN_MAIN=1"}, filepath.Join("..", "tests"), append([]string{"--executor=vm"}, files...)...)
 		}()
 	}
 	wait.Wait()
 
-	var compileFailed, outside, inside, matched, mismatched, excluded int
+	var compileFailed, outside, inside, matched, mismatched, excluded, stopped int
 	var matchedNames []string
 	firstReasons := map[string]int{}
 	opcodes := map[string]int{}
@@ -129,7 +144,7 @@ func TestLowerCompare(t *testing.T) {
 		}
 		last := o.results[len(o.results)-1]
 		if last.Stage == lowerCompareStageCompiled {
-			t.Errorf("%s: the lowering or the reference crashed, exit code %d", name, o.exitCode)
+			t.Errorf("%s: the lowering or vm crashed, exit code %d", name, o.exitCode)
 			continue
 		}
 		if last.Stage == lowerCompareStageOutside {
@@ -149,19 +164,24 @@ func TestLowerCompare(t *testing.T) {
 		inside++
 		mismatch := ""
 		switch {
-		case last.Stage == lowerCompareStageMatch:
-			matched++
-			matchedNames = append(matchedNames, name)
-			continue
 		case last.Stage == lowerCompareStageMismatch:
 			mismatch = last.Mismatch
-		case o.timedOut:
-			mismatch = "the old loop timed out"
-		case o.exitCode != int(last.ReferenceCode):
-			mismatch = fmt.Sprintf("the old loop exited with %d, the reference with %d", o.exitCode, last.ReferenceCode)
-		default:
+		case o.old.timedOut || o.vm.timedOut:
+			mismatch = fmt.Sprintf("cx timed out, old %v, vm %v", o.old.timedOut, o.vm.timedOut)
+		case o.old.exitCode != o.vm.exitCode:
+			mismatch = fmt.Sprintf("cx exited with %d on the old loop, %d on vm", o.old.exitCode, o.vm.exitCode)
+		case !bytes.Equal(o.old.stdout, o.vm.stdout):
+			mismatch = fmt.Sprintf("stdout differs, old %q, vm %q", lowerCompareClip(o.old.stdout), lowerCompareClip(o.vm.stdout))
+		case last.Stage == lowerCompareStageLowered && last.VmCode == types.CX_SUCCESS && o.timedOut:
+			mismatch = "the child timed out"
+		}
+		if mismatch == "" {
 			matched++
-			t.Logf("%s: both loops stopped with code %d", name, o.exitCode)
+			matchedNames = append(matchedNames, name)
+			if o.vm.exitCode != types.CX_SUCCESS {
+				stopped++
+				t.Logf("%s: both loops exit with code %d", name, o.vm.exitCode)
+			}
 			continue
 		}
 		if reason, found := lowerCompareExcluded[name]; found {
@@ -173,8 +193,8 @@ func TestLowerCompare(t *testing.T) {
 		t.Errorf("%s: %s", name, mismatch)
 	}
 
-	t.Logf("%d programs, %d did not compile, %d outside the subset, %d inside, %d match, %d mismatch, %d excluded",
-		len(programs), compileFailed, outside, inside, matched, mismatched, excluded)
+	t.Logf("%d programs, %d did not compile, %d outside the subset, %d inside, %d match (%d of them exit with an error code), %d mismatch, %d excluded",
+		len(programs), compileFailed, outside, inside, matched, stopped, mismatched, excluded)
 	t.Logf("matching programs: %s", strings.Join(matchedNames, ", "))
 	t.Logf("first reason a program is outside: %s", lowerCompareTop(firstReasons, 12))
 	t.Logf("opcodes outside the subset, by functions using them: %s", lowerCompareTop(opcodes, 20))
@@ -183,6 +203,36 @@ func TestLowerCompare(t *testing.T) {
 			t.Errorf("excluded program %s is not in tests/ (%s)", name, reason)
 		}
 	}
+}
+
+// lowerCompareProcess runs the test binary with args and env added, in dir
+// when it is not "", and returns its stdout and exit code.
+func lowerCompareProcess(t *testing.T, env []string, dir string, args ...string) lowerCompareRun {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	executable, err := filepath.Abs(os.Args[0])
+	if err != nil && t != nil {
+		t.Error(err)
+	}
+	cmd := exec.CommandContext(ctx, executable, args...)
+	cmd.Env = append(os.Environ(), env...)
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	run := lowerCompareRun{stdout: out, timedOut: ctx.Err() != nil}
+	if exitError, ok := err.(*exec.ExitError); ok {
+		run.exitCode = exitError.ExitCode()
+	} else if err != nil && t != nil {
+		t.Error(err)
+	}
+	return run
+}
+
+// lowerCompareClip shortens stdout for a message.
+func lowerCompareClip(out []byte) []byte {
+	if len(out) > 400 {
+		return out[:400]
+	}
+	return out
 }
 
 // lowerCompareHarnessRun matches a t1-cxtest entry, its files and flags.
@@ -260,7 +310,8 @@ func lowerCompareEmit(t *testing.T, result lowerCompareResult) {
 	fmt.Println(lowerCompareMarker + string(line))
 }
 
-// lowerCompareChild compiles, lowers and compares one program.
+// lowerCompareChild compiles and lowers one program, runs it on vm and then
+// on the old loop, and compares the memory after both.
 func lowerCompareChild(t *testing.T, program string) {
 	names := strings.Fields(program)
 	sources := make([]string, len(names))
@@ -276,8 +327,8 @@ func lowerCompareChild(t *testing.T, program string) {
 	compileRunSources(t, names, sources)
 	lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageCompiled})
 
-	image, failures := lower.Program(actions.AST)
-	if len(failures) > 0 {
+	image, failures, outside := executorLower(actions.AST)
+	if outside != "" {
 		result := lowerCompareResult{Stage: lowerCompareStageOutside}
 		for _, failure := range failures {
 			entry := lowerCompareFailure{
@@ -290,75 +341,66 @@ func lowerCompareChild(t *testing.T, program string) {
 			}
 			result.Failures = append(result.Failures, entry)
 		}
+		if len(failures) == 0 {
+			result.Failures = []lowerCompareFailure{{Reason: outside}}
+		}
 		lowerCompareEmit(t, result)
 		return
 	}
 
-	machine := referenceMachineNew(&image)
-	referenceReset(machine)
-	// A wrong jump can loop for ever, so the reference gets a time limit.
+	machine := vm.MachineNew(&image, executorOutputSize)
+	// A wrong jump can loop for ever, so vm gets a time limit.
 	done := make(chan int32, 1)
-	go func() { done <- referenceRun(machine) }()
-	var referenceCode int32
-	select {
-	case referenceCode = <-done:
-	case <-time.After(time.Minute):
-		lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageMismatch, Mismatch: "the reference did not finish in a minute"})
+	var vmCode int32
+	lowerCompareCaptureStdout(t, func() {
+		go func() { done <- executorVmRunMachine(actions.AST, machine) }()
+		select {
+		case vmCode = <-done:
+		case <-time.After(time.Minute):
+			vmCode = -1
+		}
+	})
+	if vmCode == -1 {
+		lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageMismatch, Mismatch: "vm did not finish in a minute"})
 		os.Exit(1)
 	}
-	lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageLowered, ReferenceCode: referenceCode})
+	lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageLowered, VmCode: vmCode})
+	if vmCode != types.CX_SUCCESS && vmCode != types.CX_ASSERT {
+		// The error print copied the vm state into the program, and the
+		// runs of cx compare the output.
+		return
+	}
 
-	oldOutput := lowerCompareCaptureStdout(t, func() {
+	lowerCompareCaptureStdout(t, func() {
 		if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
 			t.Fatal(err)
 		}
 	})
 
-	result := lowerCompareResult{Stage: lowerCompareStageMatch, ReferenceCode: referenceCode}
-	result.Mismatch = lowerCompareDiff(actions.AST, machine, oldOutput)
+	result := lowerCompareResult{Stage: lowerCompareStageMatch, VmCode: vmCode}
+	result.Mismatch = lowerCompareDiff(actions.AST, machine)
 	if result.Mismatch != "" {
 		result.Stage = lowerCompareStageMismatch
 	}
 	lowerCompareEmit(t, result)
 }
 
-// lowerCompareDiff describes the first difference between the old loop and
-// the reference machine, or returns "".
-func lowerCompareDiff(prgrm *ast.CXProgram, machine *referenceMachine, oldOutput []byte) string {
-	if machine.stopCode != types.CX_SUCCESS {
-		return fmt.Sprintf("the reference stopped with code %d in %s at pc %d", machine.stopCode,
-			machine.image.ImageFuncNames[machine.stopFunction], machine.stopPc)
-	}
-	// A failed test prints its source line and message, which the reference
-	// only counts. Those lines are compared by number.
-	var oldLines [][]byte
-	oldFailures := uint32(0)
-	for _, line := range bytes.SplitAfter(oldOutput, []byte("\n")) {
-		if bytes.Contains(line, []byte(": result was not equal to the expected value")) {
-			oldFailures++
-		} else {
-			oldLines = append(oldLines, line)
-		}
-	}
-	if oldFailures != machine.testFailures {
-		return fmt.Sprintf("%d tests failed in the old loop, %d in the reference", oldFailures, machine.testFailures)
-	}
-	oldOutput = bytes.Join(oldLines, nil)
+// lowerCompareDiff describes the first difference between the memory after
+// the old loop and after vm, or returns "".
+func lowerCompareDiff(prgrm *ast.CXProgram, machine *vm.Machine) string {
 	oldMemory := prgrm.Memory
-	if len(oldMemory) < len(machine.memory) {
-		return fmt.Sprintf("the old memory is %d bytes, the reference %d", len(oldMemory), len(machine.memory))
+	memory := machine.MachineMemory
+	if len(oldMemory) < len(memory) {
+		return fmt.Sprintf("the old memory is %d bytes, vm %d", len(oldMemory), len(memory))
 	}
-	for i := range machine.memory {
-		if oldMemory[i] != machine.memory[i] {
+	for i := range memory {
+		if oldMemory[i] != memory[i] {
 			segment := "stack"
-			if uint32(i) >= machine.image.ImageDataStart {
+			if uint32(i) >= machine.MachineImage.ImageDataStart {
 				segment = "data"
 			}
-			return fmt.Sprintf("memory differs at %d in the %s, old %d, reference %d", i, segment, oldMemory[i], machine.memory[i])
+			return fmt.Sprintf("memory differs at %d in the %s, old %d, vm %d", i, segment, oldMemory[i], memory[i])
 		}
-	}
-	if !bytes.Equal(oldOutput, machine.output) {
-		return fmt.Sprintf("stdout differs, old %q, reference %q", oldOutput, machine.output)
 	}
 	return ""
 }

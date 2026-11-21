@@ -663,10 +663,12 @@ moved with build tags
 ## The runtime image
 
 `lower.Program` (`t4-cx-compiler-lower`) turns a compiled program into an
-`ir.Image` (`t2-cx-runtime-ir`), the flat form step 5 of
-[#408](https://github.com/skycoin/skycoin-cx/issues/408) will run. The old
-loop still runs every program. Nothing executes an image yet except the
-reference interpreter in `t11-cx/lower_reference_test.go`.
+`ir.Image` (`t2-cx-runtime-ir`), the flat form that `vm.Machine`
+(`t3-cx-runtime-vm`) runs, steps 4 and 5 of
+[#408](https://github.com/skycoin/skycoin-cx/issues/408). cx lowers every
+program after compiling it. When every function lowers it runs the image on
+vm, otherwise on the old loop. `cx --executor=old` or `--executor=vm` forces
+one loop, and vm fails on a program that does not lower.
 
 * `ir.Instr` is a fixed 32 byte record. `InstrOpcode` is an `ir.Opcode`,
   `InstrA` to `InstrD` are operand byte offsets, `InstrN` and `InstrM` hold
@@ -697,8 +699,33 @@ identity by value, declarations, the jumps, `test` on non-string values and
 calls, with every operand a variable or literal whose address is its offset
 plus, for a stack offset, the frame pointer. Anything else gives a
 `lower.Failure` with a `ReasonCode`. `TestLowerCompare` lowers every program
-in `tests/` and compares memory and stdout after the old loop and the
-reference interpreter for each one that lowers completely.
+in `tests/` and, for each one that lowers completely, compares the memory
+after the old loop and vm, and stdout and the exit code of `cx
+--executor=old` and `cx --executor=vm`.
+
+`vm.Machine` holds the memory (stack, then the data segment), a fixed array
+of `ir.ImageCallDepthMax` frames and an output buffer, all sized before the
+run. `Run` runs one entry function and returns a `vm.Stop` code and a pc,
+never a string. The caller runs `*init`, then `main` in the frame after it,
+as `execute.RunCompiled` does.
+
+* `StopOutputFull` and `StopTestFailed` are resumable. The caller writes the
+  output buffer, prints a failed test from the line table and
+  `Machine.TestMessage`, the str bytes read from memory, then calls `Resume`.
+* `StopDivideByZero` and `StopStackOverflow` end the run. t11-cx prints them
+  as `ast.RuntimeErrorInfo` does, the line from `ir.LineAt` and the call
+  stack by copying the memory and frames into the program for
+  `PrintStack`. `vm.StopExitCodes` gives the exit code.
+* The loop has no call in it. Prints, `test` and float mod, max and min
+  return to a slow path outside the loop, which runs the instruction and
+  enters the loop again. A call in the loop makes Go spill the loop state on
+  every instruction.
+* A run allocates nothing (`TestRunVmAllocs`).
+
+Two programs behave differently on purpose. At the call depth limit the old
+loop crashes with an index out of range in `ast.RuntimeError`, and a runtime
+error in `*init` crashes it because `runSysInitFunc` has no recover. vm
+prints a stack overflow or runtime error for both.
 
 ## Known oddities
 
