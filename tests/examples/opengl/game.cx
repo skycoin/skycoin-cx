@@ -271,11 +271,11 @@ func setupScene () () {
 	var wd str
 	wd = os.GetWorkingDirectory()
 
-	tex_characters = gl.NewTexture(sprintf("%s%s", wd, "textures/roguelike_characters.png"))
-	tex_city = gl.NewTexture(sprintf("%s%s", wd, "textures/roguelike_city.png"))
-	tex_dungeon = gl.NewTexture(sprintf("%s%s", wd, "textures/roguelike_dungeon.png"))
-	tex_indoor = gl.NewTexture(sprintf("%s%s", wd, "textures/roguelike_indoor.png"))
-	tex_pack = gl.NewTexture(sprintf("%s%s", wd, "textures/roguelike_pack.png"))
+	tex_characters = gl.NewTexture("textures/roguelike_characters.png")
+	tex_city = gl.NewTexture("textures/roguelike_city.png")
+	tex_dungeon = gl.NewTexture("textures/roguelike_dungeon.png")
+	tex_indoor = gl.NewTexture("textures/roguelike_indoor.png")
+	tex_pack = gl.NewTexture("textures/roguelike_pack.png")
 	// action symbols
 	var tex_act_up i32
 	var tex_act_down i32
@@ -283,11 +283,11 @@ func setupScene () () {
 	var tex_act_left i32
 	var tex_act_water i32
 	
-	tex_act_up = gl.NewTexture(sprintf("%s%s", wd, "textures/up.png"))
-	tex_act_down = gl.NewTexture(sprintf("%s%s", wd, "textures/down.png"))
-	tex_act_right = gl.NewTexture(sprintf("%s%s", wd, "textures/right.png"))
-	tex_act_left = gl.NewTexture(sprintf("%s%s", wd, "textures/left.png"))
-	tex_act_water = gl.NewTexture(sprintf("%s%s", wd, "textures/water.png"))
+	tex_act_up = gl.NewTexture("textures/up.png")
+	tex_act_down = gl.NewTexture("textures/down.png")
+	tex_act_right = gl.NewTexture("textures/right.png")
+	tex_act_left = gl.NewTexture("textures/left.png")
+	tex_act_water = gl.NewTexture("textures/water.png")
 
 	sp_blue_carpet = setSprite(sp_blue_carpet, false, 187, 203, 136, 152, w_pack, h_pack, tex_pack)
 	sp_floor_brick_xx = setSprite(sp_floor_brick_xx, false, 102, 118, 34, 50, w_pack, h_pack, tex_pack)

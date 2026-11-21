@@ -45,7 +45,7 @@ func opOsLogFile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 func opOsReadAllText(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	success := false
 
-	if byts, err := util.CXReadFile(inputs[0].Get_str(prgrm)); err == nil {
+	if byts, fileError := ast.ProgramSandboxFileRead(prgrm, &inputs[0]); fileError == nil {
 		outputs[0].Set_str(prgrm, string(byts))
 		success = true
 	}
@@ -75,7 +75,7 @@ func getFileHandle(file *os.File) int32 {
 
 func opOsOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
-	if file, err := util.CXOpenFile(inputs[0].Get_str(prgrm)); err == nil {
+	if file, fileError := ast.ProgramSandboxFileOpen(prgrm, &inputs[0]); fileError == nil {
 		handle = getFileHandle(file)
 	}
 
@@ -84,7 +84,7 @@ func opOsOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue)
 
 func opOsCreate(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
-	if file, err := util.CXCreateFile(inputs[0].Get_str(prgrm)); err == nil {
+	if file, fileError := ast.ProgramSandboxFileCreate(prgrm, &inputs[0]); fileError == nil {
 		handle = getFileHandle(file)
 	}
 

@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t0-util"    // thin: only CXCreateFile, CXLogFile, CXOpenFile; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-util"    // thin: only CXCreateFile, CXLogFile, CXOpenFile, ProgramSandboxRootOpen; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only AssertFailed, RegisterOpcodes; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -206,6 +207,13 @@ func Run(args []string) {
 }
 
 func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
+	root, fileError := util.ProgramSandboxRootOpen(options.sandbox)
+	if fileError != nil {
+		fmt.Fprintf(os.Stderr, "cannot open the sandbox: %s\n", fileError.FileErrorMessage)
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
+	defer root.Close()
+	actions.AST.ProgramSandboxRoot = root
 
 	profiling.StartProfile("run")
 

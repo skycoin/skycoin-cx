@@ -22,7 +22,7 @@ func main () {
 
 	var wd str
 	wd = os.GetWorkingDirectory()
-	fontFile := string.Concatenation(wd, "fonts/roboto-light.ttf")
+	fontFile := "fonts/roboto-light.ttf"
 
 	var handle i32
 	var closeHandle bool

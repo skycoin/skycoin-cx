@@ -4,6 +4,7 @@
 
 #### Language
 
+- Program file paths are confined to a sandbox directory, the working directory or `cx --sandbox <dir>`, opened once at run start with `os.OpenRoot`. Every path a program passes to `os.Open`, `os.Create`, `os.ReadAllText`, `json.Open`, `StartCPUProfile`, the `gl` texture and GIF loaders and `al.LoadWav` must be relative, `/` separated, without NUL, at most 4096 bytes, and may not leave the sandbox by `..` or a symlink. An absolute path such as one built from `os.GetWorkingDirectory` is now rejected. A rejected path fails like a missing file. `t0-util` has `FileError` with the first file failure and operation codes (#433)
 - Language version 2611200002. Every built-in library lives under `sys/` and needs an explicit import, for example `import "sys/os"`. A bare import of a built-in package, an unknown `sys/` path and a built-in package used without its import are compile errors (#380)
 - The `str` functions moved to `sys/string` with verbose camel case names, for example `str.concat` is `string.Concatenation` and `str.compare_by_value` is `string.OrderingByByteValue`, and `glfw.func_i32_i32` and `glfw.call_i32_i32` are `glfw.RegisterCallbackI32I32` and `glfw.InvokeCallbackI32I32`. Opcodes keep their numbers, `OpcodeRenameTable` and the `former_names` column of `docs/opcodes.csv` record the renames, and an old name is a compile error that names the new one (#380, #382, #391)
 - `string.ByteLength`, opcode 792 (#382)

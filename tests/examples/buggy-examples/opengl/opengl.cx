@@ -453,11 +453,11 @@ func main () () {
 
 	wd := os.GetWorkingDirectory()
 	
-	tex_characters := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_characters.png"))
-	tex_city := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_city.png"))
-	tex_dungeon := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_dungeon.png"))
-	tex_indoor := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_indoor.png"))
-	tex_pack := gl.NewTexture(string.Concatenation(wd, "textures/roguelike_pack.png"))
+	tex_characters := gl.NewTexture("textures/roguelike_characters.png")
+	tex_city := gl.NewTexture("textures/roguelike_city.png")
+	tex_dungeon := gl.NewTexture("textures/roguelike_dungeon.png")
+	tex_indoor := gl.NewTexture("textures/roguelike_indoor.png")
+	tex_pack := gl.NewTexture("textures/roguelike_pack.png")
 	
 	w_characters := 918
 	h_characters := 203

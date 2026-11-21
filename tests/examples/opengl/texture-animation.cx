@@ -45,8 +45,8 @@ func display () {
 func init () () {
 	var wd str
 	wd = os.GetWorkingDirectory()
-	texture = append(texture, gl.NewTexture(string.Concatenation(wd, "textures/adventurer_walk1.png")))
-	texture = append(texture, gl.NewTexture(string.Concatenation(wd, "textures/adventurer_walk2.png")))
+	texture = append(texture, gl.NewTexture("textures/adventurer_walk1.png"))
+	texture = append(texture, gl.NewTexture("textures/adventurer_walk2.png"))
 }
 
 func main () () {

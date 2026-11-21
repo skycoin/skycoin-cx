@@ -1,0 +1,36 @@
+// Program paths must be relative and stay inside the sandbox, see #433.
+// The symlink cases are Go tests in t0-util and t11-cx.
+
+package main
+
+import "sys/os"
+import "sys/json"
+
+func rejected(path str, message str) {
+	var text str
+	var ok bool
+	test(os.Open(path), -1, message)
+	text, ok = os.ReadAllText(path)
+	test(ok, false, message)
+	test(json.Open(path), -1, message)
+}
+
+func main() {
+	rejected("../README.md", "../x")
+	rejected("a/../../README.md", "a/../../x")
+	rejected("/etc/passwd", "/etc/passwd")
+	rejected("C:\\x", "C:\\x")
+	rejected("\\\\server\\x", "\\\\server\\x")
+	rejected("test-os-sandbox\000.cx", "NUL byte")
+	rejected("", "empty path")
+
+	test(os.Create("../test-os-sandbox-escape.tmp"), -1, "create ../x")
+	test(os.Create("a/../../test-os-sandbox-escape.tmp"), -1, "create a/../../x")
+	test(os.Create("/test-os-sandbox-escape.tmp"), -1, "create /x")
+	test(os.Create("test-os-sandbox\000.tmp"), -1, "create with a NUL byte")
+
+	var text str
+	var ok bool
+	text, ok = os.ReadAllText("./testdata/json/../json/test-0.json")
+	test(ok, true, "relative path inside the sandbox")
+}

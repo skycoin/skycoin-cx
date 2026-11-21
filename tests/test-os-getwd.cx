@@ -1,4 +1,6 @@
 // https://github.com/skycoin/skycoin-cx/issues/117
+// Program paths are relative to the sandbox, so an absolute path built from
+// the working directory is rejected, see #433.
 
 package main
 
@@ -11,7 +13,11 @@ func main() {
 	test(string.EqualityByByteValue(wd, ""), false, "working directory is empty")
 
 	var handle i32
-	handle = os.Open(string.Concatenation(wd, "testdata/json/test-0.json"))
+	handle = os.Open("testdata/json/test-0.json")
 	test(handle >= 0, true, "cannot open a file relative to the working directory")
 	test(os.Close(handle), true, "close")
+
+	var absolute str
+	absolute = string.Concatenation(wd, "testdata/json/test-0.json")
+	test(os.Open(absolute), -1, "an absolute path was opened")
 }

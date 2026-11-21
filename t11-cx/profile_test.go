@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"testing"
 )
 
@@ -14,11 +13,11 @@ func TestStartCPUProfileWritesTheGivenPath(t *testing.T) {
 	dir := t.TempDir()
 	prof := filepath.Join(dir, "run.pprof")
 	file := filepath.Join(dir, "p.cx")
-	src := "package main\n\nimport \"sys/os\"\n\nfunc main() {\n\tStartCPUProfile(" + strconv.Quote(prof) + ", 100)\n\tvar i i32\n\tfor i = 0; i < 100000; i++ {\n\t}\n\tStopCPUProfile(" + strconv.Quote(prof) + ")\n}\n"
+	src := "package main\n\nimport \"sys/os\"\n\nfunc main() {\n\tStartCPUProfile(\"run.pprof\", 100)\n\tvar i i32\n\tfor i = 0; i < 100000; i++ {\n\t}\n\tStopCPUProfile(\"run.pprof\")\n}\n"
 	if err := os.WriteFile(file, []byte(src), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(os.Args[0], file)
+	cmd := exec.Command(os.Args[0], "--sandbox", dir, file)
 	cmd.Env = append(os.Environ(), "CX_TEST_RUN_MAIN=1")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("cx: %v\n%s", err, out)

@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/skycoin/skycoin-cx/t0-types"
+import (
+	"os"
+
+	"github.com/skycoin/skycoin-cx/t0-types"
+)
 
 // CXProgram is used to represent a full CX program.
 //
@@ -29,6 +33,10 @@ type CXProgram struct {
 	CallCounter types.Pointer // What function call is the currently being executed in the CallStack
 	Terminated  bool          // Utility field for the runtime. Indicates if a CX program has already finished or not.
 	Version     int64         // Language version, constants.LanguageVersionCurrent when built.
+
+	// ProgramSandboxRoot is the directory every program file opcode resolves
+	// in, opened once at run start, see #433. Nil means file opcodes fail.
+	ProgramSandboxRoot *os.Root
 
 	// Used by the REPL and cxgo
 	CurrentPackage CXPackageIndex // Represents the currently active package in the REPL or when parsing a CX file.

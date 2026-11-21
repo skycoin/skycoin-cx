@@ -25,6 +25,7 @@ type cxCmdFlags struct {
 	minHeapFreeRatio float64
 	maxHeapFreeRatio float64
 	cxpath           string
+	sandbox          string
 
 	// Debug flags for the CX developers
 	debugLexer      bool
@@ -87,6 +88,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.Float64Var(&options.minHeapFreeRatio, "min-heap-free", options.minHeapFreeRatio, "Minimum heap space percentage that should be free after calling the garbage collector. Value must be in the range of 0.0 and 1.0.")
 	commandLine.Float64Var(&options.maxHeapFreeRatio, "max-heap-free", options.maxHeapFreeRatio, "Maximum heap space percentage that should be free after calling the garbage collector. Value must be in the range of 0.0 and 1.0.")
 	commandLine.StringVar(&options.cxpath, "cxpath", options.cxpath, "Used for dynamically setting the value of the environment variable CXPATH")
+	commandLine.StringVar(&options.sandbox, "sandbox", options.sandbox, "Directory a running program's file opcodes are confined to. Program paths must be relative and stay inside it. Defaults to the working directory.")
 
 	// Debug flags
 	commandLine.BoolVar(&options.debugLexer, "debug-lexer", options.debugLexer, "Debug the lexer by printing all scanner tokens")

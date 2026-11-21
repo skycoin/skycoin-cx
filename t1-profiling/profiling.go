@@ -54,7 +54,12 @@ func StartCPUProfileFile(path string, profRate int) (stop func() error, err erro
 	if err != nil {
 		return nil, fmt.Errorf("create CPU profile: %w", err)
 	}
+	return StartCPUProfileOnFile(f, profRate)
+}
 
+// StartCPUProfileOnFile is StartCPUProfile writing to f at a nonzero profRate.
+// It closes f on stop or failure.
+func StartCPUProfileOnFile(f *os.File, profRate int) (stop func() error, err error) {
 	// test against default value to avoid warning
 	if profRate != 100 {
 		runtime.SetCPUProfileRate(profRate)

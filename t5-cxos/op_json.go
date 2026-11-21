@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -52,8 +51,8 @@ var freeJsons []int32
 func opJsonOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
 
-	file, err := util.CXOpenFile(inputs[0].Get_str(prgrm))
-	if err == nil {
+	file, fileError := ast.ProgramSandboxFileOpen(prgrm, &inputs[0])
+	if fileError == nil {
 		freeCount := len(freeJsons)
 		if freeCount > 0 {
 			freeCount--

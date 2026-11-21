@@ -3004,6 +3004,13 @@ in too and are imported with `import "sys/json"`.
 The `os` package provides functions that serve as an interface to CX's
 underlaying operating system.
 
+File paths passed to `os`, `json`, `gl`, `al` and `StartCPUProfile` are
+confined to the sandbox directory, the working directory unless `cx
+--sandbox <dir>` names another. A path must be relative, use `/` as the
+separator, contain no NUL byte, be at most 4096 bytes and not leave the
+sandbox through `..` or a symlink. A rejected path fails like a missing
+file, `os.Open` returns -1 (#433).
+
 ### `os.GetWorkingDirectory`
 ### `os.Open`
 ### `os.Close`
@@ -3013,17 +3020,11 @@ underlaying operating system.
 ```
 package main
 import "sys/os"
-import "sys/string"
 
 func main () {
-	var wd str
-	wd = os.GetWorkingDirectory()
-
-	var fileName str
-	fileName = string.Concatenation(wd, "testing.cx")
-
-	os.Open(fileName)
-	os.Close(fileName)
+	var handle i32
+	handle = os.Open("testing.cx")
+	os.Close(handle)
 }
 ```
 
