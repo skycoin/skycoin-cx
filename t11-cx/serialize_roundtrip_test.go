@@ -37,6 +37,7 @@ var serializeRoundTripSkip = []struct {
 	{regexp.MustCompile(`\bcipher\.GenerateKeyPair\b`), "prints random keys"},
 	{regexp.MustCompile(`\btime\.Unix`), "prints the clock"},
 	{regexp.MustCompile(`\bos\.Run\b`), "runs other cx programs"},
+	{regexp.MustCompile(`\btcp\.Listen\b`), "listens on a fixed port that parallel runs share"},
 }
 
 // serializeRoundTripExecutors are the executor flags each program runs with.
