@@ -50,9 +50,7 @@ type SymbolsData struct {
 //				   declaration of the name from the first, 0 when unknown.
 func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgument, isMethod bool, nameLine int, nameColumn int) ast.CXFunctionIndex {
 	if isMethod {
-		if len(receiver) > 1 {
-			panic("method has multiple receivers")
-		}
+		receiver = MethodReceiver(prgrm, receiver)
 		if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 			receiverName := receiver[0].StructType.Name
 			methodName := prgrm.CXProgramNameIntern(fnName)
@@ -96,6 +94,19 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 			panic(err)
 		}
 	}
+}
+
+// MethodReceiver records a method with more than one receiver at the second
+// and returns the first.
+func MethodReceiver(prgrm *ast.CXProgram, receiver []*ast.CXArgument) []*ast.CXArgument {
+	if len(receiver) <= 1 {
+		return receiver
+	}
+	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodReceiversMultiple, receiver[1].ArgDetails, ast.CompileErrorOperands{})
+	for _, extra := range receiver[1:] {
+		prgrm.ReleaseCXArgBuilder(extra)
+	}
+	return receiver[:1]
 }
 
 // FunctionAddParameters adds the function's input and output parameters.
@@ -1418,6 +1429,11 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 				// Now an arena getter, site S0822.
 				expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
+				// A call element of a []T literal writes its result to the element.
+				if bytes.HasPrefix(prgrm.CXProgramNameBytes(expressionOutputTypeSig.Name), []byte(constants.ELEMENT_PREFIX)) {
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+					continue
+				}
 				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeFunctionReceiverType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
 
 			}
@@ -2198,6 +2214,11 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		typeSig = field
 		strct = field.GetStructType(prgrm)
 		receiverPointer = typeSignaturePointer(prgrm, field)
+	}
+	if strct == nil && typeSignatureInvalid(prgrm, typeSig) {
+		// A value of no valid type has no methods, and its cause is the error.
+		methodCallInvalidate(prgrm, expression)
+		return false
 	}
 	if strct == nil {
 		typeText := ast.GetFormattedType(prgrm, typeSig)

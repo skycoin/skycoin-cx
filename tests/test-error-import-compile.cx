@@ -1,0 +1,16 @@
+package main
+
+import "broken"
+import "syntaxbad"
+
+var g broken.T
+
+func main() {
+	var t broken.T
+	t.a = 1
+	var y i32 = broken.Foo(1)
+	var z i32 = t.M()
+	broken.V = 2
+	var w i32 = syntaxbad.F()
+	var late i32 = "s"
+}

@@ -233,7 +233,7 @@ func runTestCases(t *runner.TestRunner) {
 		"test-slice-literal-struct-errors.cx:20 cannot use value of type 'U' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:21 cannot use value of type 'U' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:22 cannot use value of type 'i32' as type 'T' in slice literal",
-		"test-slice-literal-struct-errors.cx:23 function 'makeU' expected receiving variable of type 'U'; 'T' was provided",
+		"test-slice-literal-struct-errors.cx:23:11 cannot use value of type 'U' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
 		"test-slice-literal-struct-errors.cx:25 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
 		"test-slice-literal-struct-errors.cx:26:13 cannot use value of type 'T' as type 'i32' in slice literal")
@@ -669,14 +669,41 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunMissing("test-slice-literal-element-errors.cx", types.CX_COMPILATION_ERROR, "every slice literal element of the wrong type is one error at the element",
 		"function 'append'", "'[]U' as type 'T'")
 	t.RunWant("test-error-import-missing.cx", types.CX_COMPILATION_ERROR, "a package that cannot be loaded is one error at its import, and its members report nothing more",
-		"error: test-error-import-missing.cx:3:8 could not import nope (",
-		"\nerror: test-error-import-missing.cx:15:2 identifier 'os.Nope' does not exist\nerror: test-error-import-missing.cx:16:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+		"error: test-error-import-missing.cx:3:8 could not import nope ($CXPATH/src/nope: source file or library not found)\nerror: test-error-import-missing.cx:15:2 identifier 'os.Nope' does not exist\nerror: test-error-import-missing.cx:16:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-error-import-missing.cx", types.CX_COMPILATION_ERROR, "a package that cannot be loaded is one error at its import, and its members report nothing more",
 		"panic", "'nope.", "struct 'T'", "'ident'", ":6:", ":9:", ":10:", ":11:", ":12:", ":13:", ":14:")
 	t.RunWant("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
 		"error: test-error-invalid-field-continue.cx:7:2 trying to use an outputless operator in an assignment\nerror: test-error-invalid-field-continue.cx:10:14 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:11:6 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
 		"'ident'", ":0 ", ":8:", ":9:")
+	t.RunWant("--cxpath test-import-errors test-error-import-compile.cx", types.CX_COMPILATION_ERROR, "a package with compile errors prints them with the errors of the program, and its members report nothing more",
+		"error: test-import-errors/src/broken/broken.cx:10:16 cannot assign value of type 'str' to identifier 'bad' of type 'i32'\nerror: test-import-errors/src/broken/broken.cx:18:6 'Foo' redeclared in this block, other declaration at test-import-errors/src/broken/broken.cx:9:6\nerror: test-import-errors/src/syntaxbad/syntaxbad.cx:4:8 syntax error: unexpected comma, expected ]\nerror: test-error-import-compile.cx:15:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("--cxpath test-import-errors test-error-import-compile.cx", types.CX_COMPILATION_ERROR, "a package with compile errors prints them with the errors of the program, and its members report nothing more",
+		"panic", "could not import", "'broken.", "'syntaxbad.", "invalid type", "compile.cx:6:", "compile.cx:9:", "compile.cx:10:", "compile.cx:11:", "compile.cx:12:", "compile.cx:13:", "compile.cx:14:")
+	t.RunWant("--cxpath test-import-errors test-error-import-twice-a.cx test-error-import-twice-b.cx", types.CX_COMPILATION_ERROR, "a failed import is reported once per package, whatever its path, relative to the program",
+		"error: test-error-import-twice-a.cx:3:8 could not import nope (test-import-errors/src/nope: source file or library not found)\nerror: test-error-import-twice-a.cx:9:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\nerror: test-import-errors/src/lib/broken/broken.cx:4:16 cannot assign value of type 'str' to identifier 'bad' of type 'i32'\nerror: test-error-import-twice-b.cx:9:18 cannot assign value of type 'str' to identifier 'late2' of type 'i32'\n")
+	t.RunMissing("--cxpath test-import-errors test-error-import-twice-a.cx test-error-import-twice-b.cx", types.CX_COMPILATION_ERROR, "a failed import is reported once per package, whatever its path, relative to the program",
+		"a/nope", "test-error-import-twice-a.cx:4:", "test-error-import-twice-b.cx:3:", "test-error-import-twice-b.cx:4:", "src/broken/broken.cx")
+	t.RunWant("--cxpath test-import-errors test-error-invalid-method-call.cx", types.CX_COMPILATION_ERROR, "a method call on a value of no valid type reports nothing more",
+		"error: test-error-invalid-method-call.cx:3:8 could not import nope (test-import-errors/src/nope: source file or library not found)\nerror: test-error-invalid-method-call.cx:12:2 trying to use an outputless operator in an assignment\nerror: test-error-invalid-method-call.cx:14:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("--cxpath test-import-errors test-error-invalid-method-call.cx", types.CX_COMPILATION_ERROR, "a method call on a value of no valid type reports nothing more",
+		"invalid type", ":10:", ":11:", ":13:")
+	t.RunWant("test-error-method-receivers.cx", types.CX_COMPILATION_ERROR, "a method with more than one receiver is one error at the second, and the first receiver is used",
+		"error: test-error-method-receivers.cx:7:12 method has multiple receivers\nerror: test-error-method-receivers.cx:10:12 method has multiple receivers\nerror: test-error-method-receivers.cx:23:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-method-receivers.cx", types.CX_COMPILATION_ERROR, "a method with more than one receiver is one error at the second, and the first receiver is used",
+		"panic", ":21:", ":22:")
+	t.RunWant("test-error-redeclared-kinds.cx", types.CX_COMPILATION_ERROR, "a name declared as two of a type, a function and a global is reported at the later declaration",
+		"error: test-error-redeclared-kinds.cx:7:6 'T' redeclared in this block, other declaration at test-error-redeclared-kinds.cx:3:6\nerror: test-error-redeclared-kinds.cx:10:5 'T' redeclared in this block, other declaration at test-error-redeclared-kinds.cx:3:6\nerror: test-error-redeclared-kinds.cx:14:6 'U' redeclared in this block, other declaration at test-error-redeclared-kinds.cx:12:5\nerror: test-error-redeclared-kinds.cx:21:5 'f' redeclared in this block, other declaration at test-error-redeclared-kinds.cx:18:6\nerror: test-error-redeclared-kinds.cx:27:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-redeclared-kinds.cx", types.CX_COMPILATION_ERROR, "a name declared as two of a type, a function and a global is reported at the later declaration",
+		"panic", ":23:")
+	t.RunWant("test-error-redeclared-kinds-a.cx test-error-redeclared-kinds-b.cx test-error-redeclared-kinds-c.cx", types.CX_COMPILATION_ERROR, "a type and a function or global in two files of a package are reported in file order",
+		"error: test-error-redeclared-kinds-b.cx:3:6 'V' redeclared in this block, other declaration at test-error-redeclared-kinds-a.cx:3:6\nerror: test-error-redeclared-kinds-b.cx:9:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\nerror: test-error-redeclared-kinds-c.cx:3:6 'W' redeclared in this block, other declaration at test-error-redeclared-kinds-b.cx:6:5\n")
+	t.RunWant("test-error-redeclared-kinds-c.cx test-error-redeclared-kinds-b.cx test-error-redeclared-kinds-a.cx", types.CX_COMPILATION_ERROR, "a type and a function or global in two files of a package are reported in file order",
+		"error: test-error-redeclared-kinds-b.cx:6:5 'W' redeclared in this block, other declaration at test-error-redeclared-kinds-c.cx:3:6\nerror: test-error-redeclared-kinds-b.cx:9:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\nerror: test-error-redeclared-kinds-a.cx:3:6 'V' redeclared in this block, other declaration at test-error-redeclared-kinds-b.cx:3:6\n")
+	t.RunWant("test-slice-literal-call-errors.cx", types.CX_COMPILATION_ERROR, "a call element of the wrong type in a struct slice literal is 7051 at the element",
+		"error: test-slice-literal-call-errors.cx:21:20 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:22:3 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:23:12 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:25:18 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:26:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-slice-literal-call-errors.cx", types.CX_COMPILATION_ERROR, "a call element of the wrong type in a struct slice literal is 7051 at the element",
+		"receiving variable", ":21:11")
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

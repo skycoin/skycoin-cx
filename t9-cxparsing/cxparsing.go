@@ -57,6 +57,12 @@ var ErrCompilation = errors.New("compilation error")
 func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	// The compile errors print on return, and before a panic of the compiler.
 	defer func() { printer.PrinterCompileErrorsPrint(actions.AST) }()
+	return parseSourceStrings(sourceCodeStrings, fileNames)
+}
+
+// parseSourceStrings is ParseSourceStrings without printing the errors, which
+// an imported package leaves to the program that imports it.
+func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	cxpartialparsing.Program = actions.AST
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 	sourceCodeStrings, fileNames = sourcesWithPackageClause(actions.AST, sourceCodeStrings, fileNames)
@@ -68,8 +74,9 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 		of functions and methods are added in the cxpartialparsing.y pass
 	*/
 	parseErrors := 0
+	var packages []*ast.CXPackage
 	if len(sourceCodeStrings) > 0 {
-		parseErrors = Preliminarystage(sourceCodeStrings, fileNames)
+		parseErrors, packages = Preliminarystage(sourceCodeStrings, fileNames)
 	}
 
 	actions.AST = cxpartialparsing.Program
@@ -79,6 +86,9 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	// bodies are compiled too, and report each error pass one found once.
 	if parseErrors > 0 {
 		return ErrCompilation
+	}
+	for _, pkg := range packages {
+		actions.PackageRedeclarationCheck(actions.AST, pkg)
 	}
 	actions.AST.CxIrState.CompileErrorList.CompileErrorListPreliminary = len(actions.AST.CxIrState.CompileErrorList.CompileErrorListRecords)
 

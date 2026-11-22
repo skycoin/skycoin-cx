@@ -78,6 +78,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeDereferenceNonPointer - ast.CompileErrorCodeNil:      {Format: "%H cannot dereference non-pointer '%s' of type '%s'\n"},
 	ast.CompileErrorCodeMethodRedeclared - ast.CompileErrorCodeNil:           {Format: "%H method %s already declared at %P\n"},
 	ast.CompileErrorCodeImportFailed - ast.CompileErrorCodeNil:               {Format: "%H could not import %s (%s)\n"},
+	ast.CompileErrorCodeMethodReceiversMultiple - ast.CompileErrorCodeNil:    {Format: "%H method has multiple receivers\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

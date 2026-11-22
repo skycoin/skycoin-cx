@@ -1,0 +1,27 @@
+package main
+
+type T struct {
+	n i32
+}
+
+type U struct {
+	a i32
+}
+
+func makeU() (u U) {
+	u.a = 1
+}
+
+func makeT() (t T) {
+	t.n = 2
+}
+
+func main() {
+	var ts []T
+	ts = []T{makeT(), makeU(),
+		makeU()}
+	us := []T{makeU()}
+	var tss [][]T
+	tss = [][]T{[]T{makeU()}}
+	var late i32 = "s"
+}

@@ -1,0 +1,15 @@
+package main
+
+import "nope"
+
+func noout() {
+}
+
+func main() {
+	var t nope.T
+	var a i32 = t.M()
+	t.N(1)
+	y := noout()
+	y.M()
+	var late i32 = "s"
+}

@@ -1,0 +1,5 @@
+package syntaxbad
+
+func F() (r i32) {
+	r = [1, 2]
+}

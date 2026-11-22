@@ -1,0 +1,5 @@
+package main
+
+type W struct {
+	n i32
+}

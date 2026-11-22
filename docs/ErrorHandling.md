@@ -130,9 +130,10 @@ Three error records exist.
   `CompileErrorRecordLine`, `CompileErrorRecordColumn`, 0 when unknown, and
   `CompileErrorRecordOperands`. The code is a `CompileErrorCode` from
   `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeImportFailed` (7055). 7009
-  `CompileErrorCodeRedeclaredBlock` is a type, function or global declared
-  twice in a package, whose operands give the first declaration. 7041 is
+  `CompileErrorCodeMethodReceiversMultiple` (7056). 7009
+  `CompileErrorCodeRedeclaredBlock` is a name a package declares twice, as
+  two of a type, a function and a global or twice as one of them, whose
+  operands give the first declaration. 7041 is
   `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
   7042 a slice built-in argument or result of the wrong type, 7043
   `CompileErrorCodeCallResultCall`, a call of a call result such as
@@ -155,7 +156,11 @@ Three error records exist.
   `CompileErrorCodeDereferenceNonPointer` a `*x` of a non-pointer `x`, 7054
   `CompileErrorCodeMethodRedeclared` a method declared twice, and 7055
   `CompileErrorCodeImportFailed` an import of a package that cannot be
-  loaded, whose members then report nothing more. 7000 is
+  loaded, whose members then report nothing more, and 7056
+  `CompileErrorCodeMethodReceiversMultiple` a method with more than one
+  receiver, at the second. A package that loads but has compile errors
+  prints them with the errors of the program and fails like an import
+  that cannot be loaded, without an error at the import. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the

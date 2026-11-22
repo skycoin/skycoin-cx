@@ -81,6 +81,9 @@ const (
 	// CompileErrorCodeImportFailed is an import of a package that cannot be
 	// loaded. Its operands are the import path and the reason.
 	CompileErrorCodeImportFailed
+	// CompileErrorCodeMethodReceiversMultiple is a method with more than one
+	// receiver, at the second.
+	CompileErrorCodeMethodReceiversMultiple
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

@@ -141,8 +141,6 @@
 
                         yyDefault
 
-%type   <i32>           int_value
-
 %type   <tok>           unary_operator
 %type   <i>             type_specifier
 %type   <argument>      declaration_specifiers
@@ -182,15 +180,7 @@ external_declaration:
         |       function_declaration
         |       import_declaration
         |       struct_declaration
-
-       // |       stepping
         ;
-
-/*
-stepping:       TSTEP int_value int_value
-        |       STEP int_value
-        ;
-*/
 
 global_declaration:
                 VAR declarator declaration_specifiers SEMICOLON
@@ -265,11 +255,9 @@ function_header:
                 }
         |       FUNC LPAREN parameter_type_list RPAREN IDENTIFIER
                 {
-			if len($3) > 1 {
-				panic("method has multiple receivers")
-			}
+			receiver := actions.MethodReceiver(Program, $3)
 
-			receiverName := $3[0].StructType.Name
+			receiverName := receiver[0].StructType.Name
 			methodName := Program.CXProgramNameIntern($5)
 
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
@@ -281,7 +269,7 @@ function_header:
                                 // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
                                 // Now an arena getter, site S1402.
                                 newFn:=Program.GetFunctionFromArray(fnIdx)
-                                newFn.AddInput(Program,$3[0])
+                                newFn.AddInput(Program,receiver[0])
                                 
                                 pkg.CurrentFunction=fnIdx
 
@@ -332,18 +320,14 @@ parameter_declaration:
                 declarator declaration_specifiers
                 {
 			details := Program.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet($2.ArgDetails)
-			details.FileName, details.FileLine = CurrentFile, lineNo
+			// The parameter is at its name.
+			details.FileName, details.FileLine, details.FileColumn = CurrentFile, $<line>1, $<column>1
 			$2.Name = $1.Name
 			$2.Package = $1.Package
 			Program.ReleaseCXArgBuilder($1)
                         
 			$$ = $2
                 }
-                ;
-
-identifier_list:
-                IDENTIFIER
-	|       identifier_list COMMA IDENTIFIER
                 ;
 
 declarator:     direct_declarator
@@ -616,16 +600,6 @@ infer_clauses:
         |       infer_actions
         /* |       infer_targets */
                 ;
-
-int_value:
-		INT_LITERAL
-		{
-			$$ = $1
-		}
-        |       SUB_OP INT_LITERAL
-		{
-			$$ = -$2
-		}
 
 primary_expression:
                 IDENTIFIER

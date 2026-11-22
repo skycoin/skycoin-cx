@@ -1,0 +1,6 @@
+package broken
+
+func Foo(x i32) (r i32) {
+	var bad i32 = "lib"
+	r = x
+}

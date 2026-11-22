@@ -1,0 +1,10 @@
+package main
+
+func V() {
+}
+
+var W i32
+
+func g() {
+	var late i32 = "s"
+}

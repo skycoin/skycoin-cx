@@ -344,9 +344,17 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 		prgrm.CXAtomicOps[assign.Index].AddInput(prgrm, value[0])
 		result = append(result, *assign)
 	default:
-		// A call writes its result to elementName.
+		// A call writes its result to elementName, which is at the call for
+		// the type error of the result.
 		prgrm.CXAtomicOps[element[last].Index].Outputs = nil
-		prgrm.CXAtomicOps[element[last].Index].AddOutput(prgrm, elementArg(false))
+		output := elementArg(false)
+		if callCXLine, _ := prgrm.GetPreviousCXLine(element, last); callCXLine != nil && callCXLine.LineNumber > 0 {
+			if details := prgrm.GetCXTypeSignatureFromArray(output).ArgDetails; details != ast.CXArgumentDebugGidNil {
+				debug := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(details)
+				debug.FileName, debug.FileLine, debug.FileColumn = callCXLine.FileName, callCXLine.LineNumber, callCXLine.LineColumn
+			}
+		}
+		prgrm.CXAtomicOps[element[last].Index].AddOutput(prgrm, output)
 		result = append(result, element...)
 	}
 

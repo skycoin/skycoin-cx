@@ -1,8 +1,11 @@
 package actions
 
 import (
+	"sort"
+
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -94,4 +97,61 @@ func declareStructContains(prgrm *ast.CXProgram, strct *ast.CXStruct, target *as
 		}
 	}
 	return false
+}
+
+// packageDeclaration is the name and position of a type, function or global.
+type packageDeclaration struct {
+	name   stringpool.StringGid
+	file   ast.SourceFileGid
+	line   int
+	column int
+}
+
+// PackageRedeclarationCheck records each name that pkg declares as two of a
+// type, a function and a global, at the later declaration. A second
+// declaration of the same kind is recorded where it is declared.
+func PackageRedeclarationCheck(prgrm *ast.CXProgram, pkg *ast.CXPackage) {
+	var declarations []packageDeclaration
+	for _, strctIdx := range pkg.Structs {
+		strct := prgrm.GetStructFromArray(strctIdx)
+		declarations = append(declarations, packageDeclaration{strct.Name, strct.FileName, strct.FileLine, strct.FileColumn})
+	}
+	methods := make(map[ast.CXFunctionIndex]bool, len(pkg.Methods))
+	for _, fnIdx := range pkg.Methods {
+		methods[fnIdx] = true
+	}
+	for _, fnIdx := range pkg.Functions {
+		if !methods[fnIdx] {
+			fn := prgrm.GetFunctionFromArray(fnIdx)
+			declarations = append(declarations, packageDeclaration{fn.Name, fn.FileName, fn.FileLine, fn.FileColumn})
+		}
+	}
+	for _, glblIdx := range pkg.Globals.Fields {
+		glbl := prgrm.GetCXTypeSignatureFromArray(glblIdx)
+		file, line, column := ast.CXArgumentDebugPosition(prgrm, glbl.ArgDetails)
+		declarations = append(declarations, packageDeclaration{glbl.Name, file, line, column})
+	}
+	sort.Slice(declarations, func(left, right int) bool {
+		a, b := &declarations[left], &declarations[right]
+		if a.file != b.file {
+			return a.file < b.file
+		}
+		if a.line != b.line {
+			return a.line < b.line
+		}
+		return a.column < b.column
+	})
+	first := make(map[stringpool.StringGid]int, len(declarations))
+	for index, declaration := range declarations {
+		if declaration.line <= 0 {
+			continue
+		}
+		other, ok := first[declaration.name]
+		if !ok {
+			first[declaration.name] = index
+			continue
+		}
+		prev := &declarations[other]
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeRedeclaredBlock, declaration.file, declaration.line, declaration.column, ast.CompileErrorOperands{int64(declaration.name), int64(prev.file), int64(prev.line), int64(prev.column)})
+	}
 }

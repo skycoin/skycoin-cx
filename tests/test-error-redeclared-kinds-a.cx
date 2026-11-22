@@ -1,0 +1,8 @@
+package main
+
+type V struct {
+	n i32
+}
+
+func main() {
+}

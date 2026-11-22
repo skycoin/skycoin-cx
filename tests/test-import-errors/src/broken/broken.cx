@@ -1,0 +1,20 @@
+package broken
+
+type T struct {
+	a i32
+}
+
+var V i32
+
+func Foo(x i32) (r i32) {
+	var bad i32 = "s"
+	r = x
+}
+
+func (t T) M() (r i32) {
+	r = t.a
+}
+
+type Foo struct {
+	b i32
+}

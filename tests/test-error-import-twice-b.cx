@@ -1,0 +1,10 @@
+package main
+
+import "a/nope"
+import "nope"
+import "broken"
+
+func g() {
+	var y i32 = broken.Foo(1)
+	var late2 i32 = "s"
+}

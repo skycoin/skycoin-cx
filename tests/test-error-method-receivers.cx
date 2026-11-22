@@ -1,0 +1,24 @@
+package main
+
+type T struct {
+	n i32
+}
+
+func (a T, b T) m() {
+}
+
+func (a T, b T, c i32) k() (r i32) {
+	r = a.n
+}
+
+func (t *T) p(x i32) {
+	t.n = x
+}
+
+func main() {
+	var t T
+	t.p(1)
+	t.m()
+	var y i32 = t.k()
+	var late i32 = "s"
+}

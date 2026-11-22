@@ -1,0 +1,10 @@
+package main
+
+import "nope"
+import "a/nope"
+import "lib/broken"
+
+func main() {
+	nope.F()
+	var late i32 = "s"
+}

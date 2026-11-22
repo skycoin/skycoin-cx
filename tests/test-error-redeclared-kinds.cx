@@ -1,0 +1,28 @@
+package main
+
+type T struct {
+	n i32
+}
+
+func T() {
+}
+
+var T i32
+
+var U i32
+
+type U struct {
+	n i32
+}
+
+func f() {
+}
+
+var f i32
+
+func (t T) T() {
+}
+
+func main() {
+	var late i32 = "s"
+}
