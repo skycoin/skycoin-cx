@@ -41,7 +41,7 @@ func CXTypeSignatureStructTakesAddress(prgrm *CXProgram, out *CXTypeSignature, i
 	// A field such as b.p is the pointer when it is last.
 	pointer := out.Type == TYPE_POINTER_STRUCT && !out.IsDeref
 	if fields := prgrm.GetCXTypeSignatureStructFromArray(out.Meta).Fields; len(fields) > 0 {
-		pointer = prgrm.GetCXArgFromArray(fields[len(fields)-1]).IsPointer()
+		pointer = cxArgumentPointerField(prgrm.GetCXArgFromArray(fields[len(fields)-1]))
 	}
 	return pointer && !CXTypeSignaturePointerValue(prgrm, input)
 }
@@ -57,7 +57,7 @@ func CXTypeSignaturePointerValue(prgrm *CXProgram, sig *CXTypeSignature) bool {
 		// A field access such as b.p is decided by its last field. IsDeref of
 		// rb.p reads rb, not the field.
 		if fields := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).Fields; len(fields) > 0 {
-			return prgrm.GetCXArgFromArray(fields[len(fields)-1]).GetAssignmentElement(prgrm).IsPointer()
+			return cxArgumentPointerField(prgrm.GetCXArgFromArray(fields[len(fields)-1]).GetAssignmentElement(prgrm))
 		}
 		return sig.Type == TYPE_POINTER_STRUCT && !sig.IsDeref
 	}
@@ -397,4 +397,14 @@ func CXArgumentDebugFileLine(prgrm *CXProgram, gid CXArgumentDebugGid) (string, 
 	}
 	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(gid)
 	return prgrm.CXProgramSourceFileText(details.FileName), details.FileLine
+}
+
+// cxArgumentPointerField reports whether the field access arg is a pointer,
+// also a *i32, which keeps the type i32 and ends its specifiers with it.
+func cxArgumentPointerField(arg *CXArgument) bool {
+	if arg.IsPointer() {
+		return true
+	}
+	specs := arg.DeclarationSpecifiers
+	return arg.StructType == nil && len(arg.DereferenceOperations) == 0 && len(arg.Indexes) == 0 && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER
 }

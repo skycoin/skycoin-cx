@@ -1280,11 +1280,8 @@ If you need an array that can grow in size as required, you need to
 use slices. Behind the scenes, slices are just arrays with some extra
 features. First of all, any slice in CX goes directly to the heap, as
 it's a data structure that is going to be changing in size. In
-contrast, arrays are always going to be stored in the stack, unless
-we're handling pointers to arrays. However, this behavior may change
-in the future, when CX's escape analysis mechanism improves (for
-example, the compiler can determine if an array is never going to change
-its size, and decide to keep it in the stack).
+contrast, an array is stored in the stack frame unless its address
+escapes the function, as [Escape Analysis](#escape-analysis) describes.
 
 The second characteristic of slices in CX is how they change their
 size. Any slice, when it's first declared, starts with a size and
@@ -1661,9 +1658,9 @@ package main
 
 func foo () (pNum *i32) {
 	var num i32
-	num = 5 // this is in the stack
+	num = 5
 
-	pNum = &num
+	pNum = &num // num escapes, so it lives on the heap
 }
 
 func stackDestroyer () {
@@ -1676,19 +1673,36 @@ func main () {
 
 	stackDestroyer()
 
-	i32.print(*pNum)
+	i32.print(*pNum) // prints 5
 }
 ```
 
-If we store `foo`'s `num`'s value (`5`) in the stack, and then we call
-`stackDestroyer`, isn't `arr` going to overwrite the bytes storing the
-`5`? The design says this doesn't happen, because that `5` is moved to
-the heap. Because of an open escape analysis bug it does happen: the program prints `0`,
-not `5`, so a pointer returned from a function can point at stack
-memory that a later call overwrites. The rest of this section
-describes the intended behavior. But
-this doesn't mean that any value being pointed to is going to be moved
-to the heap. For example, let's re-examine one of the examples
+If `num` lived in `foo`'s stack frame, `stackDestroyer` would reuse that
+memory for `arr` and the program would print `0`. The compiler sees that
+the address of `num` outlives the call, so `num` lives in an object on
+the heap instead, and `pNum` keeps pointing at the `5`.
+
+The compiler decides this for every local, input and `&T{}` literal of a
+function before it compiles the function, following Go's rule. The
+address of a local escapes when it is
+
+* returned, or stored in an output,
+* stored in a global,
+* stored through a pointer, or in a slice element, unless the pointer
+  only ever points to locals of the same function,
+* passed to `append`, `insert` or `copy`,
+* passed to a function that keeps it, or that returns it to a variable
+  that escapes,
+* stored in a variable that lives longer than one pass of the loop that
+  declares the local, so each pass gets its own object.
+
+A function compiled earlier tells the compiler whether it keeps each
+input. A call to a function compiled later, or to the function itself,
+counts as keeping the pointer.
+
+Not every value being pointed to is moved to the heap. A local whose
+address does not escape stays in the stack frame, so no allocation is
+added for it. For example, let's re-examine one of the examples
 presented in the *Pointers* section:
 
 ```cx
@@ -1707,67 +1721,15 @@ func main () {
 }
 ```
 
-If any value being pointed to by a pointer was sent to the heap, we
-wouldn't be able to change `num`s value, which is stored in the stack;
-we would be changing the heap's copied value.
+`foo` does not keep the pointer it receives, so `num` stays in `main`'s
+frame and `foo` changes it there.
 
-```cx
-package main
-
-func foo () (pNum *i32) {
-	var num i32
-
-	num = 5
-
-	pNum = &num
-}
-
-func main () {
-	var pNum *i32
-	pNum = foo()
-
-	i32.print(*pNum) // prints 5
-}
-```
-
-Basically, in order to fix this problem, whenever a pointer needs to
-be returned from a function, the value it is pointing to "escapes" to
-the heap. In the example above, we can see that `num`'s value is going
-to be preserved by escaping to the heap, as we are returning a pointer
-to it from `foo`.
-
-```cx
-package main
-
-func foo () (pNum *i32) {
-	var num i32
-
-	num = 5 // this is in the stack
-
-	pNum = &num // the pointer will be returned, so the value is sent to the heap
-}
-
-func stackDestroyer () {
-	var arr [5]i32
-}
-
-func main () {
-	var pNum *i32
-	pNum = foo()
-	stackDestroyer() // if 5 does not escape, it would be destroyed by this function
-
-	i32.print(*pNum) // should print 5, prints 0 (escape analysis bug)
-}
-```
-
-We can check this behavior even further in the example above. After
-calling `foo`, we call `stackDestroyer`, which overwrites the
-following 20 bytes after `main`'s stack frame. If `num` escaped, the
-call `i32.print(*pNum)` would still find a `5`, a copy of it that was
-allocated in the heap. Because of the same bug it prints `0`, which shows
-that the value stayed on the stack. The previous example prints `5`
-only because nothing overwrites that part of the stack before the
-print.
+An escaped local is allocated when its declaration runs. Its frame slot
+holds the address of its heap object, and every use of the local reads
+through that slot. The garbage collector keeps the object while a
+pointer to it is reachable. A program with an escaped local runs on the
+old loop, because the flat VM does not use the heap. An output whose
+address is taken, as `p = &r` for an output `r`, stays in the frame.
 
 ## [Control Flow](#table-of-contents)
 

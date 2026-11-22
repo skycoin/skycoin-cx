@@ -1,0 +1,61 @@
+// p[i][j] indexes *p on a *[N][M]T and a *[N][M]*T, as in Go, for whole
+// elements, fields and writes.
+
+package main
+type Point struct {
+	x i32
+	y i32
+}
+var g [2][3]Point
+var gp [2][3]*Point
+var pts [6]Point
+func main() {
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 3; j++ {
+			g[i][j].x = i * 10 + j
+			g[i][j].y = 100 + i * 10 + j
+		}
+	}
+	var p *[2][3]Point
+	p = &g
+	i32.print(p[1][2].x)
+	i32.print(p[0][1].y)
+	var q Point
+	q = p[1][0]
+	i32.print(q.y)
+	p[0][2].x = 77
+	i32.print(g[0][2].x)
+	i32.print((*p)[1][1].x)
+
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 3; j++ {
+			pts[i*3+j].x = 200 + i * 10 + j
+			gp[i][j] = &pts[i*3+j]
+		}
+	}
+	var pp *[2][3]*Point
+	pp = &gp
+	i32.print(pp[1][2].x)
+	i32.print(pp[0][1].x)
+	var r *Point
+	r = pp[1][1]
+	i32.print(r.x)
+	pp[0][0].x = 55
+	i32.print(pts[0].x)
+
+	var a [3]*Point
+	a[0] = &pts[0]
+	a[1] = &pts[4]
+	var pa *[3]*Point
+	pa = &a
+	i32.print(pa[1].x)
+	i32.print((*pa)[1].x)
+
+	var m [2][3]i32
+	m[1][2] = 9
+	var pm *[2][3]i32
+	pm = &m
+	i32.print(pm[1][2])
+	pm[0][1] = 4
+	i32.print(m[0][1])
+}

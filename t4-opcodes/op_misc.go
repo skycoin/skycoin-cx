@@ -23,19 +23,19 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 
 		if ast.CXArgumentStringSlicePointer(elt) {
 			if ast.CXTypeSignaturePassBy(prgrm, inputs[0].TypeSignature) == constants.PASSBY_REFERENCE {
-				outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+				outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 			} else {
 				outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 			}
 		} else if ast.CXArgumentTakesAddress(prgrm, elt, inputs[0].TypeSignature) {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		} else {
 			// Pass by value
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_ATOMIC {
 		if outputs[0].TypeSignature.PassBy == constants.PASSBY_REFERENCE {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
@@ -43,25 +43,25 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 		if ast.CXTypeSignaturePointerValue(prgrm, inputs[0].TypeSignature) {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		} else {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
 		outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || outputs[0].TypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
 		if inputs[0].TypeSignature.PassBy == constants.PASSBY_REFERENCE {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_SLICE_ATOMIC {
 		if outputs[0].TypeSignature.PassBy == constants.PASSBY_REFERENCE {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_STRUCT || outputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
 		if ast.CXTypeSignatureStructTakesAddress(prgrm, outputs[0].TypeSignature, inputs[0].TypeSignature) {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			outputs[0].Set_ptr(prgrm, ast.PointerOfAddress(prgrm, inputs[0].Offset))
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}

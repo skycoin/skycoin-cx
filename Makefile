@@ -46,8 +46,9 @@ test-ptr64: ## Run the stable CX program tests with a ptr64 build
 test-go: ## Run the Go unit tests
 	go test ./...
 
-vet: ## go vet with default and ptr64 tags
+vet: ## go vet with default and ptr64 tags, and gofmt
 	go vet ./...
+	@files=$$(gofmt -l $$(git ls-files '*.go' | grep -v '^vendor/')); test -z "$$files" || { echo "gofmt -l lists: $$files"; exit 1; }
 	go vet -tags ptr64 ./t0-types ./t3-ast
 
 vet-gui: ## go vet with the cxfx tag (needs cgo and X11/GL/OpenAL headers)

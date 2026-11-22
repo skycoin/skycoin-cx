@@ -53,8 +53,8 @@ const (
 	// ReasonParameterLayout is a function whose own inputs or outputs are
 	// not plain frame variables.
 	ReasonParameterLayout
-	// ReasonOperandHeap is an operand whose address goes through a slice,
-	// which lives on the heap.
+	// ReasonOperandHeap is an operand whose address goes through a slice or
+	// an escaped local, which live on the heap.
 	ReasonOperandHeap
 	// ReasonPrintfFormat is a printf whose format is not a str literal, or a
 	// verb and value the machine does not print as buildString does.
@@ -317,6 +317,9 @@ func (s *state) declaration(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator) (
 		offset = signature.Offset
 	default:
 		return code, ReasonDeclarationType
+	}
+	if ast.OffsetEscaped(offset) {
+		return code, ReasonOperandHeap
 	}
 	return append(code, ir.Instr{
 		InstrOpcode: ir.OpcodeZero,
@@ -752,6 +755,9 @@ func (s *state) placeOf(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex
 	prgrm := s.statePrgrm
 	signature := prgrm.GetCXTypeSignatureFromArray(signatureIndex)
 	size := pointerToUint32(signature.GetSize(prgrm, false))
+	if ast.OffsetEscaped(signature.GetOffset(prgrm)) {
+		return code, place{}, ReasonOperandHeap
+	}
 	var reason ReasonCode
 	switch signature.Type {
 	case ast.TYPE_ATOMIC:

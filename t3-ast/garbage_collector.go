@@ -7,6 +7,11 @@ import (
 
 // MarkAndCompact ...
 func MarkAndCompact(prgrm *CXProgram) {
+	gcObjectStartsBuild(prgrm)
+	if prgrm.Heap.Visited == nil {
+		prgrm.Heap.Visited = map[HeapVisit]bool{}
+	}
+	clear(prgrm.Heap.Visited)
 	var fp types.Pointer
 	var faddr = constants.NULL_HEAP_ADDRESS_OFFSET
 
@@ -34,6 +39,11 @@ func MarkAndCompact(prgrm *CXProgram) {
 				panic("type is not cxargument deprecate.")
 			}
 
+			if gcGlobalPointer(glbl) {
+				MarkObjectsTree(prgrm, glbl.Offset, glbl.Type, nil)
+				continue
+			}
+
 			if (glbl.IsString() || glbl.IsSlice() || glbl.Type == types.STR) && glbl.StructType == nil {
 				// Getting the offset to the object in the heap
 				heapOffset := types.Read_ptr(prgrm.Memory, glbl.Offset)
@@ -50,7 +60,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 
 			// If `ptr` has fields, we need to navigate the heap and mark its fields too.
 			if glbl.StructType != nil {
-				for _, typeSignatureIdx := range glbl.StructType.Fields {
+				for fieldIndex, typeSignatureIdx := range glbl.StructType.Fields {
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S0339.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
@@ -65,7 +75,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 						fld = typeSignature.GetCXArgFormat(prgrm)
 					}
 
-					offset := glbl.Offset + fld.Offset
+					offset := glbl.Offset + StructFieldOffset(prgrm, glbl.StructType, fieldIndex)
 					// Getting the offset to the object in the heap
 					heapOffset := types.Read_ptr(prgrm.Memory, offset)
 					if heapOffset < prgrm.Heap.StartsAt {
@@ -100,8 +110,10 @@ func MarkAndCompact(prgrm *CXProgram) {
 		}
 
 		for _, ptr := range op.ListOfPointers {
-			offset := ptr.Offset
-			offset += fp
+			offset, found := gcFrameAddress(prgrm, fp, ptr.Offset)
+			if !found {
+				continue
+			}
 
 			ptrIsPointer := ptr.IsPointer()
 
@@ -112,23 +124,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 					// Getting the offset to the object in the heap
 					heapOffset := types.Read_ptr(prgrm.Memory, offset)
 					if heapOffset >= prgrm.Heap.StartsAt {
-						for _, typeSignatureIdx := range ptr.StructType.Fields {
-							// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-							// Now an arena getter, site S0342.
-							typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
-
-							var fld *CXArgument
-							if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
-								fldIdx := typeSignature.Meta
-								// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-								// Now an arena getter, site S0344.
-								fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
-							} else {
-								fld = typeSignature.GetCXArgFormat(prgrm)
-							}
-
-							MarkObjectsTree(prgrm, heapOffset+types.OBJECT_HEADER_SIZE+fld.Offset, fld.Type, fld.DeclarationSpecifiers[1:])
-						}
+						gcMarkStruct(prgrm, heapOffset+types.OBJECT_HEADER_SIZE, ptr.StructType)
 					}
 				}
 
@@ -139,11 +135,20 @@ func MarkAndCompact(prgrm *CXProgram) {
 			// If the root (`ptr`) is a pointer, this step is unnecessary.
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0345.
-			if len(ptr.Fields) > 0 && !ptrIsPointer && prgrm.GetCXArgFromArray(ptr.Fields[len(ptr.Fields)-1]).IsPointer() {
+			if len(ptr.Fields) == 1 && !ptrIsPointer && prgrm.GetCXArgFromArray(ptr.Fields[0]).IsPointer() {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0346.
 				fld := prgrm.GetCXArgFromArray(ptr.Fields[len(ptr.Fields)-1])
 				MarkObjectsTree(prgrm, offset+fld.Offset, fld.Type, fld.DeclarationSpecifiers[1:])
+				if pointer := types.Read_ptr(prgrm.Memory, offset+fld.Offset); fld.StructType != nil && pointer > prgrm.Heap.StartsAt {
+					gcMarkStruct(prgrm, pointer+types.OBJECT_HEADER_SIZE, fld.StructType)
+				}
+			}
+		}
+
+		for _, slot := range op.ListOfSlots {
+			if base, found := gcFrameAddress(prgrm, fp, slot.CXFunctionSlotOffset); found {
+				gcSlotMark(prgrm, base+slot.CXFunctionSlotInner, slot)
 			}
 		}
 
@@ -158,7 +163,7 @@ func MarkAndCompact(prgrm *CXProgram) {
 			forwardingAddress := types.Read_obj_forwarding_address(prgrm.Memory, c)
 
 			// We update the pointers that are pointing to the just moved object.
-			updatePointers(prgrm, forwardingAddress, prgrm.Heap.StartsAt+faddr)
+			updatePointers(prgrm, forwardingAddress, prgrm.Heap.StartsAt+faddr, objSize)
 
 			// setting the mark back to 0
 			prgrm.Memory[c] = 0
@@ -290,7 +295,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 
 			// If it's a struct instance we need to displace each of its fields.
 			if glbl.StructType != nil {
-				for _, typeSignatureIdx := range glbl.StructType.Fields {
+				for fieldIndex, typeSignatureIdx := range glbl.StructType.Fields {
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S0351.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
@@ -306,7 +311,7 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 					}
 
 					if fld.IsString() || fld.IsStruct() || fld.IsSlice() {
-						doDisplaceReferences(prgrm, &updated, glbl.Offset+fld.Offset, off, fld.Type, fld.DeclarationSpecifiers[1:])
+						doDisplaceReferences(prgrm, &updated, glbl.Offset+StructFieldOffset(prgrm, glbl.StructType, fieldIndex), off, fld.Type, fld.DeclarationSpecifiers[1:])
 					}
 				}
 			}
@@ -318,6 +323,10 @@ func DisplaceReferences(prgrm *CXProgram, off types.Pointer, numPkgs int) {
 
 // Mark marks the object located at `heapOffset` as alive and sets the object's referencing address to `heapOffset`.
 func Mark(prgrm *CXProgram, heapOffset types.Pointer) {
+	heapOffset, found := gcObjectContaining(prgrm, heapOffset)
+	if !found {
+		return
+	}
 	// Marking as alive.
 	types.Write_obj_mark(prgrm.Memory, heapOffset, 1)
 
@@ -377,20 +386,28 @@ func MarkObjectsTree(prgrm *CXProgram, offset types.Pointer, baseType types.Code
 
 // updatePointer changes the address of the pointer located at `atOffset` to `newAddress`.
 func updatePointer(prgrm *CXProgram, atOffset types.Pointer, toAddress types.Pointer) {
+	// Two roots can name one slot, and a pointer inside a moved object could
+	// still be inside it after one update.
+	for _, updated := range prgrm.Heap.UpdatedSlots {
+		if updated == atOffset {
+			return
+		}
+	}
+	prgrm.Heap.UpdatedSlots = append(prgrm.Heap.UpdatedSlots, atOffset)
 	types.Write_ptr(prgrm.Memory, atOffset, toAddress)
 }
 
 // updatePointerTree changes the address of the pointer located at `atOffset` to `newAddress` and checks if it is the
 // root of a tree of objects, such as a slice or the instance of a struct where some of its fields are pointers.
-func updatePointerTree(prgrm *CXProgram, atOffset types.Pointer, oldAddr, newAddr types.Pointer, baseType types.Code, declSpecs []int) {
+func updatePointerTree(prgrm *CXProgram, atOffset types.Pointer, oldAddr, newAddr, oldSize types.Pointer, baseType types.Code, declSpecs []int) {
 	var numDeclSpecs = len(declSpecs)
 
 	// Getting the offset to the object in the heap
 	heapOffset := types.Read_ptr(prgrm.Memory, atOffset)
 
-	if heapOffset == oldAddr {
-		// Updating the root pointer.
-		updatePointer(prgrm, atOffset, newAddr)
+	if heapOffset >= oldAddr && heapOffset < oldAddr+oldSize {
+		// Updating the root pointer, which may point inside the object.
+		updatePointer(prgrm, atOffset, heapOffset-oldAddr+newAddr)
 	}
 
 	// It can't be a tree of objects.
@@ -419,8 +436,8 @@ func updatePointerTree(prgrm *CXProgram, atOffset types.Pointer, oldAddr, newAdd
 
 				// Then it's not pointing to the object moved by the GC or it's pointing to
 				// an object in the stack segment or nil.
-				if cHeapOffset == oldAddr {
-					updatePointerTree(prgrm, heapOffset+offsetToElements+c*types.POINTER_SIZE, oldAddr, newAddr, baseType, declSpecs[1:]) // TODO:PTR remove hardcode
+				if cHeapOffset >= oldAddr && cHeapOffset < oldAddr+oldSize {
+					updatePointerTree(prgrm, heapOffset+offsetToElements+c*types.POINTER_SIZE, oldAddr, newAddr, oldSize, baseType, declSpecs[1:]) // TODO:PTR remove hardcode
 				}
 			}
 		}
@@ -431,10 +448,12 @@ func updatePointerTree(prgrm *CXProgram, atOffset types.Pointer, oldAddr, newAdd
 // For example, if `foo` was pointing to an object located at address 5151 and after calling the garbage collector it was
 // moved to address 4141, every symbol in a `CXProgram`'s `CallStack` and in its global variables need to be updated to point now to
 // 4141 instead of 5151.
-func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
+func updatePointers(prgrm *CXProgram, oldAddr, newAddr, oldSize types.Pointer) {
 	if oldAddr == newAddr {
 		return
 	}
+	prgrm.Heap.UpdatedSlots = prgrm.Heap.UpdatedSlots[:0]
+	clear(prgrm.Heap.Visited)
 	// TODO: `oldAddr` could be received as a slice of bytes that represent the old address of the object,
 	// as it needs to be converted to bytes later on anyways. However, I'm sticking to an int32
 	// for a bit more of clarity.
@@ -460,6 +479,11 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 				panic("type is not cxargument deprecate.")
 			}
 
+			if gcGlobalPointer(glbl) {
+				updatePointerTree(prgrm, glbl.Offset, oldAddr, newAddr, oldSize, glbl.Type, nil)
+				continue
+			}
+
 			if (glbl.IsPointer() || glbl.IsSlice() || glbl.Type == types.STR) && glbl.StructType == nil {
 				// Getting the offset to the object in the heap
 				heapOffset := types.Read_ptr(prgrm.Memory, glbl.Offset)
@@ -471,12 +495,12 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 				if glbl.Type == types.POINTER {
 					glblType = glbl.PointerTargetType
 				}
-				updatePointerTree(prgrm, glbl.Offset, oldAddr, newAddr, glblType, glbl.DeclarationSpecifiers[1:]) // TODO:PTR remove hardcoded 1 value
+				updatePointerTree(prgrm, glbl.Offset, oldAddr, newAddr, oldSize, glblType, glbl.DeclarationSpecifiers[1:]) // TODO:PTR remove hardcoded 1 value
 			}
 
 			// If `ptr` has fields, we need to navigate the heap and mark its fields too.
 			if glbl.StructType != nil {
-				for _, typeSignatureIdx := range glbl.StructType.Fields {
+				for fieldIndex, typeSignatureIdx := range glbl.StructType.Fields {
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S0358.
 					typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
@@ -494,7 +518,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 					if !fld.IsPointer() {
 						continue
 					}
-					offset := glbl.Offset + fld.Offset
+					offset := glbl.Offset + StructFieldOffset(prgrm, glbl.StructType, fieldIndex)
 
 					// Getting the offset to the object in the heap
 					heapOffset := types.Read_ptr(prgrm.Memory, offset)
@@ -507,7 +531,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 						if fld.Type == types.POINTER {
 							fldType = fld.PointerTargetType
 						}
-						updatePointerTree(prgrm, offset, oldAddr, newAddr, fldType, fld.DeclarationSpecifiers[1:])
+						updatePointerTree(prgrm, offset, oldAddr, newAddr, oldSize, fldType, fld.DeclarationSpecifiers[1:])
 					}
 				}
 			}
@@ -529,8 +553,10 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 		}
 
 		for _, ptr := range op.ListOfPointers {
-			offset := ptr.Offset
-			offset += fp
+			offset, found := gcFrameAddress(prgrm, fp, ptr.Offset)
+			if !found {
+				continue
+			}
 
 			ptrIsPointer := ptr.IsPointer()
 
@@ -539,28 +565,12 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 				// Getting the offset to the object in the heap
 				heapOffset := types.Read_ptr(prgrm.Memory, offset)
 				if heapOffset > prgrm.Heap.StartsAt {
-					updatePointerTree(prgrm, offset, oldAddr, newAddr, ptr.Type, ptr.DeclarationSpecifiers[1:])
+					updatePointerTree(prgrm, offset, oldAddr, newAddr, oldSize, ptr.Type, ptr.DeclarationSpecifiers[1:])
 
 					// If `ptr` has fields, we need to navigate the heap and mark its fields too.
 					if ptr.StructType != nil {
 						if heapOffset >= prgrm.Heap.StartsAt {
-							for _, typeSignatureIdx := range ptr.StructType.Fields {
-								// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-								// Now an arena getter, site S0361.
-								typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
-
-								var fld *CXArgument
-								if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
-									fldIdx := typeSignature.Meta
-									// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-									// Now an arena getter, site S0363.
-									fld = prgrm.GetCXArg(CXArgumentIndex(fldIdx))
-								} else {
-									fld = typeSignature.GetCXArgFormat(prgrm)
-								}
-
-								updatePointerTree(prgrm, heapOffset+types.OBJECT_HEADER_SIZE+fld.Offset, oldAddr, newAddr, fld.Type, fld.DeclarationSpecifiers[1:])
-							}
+							gcUpdateStruct(prgrm, heapOffset+types.OBJECT_HEADER_SIZE, ptr.StructType, oldAddr, newAddr, oldSize)
 						}
 					}
 				}
@@ -570,7 +580,7 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 			// If the root (`ptr`) is a pointer, this step is unnecessary.
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0364.
-			if len(ptr.Fields) > 0 && !ptrIsPointer && prgrm.GetCXArgFromArray(ptr.Fields[len(ptr.Fields)-1]).IsPointer() {
+			if len(ptr.Fields) == 1 && !ptrIsPointer && prgrm.GetCXArgFromArray(ptr.Fields[0]).IsPointer() {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0365.
 				fld := prgrm.GetCXArgFromArray(ptr.Fields[len(ptr.Fields)-1])
@@ -578,12 +588,166 @@ func updatePointers(prgrm *CXProgram, oldAddr, newAddr types.Pointer) {
 				// Getting the offset to the object in the heap
 				heapOffset := types.Read_ptr(prgrm.Memory, offset+fld.Offset)
 				if heapOffset > prgrm.Heap.StartsAt {
-					updatePointerTree(prgrm, offset+fld.Offset, oldAddr, newAddr, fld.Type, fld.DeclarationSpecifiers[1:])
+					updatePointerTree(prgrm, offset+fld.Offset, oldAddr, newAddr, oldSize, fld.Type, fld.DeclarationSpecifiers[1:])
+					if fld.StructType != nil {
+						gcUpdateStruct(prgrm, heapOffset+types.OBJECT_HEADER_SIZE, fld.StructType, oldAddr, newAddr, oldSize)
+					}
 				}
 			}
 
 		}
 
+		for _, slot := range op.ListOfSlots {
+			if base, found := gcFrameAddress(prgrm, fp, slot.CXFunctionSlotOffset); found {
+				gcSlotUpdate(prgrm, base+slot.CXFunctionSlotInner, slot, oldAddr, newAddr, oldSize)
+			}
+		}
+
 		fp += op.Size
 	}
+}
+
+// gcFrameAddress returns the address of the frame variable at offset. It
+// returns false for an escaped local whose declaration has not run yet.
+func gcFrameAddress(prgrm *CXProgram, fp types.Pointer, offset types.Pointer) (types.Pointer, bool) {
+	if !OffsetEscaped(offset) {
+		return offset + fp, true
+	}
+	object := types.Read_ptr(prgrm.Memory, fp+OffsetEscapedSlot(offset))
+	if object < prgrm.Heap.StartsAt+constants.NULL_HEAP_ADDRESS_OFFSET || object >= prgrm.Heap.StartsAt+prgrm.Heap.Pointer {
+		return 0, false
+	}
+	return object + types.OBJECT_HEADER_SIZE, true
+}
+
+// gcGlobalPointer reports whether glbl is a pointer to a value that is
+// neither a str nor a slice, such as the address of an escaped local.
+func gcGlobalPointer(glbl *CXArgument) bool {
+	return glbl.IsPointer() && !glbl.IsString() && !glbl.IsSlice()
+}
+
+// gcObjectStartsBuild lists the address of each heap object in
+// prgrm.Heap.ObjectStarts.
+func gcObjectStartsBuild(prgrm *CXProgram) {
+	starts := prgrm.Heap.ObjectStarts[:0]
+	for c := prgrm.Heap.StartsAt + constants.NULL_HEAP_ADDRESS_OFFSET; c < prgrm.Heap.StartsAt+prgrm.Heap.Pointer; {
+		starts = append(starts, c)
+		objSize := types.Read_obj_size(prgrm.Memory, c)
+		if objSize == 0 {
+			break
+		}
+		c += objSize
+	}
+	prgrm.Heap.ObjectStarts = starts
+}
+
+// gcObjectContaining returns the address of the heap object that pointer
+// points into. A pointer inside an object, as &s[1] is, keeps it alive.
+func gcObjectContaining(prgrm *CXProgram, pointer types.Pointer) (types.Pointer, bool) {
+	starts := prgrm.Heap.ObjectStarts
+	low, high := 0, len(starts)
+	for low < high {
+		middle := int(uint(low+high) >> 1)
+		if starts[middle] <= pointer {
+			low = middle + 1
+		} else {
+			high = middle
+		}
+	}
+	if low == 0 {
+		return 0, false
+	}
+	start := starts[low-1]
+	if pointer >= start+types.Read_obj_size(prgrm.Memory, start) {
+		return 0, false
+	}
+	return start, true
+}
+
+// gcVisit reports whether the struct value strct at address was followed
+// already, and records it.
+func gcVisit(prgrm *CXProgram, address types.Pointer, strct *CXStruct) bool {
+	key := HeapVisit{HeapVisitAddress: address, HeapVisitStruct: strct}
+	if prgrm.Heap.Visited[key] {
+		return true
+	}
+	prgrm.Heap.Visited[key] = true
+	return false
+}
+
+// gcStructField returns the argument of a struct field.
+func gcStructField(prgrm *CXProgram, fieldIdx CXTypeSignatureIndex) *CXArgument {
+	sig := prgrm.GetCXTypeSignatureFromArray(fieldIdx)
+	if sig.Type == TYPE_CXARGUMENT_DEPRECATE {
+		return prgrm.GetCXArg(CXArgumentIndex(sig.Meta))
+	}
+	return sig.GetCXArgFormat(prgrm)
+}
+
+// gcMarkStruct marks what the pointers, slices and strings of the struct
+// value strct at address point to, and follows pointers to structs.
+func gcMarkStruct(prgrm *CXProgram, address types.Pointer, strct *CXStruct) {
+	if strct == nil || gcVisit(prgrm, address, strct) {
+		return
+	}
+	for fieldIndex, fieldIdx := range strct.Fields {
+		fld := gcStructField(prgrm, fieldIdx)
+		slot := address + StructFieldOffset(prgrm, strct, fieldIndex)
+		switch {
+		case cxArgumentPointerField(fld):
+			pointer := types.Read_ptr(prgrm.Memory, slot)
+			if pointer <= prgrm.Heap.StartsAt {
+				continue
+			}
+			Mark(prgrm, pointer)
+			gcMarkStruct(prgrm, pointer+types.OBJECT_HEADER_SIZE, fld.StructType)
+		case fld.IsSlice() || fld.Type == types.STR:
+			MarkObjectsTree(prgrm, slot, fld.Type, fld.DeclarationSpecifiers[1:])
+		case fld.StructType != nil && len(fld.Lengths) == 0:
+			gcMarkStruct(prgrm, slot, fld.StructType)
+		}
+	}
+}
+
+// gcUpdateStruct is updatePointers for the struct value strct at address. It
+// follows each pointer from where it pointed before the update.
+func gcUpdateStruct(prgrm *CXProgram, address types.Pointer, strct *CXStruct, oldAddr, newAddr, oldSize types.Pointer) {
+	if strct == nil || gcVisit(prgrm, address, strct) {
+		return
+	}
+	for fieldIndex, fieldIdx := range strct.Fields {
+		fld := gcStructField(prgrm, fieldIdx)
+		slot := address + StructFieldOffset(prgrm, strct, fieldIndex)
+		switch {
+		case cxArgumentPointerField(fld):
+			pointer := types.Read_ptr(prgrm.Memory, slot)
+			if pointer <= prgrm.Heap.StartsAt {
+				continue
+			}
+			updatePointerTree(prgrm, slot, oldAddr, newAddr, oldSize, fld.Type, nil)
+			gcUpdateStruct(prgrm, pointer+types.OBJECT_HEADER_SIZE, fld.StructType, oldAddr, newAddr, oldSize)
+		case fld.IsSlice() || fld.Type == types.STR:
+			updatePointerTree(prgrm, slot, oldAddr, newAddr, oldSize, fld.Type, fld.DeclarationSpecifiers[1:])
+		case fld.StructType != nil && len(fld.Lengths) == 0:
+			gcUpdateStruct(prgrm, slot, fld.StructType, oldAddr, newAddr, oldSize)
+		}
+	}
+}
+
+// gcSlotMark marks what the slot at address points to.
+func gcSlotMark(prgrm *CXProgram, address types.Pointer, slot CXFunctionSlot) {
+	MarkObjectsTree(prgrm, address, slot.CXFunctionSlotType, slot.CXFunctionSlotSpecifiers[1:])
+	if pointer := types.Read_ptr(prgrm.Memory, address); slot.CXFunctionSlotStruct != nil && pointer > prgrm.Heap.StartsAt {
+		gcMarkStruct(prgrm, pointer+types.OBJECT_HEADER_SIZE, slot.CXFunctionSlotStruct)
+	}
+}
+
+// gcSlotUpdate is updatePointers for the slot at address.
+func gcSlotUpdate(prgrm *CXProgram, address types.Pointer, slot CXFunctionSlot, oldAddr, newAddr, oldSize types.Pointer) {
+	pointer := types.Read_ptr(prgrm.Memory, address)
+	if pointer <= prgrm.Heap.StartsAt {
+		return
+	}
+	updatePointerTree(prgrm, address, oldAddr, newAddr, oldSize, slot.CXFunctionSlotType, slot.CXFunctionSlotSpecifiers[1:])
+	gcUpdateStruct(prgrm, pointer+types.OBJECT_HEADER_SIZE, slot.CXFunctionSlotStruct, oldAddr, newAddr, oldSize)
 }

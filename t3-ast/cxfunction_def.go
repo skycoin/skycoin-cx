@@ -43,4 +43,11 @@ type CXFunction struct {
 	// OBJMODEL: CXArgumentGid, phase 5 #327.
 	// Now a pointer at rest, site S0130.
 	ListOfPointers []*CXArgument // Root pointers for the GC algorithm
+
+	// EscapeInputs says for each input where the address it holds may go.
+	// It is nil until the function is compiled.
+	EscapeInputs []CXFunctionEscape
+
+	// ListOfSlots are the roots for the GC inside the locals.
+	ListOfSlots []CXFunctionSlot
 }

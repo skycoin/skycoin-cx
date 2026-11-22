@@ -1,0 +1,13 @@
+// The temporary of a negative literal argument has the line of the call in
+// the call stack of a runtime error.
+
+package main
+
+func g(i i32) {
+	var a [2]i32
+	a[i] = 1
+}
+
+func main() {
+	g(-1)
+}

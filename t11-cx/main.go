@@ -136,6 +136,10 @@ func Run(args []string) {
 	if options.stackSize != "" {
 		constants.STACK_SIZE = parseMemoryString(options.stackSize)
 	}
+	// Memory stays below constants.ESCAPE_OFFSET_FLAG.
+	constants.MAX_HEAP_SIZE = min(constants.MAX_HEAP_SIZE, constants.ESCAPE_OFFSET_FLAG/2)
+	constants.INIT_HEAP_SIZE = min(constants.INIT_HEAP_SIZE, constants.MAX_HEAP_SIZE)
+	constants.STACK_SIZE = min(constants.STACK_SIZE, constants.ESCAPE_OFFSET_FLAG/4)
 
 	/*
 		options.minHeapFreeRatio checks for flags string "--min-heap-free"

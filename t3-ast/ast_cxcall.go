@@ -90,6 +90,10 @@ func wipeDeclarationMemory(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator) error
 		panic("type is not known")
 	}
 
+	if OffsetEscaped(offset) {
+		EscapedAllocate(prgrm, newFP, offset, escapedSize(prgrm, cxAtomicOutputTypeSig))
+		return nil
+	}
 	for c := types.Pointer(0); c < size; c++ {
 		prgrm.Memory[newFP+offset+c] = 0
 	}
@@ -220,12 +224,7 @@ func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, c
 
 		finalOffset := GetFinalOffset(prgrm, fp, nil, input)
 		if input.PassBy == constants.PASSBY_REFERENCE || inpPassBy == constants.PASSBY_REFERENCE {
-			// If we're referencing an inner element, like an element of a slice (&slc[0])
-			// or a field of a struct (&struct.fld) we no longer need to add
-			// the OBJECT_HEADER_SIZE to the offset
-			if input.IsInnerReference(prgrm) {
-				finalOffset -= types.OBJECT_HEADER_SIZE
-			}
+			finalOffset = PointerOfAddress(prgrm, finalOffset)
 			var finalOffsetB [types.POINTER_SIZE]byte
 			types.Write_ptr(finalOffsetB[:], 0, finalOffset)
 			byts = finalOffsetB[:]

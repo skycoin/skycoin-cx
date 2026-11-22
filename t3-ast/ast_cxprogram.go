@@ -22,10 +22,22 @@ type DataSegmentStruct struct {
 	StartsAt types.Pointer // Offset at which the data segment starts in a CX program's memory
 }
 
+// HeapVisit is a struct value at an address, which the collection follows once.
+type HeapVisit struct {
+	HeapVisitAddress types.Pointer
+	HeapVisitStruct  *CXStruct
+}
+
 type HeapSegmentStruct struct {
 	Size     types.Pointer // This field stores the size of a CX program's heap
 	StartsAt types.Pointer // Offset at which the heap starts in a CX program's memory (normally the stack size)
 	Pointer  types.Pointer // At what offset a CX program can insert a new object to the heap
+	// ObjectStarts lists the address of each object, for the collection running.
+	ObjectStarts []types.Pointer
+	// UpdatedSlots lists the pointers the collection moved for one object.
+	UpdatedSlots []types.Pointer
+	// Visited holds the struct values the collection followed.
+	Visited map[HeapVisit]bool
 }
 
 // ----------------------------------------------------------------

@@ -11,6 +11,8 @@ type DereferenceStruct struct {
 	sizeofElement types.Pointer
 	derefPointer  bool
 	idxCounter    int
+	// sliceIndexed is set once a slice index is applied.
+	sliceIndexed bool
 
 	// OBJMODEL: no change, the struct lives on the stack of one GetFinalOffset call.
 	// Site S0366.
@@ -102,6 +104,10 @@ func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer boo
 	// &(*p)[i] on a *[N]T ends its specifiers with a pointer but has the size
 	// of a T.
 	if derefPointer && arg.StructType == nil {
+		// p[i] on a *[N]*T reads a pointer.
+		if cxArgumentElementPointer(arg) {
+			return types.POINTER_SIZE
+		}
 		return arg.Type.Size()
 	}
 	return arg.Size
@@ -193,16 +199,13 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 		// Now an arena getter, site S0372.
 		arg = prgrm.GetCXArg(CXArgumentIndex(argTypeSig.Meta))
 	} else if argTypeSig.Type == TYPE_ATOMIC {
-		argTypeSigOffset := argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		return argTypeSigOffset
 	} else if argTypeSig.Type == TYPE_POINTER_ATOMIC {
+		if OffsetEscaped(argTypeSig.Offset) {
+			return finalOffsetEscapedPointer(prgrm, fp, argTypeSig)
+		}
 		finalOffset = argTypeSig.Offset
 
 		if argTypeSig.IsDeref {
@@ -222,13 +225,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 
 		return finalOffset
 	} else if argTypeSig.Type == TYPE_ARRAY_ATOMIC {
-		argTypeSigOffset := argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0373.
@@ -250,13 +247,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 
 		return argTypeSigOffset
 	} else if argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC {
-		finalOffset = argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if finalOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			finalOffset += fp
-		}
+		finalOffset = frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		if argTypeSig.IsDeref {
 			finalOffset = types.Read_ptr(prgrm.Memory, finalOffset)
@@ -280,57 +271,38 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 			}
 		}
 
-		if finalOffset.IsValid() && finalOffset >= prgrm.Heap.StartsAt {
+		if argTypeSig.IsDeref && finalOffset.IsValid() && finalOffset >= prgrm.Heap.StartsAt {
 			// then it's an object
 			finalOffset += types.OBJECT_HEADER_SIZE
 		}
 
 		return finalOffset
 	} else if argTypeSig.Type == TYPE_SLICE_ATOMIC {
-		argTypeSigOffset := argTypeSig.Offset
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0377.
 		return finalOffsetSliceIndexes(prgrm, fp, argTypeSigOffset, prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta), fault)
 	} else if argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC {
-		argTypeSigOffset := argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		if argTypeSig.IsDeref {
 			argTypeSigOffset = types.Read_ptr(prgrm.Memory, argTypeSigOffset)
+			if argTypeSigOffset.IsValid() && argTypeSigOffset >= prgrm.Heap.StartsAt {
+				// p points to a slice variable in a heap object.
+				argTypeSigOffset += types.OBJECT_HEADER_SIZE
+			}
 
 			// (*p)[i] indexes the slice that p points to.
 			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
 			if len(sliceDetails.Indexes) > 0 {
 				return finalOffsetSliceIndexes(prgrm, fp, argTypeSigOffset, sliceDetails, fault)
 			}
-
-			if argTypeSigOffset.IsValid() && argTypeSigOffset >= prgrm.Heap.StartsAt {
-				// then it's an object
-				argTypeSigOffset += types.OBJECT_HEADER_SIZE
-				argTypeSigOffset += constants.SLICE_HEADER_SIZE
-			}
 		}
 
 		return argTypeSigOffset
 	} else if argTypeSig.Type == TYPE_STRUCT {
-		argTypeSigOffset := argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 		// Now an arena getter, site S0379.
@@ -345,13 +317,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 
 		return argTypeSigOffset
 	} else if argTypeSig.Type == TYPE_POINTER_STRUCT {
-		argTypeSigOffset := argTypeSig.Offset
-
-		//Todo: find way to eliminate this check
-		if argTypeSigOffset < prgrm.Stack.Size {
-			// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-			argTypeSigOffset += fp
-		}
+		argTypeSigOffset := frameAddress(prgrm, fp, argTypeSig.Offset)
 
 		if argTypeSig.IsDeref {
 			argTypeSigOffset = types.Read_ptr(prgrm.Memory, argTypeSigOffset)
@@ -383,13 +349,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 		return 0
 	}
 
-	finalOffset = arg.Offset
-
-	//Todo: find way to eliminate this check
-	if finalOffset < prgrm.Stack.Size {
-		// Then it's in the stack, not in data or heap and we need to consider the frame pointer.
-		finalOffset += fp
-	}
+	finalOffset = frameAddress(prgrm, fp, arg.Offset)
 
 	// elt = arg
 	//TODO: Eliminate all op codes with more than one return type
@@ -440,6 +400,7 @@ func finalOffsetSliceIndexes(prgrm *CXProgram, fp types.Pointer, offset types.Po
 }
 
 func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct) {
+	drfsStruct.sliceIndexed = true
 	drfsStruct.isPointer = false
 	drfsStruct.finalOffset = types.Read_ptr(prgrm.Memory, drfsStruct.finalOffset)
 	drfsStruct.baseOffset = drfsStruct.finalOffset
@@ -486,6 +447,10 @@ func CalculateDereference_Array(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 }
 
 func CalculateDereference_Pointer(prgrm *CXProgram, drfsStruct *DereferenceStruct) {
+	if drfsStruct.isPointer && drfsStruct.finalOffset.IsValid() && drfsStruct.finalOffset >= prgrm.Heap.StartsAt {
+		// A pointer read from a heap object, as in **pp.
+		drfsStruct.finalOffset += types.OBJECT_HEADER_SIZE
+	}
 	drfsStruct.isPointer = true
 	drfsStruct.finalOffset = types.Read_ptr(prgrm.Memory, drfsStruct.finalOffset)
 	drfsStruct.derefPointer = true
@@ -526,7 +491,8 @@ func calculateDereferencesCompute(prgrm *CXProgram, arg *CXArgument, finalOffset
 	if drfsStruct.finalOffset.IsValid() && drfsStruct.finalOffset >= prgrm.Heap.StartsAt && drfsStruct.isPointer {
 		// then it's an object
 		drfsStruct.finalOffset += types.OBJECT_HEADER_SIZE
-		if drfsStruct.arg.IsSlice() {
+		// An element of a slice, as ps[i] is, is not the slice.
+		if drfsStruct.arg.IsSlice() && !drfsStruct.sliceIndexed {
 			drfsStruct.finalOffset += constants.SLICE_HEADER_SIZE
 			offsetSliceIndexCheck(IsValidSliceIndex(prgrm, drfsStruct.baseOffset, drfsStruct.finalOffset, drfsStruct.sizeofElement), drfsStruct.fault)
 		}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/skycoin/skycoin-cx/t0-types"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
@@ -365,3 +366,30 @@ func (fn *CXFunction) SelectExpression(line int) (*CXExpression, error) {
 	return &expr, nil
 }
 
+// CXFunctionEscape says where a function may keep the address an input holds.
+type CXFunctionEscape uint8
+
+const (
+	// CXFunctionEscapeNone keeps it only for the call.
+	CXFunctionEscapeNone CXFunctionEscape = iota
+	// CXFunctionEscapeResult may return it in an output.
+	CXFunctionEscapeResult
+	// CXFunctionEscapeHeap may keep it after the call.
+	CXFunctionEscapeHeap
+)
+
+// CXFunctionSlot is a pointer, slice or str inside a local of a function,
+// found from the declared type of the local. The GC reads it as a root.
+type CXFunctionSlot struct {
+	// CXFunctionSlotOffset is the offset of the local, flagged when it escaped.
+	CXFunctionSlotOffset types.Pointer
+	// CXFunctionSlotInner is how far into the local the slot is.
+	CXFunctionSlotInner types.Pointer
+	// CXFunctionSlotType is types.POINTER for a pointer, else the type of the
+	// elements of a slice or types.STR.
+	CXFunctionSlotType types.Code
+	// CXFunctionSlotSpecifiers are the declaration specifiers of the slot.
+	CXFunctionSlotSpecifiers []int
+	// CXFunctionSlotStruct is the struct a pointer points to, or nil.
+	CXFunctionSlotStruct *CXStruct
+}

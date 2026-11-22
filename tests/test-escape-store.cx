@@ -1,0 +1,91 @@
+// A local whose address is stored in a global, a struct reached through a
+// pointer, a slice or an array of pointers that outlives the call lives on
+// the heap.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Holder struct {
+	k  i32
+	p  *i32
+	pt *Point
+}
+
+var gp *i32
+var gpt *Point
+
+func smash() {
+	var arr [16]i32
+	for i := 0; i < 16; i++ {
+		arr[i] = 99
+	}
+}
+
+func toGlobal() {
+	var n i32
+	n = 11
+	gp = &n
+}
+
+func toGlobalStruct() {
+	var pt Point
+	pt.x = 12
+	pt.y = 13
+	gpt = &pt
+}
+
+func toField(h *Holder) {
+	var n i32
+	n = 21
+	h.p = &n
+	var pt Point
+	pt.y = 22
+	h.pt = &pt
+}
+
+func toSlice(s []*i32, v i32) (out []*i32) {
+	var n i32
+	n = v
+	out = append(s, &n)
+}
+
+func toArray(a *[2]*i32) {
+	var n i32
+	n = 51
+	a[1] = &n
+}
+
+func main() {
+	toGlobal()
+	smash()
+	i32.print(*gp)
+	toGlobalStruct()
+	smash()
+	i32.print(gpt.x)
+	i32.print(gpt.y)
+
+	var h Holder
+	toField(&h)
+	smash()
+	i32.print(*h.p)
+	i32.print(h.pt.y)
+
+	var s []*i32
+	s = toSlice(s, 31)
+	s = toSlice(s, 32)
+	smash()
+	i32.print(*s[0])
+	i32.print(*s[1])
+	*s[0] = 33
+	i32.print(*s[0])
+	i32.print(*s[1])
+
+	var a [2]*i32
+	toArray(&a)
+	smash()
+	i32.print(*a[1])
+}

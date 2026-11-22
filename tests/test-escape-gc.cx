@@ -1,0 +1,69 @@
+// The garbage collector keeps the heap objects of escaped locals that are
+// still reachable and the slices of locals, and moves the pointers to them.
+// cxtest runs it with -heap-initial 0, so nearly every allocation collects.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Node struct {
+	v    i32
+	tag  i8
+	w    i64
+	next *Node
+}
+
+func mk(v i32) (r *Point) {
+	var p Point
+	p.x = v
+	p.y = v * 2
+	r = &p
+}
+
+func push(head *Node, v i32) (n *Node) {
+	var node Node
+	node.v = v
+	node.next = head
+	n = &node
+}
+
+func main() {
+	var keep [3]*Point
+	for i := 0; i < 3; i++ {
+		keep[i] = mk(i + 1)
+	}
+	var one *Point
+	one = mk(7)
+	var list *Node
+	for i := 1; i <= 3; i++ {
+		list = push(list, i)
+	}
+	var nums []i32
+	nums = append(nums, 41)
+	nums = append(nums, 42)
+
+	var check i32
+	for i := 0; i < 20000; i++ {
+		var t *Point
+		t = mk(i)
+		check = check + t.y - t.x * 2
+		var junk []i32
+		junk = append(junk, i)
+	}
+	i32.print(check)
+	for i := 0; i < 3; i++ {
+		i32.print(keep[i].y)
+	}
+	i32.print(one.x)
+	var sum i32
+	for i := 0; i < 3; i++ {
+		sum = sum * 10 + list.v
+		list = list.next
+	}
+	i32.print(sum)
+	i32.print(nums[0])
+	i32.print(nums[1])
+}

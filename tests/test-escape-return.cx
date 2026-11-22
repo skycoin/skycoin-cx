@@ -1,0 +1,99 @@
+// A local whose address is returned lives on the heap, so a later call does
+// not overwrite it.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func foo() (pNum *i32) {
+	var num i32
+	num = 5
+	pNum = &num
+}
+
+func stackDestroyer() {
+	var arr [16]i32
+	for i := 0; i < 16; i++ {
+		arr[i] = 99
+	}
+}
+
+func fromParam(v i32) (r *i32) {
+	r = &v
+}
+
+func pass(p *i32) (q *i32) {
+	q = p
+}
+
+func chained() (r *i32) {
+	var n i32
+	n = 41
+	r = pass(pass(&n))
+}
+
+func makePoint(x i32, y i32) (p *Point) {
+	var pt Point
+	pt.x = x
+	pt.y = y
+	p = &pt
+}
+
+func literalPoint(x i32) (p *Point) {
+	p = &Point{x: x, y: x + 1}
+}
+
+func makePoints() (points *[3]Point) {
+	var bar [3]Point
+	bar[0] = Point{x: 10, y: 20}
+	bar[1] = Point{x: 30, y: 40}
+	bar[2] = Point{x: 50, y: 60}
+	points = &bar
+}
+
+func main() {
+	var pNum *i32
+	pNum = foo()
+	stackDestroyer()
+	i32.print(*pNum)
+
+	var a *i32
+	a = foo()
+	var b *i32
+	b = foo()
+	*b = 6
+	stackDestroyer()
+	i32.print(*a)
+	i32.print(*b)
+
+	var c *i32
+	c = fromParam(7)
+	var d *i32
+	d = fromParam(8)
+	stackDestroyer()
+	i32.print(*c)
+	i32.print(*d)
+
+	var e *i32
+	e = chained()
+	stackDestroyer()
+	i32.print(*e)
+
+	var p *Point
+	p = makePoint(1, 2)
+	var q *Point
+	q = literalPoint(3)
+	stackDestroyer()
+	i32.print(p.y)
+	i32.print(q.x)
+	i32.print(q.y)
+
+	var points *[3]Point
+	points = makePoints()
+	stackDestroyer()
+	i32.print(points[2].y)
+	i32.print(points[0].x)
+}

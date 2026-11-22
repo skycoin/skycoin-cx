@@ -349,10 +349,8 @@ func getOutputTypeAt(prgrm *ast.CXProgram, expr *ast.CXExpression, index int) *a
 		if expressionOperatorOutputArg.Type != types.UNDEFINED {
 			return expressionOperatorOutputTypeSig
 		}
-	} else if expressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC || expressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		return expressionOperatorOutputTypeSig
 	} else {
-		panic("type is not known")
+		return expressionOperatorOutputTypeSig
 	}
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -503,7 +501,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			sym.Offset = outTypeArg.Offset
 
 			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
-		} else if outTypeSig.Type == ast.TYPE_ATOMIC || outTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || outTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+		} else if outTypeSig.Type == ast.TYPE_ATOMIC || outTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || outTypeSig.Type == ast.TYPE_SLICE_ATOMIC || outTypeSig.Type == ast.TYPE_STRUCT || outTypeSig.Type == ast.TYPE_POINTER_STRUCT || outTypeSig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || outTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
 			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(outTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
 			typeSigIdx = newTypeSig.Index
@@ -773,6 +771,8 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S1674.
 				prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = types.STRUCT
+			} else if fromExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_STRUCT {
+				assignmentPointerStructTarget(prgrm, prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)), fromExpressionOperatorOutputTypeSig)
 			} else {
 				panic("type is not known")
 			}
@@ -1046,4 +1046,13 @@ func multipleAssignmentMethodCall(prgrm *ast.CXProgram, targets [][]ast.CXExpres
 		result = append(result, AssignmentStatement(prgrm, target, assignOp, primaryIdentifierExpressions(prgrm, names[i]))...)
 	}
 	return result
+}
+
+// assignmentPointerStructTarget types the target of x = f() where f returns
+// the *T of sig.
+func assignmentPointerStructTarget(prgrm *ast.CXProgram, target *ast.CXArgument, sig *ast.CXTypeSignature) {
+	target.Type = types.POINTER
+	target.PointerTargetType = types.STRUCT
+	target.StructType = prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).StructType
+	target.Size = types.POINTER_SIZE
 }

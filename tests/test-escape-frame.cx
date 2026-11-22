@@ -1,0 +1,58 @@
+// A local whose address does not outlive its function stays in the frame.
+// cxtest runs it with --executor=vm, which refuses a local on the heap.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func (p *Point) move(d i32) {
+	p.x = p.x + d
+}
+
+func set(n *i32, v i32) {
+	*n = v
+}
+
+func same(p *i32) (q *i32) {
+	q = p
+}
+
+func sum(points *[3]Point) (s i32) {
+	for i := 0; i < 3; i++ {
+		s = s + points[i].x
+	}
+}
+
+func main() {
+	var num i32
+	num = 15
+	set(&num, 10)
+	i32.print(num)
+
+	var p *i32
+	p = &num
+	*p = 12
+	i32.print(num)
+
+	var q *i32
+	q = same(&num)
+	*q = 13
+	i32.print(num)
+
+	var pt Point
+	pt.move(4)
+	i32.print(pt.x)
+
+	var arr [3]Point
+	arr[0].x = 1
+	arr[2].x = 5
+	i32.print(sum(&arr))
+
+	var ptrs [2]*i32
+	ptrs[0] = &num
+	*ptrs[0] = 14
+	i32.print(num)
+}

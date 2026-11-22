@@ -55,6 +55,10 @@ var MIN_HEAP_FREE_RATIO float32 = 0.4
 var MAX_HEAP_FREE_RATIO float32 = 0.7
 
 const NULL_HEAP_ADDRESS_OFFSET = types.POINTER_SIZE
+
+// ESCAPE_OFFSET_FLAG marks the offset of a local that lives in a heap object.
+// Memory stays below it, see ast.OffsetEscaped.
+const ESCAPE_OFFSET_FLAG types.Pointer = 1 << 31
 const NULL_HEAP_ADDRESS = types.Pointer(0)
 const SLICE_HEADER_SIZE = 2 * types.POINTER_SIZE
 

@@ -1,0 +1,60 @@
+// Each pass of a loop gets its own &T{} and its own escaping local, so
+// pointers kept from earlier passes stay distinct.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Node struct {
+	v    i32
+	next *Node
+}
+
+func push(head *Node, v i32) (n *Node) {
+	var node Node
+	node.v = v
+	node.next = head
+	n = &node
+}
+
+func main() {
+	var ps []*Point
+	for i := 0; i < 3; i++ {
+		var q *Point
+		q = &Point{x: i, y: i * 10}
+		ps = append(ps, q)
+	}
+	var arr [3]*Point
+	for i := 0; i < 3; i++ {
+		var q *Point
+		q = &Point{x: i + 100, y: 0}
+		arr[i] = q
+	}
+	var ns [3]*i32
+	for i := 0; i < 3; i++ {
+		var n i32
+		n = i + 200
+		ns[i] = &n
+	}
+	for i := 0; i < 3; i++ {
+		i32.print(ps[i].y)
+		i32.print(arr[i].x)
+		i32.print(*ns[i])
+	}
+	ps[0].y = 7
+	i32.print(ps[1].y)
+
+	var list *Node
+	for i := 1; i <= 4; i++ {
+		list = push(list, i)
+	}
+	var sum i32
+	for i := 0; i < 4; i++ {
+		sum = sum * 10 + list.v
+		list = list.next
+	}
+	i32.print(sum)
+}

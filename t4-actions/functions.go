@@ -27,6 +27,10 @@ type SymbolsData struct {
 	// functionSymbols are the signatures lookupSymbol made for function names,
 	// released with their arguments at the end of FunctionDeclaration.
 	functionSymbols []ast.CXTypeSignatureIndex
+	// escaped are the names of the locals that live in heap objects, and
+	// escapedSlots the frame slots of their declarations.
+	escaped      map[stringpool.StringGid]bool
+	escapedSlots []escapeSlot
 }
 
 // FunctionHeader takes a function name ('fnName') and either creates the
@@ -246,6 +250,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	// Now an arena getter, site S0735.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
+	symbolsData.escaped, exprs = escapeFunction(prgrm, fn, inputs, outputs, exprs)
 	FunctionAddParameters(prgrm, fnIdx, inputs, outputs)
 	ProcessShortCircuitJumps(prgrm, exprs)
 	ProcessGoTos(prgrm, exprs)
@@ -297,6 +302,9 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
 	}
 
+	for _, slot := range symbolsData.escapedSlots {
+		gcRootAdd(fn, slot.escapeSlotOffset, gcPointerSlot{gcPointerSlotType: types.POINTER, gcPointerSlotSpecs: []int{constants.DECL_BASIC, constants.DECL_POINTER}})
+	}
 	fn.LineCount = len(fn.Expressions)
 	fn.Size = offset
 
@@ -593,7 +601,11 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 		// Now an arena getter, site S0751.
 		inpExprAtomicOpOperator := prgrm.GetFunctionFromArray(inpExprAtomicOp.Operator)
 
-		inpExprCXLine, _ := prgrm.GetPreviousCXLine(args, i)
+		inpExprCXLine, err := prgrm.GetPreviousCXLine(args, i)
+		if err != nil {
+			// An argument such as -1 has no line of its own.
+			inpExprCXLine = &ast.CXLine{LineNumber: LineNo}
+		}
 		if inpExprAtomicOpOperator == nil && !argumentLast[i] && !inpExpr.IsMethodCall() {
 			// A declaration inside an argument, such as the variable of a literal.
 			nestedExprs = append(nestedExprs, inpExpr)
@@ -1172,13 +1184,11 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 		// Now an arena getter, site S0806.
 		sym = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
 	} else {
-		// panic("type is not cx arg deprecate\n\n)")
-		// TODO: atomic type for now doesnt have pointers
 		return
 	}
 
 	// Ignore if it's a global variable.
-	if sym.Offset > prgrm.Stack.Size {
+	if sym.Offset > prgrm.Stack.Size && !ast.OffsetEscaped(sym.Offset) {
 		return
 	}
 	// We first need to check if we're going to add `sym` with fields.
@@ -2068,7 +2078,9 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 			// add name to symbols
 			symbolsData.symbolsIndex[lastIdx][fullName] = len(symbolsData.symbols) - 1
 
-			if sym != nil {
+			if symbolsData.escaped[fullName.SymbolsDataKeyName] {
+				escapeDeclare(prgrm, symbolsData, typeSig, sym, offset)
+			} else if sym != nil {
 				sym.Name = typeSig.Name
 				sym.Offset = *offset
 				updateSymbolsTableOffsetAdd(prgrm, typeSig, offset, ast.GetArgSize(prgrm, sym))
@@ -2076,6 +2088,7 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 				typeSig.Offset = *offset
 				updateSymbolsTableOffsetAdd(prgrm, typeSig, offset, typeSig.GetSize(prgrm, true))
 			}
+			gcRootsDeclare(prgrm, currFn, typeSig, sym)
 		}
 	}
 }
@@ -3359,27 +3372,41 @@ func functionCallArguments(arguments [][]ast.CXExpression) ([]ast.CXExpression, 
 }
 
 // indexedFieldBaseDeref fixes the base of p[i].f before its fields are typed.
-// A *[N]T reads through p before it indexes, a [N]*T keeps its pointer stride.
+// A *[N]T reads through p before it indexes, a [N]*T or []*T keeps its
+// pointer stride.
 func indexedFieldBaseDeref(sym *ast.CXArgument, declared *ast.CXArgument) {
 	specs := declared.DeclarationSpecifiers
 	if pointerArrayElementPointerDeref(sym, declared) || pointerArrayIndexDeref(sym, declared) || len(sym.Indexes) == 0 || len(specs) < 2 || len(sym.DereferenceOperations) == 0 || sym.DereferenceOperations[0] != constants.DEREF_ARRAY {
 		return
 	}
-	if specs[len(specs)-1] == constants.DECL_ARRAY && specs[len(specs)-2] == constants.DECL_POINTER {
+	outer := specs[len(specs)-1]
+	if (outer == constants.DECL_ARRAY || outer == constants.DECL_SLICE) && specs[len(specs)-2] == constants.DECL_POINTER {
 		if len(sym.DeclarationSpecifiers) > 0 && sym.DeclarationSpecifiers[0] == constants.DECL_BASIC {
 			sym.DeclarationSpecifiers = append(append([]int{}, specs...), sym.DeclarationSpecifiers[1:]...)
 		}
 	}
 }
 
-// pointerArrayElementStruct reports whether sym reads one struct element of
-// the *[N]T declared, as (*p)[i] and p[i] do, with no field after it.
+// pointerArrayElementStruct reports whether sym reads one whole struct element
+// of the *[N]T or *[N][M]T declared, as (*p)[i] and p[i][j] do.
 func pointerArrayElementStruct(sym *ast.CXArgument, declared *ast.CXArgument) bool {
 	specs := declared.DeclarationSpecifiers
-	if declared.StructType == nil || len(sym.Fields) > 0 || len(sym.Indexes) != 1 || len(specs) != 3 {
+	if declared.StructType == nil || len(sym.Fields) > 0 || len(specs) < 3 || specs[0] != constants.DECL_STRUCT || specs[len(specs)-1] != constants.DECL_POINTER {
 		return false
 	}
-	return specs[1] == constants.DECL_ARRAY && specs[2] == constants.DECL_POINTER && hasDerefOp(sym, constants.DEREF_POINTER)
+	dims := pointerArrayDimensions(specs[1 : len(specs)-1])
+	return dims == len(specs)-2 && len(sym.Indexes) == dims && hasDerefOp(sym, constants.DEREF_POINTER)
+}
+
+// pointerArrayDimensions returns how many specifiers of specs are arrays, or
+// -1 when one is not.
+func pointerArrayDimensions(specs []int) int {
+	for _, spec := range specs {
+		if spec != constants.DECL_ARRAY {
+			return -1
+		}
+	}
+	return len(specs)
 }
 
 // pointerArrayIndexDeref makes p[i] on a *[N]T read through p before it
@@ -3398,24 +3425,40 @@ func pointerArrayIndexDeref(sym *ast.CXArgument, declared *ast.CXArgument) bool 
 	return true
 }
 
-// pointerArrayElementPointerDeref makes p[i].f and (*p)[i].f on a *[N]*T read
-// through p and then the element, with the stride of a pointer.
+// pointerArrayElementPointerDeref makes p[i].f on a *[N]*T and p[i][j].f on a
+// *[N][M]*T read through p and then the element, with a pointer stride.
 func pointerArrayElementPointerDeref(sym *ast.CXArgument, declared *ast.CXArgument) bool {
 	specs := declared.DeclarationSpecifiers
-	if len(sym.Fields) == 0 || len(sym.Indexes) != 1 || len(specs) != 4 || specs[1] != constants.DECL_POINTER || specs[2] != constants.DECL_ARRAY || specs[3] != constants.DECL_POINTER {
+	if len(sym.Fields) == 0 || len(specs) < 4 || specs[1] != constants.DECL_POINTER || specs[len(specs)-1] != constants.DECL_POINTER {
+		return false
+	}
+	dims := pointerArrayDimensions(specs[2 : len(specs)-1])
+	if dims < 1 || len(sym.Indexes) != dims {
 		return false
 	}
 	ops := sym.DereferenceOperations
-	switch {
-	case len(ops) == 1 && ops[0] == constants.DEREF_ARRAY:
-		sym.DereferenceOperations = []int{constants.DEREF_POINTER, constants.DEREF_ARRAY, constants.DEREF_POINTER}
-	case len(ops) == 2 && ops[0] == constants.DEREF_POINTER && ops[1] == constants.DEREF_ARRAY:
-		sym.DereferenceOperations = append(ops, constants.DEREF_POINTER)
-	default:
+	if len(ops) > 0 && ops[0] == constants.DEREF_POINTER {
+		ops = ops[1:]
+	}
+	if len(ops) != dims || pointerArrayDimensions(pointerArrayDerefSpecs(ops)) != dims {
 		return false
 	}
+	sym.DereferenceOperations = append(append([]int{constants.DEREF_POINTER}, ops...), constants.DEREF_POINTER)
 	if len(sym.DeclarationSpecifiers) > 0 && sym.DeclarationSpecifiers[0] == constants.DECL_BASIC {
 		sym.DeclarationSpecifiers = append(append([]int{}, specs...), sym.DeclarationSpecifiers[1:]...)
 	}
 	return true
+}
+
+// pointerArrayDerefSpecs maps array dereferences to array specifiers, so
+// pointerArrayDimensions can count them.
+func pointerArrayDerefSpecs(ops []int) []int {
+	specs := make([]int, len(ops))
+	for i, op := range ops {
+		specs[i] = constants.DECL_INDEXING
+		if op == constants.DEREF_ARRAY {
+			specs[i] = constants.DECL_ARRAY
+		}
+	}
+	return specs
 }

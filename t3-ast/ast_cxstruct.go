@@ -163,3 +163,13 @@ func (strct *CXStruct) GetStructSize(prgrm *CXProgram) types.Pointer {
 
 	return structSize
 }
+
+// StructFieldOffset returns the offset of field index of strct. The
+// signature of a field holds its size in Offset, so the offset is a sum.
+func StructFieldOffset(prgrm *CXProgram, strct *CXStruct, index int) types.Pointer {
+	var offset types.Pointer
+	for _, fieldIdx := range strct.Fields[:index] {
+		offset += prgrm.GetCXTypeSignatureFromArray(fieldIdx).Offset
+	}
+	return offset
+}

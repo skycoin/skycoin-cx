@@ -478,6 +478,20 @@ func runTestCases(t *runner.TestRunner) {
 		"4\n4\n6\n9\n")
 	t.RunWant("test-runtime-error-input-copy.cx", types.CX_RUNTIME_INVALID_CAST, "a runtime error in an argument stops the caller, not the callee",
 		"test-runtime-error-input-copy.cx:12, CX_RUNTIME_INVALID_CAST", "===Callstack===\n>>> main()")
+	t.RunWant("test-escape-return.cx", types.CX_SUCCESS, "a returned pointer to a local, an input, a struct, an array or a &T{} is not overwritten by a later call",
+		"5\n5\n6\n7\n8\n41\n2\n3\n4\n60\n10\n")
+	t.RunWant("test-escape-store.cx", types.CX_SUCCESS, "a pointer to a local stored in a global, a struct field, a slice or an array outlives the call",
+		"11\n12\n13\n21\n22\n31\n32\n33\n32\n51\n")
+	t.RunWant("test-escape-loop.cx", types.CX_SUCCESS, "each loop pass gets its own &T{} and escaping local",
+		"0\n100\n200\n10\n101\n201\n20\n102\n202\n10\n4321\n")
+	t.RunWant("-heap-initial 0 test-escape-gc.cx", types.CX_SUCCESS, "the GC keeps reachable escaped locals and local slices and moves the pointers to them",
+		"0\n2\n4\n6\n7\n321\n41\n42\n")
+	t.RunWant("--executor=vm test-escape-frame.cx", types.CX_SUCCESS, "a local whose address does not outlive the call stays in the frame",
+		"10\n12\n13\n4\n6\n14\n")
+	t.RunWant("test-pointer-array-2d.cx", types.CX_SUCCESS, "p[i][j] indexes a *[N][M]T and a *[N][M]*T",
+		"12\n101\n110\n77\n11\n212\n201\n211\n55\n211\n211\n9\n4\n")
+	t.RunWant("test-runtime-error-neg-argument.cx", types.CX_RUNTIME_INVALID_CAST, "the temporary of g(-1) has the line of the call in the call stack",
+		"test-runtime-error-neg-argument.cx:12 : i32.neg() : -1")
 	t.RunWant("test-runtime-error-return-line.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error in return s[0][1] prints the line of the return",
 		"test-runtime-error-return-line.cx:4, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
 	t.RunWant("test-runtime-error-return-line-index.cx", types.CX_RUNTIME_INVALID_CAST, "a runtime error in return a[i] prints the line of the return",
@@ -758,5 +772,6 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("./examples/testing-global-1.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/testing-globals.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/testing-packages.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
-	t.RunEx("./examples/testing-pointers-to-arrays-of-structs.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
+	t.RunWant("./examples/testing-pointers-to-arrays-of-structs.cx", types.CX_SUCCESS, "a pointer to a local array stays valid after a later call",
+		"10\n20\n30\n40\n50\n60\n10\n20\n30\n40\n50\n60\n")
 }
