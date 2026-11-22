@@ -60,6 +60,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeStructRecursive - ast.CompileErrorCodeNil:            {Format: "%H invalid recursive type '%s'\n"},
 	ast.CompileErrorCodeLoopJumpOutsideLoop - ast.CompileErrorCodeNil:        {Format: "%H %s is not in a loop\n"},
 	ast.CompileErrorCodeSliceArgumentType - ast.CompileErrorCodeNil:          {Format: "%H function '%s' expected a slice as input argument; '%s' was provided\n"},
+	ast.CompileErrorCodeGotoLabelMissing - ast.CompileErrorCodeNil:           {Format: "%H label '%s' is not defined\n"},
+	ast.CompileErrorCodeSliceElementType - ast.CompileErrorCodeNil:           {Format: "%H function '%s' expected argument of type '%s'; '%s' was provided\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

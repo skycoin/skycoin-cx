@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	var x i32
+	x.y = 3
+	var f f32
+	f32.print(f.z)
+}

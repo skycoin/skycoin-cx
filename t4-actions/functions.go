@@ -285,6 +285,8 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		CheckTypes(prgrm, fn.Expressions, i)
 		CheckUndValidTypes(prgrm, fn.Expressions, i)
 		checkOperatorOperands(prgrm, fn.Expressions, i)
+		checkOperatorResultType(prgrm, fn.Expressions, i)
+		checkSliceBuiltinTypes(prgrm, fn.Expressions, i)
 		ProcessTypedOperator(prgrm, fn.Expressions, i)
 		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > int(expr.ExpressionScopeCloseCount), "FunctionDeclaration: scope close without a matching open")
 		symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
@@ -457,6 +459,48 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 		}
 	}
 	prgrm.CXProgramCompileErrorAdd(code, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(sym)})
+}
+
+// checkOperatorResultType rejects an arithmetic or bitwise result stored in
+// a variable of another type, as in var f f32 = -1 (no implicit casting).
+func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, currIndex)
+	if err != nil {
+		panic(err)
+	}
+	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	if expressionOperator == nil || !ast.IsOperator(expressionOperator.AtomicOPCode) || ast.IsComparisonOperator(expressionOperator.AtomicOPCode) {
+		return
+	}
+	inputs := expression.GetInputs(prgrm)
+	outputs := expression.GetOutputs(prgrm)
+	if len(inputs) == 0 || len(outputs) != 1 {
+		return
+	}
+	outputTypeSig := prgrm.GetCXTypeSignatureFromArray(outputs[0])
+	if IsTempVar(prgrm, outputTypeSig.Name) || typeSignatureUndefined(prgrm, outputTypeSig) {
+		return
+	}
+	inputTypeSig := prgrm.GetCXTypeSignatureFromArray(inputs[0])
+	if typeSignatureUndefined(prgrm, inputTypeSig) || ast.GetTypedOperator(operatorOperandType(prgrm, inputs[0]), expressionOperator.AtomicOPCode) == nil {
+		return
+	}
+	inputType := ast.GetFormattedType(prgrm, inputTypeSig)
+	outputType := ast.GetFormattedType(prgrm, outputTypeSig)
+	if inputType == outputType {
+		return
+	}
+	outputName := outputTypeSig.Name
+	if outputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		outputName = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outputTypeSig.Meta)).GetAssignmentElement(prgrm).Name
+	}
+	file, line := exprLine(prgrm, exprs, currIndex)
+	if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, outputTypeSig.ArgDetails); sigLine > 0 {
+		file, line = sigFile, sigLine
+	} else if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, inputTypeSig.ArgDetails); sigLine > 0 {
+		file, line = sigFile, sigLine
+	}
+	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignValueType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(outputName), prgrm.CXProgramCompileErrorText(outputType)})
 }
 
 // FunctionCall completes the array of expressions for postfix function call.
@@ -1243,6 +1287,7 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 		}
 		if isOpGoto {
 			// then it's a goto
+			labelFound := false
 			for j, e := range exprs {
 				expressionToGoTo, _, err := prgrm.GetOperation(&e)
 				if err != nil {
@@ -1252,8 +1297,14 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 				if expressionToGoTo.Label == expression.Label && i != j {
 					// ElseLines is used because arg's default val is false
 					expression.ThenLines = j - i - 1
+					labelFound = true
 					break
 				}
+			}
+			// A return jumps past the end with a generated label and no target.
+			if !labelFound && !strings.HasPrefix(prgrm.CXProgramNameText(expression.Label), constants.LABEL_PREFIX) {
+				file, line := exprLine(prgrm, exprs, i)
+				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeGotoLabelMissing, file, line, ast.CompileErrorOperands{int64(expression.Label)})
 			}
 		}
 	}
@@ -3002,9 +3053,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSignature.Meta)
 		argStructType = structDetails.StructType
 	} else {
-		// panic("type is type cxargument deprecate\n\n")
-		// ProcessSymbolFields is only needed for struct types
-		// So we return from here
+		symbolFieldAccessPrimitiveCheck(prgrm, symTypeSignature, argTypeSignature)
 		return
 	}
 
@@ -3195,12 +3244,21 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 					// TODO: this should not be needed.
 					if len(nameField.DeclarationSpecifiers) > 0 {
-						nameField.DeclarationSpecifiers = append([]int{constants.DECL_BASIC, constants.DECL_SLICE}, nameField.DeclarationSpecifiers[1:]...)
+						nameField.DeclarationSpecifiers = append(declarationSpecifiersSlice(len(sliceDetails.Lengths)), nameField.DeclarationSpecifiers[1:]...)
 					} else {
 						nameField.DeclarationSpecifiers = []int{constants.DECL_BASIC}
 					}
 
-					nameField.DereferenceOperations = append([]int{constants.DEREF_POINTER}, nameField.DereferenceOperations...)
+					// Each index of a multi-dimensional slice field reads the next slice.
+					if len(sliceDetails.Lengths) > 1 && hasDerefOp(nameField, constants.DEREF_ARRAY) {
+						for i, deref := range nameField.DereferenceOperations {
+							if deref == constants.DEREF_ARRAY {
+								nameField.DereferenceOperations[i] = constants.DEREF_SLICE
+							}
+						}
+					} else {
+						nameField.DereferenceOperations = append([]int{constants.DEREF_POINTER}, nameField.DereferenceOperations...)
+					}
 
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_STRUCT {
@@ -3311,4 +3369,101 @@ func ProcessLoopJumpsOutsideLoop(prgrm *ast.CXProgram, exprs []ast.CXExpression)
 		}
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeLoopJumpOutsideLoop, file, line, ast.CompileErrorOperands{int64(prgrm.CXProgramNameIntern(keyword))})
 	}
+}
+
+// typeSignatureUndefined reports whether the type of typeSig is not known
+// yet, as for a temporary variable before its operator is typed.
+func typeSignatureUndefined(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bool {
+	if typeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		return prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta)).GetAssignmentElement(prgrm).Type == types.UNDEFINED
+	}
+	return typeSig.Type == ast.TYPE_UNUSED
+}
+
+// symbolFieldAccessPrimitiveCheck errors on a field of a symbol whose
+// declared type is not a struct, as in x.y = 3 for an i32 x.
+func symbolFieldAccessPrimitiveCheck(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
+	if symTypeSignature.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return
+	}
+	sym := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(symTypeSignature.Meta))
+	if len(sym.Fields) == 0 {
+		return
+	}
+	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, symTypeSignature.ArgDetails, ast.CompileErrorOperands{int64(symTypeSignature.Name), prgrm.CXProgramCompileErrorText(ast.GetFormattedType(prgrm, argTypeSignature))})
+}
+
+// checkSliceBuiltinTypes checks the element and result types of append,
+// insert, resize, remove and copy against the type of their slice.
+func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, currIndex)
+	if err != nil {
+		panic(err)
+	}
+	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	if expressionOperator == nil || !expressionOperator.IsBuiltIn() {
+		return
+	}
+	opName := ast.OpNames[expressionOperator.AtomicOPCode]
+	var elementInput int
+	switch opName {
+	case "append":
+		elementInput = 1
+	case "insert":
+		elementInput = 2
+	case "resize", "remove", "copy":
+		elementInput = -1
+	default:
+		return
+	}
+	inputs := expression.GetInputs(prgrm)
+	if len(inputs) == 0 {
+		return
+	}
+	sliceTypeSig := prgrm.GetCXTypeSignatureFromArray(inputs[0])
+	sliceType := ast.GetFormattedType(prgrm, sliceTypeSig)
+	if !strings.HasPrefix(sliceType, "[]") {
+		return
+	}
+	operandTypeCheck := func(typeSigIdx ast.CXTypeSignatureIndex, expectedType string) {
+		typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
+		if typeSignatureUndefined(prgrm, typeSig) {
+			return
+		}
+		// A nested slice literal element is a temporary with only its base type.
+		if strings.HasPrefix(expectedType, "[") && IsTempVar(prgrm, typeSig.Name) {
+			return
+		}
+		receivedType := ast.GetFormattedType(prgrm, typeSig)
+		if receivedType == expectedType {
+			return
+		}
+		file, line := exprLine(prgrm, exprs, currIndex)
+		if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, typeSig.ArgDetails); sigLine > 0 {
+			file, line = sigFile, sigLine
+		}
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeSliceElementType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+	}
+	if elementInput > 0 && elementInput < len(inputs) {
+		operandTypeCheck(inputs[elementInput], sliceType[len("[]"):])
+	}
+	if opName == "copy" && len(inputs) > 1 {
+		operandTypeCheck(inputs[1], sliceType)
+		return
+	}
+	outputs := expression.GetOutputs(prgrm)
+	if len(outputs) == 1 && !IsTempVar(prgrm, prgrm.GetCXTypeSignatureFromArray(outputs[0]).Name) {
+		operandTypeCheck(outputs[0], sliceType)
+	}
+}
+
+// declarationSpecifiersSlice is DECL_BASIC and one DECL_SLICE per dimension,
+// so st.m on an m [][]i32 field is [][]i32 and st.m[0] is []i32.
+func declarationSpecifiersSlice(dimensions int) []int {
+	specs := make([]int, 1, dimensions+1)
+	specs[0] = constants.DECL_BASIC
+	for range dimensions {
+		specs = append(specs, constants.DECL_SLICE)
+	}
+	return specs
 }

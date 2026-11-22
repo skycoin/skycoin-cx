@@ -56,6 +56,8 @@ const (
 	CompileErrorCodeStructRecursive
 	CompileErrorCodeLoopJumpOutsideLoop
 	CompileErrorCodeSliceArgumentType
+	CompileErrorCodeGotoLabelMissing
+	CompileErrorCodeSliceElementType
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

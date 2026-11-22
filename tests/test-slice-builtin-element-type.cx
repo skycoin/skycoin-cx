@@ -1,0 +1,33 @@
+package main
+
+type fooA struct {
+	f f32
+}
+
+type fooB struct {
+	d f64
+	i i32
+}
+
+type S struct {
+	m [][]i32
+}
+
+func main() {
+	var sa []fooA
+	var b fooB
+	sa = append(sa, b)
+	var s []i32
+	s = append(s, "a")
+	var m [][]i32
+	m = append(m, 1)
+	s = insert(s, 0, 1.5)
+	var fs []f32
+	i32.print(copy(s, fs))
+	fs = append(s, 1)
+	fs = resize(s, 2)
+	fs = remove(s, 0)
+	var st S
+	st.m = append(st.m, 5)
+	st.m[0] = append(st.m[0], s)
+}

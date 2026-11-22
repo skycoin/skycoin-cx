@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	var s []i32
+	s = append(s, 1)
+	s = append(s, 2)
+	s[1, 0] = 9
+	i32.print(s[1])
+}

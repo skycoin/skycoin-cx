@@ -472,3 +472,17 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	}
 
 }
+
+// GlobalRedeclarationCheck errors when pass one meets a global a second time.
+// Only a global that pass one already declared has a valid offset.
+func GlobalRedeclarationCheck(prgrm *ast.CXProgram, declarator *ast.CXArgument) {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		return
+	}
+	glbl, err := pkg.GetGlobal(prgrm, declarator.Name)
+	if err != nil || !glbl.Offset.IsValid() {
+		return
+	}
+	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeRedeclared, declarator.ArgDetails, ast.CompileErrorOperands{int64(declarator.Name)})
+}

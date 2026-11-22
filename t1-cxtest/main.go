@@ -353,6 +353,41 @@ func runTestCases(t *runner.TestRunner) {
 		`test-loop-break-outside.cx:5 break is not in a loop`)
 	t.RunWant("test-loop-continue-outside.cx", types.CX_COMPILATION_ERROR, "continue outside a loop (skycoin-cx#60)",
 		`test-loop-continue-outside.cx:6 continue is not in a loop`)
+	t.RunWant("test-operator-result-type.cx", types.CX_COMPILATION_ERROR, "an arithmetic result of another type is not cast implicitly (skycoin-cx#27)",
+		"test-operator-result-type.cx:4 cannot assign value of type 'i32' to identifier '1:f' of type 'f32'",
+		"test-operator-result-type.cx:6 cannot assign value of type 'i32' to identifier '2:h' of type 'f32'",
+		"test-operator-result-type.cx:8 cannot assign value of type 'i32' to identifier '4:y' of type 'f32'",
+		"test-operator-result-type.cx:9 cannot assign value of type 'i32' to identifier '5:l' of type 'i64'",
+		"test-operator-result-type.cx:11 cannot assign value of type 'i32' to identifier '6:a' of type 'f32'",
+		"test-operator-result-type.cx:13 cannot assign value of type 'f32' to identifier '8:n' of type 'i32'")
+	t.RunWant("test-operator-result-type-global.cx", types.CX_COMPILATION_ERROR, "a global initialized with an arithmetic result of another type (skycoin-cx#27)",
+		"test-operator-result-type-global.cx:3 cannot assign value of type 'i32' to identifier 'g' of type 'f32'")
+	t.RunWant("test-operator-result-type-valid.cx", types.CX_SUCCESS, "negative literals and arithmetic results of the receiver's type (skycoin-cx#27)",
+		"-1 -1 -1 7 2 -1\n")
+	t.Run("issue-520.cx", types.CX_COMPILATION_ERROR, "a negative i32 literal initializes an f32 (skycoin-cx#27)")
+	t.RunWant("test-slice-builtin-element-type.cx", types.CX_COMPILATION_ERROR, "element and result types of append, insert, resize, remove and copy (skycoin-cx#55)",
+		"test-slice-builtin-element-type.cx:19 function 'append' expected argument of type 'fooA'; 'fooB' was provided",
+		"test-slice-builtin-element-type.cx:21 function 'append' expected argument of type 'i32'; 'str' was provided",
+		"test-slice-builtin-element-type.cx:23 function 'append' expected argument of type '[]i32'; 'i32' was provided",
+		"test-slice-builtin-element-type.cx:24 function 'insert' expected argument of type 'i32'; 'f32' was provided",
+		"test-slice-builtin-element-type.cx:26 function 'copy' expected argument of type '[]i32'; '[]f32' was provided",
+		"test-slice-builtin-element-type.cx:27 function 'append' expected argument of type '[]i32'; '[]f32' was provided",
+		"test-slice-builtin-element-type.cx:28 function 'resize' expected argument of type '[]i32'; '[]f32' was provided",
+		"test-slice-builtin-element-type.cx:29 function 'remove' expected argument of type '[]i32'; '[]f32' was provided",
+		"test-slice-builtin-element-type.cx:31 function 'append' expected argument of type '[]i32'; 'i32' was provided",
+		"test-slice-builtin-element-type.cx:32 function 'append' expected argument of type 'i32'; '[]i32' was provided")
+	t.RunWant("test-slice-field-multidimensional.cx", types.CX_SUCCESS, "append, insert, remove, resize and indexing on multi-dimensional slice struct fields (skycoin-cx#55)",
+		"3\n5\n6\n1.5\n8\n10\n12\n13\n")
+	t.RunWant("test-global-redeclaration.cx", types.CX_COMPILATION_ERROR, "a global declared twice in one package (skycoin-cx#57)",
+		"test-global-redeclaration.cx:4 'i' redeclared")
+	t.RunWant("test-index-comma.cx", types.CX_COMPILATION_ERROR, "a comma inside an index is a syntax error (skycoin-cx#59)",
+		"test-index-comma.cx:7: syntax error")
+	t.Run("issue-22.cx", types.CX_COMPILATION_ERROR, "commas inside slice indexers of a struct field (skycoin-cx#59)")
+	t.RunWant("test-goto-label-missing.cx", types.CX_COMPILATION_ERROR, "goto to a label that does not exist",
+		"test-goto-label-missing.cx:4 label 'nowhere' is not defined")
+	t.RunWant("test-field-access-primitive.cx", types.CX_COMPILATION_ERROR, "a field of a variable that is not a struct",
+		"test-field-access-primitive.cx:5 illegal method call or field access on identifier 'x' of primitive type 'i32'",
+		"test-field-access-primitive.cx:7 illegal method call or field access on identifier 'f' of primitive type 'f32'")
 	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
@@ -448,7 +483,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-231.cx", types.CX_SUCCESS, "Slice keeps growing though it's cleared inside the loop")
 	t.Run("issue-232.cx", types.CX_SUCCESS, "Scope not working in loops")
 	t.Run("issue-233.cx", types.CX_SUCCESS, "Interdependant Structs")
-	t.RunEx("issue-234.cx", types.CX_COMPILATION_ERROR, "Panic when trying to access an invalid field.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#14
+	t.Run("issue-234.cx", types.CX_COMPILATION_ERROR, "Panic when trying to access an invalid field. (skycoin-cx#14)")
 	t.Run("issue-235.cx", types.CX_COMPILATION_ERROR, "No compilation error when using an using an invalid identifier")
 	t.Run("issue-236a.cx issue-236.cx", types.CX_SUCCESS, "Silent name clash between packages")
 	t.Run("issue-236.cx issue-236a.cx", types.CX_SUCCESS, "Silent name clash between packages")
@@ -558,10 +593,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-177/structofsliceint32.cx", types.CX_SUCCESS, "len of a struct slice literal (skycoin-cx#47)")
 	t.Run("issue-177/structofslicestring.cx", types.CX_SUCCESS, "len of a struct slice literal with a str field (skycoin-cx#47)")
 	t.Run("issue-177/structofslicestrings.cx", types.CX_SUCCESS, "len of a struct slice literal with another str field (skycoin-cx#47)")
-	t.RunEx("issue-120-a.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
-	t.RunEx("issue-120-b.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
-	t.RunEx("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
-	t.RunEx("issue-121.cx", types.CX_SUCCESS, "Compilation error when using unary negative operator on a function call", runner.TestIssue, 0)                       // known failing, skycoin/skycoin-cx#28
+	t.Run("issue-120-a.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
+	t.Run("issue-120-b.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
+	t.Run("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
+	t.RunEx("issue-121.cx", types.CX_SUCCESS, "Compilation error when using unary negative operator on a function call", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#28
 	t.RunEx("issue-131.cx", types.CX_SUCCESS, "Panic when using arithmetic operations.", runner.TestIssue, 0)
 	t.RunEx("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.", runner.TestIssue, 0)
 	t.RunEx("issue-157.cx", types.CX_SUCCESS, "expected either 'i32' or 'i64', got 'ident'", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#29

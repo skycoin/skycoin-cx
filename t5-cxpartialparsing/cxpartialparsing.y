@@ -191,10 +191,12 @@ stepping:       TSTEP int_value int_value
 global_declaration:
                 VAR declarator declaration_specifiers SEMICOLON
                 {
+			actions.GlobalRedeclarationCheck(Program, $2)
 			actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
                 }
         |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
                 {
+			actions.GlobalRedeclarationCheck(Program, $2)
 			actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
                 }
                 ;
@@ -620,7 +622,7 @@ after_period:   type_specifier
 
 postfix_expression:
                 primary_expression
-	|       postfix_expression LBRACK expression RBRACK
+	|       postfix_expression LBRACK assignment_expression RBRACK
         |       type_specifier PERIOD after_period
 	|       postfix_expression LPAREN RPAREN
 	|       postfix_expression LPAREN argument_expression_list RPAREN

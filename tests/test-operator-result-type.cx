@@ -1,0 +1,14 @@
+package main
+
+func main() {
+	var f f32 = -1
+	var h f32
+	h = 1 + 2
+	var x i32 = 3
+	var y f32 = -x
+	var l i64 = -1
+	var a [3]f32
+	a[0] = -1
+	var z f32 = 2.0
+	var n i32 = z * 3.0
+}

@@ -177,6 +177,10 @@ functions are printing the values of the two global variables
 defined. They are going to print the same values, as they are
 referring to the same variables.
 
+A package declares each global once. Declaring the same name twice is
+the compile error `'name' redeclared`, also when the declarations are
+in different files of the package.
+
 ### [Local variables](#table-of-contents)
 
 In contrast to global variables, local variables are constrained to
@@ -238,6 +242,8 @@ later section. Lastly, we see an example of a 2x2 matrix of type
 
 Lastly, we can see how we can set array elements using the bracket
 notation, e.g. `arr1[0] = 10`.
+Each index takes its own brackets, as in `arr3[1][0]`. A comma inside
+the brackets, `arr3[1, 0]`, is a syntax error.
 
 ### [Slices](#table-of-contents)
 
@@ -717,6 +723,9 @@ In the example above, we see how a `goto` statement forces CX to
 ignore executing the expression labeled as `label1`, and instead jumps
 to the `label2` expression.
 
+The label must be in the same function. A `goto` to a label that does
+not exist is the compile error `label 'name' is not defined`.
+
 ## [Expressions](#table-of-contents)
 
 Expressions are basically function calls. But the term expression also
@@ -904,6 +913,18 @@ other types, use these suffixes: `B` for *i8*, `H` for *i16*, `L` for
 *i64*, `UB` for *ui8*, `UH` for *ui16*, `U` for *ui32*, `UL` for
 *ui64* and `D` for *f64*. So, assuming `foo` is of type *i64*, you can
 do this assignment: `foo = 34L`.
+
+The same holds for the result of an operator. `-1` is the negation of
+the *i32* literal `1`, so `var f f32 = -1` and `var x i64 = 1 + 2` are
+compile errors. Write `-1.0` for an *f32* and `-1L` for an *i64*.
+
+```cx compile-error
+package main
+
+func main () {
+	var f f32 = -1
+}
+```
 
 ### [Variables](#table-of-contents)
 
@@ -1219,6 +1240,31 @@ func main () {
 }
 ```
 
+The value passed to `append` or `insert` has the element type of the
+slice, `copy` takes two slices of the same type, and the result of
+`append`, `insert`, `resize` and `remove` is assigned to a slice of the
+same type. Each mismatch is a compile error. This holds for slice struct
+fields with more than one dimension too, such as `st.m[0]` on a
+`m [][]i32` field.
+
+```cx compile-error
+package main
+
+type A struct {
+	f f32
+}
+
+type B struct {
+	i i32
+}
+
+func main () {
+	var s []A
+	var b B
+	s = append(s, b)
+}
+```
+
 ### [Structures](#table-of-contents)
 
 Structures are CX's mechanism for creating custom types, as in many other
@@ -1244,6 +1290,9 @@ func main () {
 	p.y = 20
 }
 ```
+
+Only a struct has fields. `x.y` on a variable of any other type is a
+compile error.
 
 Whenever an instance of a structure is created by either declaring a
 variable of that type or by creating a literal of that type, CX

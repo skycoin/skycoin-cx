@@ -1,0 +1,44 @@
+package main
+
+type S struct {
+	m [][]i32
+	a []i32
+	n [][][]f32
+}
+
+func main() {
+	var st S
+	var e []i32
+	var ef []f32
+	var eff [][]f32
+	st.m = append(st.m, e)
+	st.m[0] = append(st.m[0], 5)
+	st.a = append(st.a, 6)
+	st.n = append(st.n, eff)
+	st.n[0] = append(st.n[0], ef)
+	st.n[0][0] = append(st.n[0][0], 1.5)
+	var m [][]i32
+	m = append(m, e)
+	m[0] = append(m[0], 8)
+	var row []i32
+	row = append(row, 9)
+	m = append(m, row)
+	m[1] = insert(m[1], 0, 10)
+	m[1] = remove(m[1], 0)
+	m[1] = insert(m[1], 0, 10)
+	m[0] = resize(m[0], 3)
+	var sts []S
+	sts = append(sts, st)
+	sts[0].a = append(sts[0].a, 12)
+	sts[0].m[0] = append(sts[0].m[0], 13)
+	var cp []i32
+	cp = resize(cp, 3)
+	i32.print(copy(cp, m[0]))
+	i32.print(st.m[0][0])
+	i32.print(st.a[0])
+	f32.print(st.n[0][0][0])
+	i32.print(m[0][0])
+	i32.print(m[1][0])
+	i32.print(sts[0].a[1])
+	i32.print(sts[0].m[0][1])
+}

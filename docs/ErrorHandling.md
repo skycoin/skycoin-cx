@@ -129,7 +129,9 @@ Three error records exist.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
   `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
   `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeSliceArgumentType` (7040). 7000 is
+  `CompileErrorCodeSliceElementType` (7042). 7041 is
+  `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
+  and 7042 a slice built-in argument or result of the wrong type. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the

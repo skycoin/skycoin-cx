@@ -872,7 +872,7 @@ after_period:   type_specifier
 
 postfix_expression:
 		primary_expression
-	|       postfix_expression LBRACK expression RBRACK
+	|       postfix_expression LBRACK assignment_expression RBRACK
                 {
 			$$ = actions.PostfixExpressionArray(actions.AST,$1, $3)
                 }

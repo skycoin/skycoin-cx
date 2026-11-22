@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	goto nowhere
+	i32.print(1)
+}

@@ -56,6 +56,13 @@
 
 #### Fixed
 
+- An arithmetic or bitwise result was stored in a variable of another type without a check, so `var f f32 = -1` printed NaN and `var x i64 = -1` printed 4294967295. It is the compile error `cannot assign value of type 'i32' to identifier 'f' of type 'f32'`, as for a literal. Use `-1.0` or `-1L` (#27)
+- `append`, `insert`, `resize`, `remove` and `copy` did not check the element type, so `append(s, b)` with a `fooB` into a `[]fooA` compiled and ran. A value or result of the wrong type is the compile error `function 'append' expected argument of type 'fooA'; 'fooB' was provided`, `CompileErrorCodeSliceElementType` (7042) (#55)
+- A struct field slice with more than one dimension, `m [][]i32`, reported the type of `st.m` as `[]i32` and of `st.m[0]` as `i32`, and `st.m[i][j]` was `invalid indexing`. Its type has one `[]` per dimension and each index reads the next slice
+- A global declared twice in one package compiled and the second declaration won. It is the compile error `'i' redeclared` (#57)
+- `s[1,0]` acted as `s[1]` for reads and writes. A comma inside an index is a syntax error (#59)
+- `goto` to a label that does not exist compiled and did nothing. It is the compile error `label 'name' is not defined`, `CompileErrorCodeGotoLabelMissing` (7041)
+- `x.y` on a variable that is not a struct compiled and ran with exit 0. It is the compile error `illegal method call or field access on identifier 'x' of primitive type 'i32'` (#14)
 - `[]T{T{x: 1}}` with a struct element type assigned the fields to the slice variable itself, so `len` printed garbage that changed with the string fields. Each element is now built in its own variable and appended, and an element of the wrong type is a compile error. `[]i32{}` and `[]T{}` give an empty slice instead of leaving the target unchanged (#47)
 - `(*p)[i]` on a `*[]i32` read the pointer, and `len(*p)` stopped with "type is not known". Both index and measure the slice p points to, `t = *p` copies the whole slice header for 1 byte element types too, and `p[i]` or `*p[i]` is `invalid indexing` (#49, #267)
 - `append(p, v)` on a `*[]T` compiled and did nothing. A pointer passed where append, resize, insert, remove or copy take a slice is the compile error `function 'append' expected a slice as input argument`, `CompileErrorCodeSliceArgumentType` (7040). `append(*p, v)` is the valid form (#52)

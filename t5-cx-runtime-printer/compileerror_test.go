@@ -64,6 +64,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeStructRecursive, ast.CompileErrorOperands{text("T")}, header + " invalid recursive type 'T'\n"},
 		{ast.CompileErrorCodeLoopJumpOutsideLoop, ast.CompileErrorOperands{text("break")}, header + " break is not in a loop\n"},
 		{ast.CompileErrorCodeSliceArgumentType, ast.CompileErrorOperands{text("append"), text("*[]i32")}, header + " function 'append' expected a slice as input argument; '*[]i32' was provided\n"},
+		{ast.CompileErrorCodeGotoLabelMissing, ast.CompileErrorOperands{text("nowhere")}, header + " label 'nowhere' is not defined\n"},
+		{ast.CompileErrorCodeSliceElementType, ast.CompileErrorOperands{text("append"), text("fooA"), text("fooB")}, header + " function 'append' expected argument of type 'fooA'; 'fooB' was provided\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}
