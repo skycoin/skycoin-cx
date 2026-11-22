@@ -292,34 +292,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0377.
-		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
-		indexesLen := len(arrDetails.Indexes)
-		eltSize := types.Code(arrDetails.Meta).Size()
-
-		for i := 0; i < indexesLen; i++ {
-			// The elements of an outer slice are pointers to the inner slices.
-			sizeToUse := eltSize
-			if i+1 < len(arrDetails.Lengths) {
-				sizeToUse = types.POINTER_SIZE
-			}
-
-			argTypeSigOffset = types.Read_ptr(prgrm.Memory, argTypeSigOffset)
-			baseOffset := argTypeSigOffset
-
-			argTypeSigOffset += types.OBJECT_HEADER_SIZE
-			argTypeSigOffset += constants.SLICE_HEADER_SIZE
-
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-			// Now an arena getter, site S0378.
-			indexOffset := finalOffsetCompute(prgrm, fp, nil, prgrm.GetCXTypeSignatureFromArray(arrDetails.Indexes[i]), fault)
-			indexValue := types.Read_i32(prgrm.Memory, indexOffset)
-
-			argTypeSigOffset += offsetIndexFromI32(indexValue, fault) * sizeToUse // TODO:PTR Use ptr/Read_ptr, array/slice indexing only works with i32.
-
-			offsetSliceIndexCheck(IsValidSliceIndex(prgrm, baseOffset, argTypeSigOffset, sizeToUse), fault)
-		}
-
-		return argTypeSigOffset
+		return finalOffsetSliceIndexes(prgrm, fp, argTypeSigOffset, prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta), fault)
 	} else if argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC {
 		argTypeSigOffset := argTypeSig.Offset
 
@@ -331,6 +304,12 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 
 		if argTypeSig.IsDeref {
 			argTypeSigOffset = types.Read_ptr(prgrm.Memory, argTypeSigOffset)
+
+			// (*p)[i] indexes the slice that p points to.
+			sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(argTypeSig.Meta)
+			if len(sliceDetails.Indexes) > 0 {
+				return finalOffsetSliceIndexes(prgrm, fp, argTypeSigOffset, sliceDetails, fault)
+			}
 
 			if argTypeSigOffset.IsValid() && argTypeSigOffset >= prgrm.Heap.StartsAt {
 				// then it's an object
@@ -425,6 +404,35 @@ func finalOffsetCompute(prgrm *CXProgram, fp types.Pointer, oldArg *CXArgument, 
 	}
 
 	return finalOffset
+}
+
+// finalOffsetSliceIndexes applies the indexes of sliceDetails to the slice
+// variable at offset and returns the address of the element.
+func finalOffsetSliceIndexes(prgrm *CXProgram, fp types.Pointer, offset types.Pointer, sliceDetails *CXTypeSignature_Array, fault *bool) types.Pointer {
+	eltSize := types.Code(sliceDetails.Meta).Size()
+	for i := 0; i < len(sliceDetails.Indexes); i++ {
+		// The elements of an outer slice are pointers to the inner slices.
+		sizeToUse := eltSize
+		if i+1 < len(sliceDetails.Lengths) {
+			sizeToUse = types.POINTER_SIZE
+		}
+
+		offset = types.Read_ptr(prgrm.Memory, offset)
+		baseOffset := offset
+
+		offset += types.OBJECT_HEADER_SIZE
+		offset += constants.SLICE_HEADER_SIZE
+
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0378.
+		indexOffset := finalOffsetCompute(prgrm, fp, nil, prgrm.GetCXTypeSignatureFromArray(sliceDetails.Indexes[i]), fault)
+		indexValue := types.Read_i32(prgrm.Memory, indexOffset)
+
+		offset += offsetIndexFromI32(indexValue, fault) * sizeToUse // TODO:PTR Use ptr/Read_ptr, array/slice indexing only works with i32.
+
+		offsetSliceIndexCheck(IsValidSliceIndex(prgrm, baseOffset, offset, sizeToUse), fault)
+	}
+	return offset
 }
 
 func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct) {

@@ -786,11 +786,10 @@ prints a stack overflow or runtime error for both.
   Each expression still gets its own copy of the native function in
   `CXFunctions`.
 * Pointers to slices are only partly modelled. There is
-  `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, and
-  dereferencing or appending through one gives wrong results or no error
-  ([#49](https://github.com/skycoin/skycoin-cx/issues/49),
-  [#52](https://github.com/skycoin/skycoin-cx/issues/52),
-  [#267](https://github.com/skycoin/skycoin-cx/issues/267)).
+  `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, which
+  stays a `TYPE_CXARGUMENT_DEPRECATE`. A `*[]str` takes the string pointer
+  path of `opIdentity`, so `p = &s` copies the slice instead of taking its
+  address.
 * `GetFinalOffset` decides whether an offset is in the frame by comparing
   it with `Stack.Size`, not by a flag on the operand.
 * The line marker before the `jmp` of an `if` carries the line of the

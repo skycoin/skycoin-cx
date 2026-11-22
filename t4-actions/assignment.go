@@ -615,6 +615,11 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1654.
 			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).PointerTargetType = types.Code(fromExpressionOutputTypeSig.Meta)
+		} else if fromExpressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+			// f()[i] on a slice result reads an element.
+			eltType := types.Code(prgrm.GetCXTypeSignatureArrayFromArray(fromExpressionOutputTypeSig.Meta).Meta)
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Size = eltType.Size()
+			prgrm.GetCXArg(ast.CXArgumentIndex(toExpressionOutputIdx)).Type = eltType
 		} else {
 			panic("type is not known")
 		}

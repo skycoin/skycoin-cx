@@ -238,17 +238,6 @@ func main()() {
 This should only give a runtime error and continue, but should not panic.
 Ideally this should be done at compile time when the format string is a literal.
 
-## No compilation error when appending to a pointer to a slice
-
-```
-var si []i32
-var psi *[]i32 = &si
-psi = append(psi, 4)
-```
-
-Should give compile error.
-Error in golang: `first argument to append must be slice; have *[]int32`
-
 ## Compilation error when using multiple return values in short hand expression
 
 ```

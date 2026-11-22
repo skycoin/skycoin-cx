@@ -24,6 +24,10 @@ const NON_ASSIGN_PREFIX = "nonAssign"
 const LOCAL_PREFIX = "*tmp"
 const LABEL_PREFIX = "*lbl"
 
+// ELEMENT_PREFIX names the variable that holds a struct literal element of a
+// slice literal. It is not a temp, so its field assignments are typed normally.
+const ELEMENT_PREFIX = "*elt"
+
 // Used in `PrintProgram` to represent literals (`CXArgument`s with no name).
 const LITERAL_PLACEHOLDER = "*lit"
 const ID_FN = "identity"

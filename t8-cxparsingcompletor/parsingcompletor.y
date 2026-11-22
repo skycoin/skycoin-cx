@@ -627,25 +627,22 @@ array_literal_expression:
 slice_literal_expression_list:
                 assignment_expression
                 {
-			$1[len($1) - 1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-			$$ = $1
+			$$ = actions.SliceLiteralElement(actions.AST, $1)
                 }
 	|       slice_literal_expression_list COMMA assignment_expression
                 {
-
-			$3[len($3) - 1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-			$$ = append($1, $3...)
+			$$ = append($1, actions.SliceLiteralElement(actions.AST, $3)...)
                 }
                 ;
 
 slice_literal_expression:
                 LBRACK RBRACK IDENTIFIER LBRACE slice_literal_expression_list RBRACE
                 {
-			$$ = $5
+			$$ = actions.SliceLiteralStructExpression(actions.AST, $3, $5)
                 }
         |       LBRACK RBRACK IDENTIFIER LBRACE RBRACE
                 {
-			$$ = nil
+			$$ = actions.SliceLiteralStructExpression(actions.AST, $3, nil)
                 }
         |       LBRACK RBRACK type_specifier LBRACE slice_literal_expression_list RBRACE
                 {
@@ -653,7 +650,7 @@ slice_literal_expression:
                 }
         |       LBRACK RBRACK type_specifier LBRACE RBRACE
                 {
-			$$ = nil
+			$$ = actions.SliceLiteralExpression(actions.AST, types.Code($3), nil)
                 }
         |       LBRACK RBRACK slice_literal_expression
                 {

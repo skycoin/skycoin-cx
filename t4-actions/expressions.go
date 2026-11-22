@@ -611,24 +611,19 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0672.
 	lastLeftExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0])
-	// nil for an atomic output.
-	var lastLeftExpressionOutputArg *ast.CXArgument
-	if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-		// Now an arena getter, site S0674.
-		lastLeftExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOutputTypeSig.Meta))
-	} else if lastLeftExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastLeftExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-		// An atomic output has no indexes.
-	} else {
+	switch lastLeftExpressionOutputTypeSig.Type {
+	case ast.TYPE_CXARGUMENT_DEPRECATE, ast.TYPE_ATOMIC, ast.TYPE_POINTER_ATOMIC, ast.TYPE_SLICE_ATOMIC:
+	default:
 		panic("type is not known")
 	}
 
-	if lastLeftExpressionOutputArg != nil && len(lastLeftExpressionOutputArg.Indexes) > 0 || lastLeftExpressionOperator != nil {
+	if operandIndexed(prgrm, lastLeftExpressionOutputTypeSig) || lastLeftExpressionOperator != nil {
 		typeSigIdx := prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0]
 		// then it's a function call or an array access
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 
-		if IsTempVar(prgrm, lastLeftExpressionOutputTypeSig.Name) {
+		// The placeholder of f()[i] has no operator and is dropped like a variable.
+		if lastLeftExpressionOperator != nil && IsTempVar(prgrm, lastLeftExpressionOutputTypeSig.Name) {
 			out = append(out, leftExprs...)
 		} else {
 			out = append(out, leftExprs[:len(leftExprs)-1]...)
@@ -650,21 +645,21 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		lastRightExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOutputTypeSig.Meta))
 	} else if lastRightExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || lastRightExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 		// An atomic output has no indexes.
-	} else {
+	} else if lastRightExpressionOutputTypeSig.Type != ast.TYPE_SLICE_ATOMIC {
 		panic("type is not known")
 	}
 
-	if (opcode == constants.OP_BOOL_AND || opcode == constants.OP_BOOL_OR) && lastRightExpressionOperator == nil && lastRightExpressionOutputArg != nil && (len(lastRightExpressionOutputArg.Indexes) > 0 || len(lastRightExpressionOutputArg.DereferenceOperations) > 0) {
+	if (opcode == constants.OP_BOOL_AND || opcode == constants.OP_BOOL_OR) && lastRightExpressionOperator == nil && (operandIndexed(prgrm, lastRightExpressionOutputTypeSig) || lastRightExpressionOutputArg != nil && len(lastRightExpressionOutputArg.DereferenceOperations) > 0) {
 		lastRightExpressionOperator = shortCircuitOperandExpression(prgrm, lastRightExpressionIdx)
 		lastRightExpressionOutputTypeSig = prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0])
 	}
 
-	if lastRightExpressionOutputArg != nil && len(lastRightExpressionOutputArg.Indexes) > 0 || lastRightExpressionOperator != nil {
+	if operandIndexed(prgrm, lastRightExpressionOutputTypeSig) || lastRightExpressionOperator != nil {
 		typeSigIdx := prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0]
 		// then it's a function call or an array access
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 
-		if IsTempVar(prgrm, lastRightExpressionOutputTypeSig.Name) {
+		if lastRightExpressionOperator != nil && IsTempVar(prgrm, lastRightExpressionOutputTypeSig.Name) {
 			out = append(out, rightExprs...)
 		} else {
 			out = append(out, rightExprs[:len(rightExprs)-1]...)
@@ -680,6 +675,18 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	out = append(out, *exprCXLine, *expr)
 
 	return
+}
+
+// operandIndexed reports whether the operand sig reads an element, as a[i]
+// or the slice placeholder of f()[i] do.
+func operandIndexed(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) bool {
+	switch sig.Type {
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		return len(prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta)).Indexes) > 0
+	case ast.TYPE_SLICE_ATOMIC:
+		return len(prgrm.GetCXTypeSignatureArrayFromArray(sig.Meta).Indexes) > 0
+	}
+	return false
 }
 
 // shortCircuitLinesPending marks the skip of a short-circuit jmp until ProcessShortCircuitJumps sets it.

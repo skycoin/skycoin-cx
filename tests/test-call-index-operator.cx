@@ -1,0 +1,32 @@
+package main
+
+func arr() (a [3]i32) {
+	a[0] = 5
+	a[1] = 6
+}
+
+func slc() (s []i32) {
+	s = append(s, 7)
+	s = append(s, 8)
+}
+
+func floats() (s []f64) {
+	s = append(s, 1.5D)
+}
+
+func main() {
+	var x i32
+	x = arr()[1] + 1
+	printf("%d\n", x)
+	x = 1 + slc()[1]
+	printf("%d\n", x)
+	x = slc()[0] * arr()[1]
+	printf("%d\n", x)
+	var i i32 = 1
+	x = slc()[i] - arr()[i]
+	printf("%d\n", x)
+	printf("%d %d %v\n", arr()[0] + 1, slc()[0] * 2, floats()[0] + 1.0D)
+	if slc()[1] > 7 && arr()[1] == 6 {
+		printf("cond\n")
+	}
+}

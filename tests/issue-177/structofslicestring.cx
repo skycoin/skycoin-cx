@@ -19,6 +19,6 @@ test(len(texts),1, "")
 
 
 texts = []TextInfo{TextInfo{Text:"hmm"}}
-test(len(texts),3, "")
+test(len(texts),1, "")
 
 }

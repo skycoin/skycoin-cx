@@ -216,6 +216,38 @@ func runTestCases(t *runner.TestRunner) {
 		"set [4, 5]\n",
 		"global [1]\n",
 	)
+	t.RunWant("test-slice-pointer-index.cx", types.CX_SUCCESS, "(*p)[i] and len(*p) on a pointer to a slice (skycoin-cx#49, skycoin-cx#267)",
+		"3\n2\n3\n3\nlen 2 sum 8\nbump [3, 15]\nvar 15 plus 4\nf64 1.5 2.5 2\nui8 [7] 7\nstruct 5 40 2\n")
+	t.RunWant("test-slice-pointer-index-errors.cx", types.CX_COMPILATION_ERROR, "p[i] and *p[i] on a pointer to a slice are invalid indexing (skycoin-cx#49)",
+		"test-slice-pointer-index-errors.cx:9 invalid indexing",
+		"test-slice-pointer-index-errors.cx:10 invalid indexing")
+	t.RunWant("test-append-slice-pointer.cx", types.CX_COMPILATION_ERROR, "append, resize and remove of a pointer to a slice are compile errors (skycoin-cx#52)",
+		"test-append-slice-pointer.cx:6 function 'append' expected a slice as input argument; '*[]i32' was provided",
+		"test-append-slice-pointer.cx:7 function 'resize' expected a slice as input argument; '*[]i32' was provided",
+		"test-append-slice-pointer.cx:8 function 'remove' expected a slice as input argument; '*[]i32' was provided")
+	t.RunWant("test-append-slice-pointer-deref.cx", types.CX_SUCCESS, "append(*p, v) appends to the slice p points to (skycoin-cx#52)",
+		"3 [4, 5, 6] [4, 5, 6]\n")
+	t.RunWant("test-slice-literal-struct.cx", types.CX_SUCCESS, "slice literals of structs and empty slice literals (skycoin-cx#47)",
+		"len 1\nlen 1 hmmmm\n4 [{x: 3, y: 1.5}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 0, y: 0}]\nloop 1 2\nmany 7 28\ndecl 1 8\nglobal 2 [{x: 1, y: 0}, {x: 2, y: 2.5}]\nempty 0 0\n")
+	t.RunWant("test-slice-literal-struct-errors.cx", types.CX_COMPILATION_ERROR, "elements of the wrong type in a struct slice literal (skycoin-cx#47)",
+		"test-slice-literal-struct-errors.cx:20 cannot assign value of type 'U'",
+		"test-slice-literal-struct-errors.cx:20 field 'a' not found in struct 'T'",
+		"test-slice-literal-struct-errors.cx:21 trying to assign argument of type 'U'",
+		"test-slice-literal-struct-errors.cx:22 trying to assign argument of type 'i32'",
+		"test-slice-literal-struct-errors.cx:23 function 'makeU' expected receiving variable of type 'U'; 'T' was provided",
+		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
+		"test-slice-literal-struct-errors.cx:25 cannot assign value of type 'str'",
+		"test-slice-literal-struct-errors.cx:26 invalid expression")
+	t.RunWant("test-call-index-operator.cx", types.CX_SUCCESS, "f()[i] of an array or slice result as an operator operand",
+		"7\n9\n42\n2\n6 14 2.5\ncond\n")
+	t.RunWant("test-import-global-array-number.cx test-import-global-array.cx", types.CX_SUCCESS, "pkg.A[i] reads and writes a global array or slice of another package",
+		"4 7 14\n1.5 3\n20 2 12\n[0, 4, 7] [11, 20] 7\n")
+	t.RunWant("test-slice-resize-grow.cx", types.CX_SUCCESS, "resize past twice the capacity allocates the whole slice (audit A-04)",
+		"64 1111 2222 2\n[100, 101, 102, 103, 104, 105, 106, 107, 108, 109] [5, 5, 5, 5, 5, 5]\n100 2 3\n")
+	t.RunWant("test-slice-resize-huge.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "a slice too large for the heap is a heap exhausted error (audit A-05)",
+		"test-slice-resize-huge.cx:5, CX_RUNTIME_HEAP_EXHAUSTED_ERROR")
+	t.RunWant("test-os-read-slice-grow.cx", types.CX_SUCCESS, "os.ReadI32Slice allocates the whole slice and returns false for a count past the heap (audit B-01, B-12)",
+		"read true len 10 same true\nhuge false len 0\n")
 	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
 		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
 		"test-test-line.cx: 6: result was not equal to the expected value; after a declaration",
@@ -522,6 +554,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-39.cx", types.CX_COMPILATION_ERROR, "func defined with no arguments, called WITH arguments causes PANIC")
 	t.Run("issue-2.cx", types.CX_SUCCESS, "multi-dimensional arrays are not working")
 	t.Run("issue-1.cx", types.CX_SUCCESS, "multi-dimensional slices are not working")
+	t.Run("issue-177/structofslicechar.cx", types.CX_SUCCESS, "len of a struct slice literal does not depend on its strings (skycoin-cx#47)")
+	t.Run("issue-177/structofsliceint32.cx", types.CX_SUCCESS, "len of a struct slice literal (skycoin-cx#47)")
+	t.Run("issue-177/structofslicestring.cx", types.CX_SUCCESS, "len of a struct slice literal with a str field (skycoin-cx#47)")
+	t.Run("issue-177/structofslicestrings.cx", types.CX_SUCCESS, "len of a struct slice literal with another str field (skycoin-cx#47)")
 	t.RunEx("issue-120-a.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
 	t.RunEx("issue-120-b.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27
 	t.RunEx("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#27

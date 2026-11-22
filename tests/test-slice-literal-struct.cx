@@ -1,0 +1,61 @@
+package main
+
+type TextInfo struct {
+	Text str
+	Font str
+	Size f32
+	Wid  f32
+	Hei  f32
+}
+
+type Point struct {
+	x i32
+	y f64
+}
+
+var gpoints []Point = []Point{Point{x: 1}, Point{x: 2, y: 2.5D}}
+
+func point(x i32) (p Point) {
+	p.x = x
+}
+
+func count(ps []Point) (n i32) {
+	n = len(ps)
+}
+
+func main() {
+	var texts []TextInfo
+	texts = []TextInfo{TextInfo{Text: "hmm"}}
+	printf("len %d\n", len(texts))
+	texts = []TextInfo{TextInfo{Text: "hmmmm"}}
+	printf("len %d %s\n", len(texts), texts[0].Text)
+
+	var q Point
+	q.x = 9
+	var ps []Point
+	ps = []Point{Point{x: 3, y: 1.5D}, q, point(7), Point{}}
+	printf("%d %v\n", len(ps), ps)
+
+	for i := 0; i < 3; i++ {
+		ps = []Point{Point{x: i}}
+	}
+	printf("loop %d %d\n", len(ps), ps[0].x)
+
+	var many []Point
+	many = []Point{Point{x: 1}, Point{x: 2}, Point{x: 3}, Point{x: 4}, Point{x: 5}, Point{x: 6}, Point{x: 7}}
+	var sum i32
+	for i := 0; i < len(many); i++ {
+		sum = sum + many[i].x
+	}
+	printf("many %d %d\n", len(many), sum)
+
+	var decl []Point = []Point{Point{x: 8}}
+	printf("decl %d %d\n", count(decl), decl[0].x)
+	printf("global %d %v\n", len(gpoints), gpoints)
+
+	ps = []Point{}
+	var is []i32
+	is = append(is, 1)
+	is = []i32{}
+	printf("empty %d %d\n", len(ps), len(is))
+}

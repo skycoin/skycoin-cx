@@ -55,6 +55,7 @@ const (
 	CompileErrorCodeDeclarationTooLarge
 	CompileErrorCodeStructRecursive
 	CompileErrorCodeLoopJumpOutsideLoop
+	CompileErrorCodeSliceArgumentType
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

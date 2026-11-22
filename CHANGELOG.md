@@ -56,6 +56,13 @@
 
 #### Fixed
 
+- `[]T{T{x: 1}}` with a struct element type assigned the fields to the slice variable itself, so `len` printed garbage that changed with the string fields. Each element is now built in its own variable and appended, and an element of the wrong type is a compile error. `[]i32{}` and `[]T{}` give an empty slice instead of leaving the target unchanged (#47)
+- `(*p)[i]` on a `*[]i32` read the pointer, and `len(*p)` stopped with "type is not known". Both index and measure the slice p points to, `t = *p` copies the whole slice header for 1 byte element types too, and `p[i]` or `*p[i]` is `invalid indexing` (#49, #267)
+- `append(p, v)` on a `*[]T` compiled and did nothing. A pointer passed where append, resize, insert, remove or copy take a slice is the compile error `function 'append' expected a slice as input argument`, `CompileErrorCodeSliceArgumentType` (7040). `append(*p, v)` is the valid form (#52)
+- `f()[0] + 1` panicked the compiler for an array or slice result, and `f()[i]` with a variable index on a slice result read element 0
+- `number.A[1]` on a global array or slice of an imported package panicked the compiler, for reads and writes
+- `resize` or `os.Read*Slice` past twice the capacity set the length past the allocation, so the next allocation overwrote the slice. The capacity now grows to at least the new length, and a slice too large for the heap is `CX_RUNTIME_HEAP_EXHAUSTED_ERROR` instead of a wrapped size. `os.Read*Slice` reads its ui64 count in full and returns false for a count past what the heap can hold
+- `t = T{n: "s"}` crashed the compiler with a nil dereference instead of giving a compile error
 - `&&` and `||` evaluated both operands, so `i < len(s) && s[i] > 0` read past the end of `s` and a call on the right always ran. A jmp on the left operand now skips the right one, as in Go, on the old loop and on vm. `bool.and` and `bool.or` stay ordinary calls that evaluate both arguments (#26)
 - `break` and `continue` in an inner loop left every enclosing loop, because each enclosing loop retargeted them. A loop now turns each one it resolves into a jump (#39)
 - `for true { ... }` never ran its body and `for b { ... }` on a bool variable was a syntax error. A literal or variable condition is read in place, and the for header no longer takes `b {` as a struct literal, so `for ...; i = j {` parses too. An empty condition, `for i := 0; ; i++`, is true instead of a host panic (#20, #21)

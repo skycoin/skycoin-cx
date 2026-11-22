@@ -1,0 +1,30 @@
+package main
+
+import "sys/os"
+
+func main() {
+	var f i32
+	var ok bool
+	f = os.Open("test-os-read-slice-grow.cx")
+	var buf []i32
+	buf = []i32{1}
+	buf, ok = os.ReadI32Slice(f, buf, 10UL)
+	var before [10]i32
+	for i := 0; i < 10; i++ {
+		before[i] = buf[i]
+	}
+	var zz []i32
+	zz = []i32{5, 5, 5, 5, 5, 5}
+	var same bool = true
+	for i := 0; i < 10; i++ {
+		if buf[i] != before[i] {
+			same = false
+		}
+	}
+	printf("read %v len %d same %v\n", ok, len(buf), same)
+
+	var big []i32
+	big, ok = os.ReadI32Slice(f, big, 4294967297UL)
+	printf("huge %v len %d\n", ok, len(big))
+	ok = os.Close(f)
+}

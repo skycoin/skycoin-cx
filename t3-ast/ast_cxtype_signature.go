@@ -91,10 +91,11 @@ func (typeSignature *CXTypeSignature) GetSize(prgrm *CXProgram, IsForUpdateSymbo
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0276.
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta)
-		if typeSignature.IsDeref || len(sliceDetails.Indexes) > 0 {
+		if len(sliceDetails.Indexes) > 0 {
 			return types.Code(sliceDetails.Meta).Size()
 		}
 
+		// *p without an index is the slice header pointer, like p itself.
 		return types.POINTER.Size()
 	case TYPE_STRUCT:
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.

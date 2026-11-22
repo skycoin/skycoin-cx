@@ -63,6 +63,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeDeclarationTooLarge, ast.CompileErrorOperands{text("a")}, header + " 'a' is too large\n"},
 		{ast.CompileErrorCodeStructRecursive, ast.CompileErrorOperands{text("T")}, header + " invalid recursive type 'T'\n"},
 		{ast.CompileErrorCodeLoopJumpOutsideLoop, ast.CompileErrorOperands{text("break")}, header + " break is not in a loop\n"},
+		{ast.CompileErrorCodeSliceArgumentType, ast.CompileErrorOperands{text("append"), text("*[]i32")}, header + " function 'append' expected a slice as input argument; '*[]i32' was provided\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

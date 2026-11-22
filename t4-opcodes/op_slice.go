@@ -32,7 +32,7 @@ func opSliceLen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 		// Now an arena getter, site S1311.
 		arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(inputs[0].TypeSignature.Meta)
 		sliceLen = arrDetails.Lengths[len(arrDetails.Indexes)]
-	} else if inputs[0].TypeSignature.Type == ast.TYPE_SLICE_ATOMIC {
+	} else if inputs[0].TypeSignature.Type == ast.TYPE_SLICE_ATOMIC || inputs[0].TypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC && inputs[0].TypeSignature.IsDeref {
 		sliceOffset := types.Read_ptr(prgrm.Memory, inputs[0].Offset)
 		if sliceOffset > 0 && sliceOffset.IsValid() {
 			sliceLen = ast.GetSliceLen(prgrm, sliceOffset)

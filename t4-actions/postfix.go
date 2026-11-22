@@ -822,6 +822,13 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				lastExpressionOutputTypeSig.Type = glbl.Type
 				lastExpressionOutputTypeSig.Meta = glbl.Meta
 				lastExpressionOutputTypeSig.Offset = glbl.Offset
+			} else if lastExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastExpressionIdx].GetOutputs(prgrm)[0]); lastExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				// An array or slice global, pkg.A[i], is found by name like a global of this package.
+				lastExpressionOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastExpressionOutputTypeSig.Meta))
+				lastExpressionOutputArg.Name = glbl.Name
+				lastExpressionOutputTypeSig.Name = glbl.Name
+				lastExpressionOutputArg.Package = glbl.Package
+				lastExpressionOutputTypeSig.Package = glbl.Package
 			} else {
 				panic("type is not known")
 			}

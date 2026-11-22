@@ -3,6 +3,7 @@ package actions
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jinzhu/copier"
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
@@ -373,6 +374,20 @@ func declaredAsPointer(specs []int) bool {
 	return len(stack) > 0 && stack[len(stack)-1] == constants.DECL_POINTER
 }
 
+// pointerIndexedBeforeDeref reports whether specs index a pointer before the
+// first dereference, as in p[i] or *p[i] on a *[]T.
+func pointerIndexedBeforeDeref(specs []int) bool {
+	for _, spec := range specs {
+		switch spec {
+		case constants.DECL_DEREF:
+			return false
+		case constants.DECL_INDEXING:
+			return true
+		}
+	}
+	return false
+}
+
 var operatorSymbols = map[int]string{
 	constants.OP_EQUAL:    "==",
 	constants.OP_UNEQUAL:  "!=",
@@ -590,7 +605,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							out.Package = inpExprAtomicOp.Package
 
 							typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
-						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC {
+						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_ATOMIC || inpExprAtomicOpInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC && operandIndexed(prgrm, inpExprAtomicOpInputTypeSig) {
 							argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 							argDetails.FileName = CurrentFile
@@ -600,6 +615,10 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 							outTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 							outTypeSig.Type = ast.TYPE_ATOMIC
 							outTypeSig.Meta = inpExprAtomicOpInputTypeSig.Meta
+							if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+								// An element of the slice placeholder of f()[i].
+								outTypeSig.Meta = prgrm.GetCXTypeSignatureArrayFromArray(inpExprAtomicOpInputTypeSig.Meta).Meta
+							}
 							outTypeSig.Package = inpExprAtomicOpInputTypeSig.Package
 							outTypeSig.Offset = inpExprAtomicOpInputTypeSig.Offset
 
@@ -1051,6 +1070,13 @@ func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, 
 					GiveOffset(prgrm, symbolsData, idxIdx)
 				}
 			}
+		} else if typeSignature.Type == ast.TYPE_SLICE_ATOMIC {
+			// The slice placeholder of f()[i] keeps its indexes in its details.
+			for _, idxIdx := range prgrm.GetCXTypeSignatureArrayFromArray(typeSignature.Meta).Indexes {
+				UpdateSymbolsTable(prgrm, symbolsData, idxIdx, offset, true)
+				GiveOffset(prgrm, symbolsData, idxIdx)
+				checkIndexType(prgrm, idxIdx)
+			}
 		}
 		AddPointer(prgrm, fn, typeSignatureIdx)
 	}
@@ -1243,6 +1269,14 @@ func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, exprs [
 	}
 }
 
+// expressionOperatorName is the name of a built-in operator or a function.
+func expressionOperatorName(prgrm *ast.CXProgram, operator *ast.CXFunction) string {
+	if operator.IsBuiltIn() {
+		return ast.OpNames[operator.AtomicOPCode]
+	}
+	return prgrm.CXProgramNameText(operator.Name)
+}
+
 func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected, received []ast.CXTypeSignatureIndex, isInputs bool) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S0816.
@@ -1261,13 +1295,14 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 		// Now an arena getter, site S0818.
 		expectedTypeSig := prgrm.GetCXTypeSignatureFromArray(expectedTypeSigIdx)
 		// An atomic expected type is neither a pointer argument nor undefined.
-		var expectedPointer, expectedUndefined bool
+		var expectedPointer, expectedUndefined, expectedSlice bool
 		if expectedTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0820.
 			expectedArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expectedTypeSig.Meta))
 			expectedPointer = expectedArg.IsPointer()
 			expectedUndefined = expectedArg.Type == types.UNDEFINED
+			expectedSlice = expectedUndefined && hasDeclSpec(expectedArg, constants.DECL_SLICE)
 		}
 		expectedType = ast.GetFormattedType(prgrm, expectedTypeSig)
 
@@ -1285,13 +1320,13 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 		receivedTypeSig := prgrm.GetCXTypeSignatureFromArray(received[i])
 		receivedType = ast.GetFormattedType(prgrm, receivedTypeSig)
 
+		// A pointer where append and the other []T built-ins take a slice (skycoin-cx#52).
+		if isInputs && expectedSlice && strings.HasPrefix(receivedType, "*") {
+			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceArgumentType, receivedTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expressionOperatorName(prgrm, expressionOperator)), prgrm.CXProgramCompileErrorText(receivedType)})
+		}
+
 		if expectedType != receivedType && !expectedUndefined {
-			var opName string
-			if expressionOperator.IsBuiltIn() {
-				opName = ast.OpNames[expressionOperator.AtomicOPCode]
-			} else {
-				opName = prgrm.CXProgramNameText(expressionOperator.Name)
-			}
+			opName := expressionOperatorName(prgrm, expressionOperator)
 
 			if isInputs {
 				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeFunctionInputType, receivedTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
@@ -1442,10 +1477,13 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 			// Now an arena getter, site S0832.
 			expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
 			var expressionOutputArg *ast.CXArgument
+			// baseOutputArg is the struct of a struct literal, expressionOutputArg its field.
+			var baseOutputArg *ast.CXArgument
 			if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0834.
 				expressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
+				baseOutputArg = expressionOutputArg
 				expressionOutputArg = expressionOutputArg.GetAssignmentElement(prgrm)
 
 				if expressionOutputArg.StructType != nil {
@@ -1464,10 +1502,10 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 			}
 
 			if receivedType != expectedType {
-				if exprs[currIndex].IsStructLiteral() {
+				if exprs[currIndex].IsStructLiteral() && baseOutputArg != nil && baseOutputArg.StructType != nil && len(baseOutputArg.Fields) > 0 {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S0835.
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeStructLiteralFieldType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{int64(prgrm.GetCXArgFromArray(expressionOutputArg.Fields[0]).Name), int64(expressionOutputArg.StructType.Name), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeStructLiteralFieldType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{int64(prgrm.GetCXArgFromArray(baseOutputArg.Fields[len(baseOutputArg.Fields)-1]).Name), int64(baseOutputArg.StructType.Name), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
 				} else {
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignSymbolType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(receivedType), int64(expressionOutputTypeSig.Name), prgrm.CXProgramCompileErrorText(expectedType)})
 				}
@@ -2452,7 +2490,7 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1735.
 					prgrm.GetCXArg(ast.CXArgumentIndex(outputArgIdx)).Size = types.Code(expressionInputTypeSig.Meta).Size()
-				} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+				} else if expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
 					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 					// Now an arena getter, site S0932.
 					arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
@@ -2486,7 +2524,7 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 					outputTypeSig.Meta = expressionInputTypeSig.Meta
 				} else if expressionInputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 					outputTypeSig.Meta = expressionInputTypeSig.Meta
-				} else if expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+				} else if expressionInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || expressionInputTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
 					// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 					// Now an arena getter, site S0935.
 					sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
@@ -2693,6 +2731,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 		return
 	} else if sym != nil && arg == nil && argTypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
+		if len(sym.Indexes) > 0 && pointerIndexedBeforeDeref(sym.DeclarationSpecifiers) {
+			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidIndexing, sym.ArgDetails, ast.CompileErrorOperands{})
+		}
 		arrayGid := prgrm.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc()
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0953.

@@ -1,0 +1,14 @@
+package main
+
+func push(p *[]i32, v i32) {
+	*p = append(*p, v)
+}
+
+func main() {
+	var si []i32
+	var psi *[]i32 = &si
+	*psi = append(*psi, 4)
+	push(psi, 5)
+	push(&si, 6)
+	printf("%d %v %v\n", len(si), si, *psi)
+}

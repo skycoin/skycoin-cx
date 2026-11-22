@@ -1,0 +1,32 @@
+package main
+
+func main() {
+	var a []i32
+	a = append(a, 1)
+	a = resize(a, 64)
+	var b []i32
+	b = append(b, 1111)
+	b = append(b, 2222)
+	for i := 0; i < 64; i++ {
+		a[i] = 7
+	}
+	printf("%d %d %d %d\n", len(a), b[0], b[1], len(b))
+
+	var buf []i32
+	buf = []i32{1}
+	buf = resize(buf, 10)
+	for i := 0; i < 10; i++ {
+		buf[i] = 100 + i
+	}
+	var zz []i32
+	zz = []i32{5, 5, 5, 5, 5, 5}
+	printf("%v %v\n", buf, zz)
+
+	var big []f64
+	big = append(big, 1.0D)
+	big = resize(big, 100)
+	big[99] = 2.0D
+	var other []f64
+	other = append(other, 3.0D)
+	printf("%d %v %v\n", len(big), big[99], other[0])
+}

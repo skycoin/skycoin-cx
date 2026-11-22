@@ -1,0 +1,11 @@
+package main
+
+func main() {
+	var s []i32
+	s = append(s, 3)
+	var p *[]i32
+	p = &s
+	var x i32
+	x = *p[0]
+	i32.print(p[0])
+}

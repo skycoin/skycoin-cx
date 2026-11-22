@@ -1173,7 +1173,51 @@ func main () {
 ```
 
 The example above shows the behavior of the slice in the previous
-example, but using arrays.
+example, but using arrays. When `resize` asks for more than twice the
+capacity, the new capacity is the new size, and a slice too large for
+the heap is a `CX_RUNTIME_HEAP_EXHAUSTED_ERROR`.
+
+A slice literal can hold structs, and `[]i32{}` is an empty slice. A
+pointer to a slice is dereferenced before it is indexed, measured or
+passed to `append`, as in Go.
+
+```cx
+package main
+
+type Point struct {
+	x i32
+}
+
+func push(p *[]Point, x i32) {
+	var q Point
+	q.x = x
+	*p = append(*p, q)
+}
+
+func main () {
+	var points []Point
+	points = []Point{Point{x: 1}, Point{x: 2}}
+	push(&points, 3)
+
+	var p *[]Point
+	p = &points
+	printf("%d %d\n", len(*p), (*p)[2].x) // prints 3 3
+}
+```
+
+`append(p, q)`, `p[0]` and `*p[0]` on a pointer to a slice are compile
+errors.
+
+```cx compile-error
+package main
+
+func main () {
+	var s []i32
+	var p *[]i32
+	p = &s
+	p = append(p, 1)
+}
+```
 
 ### [Structures](#table-of-contents)
 

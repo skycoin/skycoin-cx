@@ -1,0 +1,64 @@
+package main
+
+type P struct {
+	x i32
+	y f64
+}
+
+var gs []f64
+
+func foo(slc *[]i32) {
+	*slc = append(*slc, 3)
+	*slc = append(*slc, 5)
+	i32.print((*slc)[0])
+}
+
+func sum(p *[]i32) (t i32) {
+	for i := 0; i < len(*p); i++ {
+		t = t + (*p)[i]
+	}
+}
+
+func bump(p *[]i32, i i32) {
+	(*p)[i] = (*p)[i] + 10
+}
+
+func main() {
+	var s []i32
+	var slc *[]i32
+	slc = &s
+	foo(slc)
+	i32.print(len(s))
+	i32.print(s[0])
+	i32.print((*slc)[0])
+	printf("len %d sum %d\n", len(*slc), sum(&s))
+	bump(&s, 1)
+	printf("bump %v\n", s)
+	var j i32 = 1
+	printf("var %d plus %d\n", (*slc)[j], (*slc)[0] + 1)
+
+	gs = append(gs, 1.5D)
+	gs = append(gs, 2.5D)
+	var pg *[]f64
+	pg = &gs
+	printf("f64 %v %v %d\n", (*pg)[0], (*pg)[1], len(*pg))
+
+	var b []ui8
+	b = append(b, 7UB)
+	var pb *[]ui8
+	pb = &b
+	var c []ui8
+	c = *pb
+	printf("ui8 %v %v\n", c, (*pb)[0])
+
+	var sp []P
+	var q P
+	q.x = 4
+	sp = append(sp, q)
+	q.x = 5
+	sp = append(sp, q)
+	var pp *[]P
+	pp = &sp
+	(*pp)[0].x = 40
+	printf("struct %d %d %d\n", (*pp)[1].x, sp[0].x, len(*pp))
+}

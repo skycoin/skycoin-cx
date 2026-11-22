@@ -1,0 +1,19 @@
+package main
+
+import "number"
+
+func main() {
+	number.A[1] = 4
+	number.A[2] = number.A[1] + 3
+	var x i32
+	x = number.A[1]
+	printf("%d %d %d\n", x, number.Get(2), number.A[2] * 2)
+	number.F[0] = 1.5D
+	printf("%v %d\n", number.F[0], len(number.A))
+	number.Fill()
+	printf("%d %d %d\n", number.S[1], len(number.S), number.M[1][2])
+	number.S[0] = 11
+	number.M[0][1] = 3
+	var i i32 = 2
+	printf("%v %v %d\n", number.A, number.S, number.A[i])
+}

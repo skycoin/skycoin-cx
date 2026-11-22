@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	var a []i32
+	a = resize(a, 1073741825)
+	a[3] = 9
+	i32.print(len(a))
+}

@@ -1,0 +1,27 @@
+package main
+
+type T struct {
+	n i32
+}
+
+type U struct {
+	a i32
+}
+
+func makeU() (u U) {
+	u.a = 1
+}
+
+func main() {
+	var u U
+	var ts []T
+	var t T
+	var is []i32
+	ts = []T{U{a: 1}}
+	ts = []T{u}
+	ts = []T{1}
+	ts = []T{makeU()}
+	ts = []T{T{n: "s"}}
+	t = T{n: "s"}
+	is = []i32{T{}}
+}

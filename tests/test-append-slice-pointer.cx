@@ -1,0 +1,10 @@
+package main
+
+func main() {
+	var si []i32
+	var psi *[]i32 = &si
+	psi = append(psi, 4)
+	si = resize(psi, 2)
+	si = remove(psi, 0)
+	i32.print(len(si))
+}
