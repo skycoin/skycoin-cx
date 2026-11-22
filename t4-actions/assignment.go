@@ -480,9 +480,10 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			} else if outTypeIsSlice {
 				sym.Lengths = append([]types.Pointer{0}, sym.Lengths...)
 				sym.DeclarationSpecifiers = append(sym.DeclarationSpecifiers, constants.DECL_SLICE)
-			} else if ast.IsTypeArrayAtomic(outTypeArg) {
+			} else if ast.IsTypeArrayAtomic(outTypeArg) || ast.IsTypePointerArrayAtomic(outTypeArg) {
 				sym.Lengths = outTypeArg.Lengths
 				sym.DeclarationSpecifiers = append([]int(nil), outTypeArg.DeclarationSpecifiers...)
+				sym.PointerTargetType = outTypeArg.PointerTargetType
 			} else if outTypeArg.StructType != nil && len(outTypeArg.Lengths) > 0 {
 				// An array of structs.
 				sym.Lengths = outTypeArg.Lengths

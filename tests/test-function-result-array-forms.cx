@@ -1,0 +1,50 @@
+package main
+
+type P struct {
+	x i32
+}
+
+var g [2]i32
+
+func named() (r [2]i32) {
+	return [2]i32{1, 2}
+}
+
+func unnamed() [2]i32 {
+	return [2]i32{3, 4}
+}
+
+func points() [2]P {
+	return [2]P{P{x: 5}, P{x: 6}}
+}
+
+func grid() [2][2]i32 {
+	return [2][2]i32{{1, 2}, {7, 8}}
+}
+
+func sameLine() (r [2]i32) { r[1] = 9 }
+
+func global() *[2]i32 {
+	return &g
+}
+
+func through(p *[2]i32) (r *[2]i32) {
+	return p
+}
+
+func main() {
+	a := named()
+	var b [2]i32
+	b = unnamed()
+	c := points()
+	d := grid()
+	e := sameLine()
+	printf("%d %d %d %d %d\n", a[1], b[0], c[1].x, d[1][0], e[1])
+
+	g[1] = 21
+	q := global()
+	var w *[2]i32
+	w = through(q)
+	w[0] = 5
+	printf("%d %d\n", q[1], g[0])
+}

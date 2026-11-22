@@ -82,6 +82,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeMethodPointerValue - ast.CompileErrorCodeNil:         {Format: "%H cannot call pointer method %s on %s\n"},
 	ast.CompileErrorCodeArrayLiteralElementType - ast.CompileErrorCodeNil:    {Format: "%H cannot use value of type '%s' as type '%s' in array literal\n"},
 	ast.CompileErrorCodeReturnValueType - ast.CompileErrorCodeNil:            {Format: "%H cannot use value of type '%s' as type '%s' in return statement\n"},
+	ast.CompileErrorCodeGlobalTypeUnknown - ast.CompileErrorCodeNil:          {Format: "%H cannot infer the type of global '%s' from a value that is not a literal, declare it with a type\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

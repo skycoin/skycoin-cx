@@ -205,6 +205,28 @@ A package declares each global once. Declaring the same name twice is
 the compile error `'name' redeclared`, also when the declarations are
 in different files of the package.
 
+Several globals can share one declaration, as in Go. `var a, b i32`
+declares two, `var a, b i32 = 1, 2` gives each its value, and
+`var ( ... )` groups declarations. A global without a type,
+`var count = 3`, takes the type of its value, which must be a literal
+or a negated number. `var g = f()` is a compile error that asks for
+the type.
+
+```cx
+package main
+
+var width, height i32 = 3, 4
+var (
+	name = "box"
+	scale f32 = 2.5
+)
+
+func main () {
+	var area, sides = width * height, 4
+	printf("%s %d %d %v\n", name, area, sides, scale)
+}
+```
+
 ### [Local variables](#table-of-contents)
 
 In contrast to global variables, local variables are constrained to
@@ -233,6 +255,12 @@ exist`, so CX will not even try to run that program. If we could
 de-activate CX's compile-time type checking, and the program above
 could make it to the runtime, CX would not print 5 when running
 `foo()`, as that function is unaware of that variable.
+
+Local variables take the same forms as globals, `var a, b i32`,
+`var a, b i32 = 1, 2` and `var ( ... )`. A local without a type,
+`var a, b = x, y`, is the short declaration `a, b := x, y`, so its
+values may be any expressions, and `var a, b = f()` takes the two
+results of `f`.
 
 ### [Arrays](#table-of-contents)
 
@@ -413,13 +441,17 @@ literal, as in `Point{x: 1}.x` and `Point{x: 1}.norm()`. A struct
 literal is an operand like any other, so `Point{x: 1}.norm() + 1` and
 `f(Point{x: 2}.x * 2)` work. As in Go, a struct literal in the header
 of an `if` or `for` must be in parentheses, `if (Point{x: 1}.x == 1) {`,
-since `if p {` opens the body.
+since `if p {` opens the body. Without them the error says so,
+`composite literal in condition must be parenthesized`.
 
 ### [Functions](#table-of-contents)
 
 Functions in CX are similar in syntax to functions in Go. A function
 with one output may give only its type, as in `func double (n i32) i32`.
-Several outputs must be named, as in `func pair () (a i32, b i32)`.
+Outputs in parentheses are all named, as in `func pair () (a i32, b i32)`,
+or all given by type only, as in `func pair () (i32, str)`, which
+`return 1, "a"` fills. An output may be of any type, an array such as
+`[2]i32` or `*[2]i32` included.
 
 ```cx
 package main

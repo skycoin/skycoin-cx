@@ -1,0 +1,14 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func main() {
+	if (T{a: 1}).a == 1 {
+		printf("parenthesized\n")
+	}
+	if T{a:1}.a == 1 {
+		printf("bare\n")
+	}
+}

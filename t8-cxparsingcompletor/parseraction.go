@@ -191,3 +191,50 @@ func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator strin
 	}
 	return result
 }
+
+// ParserActionDeclareLocals declares the locals of var a, b T and var a, b T =
+// x, y, which evaluates every value before it assigns any, as in Go. A spec
+// without a type, var a, b = x, y, is a, b := x, y.
+func ParserActionDeclareLocals(names []*ast.CXArgument, spec *ast.CXArgument, values [][]ast.CXExpression, initialized bool) []ast.CXExpression {
+	if spec != nil && (!initialized || len(names) == 1 && len(values) == 1) {
+		var result []ast.CXExpression
+		for i, name := range names {
+			nameSpec := spec
+			if i < len(names)-1 {
+				nameSpec = actions.DeclarationSpecifiersCopy(actions.AST, spec)
+			}
+			var initializer []ast.CXExpression
+			if initialized {
+				initializer = values[0]
+			}
+			result = append(result, actions.DeclareLocal(actions.AST, name, nameSpec, initializer, initialized)...)
+		}
+		return result
+	}
+
+	_, line, column := ast.CXArgumentDebugPosition(actions.AST, names[0].ArgDetails)
+	position := actions.TokenPositionPush(line, column)
+	defer actions.TokenPositionPop(position)
+	var result []ast.CXExpression
+	targets := make([][]ast.CXExpression, len(names))
+	for i, name := range names {
+		targets[i] = actions.PrimaryIdentifier(actions.AST, actions.AST.CXProgramNameText(name.Name))
+		if spec == nil {
+			actions.AST.ReleaseCXArgBuilder(name)
+			continue
+		}
+		nameSpec := spec
+		if i < len(names)-1 {
+			nameSpec = actions.DeclarationSpecifiersCopy(actions.AST, spec)
+		}
+		result = append(result, actions.DeclareLocal(actions.AST, name, nameSpec, nil, false)...)
+	}
+	operator := "="
+	if spec == nil {
+		operator = ":="
+	}
+	if len(targets) == 1 && len(values) == 1 {
+		return append(result, ParserActionAssignmentExpression(targets[0], operator, values[0])...)
+	}
+	return append(result, ParserActionMultipleAssignment(targets, operator, values)...)
+}

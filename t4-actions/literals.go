@@ -361,6 +361,9 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields []ast.CXExpression) []ast.CXExpression {
 	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 	writes, strct := primaryStructLiteralWrites(prgrm, structName, name, structFields)
+	if strct == nil {
+		return structLiteralInvalid(prgrm)
+	}
 	return structLiteralValue(prgrm, strct, name, writes)
 }
 
@@ -508,7 +511,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 				result = append(result, expr)
 			}
 		} else {
-			panic("type '" + structName + "' does not exist")
+			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 		}
 	} else {
 		panic(err)
@@ -522,6 +525,9 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
 	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 	writes, strct := primaryStructLiteralExternalWrites(prgrm, importName, structName, name, structFields)
+	if strct == nil {
+		return structLiteralInvalid(prgrm)
+	}
 	return structLiteralValue(prgrm, strct, name, writes)
 }
 
@@ -595,8 +601,9 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 
 					result = append(result, expr)
 				}
-			} else {
-				panic("type '" + structName + "' does not exist")
+			} else if !prgrm.CXProgramImportFailed(importNameGid) {
+				// A package whose import failed has no types, and its import is the error.
+				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 			}
 		} else {
 			panic(err)
@@ -962,4 +969,29 @@ func PrimaryStructLiteralExternalOf(prgrm *ast.CXProgram, pkgExprs []ast.CXExpre
 	// Now an arena getter, site S1492.
 	importName := prgrm.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(prgrm)[0]).Name
 	return PrimaryStructLiteralExternal(prgrm, prgrm.CXProgramNameText(importName), structName, structFields)
+}
+
+// structLiteralInvalid is the value of a literal of a struct that does not
+// exist, whose error is recorded. Its uses report nothing more.
+func structLiteralInvalid(prgrm *ast.CXProgram) []ast.CXExpression {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+	variable := func(declaration bool) ast.CXTypeSignatureIndex {
+		_, arg := ast.MakeArgument(prgrm, name, CurrentFile, LineNo)
+		arg.SetType(types.INVALID)
+		arg.Package = ast.CXPackageIndex(pkg.Index)
+		arg.PreviouslyDeclared = !declaration
+		return ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, arg)
+	}
+	declCXLine := MakeCXLineExpressionCurrent(prgrm)
+	decl := ast.MakeAtomicOperatorExpression(prgrm, nil)
+	prgrm.CXAtomicOps[decl.Index].Package = ast.CXPackageIndex(pkg.Index)
+	prgrm.CXAtomicOps[decl.Index].AddOutput(prgrm, variable(true))
+	use := ast.MakeAtomicOperatorExpression(prgrm, nil)
+	prgrm.CXAtomicOps[use.Index].Package = ast.CXPackageIndex(pkg.Index)
+	prgrm.CXAtomicOps[use.Index].AddOutput(prgrm, variable(false))
+	return []ast.CXExpression{*declCXLine, *decl, *use}
 }

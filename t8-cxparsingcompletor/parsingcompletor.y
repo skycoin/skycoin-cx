@@ -149,6 +149,8 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <argument>      parameter_declaration
 %type   <arguments>     parameter_type_list
 %type   <arguments>     function_parameters
+%type   <arguments>     function_results
+%type   <arguments>     result_type_list
 %type   <arguments>     parameter_list
 %type   <arguments>     fields
 %type   <arguments>     struct_fields
@@ -190,10 +192,11 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <SelectStatements>   elseif_list
 
 %type   <expressions>   declaration
+%type   <expressions>   local_var_spec local_var_specs
+%type   <arguments>     var_names
 //                      %type   <expressions>   init_declarator_list
 //                      %type   <expressions>   init_declarator
 
-%type   <expressions>   initializer
 
 %type   <expressions>   expression
 %type   <expressions>   block_item
@@ -261,18 +264,43 @@ selector:
                 }
                 ;
 
+// A var declaration declares one or more names, or a parenthesized group of
+// such specs, as in Go (https://go.dev/ref/spec#Variable_declarations).
 global_declaration:
-                VAR declarator declaration_specifiers SEMICOLON
+                VAR global_var_spec SEMICOLON
+        |       VAR LPAREN global_var_specs RPAREN SEMICOLON
+        |       VAR LPAREN RPAREN SEMICOLON
+                ;
+
+global_var_specs:
+                global_var_spec
+        |       global_var_specs SEMICOLON global_var_spec
+        |       global_var_specs SEMICOLON
+                ;
+
+global_var_spec:
+                var_names declaration_specifiers
                 {
-			if !actions.GlobalRedeclarationCheck(actions.AST, $2) {
-				actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, nil, false)
-			}
+			actions.DeclareGlobals(actions.AST, $1, $2, nil, nil, false)
                 }
-        |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
+        |       var_names declaration_specifiers ASSIGN assignment_value_list
                 {
-			if !actions.GlobalRedeclarationCheck(actions.AST, $2) {
-				actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, $5, true)
-			}
+			actions.DeclareGlobals(actions.AST, $1, $2, $4, nil, true)
+                }
+        |       var_names ASSIGN assignment_value_list
+                {
+			actions.DeclareGlobals(actions.AST, $1, nil, $3, nil, true)
+                }
+                ;
+
+var_names:
+                declarator
+                {
+			$$ = []*ast.CXArgument{$1}
+                }
+        |       var_names COMMA declarator
+                {
+			$$ = append($1, $3)
                 }
                 ;
 
@@ -339,12 +367,33 @@ function_parameters:
                 { $$ = $2 }
                 ;
 
+// A result list holds names and types, (r i32, s str), or only types,
+// (i32, str), as in Go. Unnamed results get hidden names.
+function_results:
+                function_parameters
+        |       LPAREN result_type_list RPAREN
+                {
+			$$ = actions.FunctionResultsUnnamed(actions.AST, $2)
+                }
+        ;
+
+result_type_list:
+                declaration_specifiers
+                {
+			$$ = []*ast.CXArgument{$1}
+                }
+        |       result_type_list COMMA declaration_specifiers
+                {
+			$$ = append($1, $3)
+                }
+        ;
+
 function_declaration:
                 function_header function_parameters compound_statement SEMICOLON
                 {
 			actions.FunctionDeclaration(actions.AST,$1, $2, nil, $3)
                 }
-        |       function_header function_parameters function_parameters compound_statement SEMICOLON
+        |       function_header function_parameters function_results compound_statement SEMICOLON
                 {
 			actions.FunctionDeclaration(actions.AST,$1, $2, $3, $4)
                 }
@@ -1262,17 +1311,42 @@ constant_expression:
                 ;
 
 declaration:
-                VAR declarator declaration_specifiers
+                VAR local_var_spec
                 {
-			$$ = actions.DeclareLocal(actions.AST,$2, $3, nil, false)
+			$$ = $2
                 }
-        |       VAR declarator declaration_specifiers ASSIGN initializer
+        |       VAR LPAREN local_var_specs RPAREN
                 {
-			$$ = actions.DeclareLocal(actions.AST,$2, $3, $5, true)
+			$$ = $3
+                }
+        |       VAR LPAREN RPAREN
+                {
+			$$ = nil
                 }
                 ;
 
-initializer:    assignment_expression
+local_var_specs:
+                local_var_spec
+        |       local_var_specs SEMICOLON local_var_spec
+                {
+			$$ = append($1, $3...)
+                }
+        |       local_var_specs SEMICOLON
+                ;
+
+local_var_spec:
+                var_names declaration_specifiers
+                {
+			$$ = ParserActionDeclareLocals($1, $2, nil, false)
+                }
+        |       var_names declaration_specifiers ASSIGN assignment_value_list
+                {
+			$$ = ParserActionDeclareLocals($1, $2, $4, true)
+                }
+        |       var_names ASSIGN assignment_value_list
+                {
+			$$ = ParserActionDeclareLocals($1, nil, $3, true)
+                }
                 ;
 
 // statements

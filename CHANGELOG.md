@@ -4,6 +4,12 @@
 
 #### Language
 
+- Function outputs in parentheses may give only their types, `func f() (i32)` and `func f() (i32, str)`, filled by `return 1, "a"` and read by `x, s := f()`, as in Go
+- An output may be an array, an array of structs, a slice of arrays or a pointer to an array, named or not. `return [2]i32{1, 2}`, `return &a` of a local array and `r[1] = 2` on the line of the function header work, where they reported a wrong type, read a dead frame or panicked
+- `var a, b i32`, `var a, b i32 = 1, 2`, `var a, b = 1, 2` and `var ( ... )` groups declare globals and locals, as in Go. A local without a type is a short declaration, and a global without a type takes the type of its literal value. Any other value is the compile error `cannot infer the type of global 'g' ...`, and a wrong number of values is `assignment mismatch`
+- A struct literal in an if or for condition, `if T{a: 1}.a == 1 {`, says `composite literal in condition must be parenthesized` instead of a plain syntax error
+- A literal of a struct that does not exist is the compile error `struct 'T' not found` instead of a panic
+- `cx -ast` prints packages in the same order on every run, each after the packages it imports. `TestAstPrintsEveryProgram` runs `-ast` twice on every program of `tests/`
 - A struct can be declared on one line, `type T struct { a i32; b i32 }`, and so can a function body or block, `func f() i32 { return 1 }`, since the semicolon before a closing `}` may be left out, as in Go. A function with one output may give only its type, `func f() i32`. A multi-line comment that holds a newline ends a statement like a newline
 - A struct literal is an operand, so `T{a: 1}.m() + 1` and `f(T{a: 1}.a * 2)` work. An if or for header still needs it in parentheses, as in Go (skycoin-cx#21)
 - A pointer method called on a struct literal or a call result, such as `T{a: 5}.p()`, is the compile error `cannot call pointer method p on T`, as in Go. `(&T{a: 5}).p()` works

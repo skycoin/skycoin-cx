@@ -154,10 +154,10 @@ func (fn *CXFunction) AddOutput(prgrm *CXProgram, param *CXArgument) *CXFunction
 
 	param.Package = fn.Package
 
-	// An array output stays a CXArgument, the call, return and assignment paths
-	// have no array signature case.
+	// An array output, or a pointer to one, stays a CXArgument, the call,
+	// return and assignment paths have no array signature case.
 	var newFieldIdx CXTypeSignatureIndex
-	if IsTypeArrayAtomic(param) {
+	if IsTypeArrayAtomic(param) || IsTypePointerArrayAtomic(param) {
 		newFieldIdx = AllocCXTypeSignatureOfCXArgDeprecate(prgrm, param)
 	} else {
 		newFieldIdx = AllocCXTypeSignatureOfCXArgBuilder(prgrm, param)

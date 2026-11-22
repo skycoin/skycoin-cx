@@ -1,0 +1,33 @@
+package main
+
+var ga, gb i32
+var gc, gd = 1, 2
+var (
+	ge i32 = 7
+	gf, gg str = "f", "g"
+	gh = 2.5
+	gi = -3
+	gj = "j"
+)
+var ()
+
+func two() (i32, i32) {
+	return 30, 40
+}
+
+func main() {
+	var a, b i32
+	var c, d = 3, 4
+	var (
+		e = "e"
+		f, h f32 = 1.5, 2.5
+	)
+	var i, j = two()
+	var k, l i32 = two()
+	a = 1
+	b = 2
+	ga = 10
+	gb = 20
+	printf("%d %d %d\n", a+b+c+d, gc+gd+ge+ga+gb+gi, i+j+k+l)
+	printf("%s %s %s %s %v %v\n", gf, gg, gj, e, f+h, gh)
+}

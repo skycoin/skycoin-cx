@@ -271,9 +271,10 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 
 		declaration_specifiers.Name = declarator.Name
-		_, declaratorLine, declaratorColumn := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
+		// The second name of var a, b T is declared first here, at its own position.
+		declaratorFile, declaratorLine, declaratorColumn := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
 		declaratorDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declaration_specifiers.ArgDetails)
-		declaratorDetails.FileLine, declaratorDetails.FileColumn = declaratorLine, declaratorColumn
+		declaratorDetails.FileName, declaratorDetails.FileLine, declaratorDetails.FileColumn = declaratorFile, declaratorLine, declaratorColumn
 		declaration_specifiers.Offset = glblArg.Offset
 		declaration_specifiers.Size = glblArg.Size
 		prgrm.ReleaseCXArgBuilder(glblArg)
@@ -500,4 +501,83 @@ func GlobalRedeclarationCheck(prgrm *ast.CXProgram, declarator *ast.CXArgument) 
 	}
 	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeRedeclaredBlock, file, line, column, ast.CompileErrorOperands{int64(declarator.Name), int64(firstFile), int64(firstLine), int64(firstColumn)})
 	return true
+}
+
+// DeclareGlobals declares the globals of var a, b T and var a, b T = x, y.
+// Pass one passes the type of each value in valueTypes, and pass two the
+// values. A spec without a type, var a, b = x, y, takes the type of each
+// literal value in pass one, and pass two reads it back from the global.
+func DeclareGlobals(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *ast.CXArgument, values [][]ast.CXExpression, valueTypes []types.Code, initialized bool) {
+	count := len(values)
+	if valueTypes != nil {
+		count = len(valueTypes)
+	}
+	if initialized && count != len(names) {
+		file, line, column := ast.CXArgumentDebugPosition(prgrm, names[0].ArgDetails)
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeAssignmentCount, file, line, column, ast.CompileErrorOperands{int64(len(names)), int64(count)})
+		initialized = false
+		if spec == nil {
+			return
+		}
+	}
+	for i, name := range names {
+		nameSpec := spec
+		if spec != nil && i < len(names)-1 {
+			nameSpec = argumentCopy(prgrm, spec)
+		}
+		if nameSpec == nil {
+			code := globalValueType(prgrm, name, valueTypes, i)
+			if code == types.UNDEFINED {
+				file, line, column := ast.CXArgumentDebugPosition(prgrm, name.ArgDetails)
+				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalTypeUnknown, file, line, column, ast.CompileErrorOperands{int64(name.Name)})
+				// Its uses report nothing more.
+				code = types.INVALID
+			}
+			nameSpec = DeclarationSpecifiersBasic(prgrm, code)
+		}
+		if GlobalRedeclarationCheck(prgrm, name) {
+			continue
+		}
+		var initializer []ast.CXExpression
+		if initialized && values != nil {
+			initializer = values[i]
+		}
+		DeclareGlobalInPackage(prgrm, nil, name, nameSpec, initializer, initialized && values != nil)
+	}
+}
+
+// globalValueType is the type the global name of var name = value takes,
+// read from valueTypes in pass one and from the global in pass two, or
+// types.UNDEFINED.
+func globalValueType(prgrm *ast.CXProgram, name *ast.CXArgument, valueTypes []types.Code, i int) types.Code {
+	if valueTypes != nil {
+		return valueTypes[i]
+	}
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		return types.UNDEFINED
+	}
+	glbl, err := pkg.GetGlobal(prgrm, name.Name)
+	if err != nil {
+		return types.UNDEFINED
+	}
+	switch glbl.Type {
+	case ast.TYPE_ATOMIC:
+		if glbl.Offset.IsValid() {
+			return types.Code(glbl.Meta)
+		}
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		// A str global keeps its argument.
+		arg := prgrm.GetCXArg(ast.CXArgumentIndex(glbl.Meta))
+		if arg.Offset.IsValid() && len(arg.Lengths) == 0 && arg.StructType == nil && len(arg.DeclarationSpecifiers) <= 1 {
+			return arg.Type
+		}
+	}
+	return types.UNDEFINED
+}
+
+// DeclarationSpecifiersCopy copies the type spec of var a, b T for the
+// second name and on.
+func DeclarationSpecifiersCopy(prgrm *ast.CXProgram, spec *ast.CXArgument) *ast.CXArgument {
+	return argumentCopy(prgrm, spec)
 }

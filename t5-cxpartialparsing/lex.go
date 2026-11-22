@@ -22,6 +22,14 @@ type Lexer struct {
 	eof       bool //eof
 	colbefore bool //used for colon keywords
 
+	// tokenBefore and tokenBeforeLast are the two tokens before tok, which
+	// varValueLiteralType reads.
+	tokenBefore, tokenBeforeLast lexerToken
+
+	// headerLiteral tracks the braces after if T or for T, which are a body to
+	// the parser and a struct literal to the writer, for the hint of Error.
+	headerLiteral lexerHeaderLiteral
+
 	// VIOLATION: pointer at rest; becomes yySymTypeGid in phase 3.
 	tok *yySymType //symbol read. soon to be depracated for fully new cxgo
 }

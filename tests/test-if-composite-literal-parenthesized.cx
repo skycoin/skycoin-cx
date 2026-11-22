@@ -1,0 +1,17 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func main() {
+	if (T{a: 1}).a == 1 {
+		printf("first\n")
+	}
+	for i := 0; (T{a: i}).a < 2; i++ {
+		printf("loop %d\n", i)
+	}
+	if (T{a: 1}.a == 1) {
+		printf("second\n")
+	}
+}

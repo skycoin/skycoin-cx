@@ -94,6 +94,9 @@ const (
 	// CompileErrorCodeReturnValueType is a value of the wrong type returned as
 	// the unnamed result of func f() T. Its operands are the two types.
 	CompileErrorCodeReturnValueType
+	// CompileErrorCodeGlobalTypeUnknown is a global declared without a type
+	// whose value is not a literal, var g = f(). Its operand is the global.
+	CompileErrorCodeGlobalTypeUnknown
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

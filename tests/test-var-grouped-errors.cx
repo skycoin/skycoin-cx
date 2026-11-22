@@ -1,0 +1,15 @@
+package main
+
+func one() (i32) {
+	return 1
+}
+
+var g = one()
+var a, b = 1
+var c, d i32 = 1, 2, 3
+
+func main() {
+	var x, y = 1
+	var z, w i32 = 1, 2, 3
+	i32.print(g + c + d + z + w)
+}

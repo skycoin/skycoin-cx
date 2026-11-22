@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	x := Missing{a: 1}
+	y := &Missing{a: 2}
+	printf("%d\n", Missing{a: 3}.a)
+	i32.print(x.a + y.a)
+}

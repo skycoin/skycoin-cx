@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jinzhu/copier"
@@ -121,7 +122,7 @@ func literalElementTypeCode(prgrm *ast.CXProgram, name stringpool.StringGid) ast
 // assignValueTypeError is the error of a value of type inputType written to
 // target of type outputType. The unnamed result of func f() T is a return.
 func assignValueTypeError(prgrm *ast.CXProgram, inputType string, target stringpool.StringGid, outputType string) (ast.CompileErrorCode, ast.CompileErrorOperands) {
-	if prgrm.CXProgramNameText(target) == constants.RESULT_NAME {
+	if strings.HasPrefix(prgrm.CXProgramNameText(target), constants.RESULT_NAME) {
 		return ast.CompileErrorCodeReturnValueType, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), prgrm.CXProgramCompileErrorText(outputType)}
 	}
 	return ast.CompileErrorCodeAssignValueType, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(target), prgrm.CXProgramCompileErrorText(outputType)}
@@ -130,11 +131,24 @@ func assignValueTypeError(prgrm *ast.CXProgram, inputType string, target stringp
 // FunctionResultUnnamed makes the result list of func f() T. The result
 // gets a name no identifier can spell, so the body cannot refer to it.
 func FunctionResultUnnamed(prgrm *ast.CXProgram, result *ast.CXArgument) []*ast.CXArgument {
-	if pkg, err := prgrm.GetCurrentPackage(); err == nil {
-		result.Package = ast.CXPackageIndex(pkg.Index)
+	return FunctionResultsUnnamed(prgrm, []*ast.CXArgument{result})
+}
+
+// FunctionResultsUnnamed names the results of func f() (T, U) as
+// FunctionResultUnnamed does, the first *result and the next *result1 on.
+func FunctionResultsUnnamed(prgrm *ast.CXProgram, results []*ast.CXArgument) []*ast.CXArgument {
+	pkg, err := prgrm.GetCurrentPackage()
+	for i, result := range results {
+		if err == nil {
+			result.Package = ast.CXPackageIndex(pkg.Index)
+		}
+		name := constants.RESULT_NAME
+		if i > 0 {
+			name += strconv.Itoa(i)
+		}
+		result.Name = prgrm.CXProgramNameIntern(name)
 	}
-	result.Name = prgrm.CXProgramNameIntern(constants.RESULT_NAME)
-	return []*ast.CXArgument{result}
+	return results
 }
 
 // FunctionAddParameters adds the function's input and output parameters.
@@ -2849,9 +2863,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	sym.Offset = arg.Offset
 	sym.Type = arg.Type
 
-	_, symLine := ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)
-	_, argLine := ast.CXArgumentDebugFileLine(prgrm, arg.ArgDetails)
-	if symLine != argLine {
+	// The parameter itself is processed too, at the site of its declaration.
+	use := !copyArgFieldsDeclarationSite(prgrm, sym, arg)
+	if use {
 		// FIXME Maybe we can unify this later.
 		if len(sym.Fields) > 0 {
 			indexedFieldBaseDeref(sym, arg)
@@ -2907,7 +2921,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 						prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidIndirection, sym.ArgDetails, ast.CompileErrorOperands{})
 					}
 				case constants.DECL_POINTER:
-					if symLine != argLine {
+					if use {
 						// This function is also called so it assigns offset and other fields to signature parameters
 						//
 						declSpec = append(declSpec, constants.DECL_POINTER)
@@ -3971,4 +3985,20 @@ func dereferenceNonPointer(prgrm *ast.CXProgram, sym *ast.CXTypeSignature, decla
 		}
 	}
 	return false
+}
+
+// copyArgFieldsDeclarationSite reports whether sym sits where arg is declared,
+// which a use on the line of the declaration, as in func f() (r [2]i32) { r[1] = 2 }, does not.
+func copyArgFieldsDeclarationSite(prgrm *ast.CXProgram, sym *ast.CXArgument, arg *ast.CXArgument) bool {
+	_, symLine := ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)
+	_, argLine := ast.CXArgumentDebugFileLine(prgrm, arg.ArgDetails)
+	if symLine != argLine {
+		return false
+	}
+	if sym.ArgDetails == ast.CXArgumentDebugGidNil || arg.ArgDetails == ast.CXArgumentDebugGidNil {
+		return true
+	}
+	symColumn := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(sym.ArgDetails).FileColumn
+	argColumn := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails).FileColumn
+	return symColumn == argColumn
 }

@@ -3,7 +3,9 @@ package partialparsing
 import (
 	"fmt"
 	"io"
+	"strings"
 
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -20,7 +22,12 @@ func (yylex Lexer) Error(e string) {
 	if yylex.tok.yys == IDENTIFIER || yylex.tok.yys == SEMICOLON {
 		name = yylex.tok.tok
 	}
-	Program.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSyntax, CurrentFile, yylex.tok.line, yylex.tok.column, ast.CompileErrorOperands{Program.CXProgramCompileErrorText(ast.CompileErrorSyntaxText(e, name))})
+	text := ast.CompileErrorSyntaxText(e, name)
+	if yylex.headerLiteral.lexerHeaderLiteralAfter() {
+		unexpected, _, _ := strings.Cut(text, ", expected ")
+		text = unexpected + ", composite literal in condition must be parenthesized"
+	}
+	Program.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSyntax, CurrentFile, yylex.tok.line, yylex.tok.column, ast.CompileErrorOperands{Program.CXProgramCompileErrorText(text)})
 	yylex.stop()
 }
 
@@ -29,7 +36,12 @@ func (yylex *Lexer) Stop() {
 }
 
 func (yylex *Lexer) Lex(lval *yySymType) int {
+	if yylex.tok != nil {
+		yylex.tokenBeforeLast = yylex.tokenBefore
+		yylex.tokenBefore = lexerToken{lexerTokenKind: yylex.tok.yys, lexerTokenLine: yylex.tok.line, lexerTokenColumn: yylex.tok.column}
+	}
 	yylex.next()
+	yylex.headerLiteral.lexerHeaderLiteralNext(yylex.tok.yys, yylex.tokenBefore.lexerTokenKind, yylex.tok.line)
 	lval.scancopy(yylex.tok)
 	lineNo = lval.line
 	Program.CXProgramCompileErrorTokenSet(CurrentFile, lval.line, lval.column)
@@ -233,3 +245,129 @@ var tokenNames = map[int]string{
 	ADDR: "ADDR",
 }
 */
+
+// lexerToken is the kind and position of a token the lexer read.
+type lexerToken struct {
+	lexerTokenKind   int
+	lexerTokenLine   int
+	lexerTokenColumn int
+}
+
+// varValueLiteralType is the type of the value of var g = value that starts
+// at line and column when it is a literal or a negated number literal, and
+// types.UNDEFINED otherwise. The parser has read the token after the value.
+func varValueLiteralType(yylex yyLexer, line int, column int) int {
+	lexer, ok := yylex.(*Lexer)
+	if !ok {
+		return int(types.UNDEFINED)
+	}
+	last := lexer.tokenBefore
+	if last.lexerTokenLine == line && last.lexerTokenColumn == column {
+		return int(varLiteralTokenType(last.lexerTokenKind))
+	}
+	sign := lexer.tokenBeforeLast
+	code := varLiteralTokenType(last.lexerTokenKind)
+	if sign.lexerTokenLine == line && sign.lexerTokenColumn == column && (sign.lexerTokenKind == SUB_OP || sign.lexerTokenKind == ADD_OP) && code != types.STR && code != types.BOOL {
+		return int(code)
+	}
+	return int(types.UNDEFINED)
+}
+
+// varLiteralTokenType is the type of a literal token, as pass two writes it.
+func varLiteralTokenType(kind int) types.Code {
+	switch kind {
+	case STRING_LITERAL:
+		return types.STR
+	case BOOLEAN_LITERAL:
+		return types.BOOL
+	case BYTE_LITERAL:
+		return types.I8
+	case SHORT_LITERAL:
+		return types.I16
+	case INT_LITERAL:
+		return types.I32
+	case LONG_LITERAL:
+		return types.I64
+	case UNSIGNED_BYTE_LITERAL:
+		return types.UI8
+	case UNSIGNED_SHORT_LITERAL:
+		return types.UI16
+	case UNSIGNED_INT_LITERAL:
+		return types.UI32
+	case UNSIGNED_LONG_LITERAL:
+		return types.UI64
+	case FLOAT_LITERAL:
+		return types.F32
+	case DOUBLE_LITERAL:
+		return types.F64
+	}
+	return types.UNDEFINED
+}
+
+// varValueTypes converts the value types var_values holds.
+func varValueTypes(codes []int) []types.Code {
+	result := make([]types.Code, len(codes))
+	for i, code := range codes {
+		result[i] = types.Code(code)
+	}
+	return result
+}
+
+// varNamesRelease releases the names of a local var spec, which pass one
+// does not declare.
+func varNamesRelease(names []*ast.CXArgument) {
+	for _, name := range names {
+		Program.ReleaseCXArgBuilder(name)
+	}
+}
+
+// lexerHeaderLiteral follows the braces that open after if T or for T, where
+// T is an identifier, to tell whether a token comes right after their
+// closing brace, as . does in if T{a: 1}.a == 1 {.
+type lexerHeaderLiteral struct {
+	lexerHeaderLiteralHeader  bool
+	lexerHeaderLiteralLine    int
+	lexerHeaderLiteralNesting int
+	lexerHeaderLiteralBraces  int
+	lexerHeaderLiteralClosing bool
+	lexerHeaderLiteralClosed  bool
+}
+
+// lexerHeaderLiteralNext follows the token kind at line, read after the token
+// before. A literal ends on the line of its if or for.
+func (header *lexerHeaderLiteral) lexerHeaderLiteralNext(kind int, before int, line int) {
+	header.lexerHeaderLiteralClosed = header.lexerHeaderLiteralClosing
+	header.lexerHeaderLiteralClosing = false
+	switch {
+	case kind == IF || kind == FOR:
+		*header = lexerHeaderLiteral{lexerHeaderLiteralHeader: true, lexerHeaderLiteralLine: line}
+	case header.lexerHeaderLiteralBraces > 0:
+		switch kind {
+		case LBRACE:
+			header.lexerHeaderLiteralBraces++
+		case RBRACE:
+			header.lexerHeaderLiteralBraces--
+			header.lexerHeaderLiteralClosing = header.lexerHeaderLiteralBraces == 0 && line == header.lexerHeaderLiteralLine
+		}
+	case header.lexerHeaderLiteralHeader:
+		switch kind {
+		case LPAREN, LBRACK:
+			header.lexerHeaderLiteralNesting++
+		case RPAREN, RBRACK:
+			header.lexerHeaderLiteralNesting--
+		case LBRACE:
+			if header.lexerHeaderLiteralNesting == 0 {
+				header.lexerHeaderLiteralHeader = false
+				if before == IDENTIFIER {
+					header.lexerHeaderLiteralBraces = 1
+				}
+			}
+		}
+	}
+}
+
+// lexerHeaderLiteralAfter reports whether the token is right after the
+// closing brace of if T {...} or for T {...}.
+func (header lexerHeaderLiteral) lexerHeaderLiteralAfter() bool {
+	return header.lexerHeaderLiteralClosed
+}

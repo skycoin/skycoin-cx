@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"slices"
+
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
@@ -953,6 +955,9 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 	// Now an arena getter, site S0699.
 	fnOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(fnOutputs[idx])
 	var outParam *ast.CXArgument
+	// pointerArrayOut is the result of a *[N]T function, which return &a
+	// writes the address to, as r = &a does.
+	var pointerArrayOut *ast.CXArgument
 	var typeSigIdx ast.CXTypeSignatureIndex
 	if fnOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -964,7 +969,18 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		out.StructType = outParam.StructType
 		out.PreviouslyDeclared = true
 
-		typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
+		if ast.IsTypeArrayAtomic(outParam) {
+			// return [2]i32{1, 2} checks the literal against the whole result type.
+			out.Lengths = slices.Clone(outParam.Lengths)
+			out.DeclarationSpecifiers = slices.Clone(outParam.DeclarationSpecifiers)
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, out)
+		} else if ast.IsTypePointerArrayAtomic(outParam) {
+			// The result takes its pointer specifiers from its declaration.
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, out)
+			pointerArrayOut = out
+		} else {
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
+		}
 	} else if fnOutputTypeSig.Type == ast.TYPE_ATOMIC {
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
@@ -1040,12 +1056,22 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		lastExpression.Inputs = lastExpression.Outputs
 		lastExpression.Outputs = nil
 
+		if inputs := lastExpression.GetInputs(prgrm); pointerArrayOut != nil && len(inputs) > 0 && ast.CXTypeSignaturePassBy(prgrm, prgrm.GetCXTypeSignatureFromArray(inputs[0])) == constants.PASSBY_REFERENCE {
+			pointerArrayOut.PassBy = constants.PASSBY_REFERENCE
+			prgrm.GetCXTypeSignatureFromArray(typeSigIdx).PassBy = constants.PASSBY_REFERENCE
+		}
 		lastExpression.AddOutput(prgrm, typeSigIdx)
 		if len(retExprs) < 2 || retExprs[len(retExprs)-2].Type != ast.CX_LINE {
 			// return s[0][1] has no line of its own for a runtime error to report.
 			lineExprs := append([]ast.CXExpression{}, retExprs[:len(retExprs)-1]...)
 			return append(lineExprs, *MakeCXLineExpressionCurrent(prgrm), lastExpr)
 		}
+		return retExprs
+	} else if lastExpr.IsArrayLiteral() && len(lastExpression.GetOutputs(prgrm)) > 0 {
+		// return [2]i32{1, 2} writes the literal to the result.
+		lastExpression.Outputs = nil
+		lastExpression.AddOutput(prgrm, typeSigIdx)
+		retExprs[len(retExprs)-1].ExpressionType = ast.CXEXPR_UNUSED
 		return retExprs
 	} else if len(lastExpression.GetOutputs(prgrm)) > 0 {
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.

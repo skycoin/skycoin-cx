@@ -1,0 +1,33 @@
+package main
+
+type T struct {
+	v i32
+}
+
+func one() (i32) {
+	return 3
+}
+
+func two() (i32, str) {
+	return 4, "x"
+}
+
+func three() (i32, [2]i32, str) {
+	var a [2]i32
+	a[1] = 9
+	return 5, a, "y"
+}
+
+func pair() (T, T) {
+	return T{v: 6}, T{v: 7}
+}
+
+func main() {
+	x, s := two()
+	var n i32
+	var arr [2]i32
+	var q str
+	n, arr, q = three()
+	a, b := pair()
+	printf("%d %d %s %d %s %d\n", one(), x, s, n+arr[1], q, a.v+b.v)
+}

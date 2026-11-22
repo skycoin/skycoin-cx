@@ -1,0 +1,40 @@
+package main
+
+func local() (r *[2]i32) {
+	var a [2]i32
+	a[0] = 3
+	a[1] = 13
+	return &a
+}
+
+func localUnnamed() *[2]i32 {
+	var a [2]i32
+	a[1] = 14
+	return &a
+}
+
+func rows() (r [][2]i32) {
+	var e [2]i32
+	e[0] = 9
+	r = append(r, e)
+	return r
+}
+
+func rowsUnnamed() [][2]i32 {
+	var e [2]i32
+	e[1] = 8
+	var r [][2]i32
+	r = append(r, e)
+	return r
+}
+
+func main() {
+	p := local()
+	q := localUnnamed()
+	var s *[2]i32
+	s = local()
+	printf("%d %d %d %d\n", p[0], p[1], q[1], (*s)[1])
+	m := rows()
+	n := rowsUnnamed()
+	printf("%d %d %d\n", len(m), m[0][0], n[0][1])
+}

@@ -798,6 +798,36 @@ func runTestCases(t *runner.TestRunner) {
 		`test-operator-argument-types.cx:5 invalid argument types for 'bitand' operator`,
 		`test-operator-argument-types.cx:6 invalid argument types for 'lt' operator`)
 	t.Run("test-function-return-array.cx", types.CX_SUCCESS, "functions that return arrays")
+	t.RunWant("--executor=old test-function-result-array-forms.cx", types.CX_SUCCESS, "array results named and unnamed, from literals, of structs and pointers, on the old loop", "2 3 6 7 9\n21 5\n")
+	t.RunWant("--executor=vm test-function-result-array-forms.cx", types.CX_SUCCESS, "array results named and unnamed, from literals, of structs and pointers, on vm", "2 3 6 7 9\n21 5\n")
+	t.RunWant("test-function-result-array-heap.cx", types.CX_SUCCESS, "return &a of a local array and slices of arrays as results", "3 13 14 13\n1 9 8\n")
+	t.RunWant("--executor=old test-function-results-unnamed.cx", types.CX_SUCCESS, "unnamed results in parentheses, on the old loop", "3 4 x 14 y 13\n")
+	t.RunWant("--executor=vm test-function-results-unnamed.cx", types.CX_SUCCESS, "unnamed results in parentheses, on vm", "3 4 x 14 y 13\n")
+	t.RunWant("test-function-results-unnamed-errors.cx", types.CX_COMPILATION_ERROR, "a return that does not match unnamed results",
+		"test-function-results-unnamed-errors.cx:4 function 'short' expects to return 2 arguments, but 1 output argument was provided",
+		"test-function-results-unnamed-errors.cx:8:12 cannot use value of type 'i32' as type 'str' in return statement")
+	t.RunWant("--executor=old test-var-grouped.cx", types.CX_SUCCESS, "var a, b T, var a, b = x, y and var ( ... ) as globals and locals, on the old loop", "10 37 140\nf g j e 4 2.5\n")
+	t.RunWant("--executor=vm test-var-grouped.cx", types.CX_SUCCESS, "var a, b T, var a, b = x, y and var ( ... ) as globals and locals, on vm", "10 37 140\nf g j e 4 2.5\n")
+	t.RunWant("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "a grouped var with the wrong number of values, and a global whose type a value cannot give",
+		"test-var-grouped-errors.cx:7:5 cannot infer the type of global 'g' from a value that is not a literal, declare it with a type",
+		"test-var-grouped-errors.cx:8:5 assignment mismatch: 2 variables but 1 value",
+		"test-var-grouped-errors.cx:9:5 assignment mismatch: 2 variables but 3 values",
+		"test-var-grouped-errors.cx:12:6 assignment mismatch: 2 variables but 1 value",
+		"test-var-grouped-errors.cx:13:6 assignment mismatch: 2 variables but 3 values")
+	t.RunMissing("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "a grouped var with the wrong number of values reports nothing more", ":14 ", "does not exist")
+	t.RunWant("test-if-composite-literal.cx", types.CX_COMPILATION_ERROR, "a bare struct literal in an if header gets Go's hint",
+		"test-if-composite-literal.cx:11:11 syntax error: unexpected ., composite literal in condition must be parenthesized")
+	t.RunWant("test-if-composite-literal-parenthesized.cx", types.CX_SUCCESS, "a parenthesized struct literal in an if or for header", "first\nloop 0\nloop 1\nsecond\n")
+	t.RunWant("test-struct-literal-missing.cx", types.CX_COMPILATION_ERROR, "a literal of a struct that does not exist is an error, not a panic",
+		"test-struct-literal-missing.cx:4 struct 'Missing' not found in package 'main'",
+		"test-struct-literal-missing.cx:5 struct 'Missing' not found in package 'main'",
+		"test-struct-literal-missing.cx:6 struct 'Missing' not found in package 'main'")
+	t.RunMissing("test-struct-literal-missing.cx", types.CX_COMPILATION_ERROR, "a literal of a struct that does not exist is an error, not a panic", "panic", "goroutine", ":7 ")
+	t.RunMissing("-ast test-pointers.cx", types.CX_COMPILATION_ERROR, "-ast of a program missing its struct file reports errors, not a panic", "panic", "goroutine")
+	t.RunWant("-ast ./examples/packages.cx", types.CX_SUCCESS, "-ast prints packages after the packages they import, the same on every run",
+		"0.- Package: foo\n", "1.- Package: nosal\n", "2.- Package: bar\n", "3.- Package: main\n")
+	t.RunWant("-ast --cxpath test-workspace test-struct-literal-external-ref.cx", types.CX_SUCCESS, "-ast prints an imported package before the program",
+		"0.- Package: geometry\n", "1.- Package: main\n")
 	t.Run("test-imported-global-assign.cx", types.CX_SUCCESS, "assignment to a global of an imported package")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 

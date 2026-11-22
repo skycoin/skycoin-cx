@@ -204,7 +204,7 @@ func BuildStrPackages(prgrm *CXProgram, ast *string) {
 	// We need to declare the counter outside so we can
 	// ignore the increments from core or stdlib packages.
 	var i int
-	for _, pkgIdx := range prgrm.Packages {
+	for _, pkgIdx := range packagesOrdered(prgrm) {
 		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
 		// Now an arena getter, site S0484.
 		pkg, err := prgrm.GetPackageFromArray(pkgIdx)
@@ -225,6 +225,31 @@ func BuildStrPackages(prgrm *CXProgram, ast *string) {
 
 		i++
 	}
+}
+
+// packagesOrdered returns the packages of prgrm with each one after the
+// packages it imports, in the order they were declared or imported, so -ast
+// prints the same order on every run.
+func packagesOrdered(prgrm *CXProgram) []CXPackageIndex {
+	ordered := make([]CXPackageIndex, 0, len(prgrm.Packages))
+	visited := map[CXPackageIndex]bool{}
+	var visit func(pkgIdx CXPackageIndex)
+	visit = func(pkgIdx CXPackageIndex) {
+		if visited[pkgIdx] {
+			return
+		}
+		visited[pkgIdx] = true
+		if pkg, err := prgrm.GetPackageFromArray(pkgIdx); err == nil {
+			for _, impIdx := range slices.Sorted(maps.Values(pkg.Imports)) {
+				visit(impIdx)
+			}
+		}
+		ordered = append(ordered, pkgIdx)
+	}
+	for _, pkgIdx := range slices.Sorted(maps.Values(prgrm.Packages)) {
+		visit(pkgIdx)
+	}
+	return ordered
 }
 
 // getFormattedParam is an auxiliary function for `ToString`. It formats the

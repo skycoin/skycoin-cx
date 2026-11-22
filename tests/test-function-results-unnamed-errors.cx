@@ -1,0 +1,15 @@
+package main
+
+func short() (i32, str) {
+	return 1
+}
+
+func wrong() (i32, str) {
+	return 1, 2
+}
+
+func main() {
+	x, s := short()
+	y, t := wrong()
+	printf("%d %s %d %s\n", x, s, y, t)
+}
