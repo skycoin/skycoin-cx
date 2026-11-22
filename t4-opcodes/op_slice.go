@@ -37,7 +37,7 @@ func opSliceLen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 		if sliceOffset > 0 && sliceOffset.IsValid() {
 			sliceLen = ast.GetSliceLen(prgrm, sliceOffset)
 		}
-	} else if inputs[0].TypeSignature.Type == ast.TYPE_STRUCT {
+	} else if inputs[0].TypeSignature.Type == ast.TYPE_STRUCT || inputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
 		// Now an arena getter, site S1312.
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(inputs[0].TypeSignature.Meta)
@@ -93,7 +93,7 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 		inp0Type = types.Code(sliceDetails.Meta)
 
 		input0IsSlice = true
-	} else if inputs[0].TypeSignature.Type == ast.TYPE_STRUCT {
+	} else if inputs[0].TypeSignature.Type == ast.TYPE_STRUCT || inputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
 		inp0Type = types.STRUCT
 
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
@@ -148,7 +148,7 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 		sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(outputs[0].TypeSignature.Meta)
 		out0Type = types.Code(sliceDetails.Meta)
 		outputIsSlice = true
-	} else if outputs[0].TypeSignature.Type == ast.TYPE_STRUCT {
+	} else if outputs[0].TypeSignature.Type == ast.TYPE_STRUCT || outputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
 		out0Type = types.STRUCT
 
 		// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.

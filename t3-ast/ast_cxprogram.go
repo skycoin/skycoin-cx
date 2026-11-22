@@ -1,8 +1,10 @@
 package ast
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
@@ -788,4 +790,9 @@ func (cxprogram *CXProgram) GetFramePointer() int {
 // human-readable format.
 func (cxprogram *CXProgram) PrintProgram() {
 	fmt.Println(ToString(cxprogram))
+}
+
+// ProgramStdinInit makes reader the input of read() for the rest of the run.
+func (prgrm *CXProgram) ProgramStdinInit(reader io.Reader) {
+	prgrm.ProgramStdin = bufio.NewReader(reader)
 }

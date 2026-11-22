@@ -73,6 +73,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeArrayLiteralLength, ast.CompileErrorOperands{2, 3}, header + " array literal of length 2 has 3 elements\n"},
 		{ast.CompileErrorCodeArrayLiteralLength, ast.CompileErrorOperands{0, 1}, header + " array literal of length 0 has 1 element\n"},
 		{ast.CompileErrorCodeStructLiteralFieldRepeated, ast.CompileErrorOperands{text("x")}, header + " duplicate field name 'x' in struct literal\n"},
+		{ast.CompileErrorCodeImportGuiBuildMissing, ast.CompileErrorOperands{text("sys/gl")}, header + " package \"sys/gl\" needs a GUI build of cx, build it with make build-gui\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

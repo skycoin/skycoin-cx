@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -36,14 +37,19 @@ func (t *TestRunner) Run(args string, exitCode int, desc string) {
 
 // RunWant is Run that also requires each of want to appear in the output.
 func (t *TestRunner) RunWant(args string, exitCode int, desc string, want ...string) {
-	t.runEx(args, exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
+	t.runEx(args, "", exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
+}
+
+// RunWantInput is RunWant with input piped to the program's stdin.
+func (t *TestRunner) RunWantInput(args string, input string, exitCode int, desc string, want ...string) {
+	t.runEx(args, input, exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
 }
 
 func (t *TestRunner) RunEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration) {
-	t.runEx(args, exitCode, desc, filter, timeout, nil)
+	t.runEx(args, "", exitCode, desc, filter, timeout, nil)
 }
 
-func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration, want []string) {
+func (t *TestRunner) runEx(args string, input string, exitCode int, desc string, filter Bits, timeout time.Duration, want []string) {
 	if timeout == 0 {
 		timeout = t.cfg.DefaultTimeout
 	}
@@ -59,7 +65,7 @@ func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, 
 	}
 
 	start := time.Now().Unix()
-	out, err := runCmd(t.cfg.CxPath, strings.Split(args, " "), t.cfg.WorkingDir, timeout)
+	out, stderr, err := runCmd(t.cfg.CxPath, strings.Split(args, " "), input, t.cfg.WorkingDir, timeout)
 	end := time.Now().Unix()
 
 	timing := "na"
@@ -70,7 +76,6 @@ func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, 
 	t.TestCount += 1
 
 	var ec int
-	var stderr []byte
 	if err != nil {
 		if err == context.DeadlineExceeded {
 			fmt.Printf("#%s%d | FAILED  | %s | '%s' | exec.Command timeout\n",
@@ -85,7 +90,6 @@ func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, 
 			return
 		}
 		ec = exitError.ExitCode()
-		stderr = exitError.Stderr
 	}
 
 	if ec != exitCode {
@@ -118,17 +122,20 @@ func (t *TestRunner) runEx(args string, exitCode int, desc string, filter Bits, 
 	t.TestSuccess += 1
 }
 
-func runCmd(path string, args []string, dir string, timeout time.Duration) ([]byte, error) {
+func runCmd(path string, args []string, input string, dir string, timeout time.Duration) (stdout []byte, stderr []byte, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, path, args...)
 	cmd.Dir = dir
-	out, err := cmd.Output()
+	cmd.Stdin = strings.NewReader(input)
+	var stderrBuffer bytes.Buffer
+	cmd.Stderr = &stderrBuffer
+	stdout, err = cmd.Output()
 	if ctx.Err() == context.DeadlineExceeded {
-		return out, ctx.Err()
+		return stdout, stderrBuffer.Bytes(), ctx.Err()
 	}
-	return out, err
+	return stdout, stderrBuffer.Bytes(), err
 }
 
 func padding(t *TestRunner) string {

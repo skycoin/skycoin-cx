@@ -1,0 +1,13 @@
+// https://github.com/skycoin/cx/issues/110
+// A second read() on a piped stdin gets the second line.
+
+package main
+
+import "sys/string"
+
+func main() {
+	var name str
+	name = read()
+	printf("Hello, %s!\n", name)
+	string.PrintLine(read())
+}

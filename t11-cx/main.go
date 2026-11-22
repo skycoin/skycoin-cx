@@ -16,10 +16,9 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute" // thin: only RunCompiled; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
-	"github.com/skycoin/skycoin-cx/t5-cxos"                                // thin: only InitConstants; no depth gain
-	"github.com/skycoin/skycoin-cx/t6-cxfx"                                // thin: only InitConstants; no depth gain
-	cxinit "github.com/skycoin/skycoin-cx/t7-init"                         // thin: only MakeProgram, RegisterPackages; no depth gain
-	parsingcompletor "github.com/skycoin/skycoin-cx/t8-cxparsingcompletor" // thin: only DebugLexer, Tokenize; no depth gain
+	"github.com/skycoin/skycoin-cx/t5-cxos"        // thin: only InitConstants; no depth gain
+	"github.com/skycoin/skycoin-cx/t6-cxfx"        // thin: only InitConstants; no depth gain
+	cxinit "github.com/skycoin/skycoin-cx/t7-init" // thin: only MakeProgram, RegisterPackages; no depth gain
 )
 
 func main() {
@@ -162,8 +161,6 @@ func Run(args []string) {
 	}
 
 	// Propagate some options out to other packages.
-	parsingcompletor.DebugLexer = options.debugLexer
-
 	profiling.DebugProfileRate = options.debugProfile
 
 	profiling.DebugProfile = profiling.DebugProfileRate > 0
@@ -187,7 +184,7 @@ func Run(args []string) {
 
 	if run := parseProgram(options, fileNames, sourceCode); run {
 
-		if checkAST(args) {
+		if options.printAST || checkAST(args) {
 			printProgramAST(options, cxArgs, sourceCode)
 			return
 		}
@@ -215,6 +212,7 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 	}
 	defer root.Close()
 	actions.AST.ProgramSandboxRoot = root
+	actions.AST.ProgramStdinInit(os.Stdin)
 
 	profiling.StartProfile("run")
 

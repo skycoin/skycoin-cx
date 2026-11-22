@@ -1,0 +1,10 @@
+// https://github.com/skycoin/cx/issues/432
+// sys/gl needs a cx built with the cxfx tag, make build-gui.
+
+package main
+
+import "sys/gl"
+
+func main() {
+	gl.Init()
+}

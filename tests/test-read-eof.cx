@@ -1,0 +1,16 @@
+// read() returns "" at the end of input, provisionally (skycoin/cx#110).
+// The last line may lack its line ending.
+
+package main
+
+func main() {
+	var line str
+	line = read()
+	printf("[%s]\n", line)
+	line = read()
+	printf("[%s]\n", line)
+	line = read()
+	printf("[%s]\n", line)
+	line = read()
+	printf("[%s]\n", line)
+}

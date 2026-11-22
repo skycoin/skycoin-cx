@@ -1,0 +1,53 @@
+// append to a slice field of a struct and of a struct pointer copies the
+// whole element, and len reads it through the pointer.
+
+package main
+
+type U struct {
+	a i32
+	b i64
+	c str
+}
+
+type T struct {
+	n i32
+	s []U
+	f []f64
+	g []str
+	h []i32
+}
+
+type O struct {
+	t T
+}
+
+func main() {
+	var t T
+	var u U
+	u.a = 7
+	u.b = 9000000000L
+	u.c = "cee"
+	var x []U
+	x = append(t.s, u)
+	printf("%d %d %d %s\n", len(x), x[0].a, x[0].b, x[0].c)
+	t.s = append(t.s, u)
+	t.s = append(t.s, u)
+	printf("%d %d %d %s\n", len(t.s), t.s[1].a, t.s[1].b, t.s[1].c)
+	t.f = append(t.f, 2.5D)
+	t.f = append(t.f, 3.5D)
+	printf("%d %v %v\n", len(t.f), t.f[0], t.f[1])
+	t.g = append(t.g, "one")
+	t.g = append(t.g, "two")
+	printf("%s %s\n", t.g[0], t.g[1])
+	t.h = append(t.h, 4)
+	t.h = append(t.h, 5)
+	printf("%d %d\n", t.h[0], t.h[1])
+	var p *T
+	p = &t
+	p.s = append(p.s, u)
+	printf("%d %d %d %s\n", len(t.s), len(p.s), t.s[2].b, t.s[2].c)
+	var o O
+	o.t.s = append(o.t.s, u)
+	o.t.s = append(o.t.s, u)
+	printf("%d %d %s\n", len(o.t.s), o.t.s[1].b, o.t.s[1].c)
+}

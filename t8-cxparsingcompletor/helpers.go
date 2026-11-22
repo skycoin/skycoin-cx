@@ -9,9 +9,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 )
 
-// VIOLATION: state outside State. Owner: t8-cxparsingcompletor; moves to ConfigMng in phase 2.
-var DebugLexer bool
-
 func (yylex Lexer) Error(msg string) {
 	yylex.stop()
 	yylex.errorf(msg)

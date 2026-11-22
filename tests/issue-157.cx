@@ -1,34 +1,30 @@
-// https://github.com/skycoin/cx/issues/157
+// https://github.com/skycoin/cx/issues/157, skycoin/skycoin-cx#29
+// A call result as a slice index, nums[i32.add(j, 1)], in a bubble sort.
 
-package main 
+package main
 
-func Sort (nums []i32, size i32) (nums []i32){
+func Sort(nums []i32, size i32) (out []i32) {
 	var i i32
 	var j i32
 	var temp i32
-	for i = 0; i <i32.sub(size, 1); i++{
-		for j = 0; j < i32.sub(i32.sub(size, i), 1); j++{
-			if nums[j] > nums[i32.add(j, 1)]{
-													// here is the compiler issue 
+	for i = 0; i < i32.sub(size, 1); i++ {
+		for j = 0; j < i32.sub(i32.sub(size, i), 1); j++ {
+			if nums[j] > nums[i32.add(j, 1)] {
 				temp = nums[j]
 				nums[j] = nums[i32.add(j, 1)]
 				nums[i32.add(j, 1)] = temp
 			}
 		}
 	}
-	return nums
+	out = nums
 }
 
-
-func main() (){
-
+func main() {
 	var nums []i32
-	var rand i32
 	var c i32
-	rand = i32.rand(5, 15)
-	for c = 0; c < rand; c++{
-		randArray[c] = i32.rand(1, 100)
+	for c = 0; c < 10; c++ {
+		nums = append(nums, i32.mod(i32.mul(c, 37), 11))
 	}
-	nums = Sort(nums, rand)
-
+	nums = Sort(nums, 10)
+	printf("%v\n", nums)
 }

@@ -2131,9 +2131,7 @@ to a REPL for the program that we have been building in the last few sections.
 
 The attacks could also be methods, such as
 `func (player Player) attack (cmd str, monster *Monster)` called as
-`player.attack(cmd, &monster)`. One open bug remains: when several
-lines are piped into this program at once, the second `read` fails
-with a runtime error. Typing the commands works.
+`player.attack(cmd, &monster)`.
 
 ### [Go-to](#table-of-contents)
 
@@ -2453,7 +2451,13 @@ print output to a terminal.
 
 ### `read`
 
-`read` reads one line from standard input.
+`read` reads one line from standard input and returns it without its line
+ending. One reader serves the whole run, so lines piped in at once are
+read in order. At the end of input `read` returns `""`.
+
+The end of input result is provisional. A second `ok bool` output that is
+false at the end of input is under discussion, so a program cannot yet
+tell an empty line from the end of input.
 
 #### Example
 

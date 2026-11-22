@@ -457,6 +457,14 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
+	t.Run("issue-31.cx", types.CX_SUCCESS, "len of a slice after append, read into a short declaration")
+	t.RunWant("issue-157.cx", types.CX_SUCCESS, "a call result as a slice index in a bubble sort (skycoin-cx#29)", "[0, 1, 2, 3, 4, 5, 6, 8, 9, 10]\n")
+	t.RunWantInput("issue-110.cx", "abc\ndef\n", types.CX_SUCCESS, "a second read() on a piped stdin (skycoin/cx#110)", "Hello, abc!\ndef\n")
+	t.RunWantInput("test-read-eof.cx", "one\ntwo", types.CX_SUCCESS, "read() returns an unterminated last line, then \"\" at the end of input", "[one]\n[two]\n[]\n[]\n")
+	t.RunWant("issue-432.cx", types.CX_COMPILATION_ERROR, "sys/gl in a cx built without cxfx (skycoin/cx#432)", "issue-432.cx:6 package \"sys/gl\" needs a GUI build of cx, build it with make build-gui")
+	t.RunWant("-h", types.CX_SUCCESS, "cx -h names the real flags (skycoin/cx#567)", "alias for -lexer\n", "alias for -heap-initial\n", "alias for -heap-max\n", "-lexer-output string")
+	t.RunWant("test-append-struct-field.cx", types.CX_SUCCESS, "append and len on a slice field of a struct and of a struct pointer",
+		"1 7 9000000000 cee\n2 7 9000000000 cee\n2 2.5 3.5\none two\n4 5\n3 3 9000000000 cee\n2 9000000000 cee\n")
 	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
@@ -663,7 +671,6 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
 	t.RunEx("issue-131.cx", types.CX_SUCCESS, "Panic when using arithmetic operations.", runner.TestIssue, 0)
 	t.RunEx("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.", runner.TestIssue, 0)
-	t.RunEx("issue-157.cx", types.CX_SUCCESS, "expected either 'i32' or 'i64', got 'ident'", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#29
 	t.Run("issue-650.cx", types.CX_SUCCESS, "test should not fail")
 
 	// We need to fix serialization and deserialization as user-callable functions

@@ -67,6 +67,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeAssignmentCount - ast.CompileErrorCodeNil:            {Format: "%H assignment mismatch: %d variable%+ but %d value%+\n"},
 	ast.CompileErrorCodeArrayLiteralLength - ast.CompileErrorCodeNil:         {Format: "%H array literal of length %d has %d element%+\n"},
 	ast.CompileErrorCodeStructLiteralFieldRepeated - ast.CompileErrorCodeNil: {Format: "%H duplicate field name '%s' in struct literal\n"},
+	ast.CompileErrorCodeImportGuiBuildMissing - ast.CompileErrorCodeNil:      {Format: "%H package \"%s\" needs a GUI build of cx, build it with make build-gui\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

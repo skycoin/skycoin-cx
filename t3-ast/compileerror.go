@@ -63,6 +63,7 @@ const (
 	CompileErrorCodeAssignmentCount
 	CompileErrorCodeArrayLiteralLength
 	CompileErrorCodeStructLiteralFieldRepeated
+	CompileErrorCodeImportGuiBuildMissing
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

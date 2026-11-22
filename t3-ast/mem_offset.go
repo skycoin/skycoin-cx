@@ -103,20 +103,20 @@ func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer boo
 	return arg.Size
 }
 
-// GetDerefSizeSlice ...
+// GetDerefSizeSlice returns the element size of the slice typeSignature names.
 func GetDerefSizeSlice(prgrm *CXProgram, typeSignature *CXTypeSignature) types.Pointer {
 	if typeSignature.Type == TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0368.
 		arg := prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta))
-		arg = arg.GetAssignmentElement(prgrm)
-		if len(arg.Lengths) > 1 && (len(arg.Lengths)-len(arg.Indexes)) > 1 {
-			return types.POINTER_SIZE
+		return derefSizeSliceOfArg(prgrm, arg.GetAssignmentElement(prgrm))
+	} else if typeSignature.Type == TYPE_STRUCT || typeSignature.Type == TYPE_POINTER_STRUCT {
+		// A field access such as t.s, sized by its last field, not by the slice header.
+		structDetails := prgrm.GetCXTypeSignatureStructFromArray(typeSignature.Meta)
+		if fldLen := len(structDetails.Fields); fldLen > 0 {
+			fld := prgrm.GetCXArgFromArray(structDetails.Fields[fldLen-1])
+			return derefSizeSliceOfArg(prgrm, fld.GetAssignmentElement(prgrm))
 		}
-		if arg.StructType != nil {
-			return arg.StructType.GetStructSize(prgrm)
-		}
-		return arg.Size
 	} else if typeSignature.Type == TYPE_SLICE_ATOMIC {
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0369.
@@ -529,4 +529,15 @@ func calculateDereferencesCompute(prgrm *CXProgram, arg *CXArgument, finalOffset
 	}
 
 	return drfsStruct.finalOffset
+}
+
+// derefSizeSliceOfArg returns the element size of the slice arg.
+func derefSizeSliceOfArg(prgrm *CXProgram, arg *CXArgument) types.Pointer {
+	if len(arg.Lengths) > 1 && (len(arg.Lengths)-len(arg.Indexes)) > 1 {
+		return types.POINTER_SIZE
+	}
+	if arg.StructType != nil {
+		return arg.StructType.GetStructSize(prgrm)
+	}
+	return arg.Size
 }
