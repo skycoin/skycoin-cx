@@ -1,0 +1,10 @@
+// deserialize of bytes that are not a serialized program is a runtime error.
+
+package main
+
+func main() {
+	var b []ui8
+	b = append(b, 1UB)
+	b = append(b, 2UB)
+	deserialize(b)
+}

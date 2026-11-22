@@ -725,7 +725,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.", runner.TestIssue, 0)
 	t.Run("issue-650.cx", types.CX_SUCCESS, "test should not fail")
 
-	// We need to fix serialization and deserialization as user-callable functions
+	t.RunWant("test-serialize.cx", types.CX_SUCCESS, "serialize returns a []ui8 that deserialize accepts", "true\n7")
+	t.RunWant("test-serialize-invalid.cx", types.CX_RUNTIME_INVALID_ARGUMENT, "deserialize of bytes that are not a program is a runtime error",
+		"test-serialize-invalid.cx:9, CX_RUNTIME_INVALID_ARGUMENT")
+	// These issues of skycoin/cx have no test file here.
 	// t.RunEx("issue-309.cx", types.CX_SUCCESS, "Serialization is not taking into account non-default stack sizes.", TestIssue, 0)
 	// t.RunEx("issue-310.cx", types.CX_SUCCESS, "Splitting a serialized program into its blockchain and transaction parts.", TestIssue, 0)
 	// t.RunEx("issue-311.cx", types.CX_SUCCESS, "`CurrentFunction` and `CurrentStruct` are causing errors in programs with more than 1 package.", TestIssue, 0)

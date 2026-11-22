@@ -69,17 +69,21 @@ func TestSerializeDebugInfoCompressed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plain) < len(prgrm.Memory) {
-		t.Fatalf("%d plain bytes do not hold %d bytes of memory", len(plain), len(prgrm.Memory))
+	got, err := cxast.Deserialize(b, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got.Memory, prgrm.Memory) {
+		t.Fatal("compressed serialization did not keep the memory")
 	}
 
 	info, err := cxast.SerializeDebugInfo(prgrm, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sum := info.Program + info.Calls + info.Packages + info.Structs + info.Functions +
-		info.Expressions + info.Arguments + info.Integers + info.Strings + info.Memory
-	if sum == 0 || sum > len(plain) {
+	sum := info.Header + info.Program + info.Strings + info.Packages + info.Structs + info.Functions +
+		info.Expressions + info.Arguments + info.TypeSignatures + info.Memory
+	if sum != len(plain) {
 		t.Fatalf("section sizes add up to %d, serialized program is %d bytes", sum, len(plain))
 	}
 }

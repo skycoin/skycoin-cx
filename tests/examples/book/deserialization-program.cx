@@ -2,7 +2,7 @@ package main
 
 func main () {
     var target aff
-    var result []byte
+    var result []ui8
     
     target = #{}
     result = serialize(target)

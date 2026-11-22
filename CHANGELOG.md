@@ -40,6 +40,8 @@
 
 #### Changed
 
+- The serialized program is a snapshot of the arenas and managers with a 24 byte header, the magic `CXPROGRM`, format 2, the pointer size and the language version, and nine length prefixed sections. A deserialized program lowers and runs as the original, escaped locals and GC roots included. `Deserialize` returns an error instead of panicking on malformed bytes and refuses a program from another pointer size. `SerializeDebugInfo` reports the size of each section, and the skyencoder `SerializedCXProgram` is gone. See "Serialized form" in docs/IR.md (#12, #292, #293, #295)
+- `serialize` returns `[]ui8` and `deserialize` takes `[]ui8`, so they round trip. `deserialize` of bytes that are not a program is the runtime error `CX_RUNTIME_INVALID_ARGUMENT`
 - `CXCall.Call` fetches the atomic operator and its function once per step and passes them to `processBuiltInOperators`, `processNonAtomicOperators` and `wipeDeclarationMemory`, which fetched them again. The jmp, goto, break and continue handlers still fetch the atomic operator themselves (#417)
 - `CXCall.Call` takes a pointer to the current expression instead of a copy, so a step no longer allocates. `CXValue.Expr` is cleared when the opcode handler returns. Allocations per run of a 100000 iteration loop fall from 1,000,019 to 11 and run time by about 30% (#407, #417)
 - `CXTypeSignature_Struct` objects live in `CxIrState.CXTypeSignature_StructMng`. Struct signatures are allocated there, `CXProgram.TypeSignatureForStructs` and `AddCXTypeSignatureStructInArray` are gone, and `GetCXTypeSignatureStructFromArray` reads the manager by slot index (#299, #321)

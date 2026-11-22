@@ -7,7 +7,7 @@ type Point struct {
 
 func main () {
     var target aff
-    var result []byte
+    var result []ui8
     
     var foo i32
     var bar Point

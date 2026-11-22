@@ -26,13 +26,97 @@ func main() {
 }
 
 func Run(args []string) {
+	options, cxArgs, sourceCode, fileNames, start := runStart(args)
+	if !start {
+		return
+	}
 
+	if run := parseProgram(options, fileNames, sourceCode); run {
+
+		if options.printAST || checkAST(args) {
+			printProgramAST(options, cxArgs, sourceCode)
+			return
+		}
+
+		if options.tokenizeMode {
+			printTokenize(options, fileNames)
+			return
+		}
+
+		//if strings.Contains(args[0], "tokenize") {
+		if checktokenizeMode(args) {
+			printTokenize(options, fileNames)
+			return
+		}
+
+		runProgram(options, cxArgs, sourceCode)
+	}
+}
+
+func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
+	root, fileError := util.ProgramSandboxRootOpen(options.sandbox)
+	if fileError != nil {
+		fmt.Fprintf(os.Stderr, "cannot open the sandbox: %s\n", fileError.FileErrorMessage)
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
+	defer root.Close()
+	actions.AST.ProgramSandboxRoot = root
+	actions.AST.ProgramStdinInit(os.Stdin)
+
+	profiling.StartProfile("run")
+
+	defer profiling.StopProfile("run")
+
+	if options.executor != executorAuto && options.executor != executorOld && options.executor != executorVm {
+		fmt.Fprintf(os.Stderr, "unknown --executor %q, want auto, old or vm\n", options.executor)
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
+
+	if options.replMode || len(sourceCode) == 0 {
+		repl.Repl()
+		return
+	}
+
+	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
+	actions.AST.CxIrState.StringPool.StringPoolFreeze()
+
+	if options.executor != executorOld {
+		image, _, outside := executorLower(actions.AST)
+		switch {
+		case outside == "":
+			if code := executorVmRun(actions.AST, &image); code != types.CX_SUCCESS {
+				os.Exit(int(code))
+			}
+			return
+		case options.executor == executorVm:
+			fmt.Fprintf(os.Stderr, "cannot run on vm: %s\n", outside)
+			os.Exit(types.CX_RUNTIME_NOT_IMPLEMENTED)
+		}
+	}
+
+	err := execute.RunCompiled(actions.AST, 0, cxArgs)
+
+	if err != nil {
+		panic(err)
+	}
+	if actions.AST.RuntimeError.RuntimeErrorRecordRaised {
+		os.Exit(printer.PrinterRuntimeErrorPrint(actions.AST))
+	}
+
+	if opcodes.AssertFailed() {
+		os.Exit(types.CX_ASSERT)
+	}
+}
+
+// runStart reads the flags and sets up the program state for args, the part
+// of Run before parsing. It returns false when there is nothing to run.
+func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []*os.File, fileNames []string, start bool) {
 	types.Allocator = ast.AllocateSeq
 	runtime.LockOSThread()
 
 	runtime.GOMAXPROCS(2)
 
-	options := defaultCmdFlags()
+	options = defaultCmdFlags()
 
 	parseFlags(&options, args)
 
@@ -49,7 +133,7 @@ func Run(args []string) {
 	*/
 	if checkHelp(args) {
 		commandLine.PrintDefaults()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -60,7 +144,7 @@ func Run(args []string) {
 	*/
 	if options.printHelp {
 		printHelp()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -71,7 +155,7 @@ func Run(args []string) {
 	*/
 	if options.printVersion {
 		printVersion()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -81,7 +165,7 @@ func Run(args []string) {
 	*/
 	if checkversion(args) {
 		printVersion()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -91,7 +175,7 @@ func Run(args []string) {
 	*/
 	if options.printEnv {
 		printEnv()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -101,7 +185,7 @@ func Run(args []string) {
 	*/
 	if checkenv(args) {
 		printEnv()
-		return
+		return options, nil, nil, nil, false
 	}
 
 	/*
@@ -186,79 +270,5 @@ func Run(args []string) {
 	// Init 9: built-in opcode and operator tables
 	opcodes.RegisterOpcodes(actions.AST)
 
-	if run := parseProgram(options, fileNames, sourceCode); run {
-
-		if options.printAST || checkAST(args) {
-			printProgramAST(options, cxArgs, sourceCode)
-			return
-		}
-
-		if options.tokenizeMode {
-			printTokenize(options, fileNames)
-			return
-		}
-
-		//if strings.Contains(args[0], "tokenize") {
-		if checktokenizeMode(args) {
-			printTokenize(options, fileNames)
-			return
-		}
-
-		runProgram(options, cxArgs, sourceCode)
-	}
-}
-
-func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
-	root, fileError := util.ProgramSandboxRootOpen(options.sandbox)
-	if fileError != nil {
-		fmt.Fprintf(os.Stderr, "cannot open the sandbox: %s\n", fileError.FileErrorMessage)
-		os.Exit(types.CX_COMPILATION_ERROR)
-	}
-	defer root.Close()
-	actions.AST.ProgramSandboxRoot = root
-	actions.AST.ProgramStdinInit(os.Stdin)
-
-	profiling.StartProfile("run")
-
-	defer profiling.StopProfile("run")
-
-	if options.executor != executorAuto && options.executor != executorOld && options.executor != executorVm {
-		fmt.Fprintf(os.Stderr, "unknown --executor %q, want auto, old or vm\n", options.executor)
-		os.Exit(types.CX_COMPILATION_ERROR)
-	}
-
-	if options.replMode || len(sourceCode) == 0 {
-		repl.Repl()
-		return
-	}
-
-	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
-	actions.AST.CxIrState.StringPool.StringPoolFreeze()
-
-	if options.executor != executorOld {
-		image, _, outside := executorLower(actions.AST)
-		switch {
-		case outside == "":
-			if code := executorVmRun(actions.AST, &image); code != types.CX_SUCCESS {
-				os.Exit(int(code))
-			}
-			return
-		case options.executor == executorVm:
-			fmt.Fprintf(os.Stderr, "cannot run on vm: %s\n", outside)
-			os.Exit(types.CX_RUNTIME_NOT_IMPLEMENTED)
-		}
-	}
-
-	err := execute.RunCompiled(actions.AST, 0, cxArgs)
-
-	if err != nil {
-		panic(err)
-	}
-	if actions.AST.RuntimeError.RuntimeErrorRecordRaised {
-		os.Exit(printer.PrinterRuntimeErrorPrint(actions.AST))
-	}
-
-	if opcodes.AssertFailed() {
-		os.Exit(types.CX_ASSERT)
-	}
+	return options, cxArgs, sourceCode, fileNames, true
 }

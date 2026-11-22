@@ -3,10 +3,11 @@ package generator_test
 import (
 	"bytes"
 	"encoding/binary"
-	// "reflect" // only used by the FAILING tests below
+	"reflect"
+	"strings"
 	"testing"
-	// "time" // only used by the FAILING tests below
 
+	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	cxgenerator "github.com/skycoin/skycoin-cx/t10-generator"
 	cxast "github.com/skycoin/skycoin-cx/t3-ast"
@@ -23,65 +24,57 @@ import (
 // t.Logf("memory len=%v\n", len(tc.program.Memory))
 // t.Logf("value at memory data offset=%v\n", tc.program.Memory[tc.program.DataSegmentStartsAt:tc.program.DataSegmentStartsAt+tc.program.DataSegmentSize])
 
-// FAILING: t3-ast serializeExpression and serializeFunctionArguments drop TYPE_ATOMIC signatures via
-// ConvertIndexTypeSignaturesToPointerArgs, and deserializePackages leaves pkg.Globals nil; see #12
-// func TestSerialize(t *testing.T) {
-// 	tests := []struct {
-// 		scenario          string
-// 		program           *cxast.CXProgram
-// 		includeDataMemory bool
-// 		useCompression    bool
-// 	}{
-// 		{
-// 			scenario:          "program without literal",
-// 			program:           generateSampleProgramFromCXEvolves(t, false),
-// 			includeDataMemory: false,
-// 			useCompression:    false,
-// 		},
-// 		{
-// 			scenario:          "program with literal",
-// 			program:           generateSampleProgramFromCXEvolves(t, true),
-// 			includeDataMemory: true,
-// 			useCompression:    false,
-// 		},
-// 		{
-// 			scenario:          "program without literal, use compression",
-// 			program:           generateSampleProgramFromCXEvolves(t, false),
-// 			includeDataMemory: false,
-// 			useCompression:    true,
-// 		},
-// 		{
-// 			scenario:          "program with literal, use compression",
-// 			program:           generateSampleProgramFromCXEvolves(t, true),
-// 			includeDataMemory: true,
-// 			useCompression:    true,
-// 		},
-// 	}
-//
-// 	for _, tc := range tests {
-// 		t.Run(tc.scenario, func(t *testing.T) {
-// 			timeStart := time.Now()
-// 			serializedBytes := cxast.SerializeCXProgram(tc.program, tc.includeDataMemory, tc.useCompression)
-// 			t.Logf("Serialization took=%v\n", time.Since(timeStart))
-//
-// 			timeStart = time.Now()
-// 			deserializedCXProgram := cxast.Deserialize(serializedBytes, tc.useCompression)
-// 			t.Logf("Deserialization took=%v\n", time.Since(timeStart))
-//
-// 			if cxast.ToString(deserializedCXProgram) != cxast.ToString(tc.program) {
-// 				t.Errorf("%+v\n!=\n%+v\n", cxast.ToString(deserializedCXProgram), cxast.ToString(tc.program))
-// 			}
-//
-// 			if tc.includeDataMemory {
-// 				wantDataSegmentMemory := tc.program.Memory[tc.program.Data.StartsAt : tc.program.Data.StartsAt+tc.program.Data.Size]
-// 				gotDataSegmentMemory := deserializedCXProgram.Memory[deserializedCXProgram.Data.StartsAt : deserializedCXProgram.Data.StartsAt+deserializedCXProgram.Data.Size]
-// 				if !reflect.DeepEqual(wantDataSegmentMemory, gotDataSegmentMemory) {
-// 					t.Errorf("want %v, got %v", wantDataSegmentMemory, gotDataSegmentMemory)
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+// TestSerialize round trips the sample program, whose operands are TYPE_ATOMIC
+// type signatures, with and without memory and compression. See #12.
+func TestSerialize(t *testing.T) {
+	tests := []struct {
+		scenario          string
+		withLiteral       bool
+		includeDataMemory bool
+		useCompression    bool
+	}{
+		{"program without literal", false, false, false},
+		{"program with literal", true, true, false},
+		{"program without literal, use compression", false, false, true},
+		{"program with literal, use compression", true, true, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.scenario, func(t *testing.T) {
+			program := generateSampleProgramFromCXEvolves(t, tc.withLiteral)
+			var codec *lz4codec.Codec
+			if tc.useCompression {
+				codec = newProgramCodec(t)
+			}
+			serializedBytes, err := cxast.SerializeCXProgram(program, tc.includeDataMemory, codec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+			// Now a constructor call, as the other round trip tests make it.
+			deserializedCXProgram, err := cxast.Deserialize(serializedBytes, codec)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want, got := cxast.ToString(program), cxast.ToString(deserializedCXProgram)
+			if got != want {
+				t.Errorf("%+v\n!=\n%+v\n", got, want)
+			}
+			if !strings.Contains(want, "i32.add") {
+				t.Errorf("the sample program has no i32.add expression to compare:\n%s", want)
+			}
+
+			if tc.includeDataMemory || tc.useCompression {
+				wantDataSegmentMemory := program.Memory[program.Data.StartsAt : program.Data.StartsAt+program.Data.Size]
+				gotDataSegmentMemory := deserializedCXProgram.Memory[deserializedCXProgram.Data.StartsAt : deserializedCXProgram.Data.StartsAt+deserializedCXProgram.Data.Size]
+				if !reflect.DeepEqual(wantDataSegmentMemory, gotDataSegmentMemory) {
+					t.Errorf("want %v, got %v", wantDataSegmentMemory, gotDataSegmentMemory)
+				}
+			}
+		})
+	}
+}
 
 func generateSampleProgramFromCXEvolves(t *testing.T, withLiteral bool) *cxast.CXProgram {
 	var cxProgram *cxast.CXProgram

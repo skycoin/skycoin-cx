@@ -1,0 +1,13 @@
+// serialize returns the program as a []ui8 that deserialize accepts.
+
+package main
+
+func main() {
+	var target aff
+	var result []ui8
+	target = #{}
+	result = serialize(target)
+	bool.print(len(result) > 24)
+	deserialize(result)
+	i32.print(7)
+}

@@ -18,6 +18,11 @@ func TestMain(m *testing.M) {
 		main()
 		os.Exit(0)
 	}
+	// A round trip child runs outside the test framework, as cx runs, see
+	// TestSerializeRoundTrip.
+	if program := os.Getenv(serializeRoundTripProgramEnv); program != "" {
+		serializeRoundTripChild(strings.Fields(program))
+	}
 	os.Exit(m.Run())
 }
 

@@ -65,8 +65,8 @@ Not managed, with the reason.
   the objects they point at.
 * `DereferenceStruct` (`t3-ast/mem_offset.go`) lives on the stack of
   `GetFinalOffset` only.
-* The `serialized*` structs in `t3-ast/serialize_structs.go` are the byte
-  form. They hold offsets, not objects.
+* The serializer (`t3-ast/serialize.go`) writes the managers and arenas as
+  bytes and reads them back slot for slot, so it holds no objects.
 * `CXArgumentSlice`, `CXArgumentStruct` and `CXArgumentPointer` were
   unused and were removed with the Def files.
 
@@ -493,7 +493,8 @@ map.
 are `SourceFileGid`, and `CXLine.LineStr` is a `StringGid`. The parsers
 register a file once when they start it. Diagnostics, `PrinterStackPrint`,
 lowering, the serializer and the REPL take the path as text through
-`CXProgramSourceFileText`. The serialized format still writes the text.
+`CXProgramSourceFileText`. The serialized format writes the string pool and
+`SourceFileMng` as they are.
 
 ## Rules
 
