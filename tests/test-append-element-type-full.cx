@@ -1,0 +1,43 @@
+package main
+
+type P struct {
+	x i32
+}
+
+type Q struct {
+	y i64
+	z i64
+}
+
+func three() (r [3]i32) {
+	return r
+}
+
+func one() (r i32) {
+	return 4
+}
+
+func mkq() (r Q) {
+	return r
+}
+
+func main() {
+	var a [][2]i32
+	var x i32
+	a = append(a, x)
+	a = append(a, three())
+	a = append(a, one())
+	a = append(a, [3]i32{1, 2, 3})
+	var ps []P
+	var q Q
+	ps = append(ps, q)
+	ps = append(ps, mkq())
+	var b [][]i64
+	var c []i32
+	b = append(b, c)
+	b = append(b, []i32{1})
+	var e [2]i32
+	a = append(a, e)
+	b = append(b, []i64{1L})
+	b = [][]i64{[]i64{1L}, []i64{2L}}
+}

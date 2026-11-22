@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	var z i32
+	z = "s"
+	var b bool
+	b = 1
+}

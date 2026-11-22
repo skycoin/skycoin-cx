@@ -46,7 +46,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeOpcodeRenamed, ast.CompileErrorOperands{text("str.concat"), text("string.Concatenation"), 2611200002}, header + " " + fmt.Sprintf("%s was renamed to %s in language version %d", "str.concat", "string.Concatenation", 2611200002) + "\n"},
 		{ast.CompileErrorCodeOpcodeRenamedImport, ast.CompileErrorOperands{text("str.concat"), text("string.Concatenation"), 2611200002, text("string")}, header + " " + fmt.Sprintf("%s was renamed to %s in language version %d", "str.concat", "string.Concatenation", 2611200002) + fmt.Sprintf(", import \"%s%s\"", "sys/", "string") + "\n"},
 		{ast.CompileErrorCodeOperatorArgumentTypes, ast.CompileErrorOperands{text("i32.add")}, header + " " + fmt.Sprintf("invalid argument types for '%s' operator", "i32.add") + "\n"},
-		{ast.CompileErrorCodeOperatorInputCount, ast.CompileErrorOperands{text("op"), 2, 1}, header + " " + fmt.Sprintf("operator '%s' expects %d input/s, but %d input argument\n were provided", "op", 2, 1) + "\n"},
+		{ast.CompileErrorCodeOperatorInputCount, ast.CompileErrorOperands{text("op"), 2, 1}, header + " " + fmt.Sprintf("operator '%s' expects %d input/s, but %d input argument was provided", "op", 2, 1) + "\n"},
 		{ast.CompileErrorCodeOperatorOutputCount, ast.CompileErrorOperands{text("op"), 1, 2}, header + " " + fmt.Sprintf("operator '%s' expects to return %d output/s, but %d receiving argument/s were provided", "op", 1, 2) + "\n"},
 		{ast.CompileErrorCodePackageIdentifierMissing, ast.CompileErrorOperands{text("os"), text("Foo")}, header + " " + fmt.Sprintf("identifier '%s.%s' does not exist", "os", "Foo") + "\n"},
 		{ast.CompileErrorCodePointerOrderingOperator, ast.CompileErrorOperands{text("<")}, header + " " + fmt.Sprintf("pointer %s pointer is not allowed, pointers support only == and !=", "<") + "\n"},
@@ -76,6 +76,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeImportGuiBuildMissing, ast.CompileErrorOperands{text("sys/gl")}, header + " package \"sys/gl\" needs a GUI build of cx, build it with make build-gui\n"},
 		{ast.CompileErrorCodeLiteralElementType, ast.CompileErrorOperands{text("i32")}, header + " invalid composite literal type 'i32'\n"},
 		{ast.CompileErrorCodeStructLiteralFieldNames, ast.CompileErrorOperands{text("Point")}, header + " struct literal of type 'Point' must name its fields\n"},
+		{ast.CompileErrorCodeSliceLiteralElementType, ast.CompileErrorOperands{text("U"), text("T")}, header + " cannot use value of type 'U' as type 'T' in slice literal\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

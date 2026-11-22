@@ -2,6 +2,7 @@ package printer
 
 import (
 	"os"
+	"sort"
 	"strconv"
 
 	cxpackages "github.com/skycoin/skycoin-cx/t0-packages"
@@ -42,7 +43,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeOpcodeRenamed - ast.CompileErrorCodeNil:              {Format: "%H %s was renamed to %s in language version %d\n"},
 	ast.CompileErrorCodeOpcodeRenamedImport - ast.CompileErrorCodeNil:        {Format: "%H %s was renamed to %s in language version %d, import \"" + cxpackages.SysPrefix + "%s\"\n"},
 	ast.CompileErrorCodeOperatorArgumentTypes - ast.CompileErrorCodeNil:      {Format: "%H invalid argument types for '%s' operator\n"},
-	ast.CompileErrorCodeOperatorInputCount - ast.CompileErrorCodeNil:         {Format: "%H operator '%s' expects %d input/s, but %d input argument\n were provided\n"},
+	ast.CompileErrorCodeOperatorInputCount - ast.CompileErrorCodeNil:         {Format: "%H operator '%s' expects %d input/s, but %d input argument%~ provided\n"},
 	ast.CompileErrorCodeOperatorOutputCount - ast.CompileErrorCodeNil:        {Format: "%H operator '%s' expects to return %d output/s, but %d receiving argument/s were provided\n"},
 	ast.CompileErrorCodePackageIdentifierMissing - ast.CompileErrorCodeNil:   {Format: "%H identifier '%s.%s' does not exist\n"},
 	ast.CompileErrorCodePointerOrderingOperator - ast.CompileErrorCodeNil:    {Format: "%H pointer %s pointer is not allowed, pointers support only == and !=\n"},
@@ -70,6 +71,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeImportGuiBuildMissing - ast.CompileErrorCodeNil:      {Format: "%H package \"%s\" needs a GUI build of cx, build it with make build-gui\n"},
 	ast.CompileErrorCodeLiteralElementType - ast.CompileErrorCodeNil:         {Format: "%H invalid composite literal type '%s'\n"},
 	ast.CompileErrorCodeStructLiteralFieldNames - ast.CompileErrorCodeNil:    {Format: "%H struct literal of type '%s' must name its fields\n"},
+	ast.CompileErrorCodeSliceLiteralElementType - ast.CompileErrorCodeNil:    {Format: "%H cannot use value of type '%s' as type '%s' in slice literal\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through
@@ -79,11 +81,22 @@ func PrinterCompileErrorsRegister(prgrm *ast.CXProgram) {
 }
 
 // PrinterCompileErrorsPrint prints the compile errors of prgrm that are not
-// printed yet, in the order they were found.
+// printed yet, ordered by file and line, and a record equal to the one
+// before it once.
 func PrinterCompileErrorsPrint(prgrm *ast.CXProgram) {
 	list := &prgrm.CxIrState.CompileErrorList
+	pending := list.CompileErrorListRecords[list.CompileErrorListPrinted:]
+	sort.SliceStable(pending, func(left, right int) bool {
+		if pending[left].CompileErrorRecordFile != pending[right].CompileErrorRecordFile {
+			return pending[left].CompileErrorRecordFile < pending[right].CompileErrorRecordFile
+		}
+		return pending[left].CompileErrorRecordLine < pending[right].CompileErrorRecordLine
+	})
 	for ; list.CompileErrorListPrinted < len(list.CompileErrorListRecords); list.CompileErrorListPrinted++ {
 		record := &list.CompileErrorListRecords[list.CompileErrorListPrinted]
+		if list.CompileErrorListPrinted > 0 && *record == list.CompileErrorListRecords[list.CompileErrorListPrinted-1] {
+			continue
+		}
 		format := printerCompileErrorFormats[record.CompileErrorRecordCode-ast.CompileErrorCodeNil]
 		text := PrinterCompileErrorAppend(nil, prgrm, record)
 		if format.Stdout {

@@ -877,7 +877,16 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 
 	if checkIfFunctionCallNeedsAnOutput(prgrm, fromExpressionOperator, toExpression) {
 		// The call stays as a statement, so the errors after it are found too.
-		return fromExprs
+		if assignOp != ":=" {
+			return fromExprs
+		}
+		// y := noout() still declares y, as a placeholder, so its uses are no errors.
+		target := prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0])
+		file, line := ast.CXArgumentDebugFileGidLine(prgrm, target.ArgDetails)
+		_, declarator := ast.MakeArgument(prgrm, target.Name, file, line)
+		placeholder := declarationSpecifiersPlaceholder(prgrm, file, line)
+		placeholder.Type = types.INVALID
+		return append(DeclareLocal(prgrm, declarator, placeholder, nil, false), fromExprs...)
 	}
 
 	pkg, err := prgrm.GetCurrentPackage()

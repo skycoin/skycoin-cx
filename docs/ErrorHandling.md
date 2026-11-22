@@ -129,7 +129,7 @@ Three error records exist.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
   `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
   `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeStructLiteralFieldNames` (7050). 7041 is
+  `CompileErrorCodeSliceLiteralElementType` (7051). 7041 is
   `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
   7042 a slice built-in argument or result of the wrong type, 7043
   `CompileErrorCodeCallResultCall`, a call of a call result such as
@@ -142,9 +142,11 @@ Three error records exist.
   `CompileErrorCodeImportGuiBuildMissing`, an import of `sys/gl`, `sys/glfw`,
   `sys/al` or `sys/gltext` in a cx built without the cxfx tag, 7049
   `CompileErrorCodeLiteralElementType`, an elided literal element that does
-  not fit its element type, such as `{1}` in a `[]i32`, and 7050
+  not fit its element type, such as `{1}` in a `[]i32`, 7050
   `CompileErrorCodeStructLiteralFieldNames`, an elided struct element that
-  does not name its fields, such as `[]Point{{1, 2}}`. 7000 is
+  does not name its fields, such as `[]Point{{1, 2}}`, and 7051
+  `CompileErrorCodeSliceLiteralElementType`, a slice literal element of the
+  wrong type, such as `u` of type `U` in `[]T{u}`. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the
@@ -273,9 +275,13 @@ A compile error is data too. The compiler appends a `CompileErrorRecord`, a
 `CompileErrorCode`, a `SourceFileGid`, a line and up to four `StringGid` or
 integer operands, to `CxIrState.CompileErrorList` without building text.
 `printer.PrinterCompileErrorsPrint` prints the records through a table of
-formats indexed by the code when compilation returns. A compile error the
+formats indexed by the code when compilation returns, sorted by file and line
+with an identical record printed once. A compile error the
 compiler cannot go on after calls `CXProgramCompileErrorExit`, which prints
-through the printer the program registered and exits, see #413. A Go error
+through the printer the program registered and exits, see #413. A value
+whose error is recorded, such as `y` in `y := noout()` or the result of a
+missing method, is declared with the type `types.INVALID`, and the checks
+skip an expression that uses one. A Go error
 or lexer message that has no code of its own is the operand of
 `CompileErrorCodeMessage`.
 

@@ -1,0 +1,21 @@
+package main
+
+type A struct {
+	x i32
+}
+
+func (a A) show() {
+}
+
+func main() {
+	var a A
+	v := a.missing(1)
+	i32.print(v)
+	i32.print(a.gone() + 1)
+	var n i32
+	n.get()
+	k := a.show()
+	i32.print(k)
+	b.get()
+	var late i32 = "x"
+}

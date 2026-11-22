@@ -230,9 +230,9 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-slice-literal-struct.cx", types.CX_SUCCESS, "slice literals of structs and empty slice literals (skycoin-cx#47)",
 		"len 1\nlen 1 hmmmm\n4 [{x: 3, y: 1.5}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 0, y: 0}]\nloop 1 2\nmany 7 28\ndecl 1 8\nglobal 2 [{x: 1, y: 0}, {x: 2, y: 2.5}]\nempty 0 0\n")
 	t.RunWant("test-slice-literal-struct-errors.cx", types.CX_COMPILATION_ERROR, "elements of the wrong type in a struct slice literal (skycoin-cx#47)",
-		"test-slice-literal-struct-errors.cx:20 cannot assign value of type 'U'",
-		"test-slice-literal-struct-errors.cx:21 trying to assign argument of type 'U'",
-		"test-slice-literal-struct-errors.cx:22 trying to assign argument of type 'i32'",
+		"test-slice-literal-struct-errors.cx:20 cannot use value of type 'U' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:21 cannot use value of type 'U' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:22 cannot use value of type 'i32' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:23 function 'makeU' expected receiving variable of type 'U'; 'T' was provided",
 		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
 		"test-slice-literal-struct-errors.cx:25 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
@@ -353,12 +353,12 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-loop-continue-outside.cx", types.CX_COMPILATION_ERROR, "continue outside a loop (skycoin-cx#60)",
 		`test-loop-continue-outside.cx:6 continue is not in a loop`)
 	t.RunWant("test-operator-result-type.cx", types.CX_COMPILATION_ERROR, "an arithmetic result of another type is not cast implicitly (skycoin-cx#27)",
-		"test-operator-result-type.cx:4 cannot assign value of type 'i32' to identifier '1:f' of type 'f32'",
-		"test-operator-result-type.cx:6 cannot assign value of type 'i32' to identifier '2:h' of type 'f32'",
-		"test-operator-result-type.cx:8 cannot assign value of type 'i32' to identifier '4:y' of type 'f32'",
-		"test-operator-result-type.cx:9 cannot assign value of type 'i32' to identifier '5:l' of type 'i64'",
-		"test-operator-result-type.cx:11 cannot assign value of type 'i32' to identifier '6:a' of type 'f32'",
-		"test-operator-result-type.cx:13 cannot assign value of type 'f32' to identifier '8:n' of type 'i32'")
+		"test-operator-result-type.cx:4 cannot assign value of type 'i32' to identifier 'f' of type 'f32'",
+		"test-operator-result-type.cx:6 cannot assign value of type 'i32' to identifier 'h' of type 'f32'",
+		"test-operator-result-type.cx:8 cannot assign value of type 'i32' to identifier 'y' of type 'f32'",
+		"test-operator-result-type.cx:9 cannot assign value of type 'i32' to identifier 'l' of type 'i64'",
+		"test-operator-result-type.cx:11 cannot assign value of type 'i32' to identifier 'a' of type 'f32'",
+		"test-operator-result-type.cx:13 cannot assign value of type 'f32' to identifier 'n' of type 'i32'")
 	t.RunWant("test-operator-result-type-global.cx", types.CX_COMPILATION_ERROR, "a global initialized with an arithmetic result of another type (skycoin-cx#27)",
 		"test-operator-result-type-global.cx:3 cannot assign value of type 'i32' to identifier 'g' of type 'f32'")
 	t.RunWant("test-operator-result-type-valid.cx", types.CX_SUCCESS, "negative literals and arithmetic results of the receiver's type (skycoin-cx#27)",
@@ -401,7 +401,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-package-function-qualified.cx", types.CX_COMPILATION_ERROR, "pkg.f does not find a function of an import of pkg (skycoin/cx#9)",
 		"test-package-function-qualified.cx:25 identifier 'main.test1' does not exist")
 	t.RunWant("test-package-function-value.cx", types.CX_COMPILATION_ERROR, "pkg.F without parentheses is not a call (skycoin-cx#48)",
-		"test-package-function-value.cx:8 cannot assign value of type 'func()(i32)' to identifier '1:x' of type 'i32'",
+		"test-package-function-value.cx:8 cannot assign value of type 'func()(i32)' to identifier 'x' of type 'i32'",
 		"test-package-function-value.cx:9 function 'i32.print' expected input argument of type 'i32'; 'func()(i32)' was provided")
 	t.RunWant("issue-136.cx", types.CX_COMPILATION_ERROR, "pkg.F without parentheses is not a call (skycoin-cx#48)",
 		"issue-136.cx:7 invalid expression")
@@ -566,6 +566,42 @@ func runTestCases(t *runner.TestRunner) {
 		"\t\t0.- Function: A.m (1:a A) ()\n\t\t1.- Function: zeta () ()\n\t\t2.- Function: alpha () ()\n\t\t3.- Function: mid () ()\n\t\t4.- Function: omega () ()\n\t\t5.- Function: beta () ()\n\t\t6.- Function: main () ()\n")
 	t.RunWant("test-error-outputless-method.cx", types.CX_COMPILATION_ERROR, "an outputless call in an assignment leaves the later errors reported",
 		"test-error-outputless-method.cx:14 trying to use an outputless operator in an assignment", "test-error-outputless-method.cx:12 type 'A' has no method 'missing'")
+	t.RunWant("test-error-outputless-declare.cx", types.CX_COMPILATION_ERROR, "y := noout() declares y, so its uses report nothing more",
+		"test-error-outputless-declare.cx:14 trying to use an outputless operator in an assignment",
+		"test-error-outputless-declare.cx:25 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-outputless-declare.cx", types.CX_COMPILATION_ERROR, "y := noout() declares y, so its uses report nothing more",
+		"does not exist", "invalid type", "has no fields", "same type", "invalid argument types", ":15 ", ":17 ", ":18 ", ":19 ", ":21 ", ":23 ", ":24 ")
+	t.RunWant("test-error-method-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing method leaves the later errors reported",
+		"test-error-method-missing-continue.cx:12 type 'A' has no method 'missing'",
+		"test-error-method-missing-continue.cx:14 type 'A' has no method 'gone'",
+		"test-error-method-missing-continue.cx:16 illegal method call or field access on identifier 'n' of primitive type 'i32'",
+		"test-error-method-missing-continue.cx:17 method 'A.show' returns no value",
+		"test-error-method-missing-continue.cx:19 identifier 'b' does not exist",
+		"test-error-method-missing-continue.cx:20 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-method-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing method leaves the later errors reported",
+		"*mrs", "not found", "has no fields", "invalid type", ":13 ", ":18 ")
+	t.RunWant("test-error-assign-once.cx", types.CX_COMPILATION_ERROR, "an assignment of the wrong type is one error",
+		"test-error-assign-once.cx:5 cannot assign value of type 'str' to identifier 'z' of type 'i32'",
+		"test-error-assign-once.cx:7 cannot assign value of type 'i32' to identifier 'b' of type 'bool'")
+	t.RunMissing("test-error-assign-once.cx", types.CX_COMPILATION_ERROR, "an assignment of the wrong type is one error",
+		"trying to assign argument")
+	t.RunWant("test-error-order.cx", types.CX_COMPILATION_ERROR, "compile errors print in line order",
+		"test-error-order.cx:12 type 'A' has no method 'missing'\nerror: test-error-order.cx:14 trying to use an outputless operator in an assignment\nerror: test-error-order.cx:15 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunWant("test-append-element-type-full.cx", types.CX_COMPILATION_ERROR, "append checks the full element type, call results and literals included",
+		"test-append-element-type-full.cx:27 function 'append' expected argument of type '[2]i32'; 'i32' was provided",
+		"test-append-element-type-full.cx:28 function 'append' expected argument of type '[2]i32'; '[3]i32' was provided",
+		"test-append-element-type-full.cx:29 function 'append' expected argument of type '[2]i32'; 'i32' was provided",
+		"test-append-element-type-full.cx:30 function 'append' expected argument of type '[2]i32'; '[3]i32' was provided",
+		"test-append-element-type-full.cx:33 function 'append' expected argument of type 'P'; 'Q' was provided",
+		"test-append-element-type-full.cx:34 function 'append' expected argument of type 'P'; 'Q' was provided",
+		"test-append-element-type-full.cx:37 function 'append' expected argument of type '[]i64'; '[]i32' was provided",
+		"test-append-element-type-full.cx:38 function 'append' expected argument of type '[]i64'; '[]i32' was provided")
+	t.RunMissing("test-append-element-type-full.cx", types.CX_COMPILATION_ERROR, "append checks the full element type, call results and literals included",
+		":40 ", ":41 ", ":42 ", ":13 ", ":17 ", ":21 ")
+	t.RunWant("test-error-call-count-continue.cx", types.CX_COMPILATION_ERROR, "a call with a wrong number of inputs or receivers leaves the later errors reported",
+		"test-error-call-count-continue.cx:12 operator 'f' expects 1 input/s, but 0 input arguments were provided",
+		"test-error-call-count-continue.cx:14 operator 'g' expects to return 2 output/s, but 1 receiving argument/s were provided",
+		"test-error-call-count-continue.cx:16 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

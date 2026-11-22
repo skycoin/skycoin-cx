@@ -1,0 +1,26 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func noout() {
+}
+
+func take(n i32) {
+}
+
+func main() {
+	y := noout()
+	printf("%d\n", y)
+	var z i32
+	z = y
+	take(y)
+	w := y + 1
+	i32.print(w)
+	y = 3
+	var p P
+	p = y
+	r := y.x
+	var late i32 = "x"
+}

@@ -66,6 +66,7 @@ const (
 	CompileErrorCodeImportGuiBuildMissing
 	CompileErrorCodeLiteralElementType
 	CompileErrorCodeStructLiteralFieldNames
+	CompileErrorCodeSliceLiteralElementType
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

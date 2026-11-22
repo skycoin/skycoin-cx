@@ -1,0 +1,16 @@
+package main
+
+type A struct {
+	x i32
+}
+
+func noout() {
+}
+
+func main() {
+	var a A
+	a.missing()
+	var y i32
+	y = noout()
+	var late i32 = "x"
+}

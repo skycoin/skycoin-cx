@@ -1,0 +1,17 @@
+package main
+
+func f(a i32) (r i32) {
+	return a
+}
+
+func g() (a i32, b i32) {
+	return 1, 2
+}
+
+func main() {
+	x := f()
+	i32.print(x)
+	y := g()
+	i32.print(y)
+	var late i32 = "x"
+}

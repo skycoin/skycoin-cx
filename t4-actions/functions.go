@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -274,7 +275,12 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 			symbolsData.symbolsIndex = append(symbolsData.symbolsIndex, make(map[SymbolsDataKey]int))
 		}
 
-		ProcessMethodCall(prgrm, &expr, symbolsData)
+		if !ProcessMethodCall(prgrm, &expr, symbolsData) {
+			// Only the results are declared, as types.INVALID placeholders.
+			ProcessExpressionArguments(prgrm, symbolsData, &offset, fnIdx, exprAtomicOp.GetOutputs(prgrm), &expr, false)
+			symbolsScopeClose(symbolsData, expr)
+			continue
+		}
 
 		incDec := incDecOperandMissing(prgrm, exprAtomicOp)
 		ProcessExpressionArguments(prgrm, symbolsData, &offset, fnIdx, exprAtomicOp.GetInputs(prgrm), &expr, true)
@@ -291,15 +297,22 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		// ProcessReferenceAssignment(prgrm, &expr)
 		ProcessShortDeclaration(prgrm, &expr, fn.Expressions, i, &offset)
 		processTestExpression(prgrm, fn.Expressions, i)
+		if expressionOperandInvalid(prgrm, exprAtomicOp) {
+			// A placeholder of a reported error, so its type checks would only repeat it.
+			symbolsScopeClose(symbolsData, expr)
+			continue
+		}
 
-		CheckTypes(prgrm, fn.Expressions, i)
+		if !CheckTypes(prgrm, fn.Expressions, i) {
+			symbolsScopeClose(symbolsData, expr)
+			continue
+		}
 		CheckUndValidTypes(prgrm, fn.Expressions, i)
 		checkOperatorOperands(prgrm, fn.Expressions, i)
 		checkOperatorResultType(prgrm, fn.Expressions, i)
 		checkSliceBuiltinTypes(prgrm, fn.Expressions, i)
 		ProcessTypedOperator(prgrm, fn.Expressions, i)
-		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > int(expr.ExpressionScopeCloseCount), "FunctionDeclaration: scope close without a matching open")
-		symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
+		symbolsScopeClose(symbolsData, expr)
 	}
 
 	for _, slot := range symbolsData.escapedSlots {
@@ -309,6 +322,12 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	fn.Size = offset
 
 	releaseFunctionSymbols(prgrm, symbolsData)
+}
+
+// symbolsScopeClose closes the scopes that expr ends.
+func symbolsScopeClose(symbolsData *SymbolsData, expr ast.CXExpression) {
+	assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > int(expr.ExpressionScopeCloseCount), "FunctionDeclaration: scope close without a matching open")
+	symbolsData.symbolsIndex = symbolsData.symbolsIndex[:len(symbolsData.symbolsIndex)-int(expr.ExpressionScopeCloseCount)]
 }
 
 // ProcessTypedOperator gets the proper typed operator for the expression.
@@ -513,7 +532,7 @@ func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, cur
 	} else if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, inputTypeSig.ArgDetails); sigLine > 0 {
 		file, line = sigFile, sigLine
 	}
-	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignValueType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(outputName), prgrm.CXProgramCompileErrorText(outputType)})
+	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignValueType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(StripNameNumber(prgrm, outputName)), prgrm.CXProgramCompileErrorText(outputType)})
 }
 
 // FunctionCall completes the array of expressions for postfix function call.
@@ -1429,22 +1448,29 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			// We use `isInputs` to only print the error once.
 			// Otherwise we'd print the error twice: once for the input and again for the output
 			if inpType != outType && isInputs {
-				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignValueType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), int64(expressionOutputTypeSigName), prgrm.CXProgramCompileErrorText(outType)})
+				targetName := StripNameNumber(prgrm, expressionOutputTypeSigName)
+				if bytes.HasPrefix(prgrm.CXProgramNameBytes(targetName), []byte(constants.ELEMENT_PREFIX)) {
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), prgrm.CXProgramCompileErrorText(outType)})
+				} else {
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignValueType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), int64(targetName), prgrm.CXProgramCompileErrorText(outType)})
+				}
 			}
 
 		}
 	}
 }
 
-func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine, builtIn bool) {
+// checkMatchExprNumOfInputs records a call with a wrong number of inputs and
+// returns false.
+func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine, builtIn bool) bool {
 	// checking if number of inputs is not the same as the required number of inputs
 	if len(expression.GetInputs(prgrm)) == len(expressionOperatorInputs) {
-		return
+		return true
 	}
 
 	// built-ins without declared inputs, such as break and goto, take a label
 	if builtIn && len(expressionOperatorInputs) == 0 {
-		return
+		return true
 	}
 
 	// if the last input is of type undefined then it might be a variadic function, such as printf
@@ -1457,30 +1483,35 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0828.
 			if prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastTypeSig.Meta)).Type == types.UNDEFINED {
-				return
+				return true
 			}
 		case ast.TYPE_ATOMIC:
 			if types.Code(lastTypeSig.Meta) == types.UNDEFINED {
-				return
+				return true
 			}
 		}
 	}
 
 	// then we need to be strict in the number of inputs
 	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorInputCount, exprCXLine.FileName, exprCXLine.LineNumber, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorInputs)), int64(len(expression.GetInputs(prgrm)))})
-	prgrm.CXProgramCompileErrorExit()
+	return false
 }
 
-func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) {
+// checkMatchExprNumOfOutputs records a call with a wrong number of receivers
+// and returns false.
+func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) bool {
 	// checking if number of outputs is not the same as the required number of outputs
 	if len(expression.GetOutputs(prgrm)) != len(expressionOperatorOutputs) {
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorOutputCount, exprCXLine.FileName, exprCXLine.LineNumber, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorOutputs)), int64(len(expression.GetOutputs(prgrm)))})
-		prgrm.CXProgramCompileErrorExit()
+		return false
 	}
+	return true
 }
 
-// CheckTypes checks if the expected types are provided and outputted correctly.
-func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+// CheckTypes checks if the expected types are provided and outputted
+// correctly. It returns false after a call with a wrong number of inputs or
+// receivers, whose other checks would index past its arguments.
+func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) bool {
 	expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, currIndex)
 	if err != nil {
 		panic(err)
@@ -1495,10 +1526,11 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 		expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
-		// checking if number of inputs is not the same as the required number of inputs
-		checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn())
-		// checking if number of outputs is not the same as the required number of outputs
-		checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine)
+		inputsMatch := checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn())
+		outputsMatch := checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine)
+		if !inputsMatch || !outputsMatch {
+			return false
+		}
 	}
 
 	if expressionOperator != nil && expressionOperator.IsBuiltIn() && expressionOperator.AtomicOPCode == constants.OP_IDENTITY {
@@ -1563,7 +1595,8 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S0835.
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeStructLiteralFieldType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{int64(prgrm.GetCXArgFromArray(baseOutputArg.Fields[len(baseOutputArg.Fields)-1]).Name), int64(baseOutputArg.StructType.Name), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
-				} else {
+				} else if IsTempVar(prgrm, expressionOutputTypeSig.Name) || ShortCircuitJumpCheck(prgrm, exprs, currIndex) {
+					// Otherwise checkMatchParamTypes reports the full types below.
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignSymbolType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(receivedType), int64(expressionOutputTypeSig.Name), prgrm.CXProgramCompileErrorText(expectedType)})
 				}
 			}
@@ -1579,6 +1612,7 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 		// checking outputs matching operator's outputs
 		checkMatchParamTypes(prgrm, &exprs[currIndex], expressionOperator.GetOutputs(prgrm), expression.GetOutputs(prgrm), false)
 	}
+	return true
 }
 
 // ProcessStringAssignment sets the args PassBy to PASSBY_VALUE if the type is string.
@@ -2120,10 +2154,11 @@ func updateSymbolsTableOffsetAdd(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignat
 }
 
 // ProcessMethodCall resolves the method of a method call expression. The
-// receiver is the first input and names the method as its last field.
-func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData *SymbolsData) {
+// receiver is the first input and names the method as its last field. It
+// returns false after recording why the method cannot be resolved.
+func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData *SymbolsData) bool {
 	if !expr.IsMethodCall() {
-		return
+		return true
 	}
 	expression := &prgrm.CXAtomicOps[expr.Index]
 	receiverTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
@@ -2137,7 +2172,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	symbolTypeSig, err := lookupSymbol(prgrm, receiverPkg.Name, receiver.Name, symbolsData)
 	if err != nil {
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeIdentifierMissing, receiver.ArgDetails, ast.CompileErrorOperands{int64(receiver.Name)})
-		prgrm.CXProgramCompileErrorExit()
+		methodCallInvalidate(prgrm, expression)
+		return false
 	}
 
 	strct := symbolTypeSig.GetStructType(prgrm)
@@ -2158,8 +2194,9 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	}
 	if strct == nil {
 		typeText := ast.GetFormattedType(prgrm, typeSig)
-		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, symbolTypeSig.ArgDetails, ast.CompileErrorOperands{int64(symbolTypeSig.Name), prgrm.CXProgramCompileErrorText(typeText)})
-		prgrm.CXProgramCompileErrorExit()
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, receiver.ArgDetails, ast.CompileErrorOperands{int64(StripNameNumber(prgrm, symbolTypeSig.Name)), prgrm.CXProgramCompileErrorText(typeText)})
+		methodCallInvalidate(prgrm, expression)
+		return false
 	}
 
 	strctPkg, err := prgrm.GetPackageFromArray(strct.Package)
@@ -2169,7 +2206,9 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	method := prgrm.GetCXArgFromArray(methodIdx)
 	fnIdx, err := strctPkg.GetMethod(prgrm, strct.Name, method.Name)
 	if err != nil {
-		processMethodCallMissing(prgrm, strct, method)
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodMissing, method.ArgDetails, ast.CompileErrorOperands{int64(strct.Name), int64(method.Name)})
+		methodCallInvalidate(prgrm, expression)
+		return false
 	}
 	expression = &prgrm.CXAtomicOps[expr.Index]
 	expression.Operator = fnIdx
@@ -2180,7 +2219,22 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		receiverTypeSig.PassBy = constants.PASSBY_REFERENCE
 	}
 
-	methodCallResultsType(prgrm, expression, strct, method)
+	return methodCallResultsType(prgrm, expression, strct, method)
+}
+
+// methodCallInvalidate types the result variables of a method call that
+// cannot be resolved as types.INVALID, so their uses report nothing more.
+func methodCallInvalidate(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) {
+	for _, resultIdx := range expression.GetOutputs(prgrm) {
+		resultTypeSig := prgrm.GetCXTypeSignatureFromArray(resultIdx)
+		if resultTypeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE || !strings.HasPrefix(prgrm.CXProgramNameText(resultTypeSig.Name), constants.METHOD_RESULT_PREFIX) {
+			continue
+		}
+		result := prgrm.GetCXArg(ast.CXArgumentIndex(resultTypeSig.Meta))
+		if result.Type == types.UNDEFINED {
+			result.Type, result.Size = types.INVALID, 0
+		}
+	}
 }
 
 // typeSignaturePointer reports whether typeSig is a pointer.
@@ -2195,8 +2249,9 @@ func typeSignaturePointer(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bo
 }
 
 // methodCallResultsType gives the result variables of MethodCallValue the
-// types of the outputs of the method.
-func methodCallResultsType(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, strct *ast.CXStruct, method *ast.CXArgument) {
+// types of the outputs of the method. It returns false after recording a
+// method without the outputs its call uses.
+func methodCallResultsType(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, strct *ast.CXStruct, method *ast.CXArgument) bool {
 	methodOutputs := prgrm.GetFunctionFromArray(expression.Operator).GetOutputs(prgrm)
 	for i, resultIdx := range expression.GetOutputs(prgrm) {
 		resultTypeSig := prgrm.GetCXTypeSignatureFromArray(resultIdx)
@@ -2209,7 +2264,8 @@ func methodCallResultsType(prgrm *ast.CXProgram, expression *ast.CXAtomicOperato
 		}
 		if i >= len(methodOutputs) {
 			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodResultMissing, method.ArgDetails, ast.CompileErrorOperands{int64(strct.Name), int64(method.Name)})
-			prgrm.CXProgramCompileErrorExit()
+			methodCallInvalidate(prgrm, expression)
+			return false
 		}
 
 		outputTypeSig := prgrm.GetCXTypeSignatureFromArray(methodOutputs[i])
@@ -2233,13 +2289,7 @@ func methodCallResultsType(prgrm *ast.CXProgram, expression *ast.CXAtomicOperato
 		result.PointerTargetType = output.PointerTargetType
 		result.PassBy = output.PassBy
 	}
-}
-
-// processMethodCallMissing records that strct has no method named by field
-// and exits, as the call cannot be built without it.
-func processMethodCallMissing(prgrm *ast.CXProgram, strct *ast.CXStruct, field *ast.CXArgument) {
-	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodMissing, field.ArgDetails, ast.CompileErrorOperands{int64(strct.Name), int64(field.Name)})
-	prgrm.CXProgramCompileErrorExit()
+	return true
 }
 
 // GiveOffset
@@ -2863,6 +2913,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 // ProcessSymbolFields copies the correct field values for the sym.Fields from their struct fields.
 func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
+	if typeSignatureInvalid(prgrm, argTypeSignature) {
+		return
+	}
 	var argStructType *ast.CXStruct
 	if argTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -3230,6 +3283,28 @@ func symbolFieldAccessPrimitiveCheck(prgrm *ast.CXProgram, symTypeSignature, arg
 	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, symTypeSignature.ArgDetails, ast.CompileErrorOperands{int64(symTypeSignature.Name), prgrm.CXProgramCompileErrorText(ast.GetFormattedType(prgrm, argTypeSignature))})
 }
 
+// sliceLiteralNestedTemporary reports whether the temporary name is set by an
+// identity before currIndex, as the element of a nested slice literal is.
+// That temporary has only its base type.
+func sliceLiteralNestedTemporary(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int, name stringpool.StringGid) bool {
+	for i := currIndex - 1; i >= 0; i-- {
+		if exprs[i].Type == ast.CX_LINE {
+			continue
+		}
+		expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, i)
+		if err != nil {
+			continue
+		}
+		outputs := expression.GetOutputs(prgrm)
+		if len(outputs) != 1 || prgrm.GetCXTypeSignatureFromArray(outputs[0]).Name != name {
+			continue
+		}
+		operator := prgrm.GetFunctionFromArray(expression.Operator)
+		return operator != nil && operator.IsBuiltIn() && operator.AtomicOPCode == constants.OP_IDENTITY
+	}
+	return false
+}
+
 // checkSliceBuiltinTypes checks the element and result types of append,
 // insert, resize, remove and copy against the type of their slice.
 func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
@@ -3267,16 +3342,16 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 		if typeSignatureUndefined(prgrm, typeSig) {
 			return
 		}
-		// A nested slice literal element is a temporary with only its base type.
-		if strings.HasPrefix(expectedType, "[") && IsTempVar(prgrm, typeSig.Name) {
-			return
-		}
+		temporary := IsTempVar(prgrm, typeSig.Name)
 		receivedType := ast.GetFormattedType(prgrm, typeSig)
 		if receivedType == expectedType {
 			return
 		}
+		if temporary && !strings.HasPrefix(receivedType, "[") && strings.HasSuffix(expectedType, "]"+receivedType) && sliceLiteralNestedTemporary(prgrm, exprs, currIndex, typeSig.Name) {
+			return
+		}
 		file, line := exprLine(prgrm, exprs, currIndex)
-		if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, typeSig.ArgDetails); sigLine > 0 {
+		if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, typeSig.ArgDetails); sigLine > 0 && !temporary {
 			file, line = sigFile, sigLine
 		}
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeSliceElementType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
@@ -3356,7 +3431,7 @@ func incDecOperandAdd(prgrm *ast.CXProgram, exprAtomicOp *ast.CXAtomicOperator) 
 func checkOperatorSameType(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	expression := &prgrm.CXAtomicOps[exprs[currIndex].Index]
 	operator := prgrm.GetFunctionFromArray(expression.Operator)
-	if operator == nil || !ast.IsOperator(operator.AtomicOPCode) || len(expression.GetOutputs(prgrm)) == 0 {
+	if operator == nil || !ast.IsOperator(operator.AtomicOPCode) || len(expression.GetOutputs(prgrm)) == 0 || expressionOperandInvalid(prgrm, expression) {
 		return
 	}
 	if err := checkSameNativeType(prgrm, &exprs[currIndex]); err != nil {
@@ -3719,4 +3794,33 @@ func shortDeclarationCollectionSet(prgrm *ast.CXProgram, decl, assign *ast.CXAto
 		ProcessSlice(prgrm, ast.CXArgumentIndex(outSig.Meta))
 	}
 	return true
+}
+
+// typeSignatureInvalid reports whether typeSig is a types.INVALID placeholder,
+// a value whose compile error is already recorded.
+func typeSignatureInvalid(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bool {
+	switch typeSig.Type {
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
+		return arg.Type == types.INVALID || arg.GetAssignmentElement(prgrm).Type == types.INVALID
+	case ast.TYPE_ATOMIC, ast.TYPE_POINTER_ATOMIC:
+		return types.Code(typeSig.Meta) == types.INVALID
+	}
+	return false
+}
+
+// expressionOperandInvalid reports whether an input or output of expression
+// is a types.INVALID placeholder.
+func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) bool {
+	for _, typeSigIdx := range expression.GetInputs(prgrm) {
+		if typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(typeSigIdx)) {
+			return true
+		}
+	}
+	for _, typeSigIdx := range expression.GetOutputs(prgrm) {
+		if typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(typeSigIdx)) {
+			return true
+		}
+	}
+	return false
 }

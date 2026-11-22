@@ -62,6 +62,8 @@
 
 #### Fixed
 
+- Compile errors print in file and line order, an identical error prints once, and a recoverable error no longer stops the compiler. `y := noout()` still declares `y`, as a placeholder of the new type `types.INVALID`, so its uses are no `identifier 'y' does not exist`. A missing method, a method call on a primitive or undeclared receiver, a method without a result used as a value and a call with a wrong number of inputs or receivers are recorded, and the errors after them in the same function are reported without a cascade through the method result. `z = "s"` prints `cannot assign value of type 'str' to identifier 'z' of type 'i32'` once instead of with `trying to assign argument`, and names `z` without its scope number. An element of the wrong type in a slice literal is `cannot use value of type 'U' as type 'T' in slice literal`, `CompileErrorCodeSliceLiteralElementType` (7051). `operator 'f' expects 1 input/s` ends with `input arguments were provided` on one line
+- `append` checks the full type of a call result or literal element, so `append(a, f())` with an `i32` or `[3]i32` result into a `[][2]i32` and `append(b, []i32{1})` into a `[][]i64` are compile errors naming both types, at the line of the call
 - `x := v` typed `x` as the element type when `v` was a slice, an array, an element of a `[][]i32` or `[2][3]i32`, a slice or array field, or `&a` of an array. `x` takes the full type of `v`. `d = r[1]` on a `[2][3]i32` copied one element
 - `append` that collected could lose the elements of the slice it grew, as `tests/test-gc.cx` did on a ptr64 build, which `make test-ptr64` now runs
 - `cx -ast` prints functions, structs and imports in declaration order instead of map order
