@@ -13,10 +13,14 @@ var CurrentFile ast.SourceFileGid
 func (yylex Lexer) Error(e string) {
 	if inREPL {
 		fmt.Printf("syntax error: %s\n", e)
-	} else {
-		fmt.Printf("%s:%d: syntax error: %s\n", Program.CXProgramSourceFileText(CurrentFile), yylex.l+1, e)
+		yylex.stop()
+		return
 	}
-
+	name := ""
+	if yylex.tok.yys == IDENTIFIER || yylex.tok.yys == SEMICOLON {
+		name = yylex.tok.tok
+	}
+	Program.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSyntax, CurrentFile, yylex.tok.line, yylex.tok.column, ast.CompileErrorOperands{Program.CXProgramCompileErrorText(ast.CompileErrorSyntaxText(e, name))})
 	yylex.stop()
 }
 
@@ -28,6 +32,7 @@ func (yylex *Lexer) Lex(lval *yySymType) int {
 	yylex.next()
 	lval.scancopy(yylex.tok)
 	lineNo = lval.line
+	Program.CXProgramCompileErrorTokenSet(CurrentFile, lval.line, lval.column)
 	return lval.yys
 }
 
@@ -38,8 +43,7 @@ func NewLexer(rdr io.Reader) *Lexer {
 		if ast.InREPL {
 			panic(fmt.Sprintf("[%d:%d] %s\n", l, c, msg))
 		}
-		Program.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, l, ast.CompileErrorOperands{Program.CXProgramCompileErrorText(msg)})
-		Program.CXProgramCompileErrorExit()
+		Program.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, CurrentFile, l, c, ast.CompileErrorOperands{Program.CXProgramCompileErrorText(msg)})
 	})
 	return lx
 }
@@ -60,6 +64,7 @@ func (lval *yySymType) scancopy(tok *yySymType) {
 	lval.i8 = tok.i8
 	lval.ints = tok.ints
 	lval.line = tok.line
+	lval.column = tok.column
 	lval.string = tok.string
 	lval.stringA = tok.stringA
 	lval.tok = tok.tok

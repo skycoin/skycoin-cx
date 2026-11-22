@@ -127,9 +127,10 @@ Three error records exist.
   `FileOperationOpen` (1501) to `FileOperationSandboxRootOpen` (1505).
 - `CompileErrorRecord` in `t3-ast/compileerror.go` holds one compile error.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
-  `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
-  `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeSliceLiteralElementType` (7051). 7041 is
+  `CompileErrorRecordLine`, `CompileErrorRecordColumn`, 0 when unknown, and
+  `CompileErrorRecordOperands`. The code is a `CompileErrorCode` from
+  `CompileErrorCodeMessage` (7001) to
+  `CompileErrorCodeDereferenceNonPointer` (7053). 7041 is
   `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
   7042 a slice built-in argument or result of the wrong type, 7043
   `CompileErrorCodeCallResultCall`, a call of a call result such as
@@ -146,7 +147,10 @@ Three error records exist.
   `CompileErrorCodeStructLiteralFieldNames`, an elided struct element that
   does not name its fields, such as `[]Point{{1, 2}}`, and 7051
   `CompileErrorCodeSliceLiteralElementType`, a slice literal element of the
-  wrong type, such as `u` of type `U` in `[]T{u}`. 7000 is
+  wrong type, such as `u` of type `U` in `[]T{u}`. 7052
+  `CompileErrorCodeSyntax` is a syntax error, whose operand names the
+  unexpected and the expected tokens, and 7053
+  `CompileErrorCodeDereferenceNonPointer` a `*x` of a non-pointer `x`. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the
@@ -272,16 +276,24 @@ builtins do the same with `CX_ASSERT` or `CX_PANIC`. This holds under the REPL
 and any embedding host too.
 
 A compile error is data too. The compiler appends a `CompileErrorRecord`, a
-`CompileErrorCode`, a `SourceFileGid`, a line and up to four `StringGid` or
-integer operands, to `CxIrState.CompileErrorList` without building text.
+`CompileErrorCode`, a `SourceFileGid`, a line, a column and up to four
+`StringGid` or integer operands, to `CxIrState.CompileErrorList` without
+building text. The column is that of the lexer token the parser is at, which
+the rules of identifiers, literals, calls and statements set to where they
+start, and `CXArgumentDebug` and `CXLine` keep it.
 `printer.PrinterCompileErrorsPrint` prints the records through a table of
-formats indexed by the code when compilation returns, sorted by file and line
-with an identical record printed once. A compile error the
-compiler cannot go on after calls `CXProgramCompileErrorExit`, which prints
-through the printer the program registered and exits, see #413. A value
-whose error is recorded, such as `y` in `y := noout()` or the result of a
-missing method, is declared with the type `types.INVALID`, and the checks
-skip an expression that uses one. A Go error
+formats indexed by the code when compilation returns, as
+`error: file:line:column`, sorted by file, line and column with an identical
+record printed once. A syntax error is a record too, and stops the parse of
+its file only. After errors of the preliminary stage other than syntax
+errors the bodies are compiled as well, and an error that stage recorded is
+not recorded again. Only an unterminated string still calls
+`CXProgramCompileErrorExit`, which prints through the printer the program
+registered and exits, see #413. A value whose error is recorded, such as `y`
+in `y := noout()` or the result of a missing method, is declared with the
+type `types.INVALID`, and the checks skip an expression that uses one. A call
+of a missing function, native or package member calls a stand in that takes
+any inputs and returns one `types.INVALID` result. A Go error
 or lexer message that has no code of its own is the operand of
 `CompileErrorCodeMessage`.
 

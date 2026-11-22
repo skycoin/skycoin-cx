@@ -38,7 +38,7 @@ const readCountMax = 10
 /* the following code is provided */
 func (s *Lexer) init(r io.Reader, errh func(l, c int, msg string)) {
 	s.scan = r
-	s.l, s.c, s.b, s.r, s.e = 0, 0, -1, 0, 0
+	s.l, s.c, s.b, s.r, s.e = 0, 1, -1, 0, 0
 	s.lineStr = ""
 	s.buf = make([]byte, 1<<LexerBufferMin)
 	s.buf[0] = sentinel
@@ -185,6 +185,7 @@ redonext:
 		s.nextch()
 	}
 	s.tok.line = s.l + 1
+	s.tok.column = s.c + 1
 
 	s.start()
 
@@ -205,6 +206,7 @@ redonext:
 		s.nextch()
 		if nlsemi {
 			s.tok.yys = SEMICOLON
+			s.tok.tok = "\n"
 		}
 		s.nlsemi = false
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
@@ -240,6 +242,7 @@ redonext:
 	case ';':
 		s.nextch()
 		s.tok.yys = SEMICOLON
+		s.tok.tok = ";"
 	case ':':
 		s.nextch()
 		if s.ch == '=' {
@@ -461,7 +464,7 @@ func (s *Lexer) ident() {
 
 	// possibly a keyword
 	lit := s.segment()
-	s.tok = &yySymType{line: s.tok.line, lineStr: s.tok.lineStr}
+	s.tok = &yySymType{line: s.tok.line, column: s.tok.column, lineStr: s.tok.lineStr}
 	if len(lit) >= 2 {
 		if tok := KeywordMap[string(lit)]; tok != 0 {
 			switch tok {
@@ -674,7 +677,7 @@ func (s *Lexer) number(seenPoint bool) {
 		ok = false
 	}
 
-	s.tok = &yySymType{line: s.tok.line, lineStr: s.tok.lineStr}
+	s.tok = &yySymType{line: s.tok.line, column: s.tok.column, lineStr: s.tok.lineStr}
 	switch kind {
 	case INT_LITERAL:
 		result, err := strconv.ParseInt(yylex, base, 32)
@@ -789,7 +792,7 @@ func (s *Lexer) rawString() {
 			break
 		}
 		if s.ch < 0 {
-			s.errorf("string not terminated")
+			s.errh(s.tok.line, s.tok.column, "string not terminated")
 			break
 		}
 		s.nextch()
@@ -828,8 +831,11 @@ func (s *Lexer) stdString() {
 			s.nextch()
 		}
 		if s.ch < 0 {
-			s.errorf("string not terminated")
-			break
+			s.errh(s.tok.line, s.tok.column, "string not terminated")
+			// Unquote would only report the same string again.
+			s.tok.yys = STRING_LITERAL
+			s.nlsemi = true
+			return
 		}
 		s.nextch()
 	}

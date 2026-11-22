@@ -29,6 +29,7 @@
 	// Parse() is the function that is called from main().
 	// It is needed because yyParse is not exported.
 	func Parse(code string) int {
+		yyErrorVerbose = true
 		codeBuf := bytes.NewBufferString(code)
 		return yyParse(NewLexer(codeBuf))
 	}
@@ -67,6 +68,7 @@
 	ints    []int
 
 	line int
+	column int
 
 	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
 	// Now a pointer at rest, site S1394.

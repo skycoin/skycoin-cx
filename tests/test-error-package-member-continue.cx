@@ -1,0 +1,12 @@
+package main
+import "sys/os"
+
+func main() {
+	os.Nope()
+	x := os.Nope2(1, 2)
+	y := os.NoVal
+	i32.print(x + y)
+	time.Sleep(1)
+	os.ReadAllHmm("a")
+	var late i32 = "s"
+}

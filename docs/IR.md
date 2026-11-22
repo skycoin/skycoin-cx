@@ -185,8 +185,8 @@ open and close a symbol scope in `FunctionDeclaration`.
 ### Line markers
 
 A `CX_LINE` expression points at an `ast.CXLine`
-(`t3-ast/cxline_def.go`) with `FileName`, `LineNumber` and `LineStr`.
-`ast.MakeCXLineExpression` creates them. The parser puts one before each
+(`t3-ast/cxline_def.go`) with `FileName`, `LineNumber`, `LineColumn` and
+`LineStr`. `ast.MakeCXLineExpression` creates them. The parser puts one before each
 statement, and error messages use the nearest preceding marker. The VM
 skips them, but they take a slot in `Expressions`, so jump distances
 count them.
@@ -529,7 +529,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 3 |
+| 8 to 11 | format | `serializeFormatVersion`, now 4 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 

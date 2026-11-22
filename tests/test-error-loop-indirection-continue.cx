@@ -1,0 +1,13 @@
+package main
+
+func noout() {
+}
+
+func main() {
+	for noout() {
+		i32.print(1)
+	}
+	x := *noout()
+	i32.print(x)
+	var late i32 = "s"
+}

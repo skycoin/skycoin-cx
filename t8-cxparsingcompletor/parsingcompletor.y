@@ -25,6 +25,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 	// var actions.AST = MakeProgram(CALLSTACK_SIZE, STACK_SIZE, INIT_HEAP_SIZE)
 	
 	func Parse (lexer *Lexer) int {
+		yyErrorVerbose = true
 		return yyParse(lexer)
 	}
 %}
@@ -48,6 +49,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 	ints    []int
 
 	line int
+	column int
         lineStr string
 
 	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
@@ -725,7 +727,9 @@ int_value:
 primary_expression:
                 IDENTIFIER
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PrimaryIdentifier(actions.AST,$1)
+			actions.TokenPositionPop(position)
                 }
 	|	FUNC LPAREN RPAREN
 		{
@@ -737,52 +741,76 @@ primary_expression:
                 }
         |       STRING_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.STR, types.Make_obj([]byte($1)), false)
+			actions.TokenPositionPop(position)
                 }
         |       BOOLEAN_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			exprs := actions.WritePrimaryExprs(actions.AST,types.BOOL, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
 			$$ = exprs
                 }
         |       BYTE_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.I8, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       SHORT_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.I16, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       INT_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.I32, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       LONG_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.I64, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       UNSIGNED_BYTE_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.UI8, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       UNSIGNED_SHORT_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.UI16, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       UNSIGNED_INT_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.UI32, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       UNSIGNED_LONG_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.UI64, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       FLOAT_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.F32, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       DOUBLE_LITERAL
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.WritePrimaryExprs(actions.AST,types.F64, encoder.Serialize($1), false)
+			actions.TokenPositionPop(position)
                 }
         |       LPAREN expression RPAREN
                 { $$ = $2 }
@@ -807,23 +835,33 @@ postfix_expression:
 		primary_expression
 	|       postfix_expression LBRACK assignment_expression RBRACK
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionArray(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
                 }
         |       type_specifier PERIOD after_period
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionNative(actions.AST,types.Code($1), $3)
+			actions.TokenPositionPop(position)
                 }
 	|       postfix_expression LPAREN RPAREN
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionEmptyFunCall(actions.AST,$1)
+			actions.TokenPositionPop(position)
                 }
 	|       postfix_expression LPAREN argument_expression_list RPAREN
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
                 }
         |       postfix_expression PERIOD IDENTIFIER
                 {
+			position := actions.TokenPositionPush($<line>3, $<column>3)
 			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -845,7 +883,9 @@ unary_expression:
                 }
 	|       unary_operator unary_expression
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.UnaryExpression(actions.AST,$1, $2)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -986,7 +1026,9 @@ assignment_expression:
                 struct_literal_expression
 	|       unary_expression assignment_operator assignment_expression
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionAssignmentExpression($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1008,11 +1050,15 @@ assignment_operator:
 expression:     assignment_expression
 	|       assignment_target_list ASSIGN assignment_value_list
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
 	|       assignment_target_list CASSIGN assignment_value_list
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1121,15 +1167,21 @@ expression_statement:
                 { $$ = nil }
 	|       expression SEMICOLON
                 {          
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement($1)
+			actions.TokenPositionPop(position)
                 }
 	|       unary_expression INC_OP SEMICOLON
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, true))
+			actions.TokenPositionPop(position)
                 }
 	|       unary_expression DEC_OP SEMICOLON
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, false))
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1208,7 +1260,9 @@ else_statement:
 iteration_statement:
                 FOR conditional_expression compound_statement
                 {
+			position := actions.TokenPositionPush($<line>2, $<column>2)
 			$$ = actions.IterationExpressions(actions.AST,nil, $2, nil, $3)
+			actions.TokenPositionPop(position)
                 }
         |       FOR for_clause_statement for_condition_statement compound_statement
                 {			
@@ -1226,7 +1280,9 @@ for_clause_assignment:
                 conditional_expression
 	|       unary_expression assignment_operator for_clause_assignment
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionAssignmentExpression($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1243,7 +1299,9 @@ for_post_expression:
                 }
 	|       assignment_target_list ASSIGN for_assignment_value_list
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1251,7 +1309,9 @@ for_init_assignment:
                 conditional_expression
 	|       unary_expression assignment_operator assignment_expression
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionAssignmentExpression($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1259,11 +1319,15 @@ for_init_expression:
                 for_init_assignment
 	|       assignment_target_list ASSIGN for_assignment_value_list
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
 	|       assignment_target_list CASSIGN for_assignment_value_list
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
@@ -1272,7 +1336,9 @@ for_clause_statement:
                 { $$ = nil }
 	|       for_init_expression SEMICOLON
                 {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement($1)
+			actions.TokenPositionPop(position)
                 }
                 ;
 

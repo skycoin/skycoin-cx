@@ -1,0 +1,7 @@
+package main
+
+func main() {
+	var late i32 = "s"
+	s := []i32{1, 2}
+	s[1, 0] = 9
+}

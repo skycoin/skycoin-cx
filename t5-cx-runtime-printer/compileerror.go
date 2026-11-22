@@ -11,9 +11,10 @@ import (
 )
 
 // printerCompileErrorFormat is the text of one compile error code. In
-// Format, %H is the "error: file:line" header, %s the next operand as a
-// StringGid and %d the next as an integer. %+ is "s" when the last integer
-// is above 1, and %~ is " was" when it is 1 and "s were" otherwise.
+// Format, %H is the "error: file:line:column" header, without a column of 0,
+// %s the next operand as a StringGid and %d the next as an integer. %+ is
+// "s" when the last integer is above 1, and %~ is " was" when it is 1 and
+// "s were" otherwise.
 // Stdout sends the text to stdout instead of stderr.
 type printerCompileErrorFormat struct {
 	Format string
@@ -53,7 +54,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeStrConcatenation - ast.CompileErrorCodeNil:           {Format: "%H str + str is not allowed, use string.Concatenation\n"},
 	ast.CompileErrorCodeStrEqualityOperator - ast.CompileErrorCodeNil:        {Format: "%H str %s str is not allowed, use string.EqualityByByteValue or string.EqualityByHeapPointer\n"},
 	ast.CompileErrorCodeStrOrderingOperator - ast.CompileErrorCodeNil:        {Format: "%H str %s str is not allowed, use string.OrderingByByteValue\n"},
-	ast.CompileErrorCodeStructFieldDuplicate - ast.CompileErrorCodeNil:       {Format: "%H : duplicate field", Stdout: true},
+	ast.CompileErrorCodeStructFieldDuplicate - ast.CompileErrorCodeNil:       {Format: "%H duplicate field %s\n"},
 	ast.CompileErrorCodeStructFieldMultiplyDefined - ast.CompileErrorCodeNil: {Format: "%H Multiply defined struct field: %s\n"},
 	ast.CompileErrorCodeStructLiteralFieldType - ast.CompileErrorCodeNil:     {Format: "%H field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided\n"},
 	ast.CompileErrorCodeMethodMissing - ast.CompileErrorCodeNil:              {Format: "%H type '%s' has no method '%s'\n"},
@@ -72,6 +73,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeLiteralElementType - ast.CompileErrorCodeNil:         {Format: "%H invalid composite literal type '%s'\n"},
 	ast.CompileErrorCodeStructLiteralFieldNames - ast.CompileErrorCodeNil:    {Format: "%H struct literal of type '%s' must name its fields\n"},
 	ast.CompileErrorCodeSliceLiteralElementType - ast.CompileErrorCodeNil:    {Format: "%H cannot use value of type '%s' as type '%s' in slice literal\n"},
+	ast.CompileErrorCodeSyntax - ast.CompileErrorCodeNil:                     {Format: "%H syntax error: %s\n"},
+	ast.CompileErrorCodeDereferenceNonPointer - ast.CompileErrorCodeNil:      {Format: "%H cannot dereference non-pointer '%s' of type '%s'\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through
@@ -81,17 +84,11 @@ func PrinterCompileErrorsRegister(prgrm *ast.CXProgram) {
 }
 
 // PrinterCompileErrorsPrint prints the compile errors of prgrm that are not
-// printed yet, ordered by file and line, and a record equal to the one
+// printed yet, ordered by file, line and column, and a record equal to the one
 // before it once.
 func PrinterCompileErrorsPrint(prgrm *ast.CXProgram) {
 	list := &prgrm.CxIrState.CompileErrorList
-	pending := list.CompileErrorListRecords[list.CompileErrorListPrinted:]
-	sort.SliceStable(pending, func(left, right int) bool {
-		if pending[left].CompileErrorRecordFile != pending[right].CompileErrorRecordFile {
-			return pending[left].CompileErrorRecordFile < pending[right].CompileErrorRecordFile
-		}
-		return pending[left].CompileErrorRecordLine < pending[right].CompileErrorRecordLine
-	})
+	printerCompileErrorsSort(list.CompileErrorListRecords[list.CompileErrorListPrinted:])
 	for ; list.CompileErrorListPrinted < len(list.CompileErrorListRecords); list.CompileErrorListPrinted++ {
 		record := &list.CompileErrorListRecords[list.CompileErrorListPrinted]
 		if list.CompileErrorListPrinted > 0 && *record == list.CompileErrorListRecords[list.CompileErrorListPrinted-1] {
@@ -124,6 +121,10 @@ func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.Co
 			text = append(text, prgrm.CXProgramSourceFileText(record.CompileErrorRecordFile)...)
 			text = append(text, ':')
 			text = strconv.AppendInt(text, int64(record.CompileErrorRecordLine), 10)
+			if record.CompileErrorRecordColumn > 0 {
+				text = append(text, ':')
+				text = strconv.AppendInt(text, int64(record.CompileErrorRecordColumn), 10)
+			}
 		case 's':
 			text = append(text, prgrm.CXProgramNameBytes(stringpool.StringGid(record.CompileErrorRecordOperands[operand]))...)
 			operand++
@@ -146,4 +147,18 @@ func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.Co
 		}
 	}
 	return text
+}
+
+// printerCompileErrorsSort orders pending by file, line and column, keeping
+// equal positions in record order.
+func printerCompileErrorsSort(pending []ast.CompileErrorRecord) {
+	sort.SliceStable(pending, func(left, right int) bool {
+		if pending[left].CompileErrorRecordFile != pending[right].CompileErrorRecordFile {
+			return pending[left].CompileErrorRecordFile < pending[right].CompileErrorRecordFile
+		}
+		if pending[left].CompileErrorRecordLine != pending[right].CompileErrorRecordLine {
+			return pending[left].CompileErrorRecordLine < pending[right].CompileErrorRecordLine
+		}
+		return pending[left].CompileErrorRecordColumn < pending[right].CompileErrorRecordColumn
+	})
 }

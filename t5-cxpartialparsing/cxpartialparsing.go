@@ -35,6 +35,7 @@ var fileName string
 // Parse() is the function that is called from main().
 // It is needed because yyParse is not exported.
 func Parse(code string) int {
+	yyErrorVerbose = true
 	codeBuf := bytes.NewBufferString(code)
 	return yyParse(NewLexer(codeBuf))
 }
@@ -52,7 +53,7 @@ func PreFunctionDeclaration(fnIdx ast.CXFunctionIndex, inputs []*ast.CXArgument,
 	}
 }
 
-//line t5-cxpartialparsing/cxpartialparsing.y:51
+//line t5-cxpartialparsing/cxpartialparsing.y:52
 type yySymType struct {
 	yys     int
 	i       int
@@ -72,7 +73,8 @@ type yySymType struct {
 	stringA []string
 	ints    []int
 
-	line int
+	line   int
+	column int
 
 	// OBJMODEL: CXArgumentGid, the parser value stack lives across Allocs, phase 4 #326.
 	// Now a pointer at rest, site S1394.
@@ -392,7 +394,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line t5-cxpartialparsing/cxpartialparsing.y:884
+//line t5-cxpartialparsing/cxpartialparsing.y:886
 
 //line yacctab:1
 var yyExca = [...]int8{
@@ -1266,39 +1268,39 @@ yydefault:
 
 	case 8:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:195
+//line t5-cxpartialparsing/cxpartialparsing.y:197
 		{
 			actions.GlobalRedeclarationCheck(Program, yyDollar[2].argument)
 			actions.DeclareGlobalInPackage(Program, nil, yyDollar[2].argument, yyDollar[3].argument, nil, false)
 		}
 	case 9:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:200
+//line t5-cxpartialparsing/cxpartialparsing.y:202
 		{
 			actions.GlobalRedeclarationCheck(Program, yyDollar[2].argument)
 			actions.DeclareGlobalInPackage(Program, nil, yyDollar[2].argument, yyDollar[3].argument, nil, false)
 		}
 	case 10:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:208
+//line t5-cxpartialparsing/cxpartialparsing.y:210
 		{
 			actions.DeclareStruct(Program, yyDollar[2].tok, yyDollar[4].arguments)
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:215
+//line t5-cxpartialparsing/cxpartialparsing.y:217
 		{
 			yyVAL.arguments = nil
 		}
 	case 12:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:217
+//line t5-cxpartialparsing/cxpartialparsing.y:219
 		{
 			yyVAL.arguments = yyDollar[2].arguments
 		}
 	case 13:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:221
+//line t5-cxpartialparsing/cxpartialparsing.y:223
 		{
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1399.
@@ -1306,25 +1308,25 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:227
+//line t5-cxpartialparsing/cxpartialparsing.y:229
 		{
 			yyVAL.arguments = append(yyDollar[1].arguments, yyDollar[2].argument)
 		}
 	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:234
+//line t5-cxpartialparsing/cxpartialparsing.y:236
 		{
 			actions.DeclarePackage(Program, yyDollar[2].tok)
 		}
 	case 16:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:241
+//line t5-cxpartialparsing/cxpartialparsing.y:243
 		{
 			actions.DeclareImport(Program, yyDollar[2].tok, CurrentFile, lineNo)
 		}
 	case 17:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:248
+//line t5-cxpartialparsing/cxpartialparsing.y:250
 		{
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
@@ -1340,7 +1342,7 @@ yydefault:
 		}
 	case 18:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:262
+//line t5-cxpartialparsing/cxpartialparsing.y:264
 		{
 			if len(yyDollar[3].arguments) > 1 {
 				panic("method has multiple receivers")
@@ -1368,31 +1370,31 @@ yydefault:
 		}
 	case 19:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:291
+//line t5-cxpartialparsing/cxpartialparsing.y:293
 		{
 			yyVAL.arguments = nil
 		}
 	case 20:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:293
+//line t5-cxpartialparsing/cxpartialparsing.y:295
 		{
 			yyVAL.arguments = yyDollar[2].arguments
 		}
 	case 21:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:298
+//line t5-cxpartialparsing/cxpartialparsing.y:300
 		{
 			PreFunctionDeclaration(yyDollar[1].functionIndex, yyDollar[2].arguments, nil)
 		}
 	case 22:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:302
+//line t5-cxpartialparsing/cxpartialparsing.y:304
 		{
 			PreFunctionDeclaration(yyDollar[1].functionIndex, yyDollar[2].arguments, yyDollar[3].arguments)
 		}
 	case 24:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:314
+//line t5-cxpartialparsing/cxpartialparsing.y:316
 		{
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1403.
@@ -1400,13 +1402,13 @@ yydefault:
 		}
 	case 25:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:320
+//line t5-cxpartialparsing/cxpartialparsing.y:322
 		{
 			yyVAL.arguments = append(yyDollar[1].arguments, yyDollar[3].argument)
 		}
 	case 26:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:327
+//line t5-cxpartialparsing/cxpartialparsing.y:329
 		{
 			details := Program.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(yyDollar[2].argument.ArgDetails)
 			details.FileName, details.FileLine = CurrentFile, lineNo
@@ -1418,7 +1420,7 @@ yydefault:
 		}
 	case 30:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:348
+//line t5-cxpartialparsing/cxpartialparsing.y:350
 		{
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -1434,13 +1436,13 @@ yydefault:
 		}
 	case 31:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:362
+//line t5-cxpartialparsing/cxpartialparsing.y:364
 		{
 			yyVAL.argument = yyDollar[2].argument
 		}
 	case 32:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:366
+//line t5-cxpartialparsing/cxpartialparsing.y:368
 		{
 			arg := actions.DeclarationSpecifiersStruct(Program, yyDollar[1].tok, "", false, CurrentFile, lineNo)
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
@@ -1449,7 +1451,7 @@ yydefault:
 		}
 	case 33:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:373
+//line t5-cxpartialparsing/cxpartialparsing.y:375
 		{
 			arg := actions.DeclarationSpecifiersBasic(Program, types.Code(yyDollar[1].i))
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
@@ -1458,39 +1460,39 @@ yydefault:
 		}
 	case 34:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:380
+//line t5-cxpartialparsing/cxpartialparsing.y:382
 		{
 			arg := actions.DeclarationSpecifiersStruct(Program, yyDollar[3].tok, "", false, CurrentFile, lineNo)
 			yyVAL.arguments = append(yyDollar[1].arguments, arg)
 		}
 	case 35:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:385
+//line t5-cxpartialparsing/cxpartialparsing.y:387
 		{
 			arg := actions.DeclarationSpecifiersBasic(Program, types.Code(yyDollar[3].i))
 			yyVAL.arguments = append(yyDollar[1].arguments, arg)
 		}
 	case 36:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:393
+//line t5-cxpartialparsing/cxpartialparsing.y:395
 		{
 			yyVAL.arguments = yyDollar[2].arguments
 		}
 	case 37:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:397
+//line t5-cxpartialparsing/cxpartialparsing.y:399
 		{
 			yyVAL.arguments = nil
 		}
 	case 39:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:405
+//line t5-cxpartialparsing/cxpartialparsing.y:407
 		{
 			yyVAL.argument = actions.DeclarationSpecifiers(yyDollar[2].argument, types.Cast_sint_to_sptr(yyDollar[1].ints), constants.DECL_ARRAY)
 		}
 	case 40:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:412
+//line t5-cxpartialparsing/cxpartialparsing.y:414
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1407.
@@ -1506,200 +1508,200 @@ yydefault:
 		}
 	case 41:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:426
+//line t5-cxpartialparsing/cxpartialparsing.y:428
 		{
 			yyVAL.argument = actions.DeclarationSpecifiers(yyDollar[2].argument, []types.Pointer{0}, constants.DECL_POINTER)
 		}
 	case 42:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:430
+//line t5-cxpartialparsing/cxpartialparsing.y:432
 		{
 			yyVAL.argument = actions.DeclarationSpecifiers(yyDollar[3].argument, []types.Pointer{0}, constants.DECL_SLICE)
 		}
 	case 43:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:434
+//line t5-cxpartialparsing/cxpartialparsing.y:436
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersBasic(Program, types.Code(yyDollar[1].i))
 		}
 	case 44:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:438
+//line t5-cxpartialparsing/cxpartialparsing.y:440
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[1].tok, "", false, CurrentFile, lineNo)
 		}
 	case 45:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:442
+//line t5-cxpartialparsing/cxpartialparsing.y:444
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[3].tok, yyDollar[1].tok, true, CurrentFile, lineNo)
 		}
 	case 46:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:446
+//line t5-cxpartialparsing/cxpartialparsing.y:448
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[3].tok, types.Code(yyDollar[1].i).Name(), true, CurrentFile, lineNo)
 		}
 	case 47:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:455
+//line t5-cxpartialparsing/cxpartialparsing.y:457
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersBasic(Program, types.Code(yyDollar[1].i))
 		}
 	case 48:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:459
+//line t5-cxpartialparsing/cxpartialparsing.y:461
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[1].tok, "", false, CurrentFile, lineNo)
 		}
 	case 49:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:463
+//line t5-cxpartialparsing/cxpartialparsing.y:465
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[3].tok, yyDollar[1].tok, true, CurrentFile, lineNo)
 		}
 	case 50:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:467
+//line t5-cxpartialparsing/cxpartialparsing.y:469
 		{
 			yyVAL.argument = actions.DeclarationSpecifiersStruct(Program, yyDollar[3].tok, types.Code(yyDollar[1].i).Name(), true, CurrentFile, lineNo)
 		}
 	case 51:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:471
+//line t5-cxpartialparsing/cxpartialparsing.y:473
 		{
 			yyVAL.argument = actions.DeclarationSpecifiers(yyDollar[2].argument, []types.Pointer{0}, constants.DECL_POINTER)
 		}
 	case 52:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:475
+//line t5-cxpartialparsing/cxpartialparsing.y:477
 		{
 			yyVAL.argument = actions.DeclarationSpecifiers(yyDollar[3].argument, []types.Pointer{0}, constants.DECL_SLICE)
 		}
 	case 53:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:482
+//line t5-cxpartialparsing/cxpartialparsing.y:484
 		{
 			yyVAL.i = int(types.AFF)
 		}
 	case 54:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:484
+//line t5-cxpartialparsing/cxpartialparsing.y:486
 		{
 			yyVAL.i = int(types.BOOL)
 		}
 	case 55:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:486
+//line t5-cxpartialparsing/cxpartialparsing.y:488
 		{
 			yyVAL.i = int(types.STR)
 		}
 	case 56:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:488
+//line t5-cxpartialparsing/cxpartialparsing.y:490
 		{
 			yyVAL.i = int(types.F32)
 		}
 	case 57:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:490
+//line t5-cxpartialparsing/cxpartialparsing.y:492
 		{
 			yyVAL.i = int(types.F64)
 		}
 	case 58:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:492
+//line t5-cxpartialparsing/cxpartialparsing.y:494
 		{
 			yyVAL.i = int(types.I8)
 		}
 	case 59:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:494
+//line t5-cxpartialparsing/cxpartialparsing.y:496
 		{
 			yyVAL.i = int(types.I16)
 		}
 	case 60:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:496
+//line t5-cxpartialparsing/cxpartialparsing.y:498
 		{
 			yyVAL.i = int(types.I32)
 		}
 	case 61:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:498
+//line t5-cxpartialparsing/cxpartialparsing.y:500
 		{
 			yyVAL.i = int(types.I64)
 		}
 	case 62:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:500
+//line t5-cxpartialparsing/cxpartialparsing.y:502
 		{
 			yyVAL.i = int(types.UI8)
 		}
 	case 63:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:502
+//line t5-cxpartialparsing/cxpartialparsing.y:504
 		{
 			yyVAL.i = int(types.UI16)
 		}
 	case 64:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:504
+//line t5-cxpartialparsing/cxpartialparsing.y:506
 		{
 			yyVAL.i = int(types.UI32)
 		}
 	case 65:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:506
+//line t5-cxpartialparsing/cxpartialparsing.y:508
 		{
 			yyVAL.i = int(types.UI64)
 		}
 	case 74:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:540
+//line t5-cxpartialparsing/cxpartialparsing.y:542
 		{
 			yyVAL.ints = []int{int(yyDollar[2].i32)}
 		}
 	case 75:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:544
+//line t5-cxpartialparsing/cxpartialparsing.y:546
 		{
 			yyVAL.ints = append(yyDollar[1].ints, int(yyDollar[3].i32))
 		}
 	case 76:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:551
+//line t5-cxpartialparsing/cxpartialparsing.y:553
 		{
 			yyVAL.ints = []int{0}
 		}
 	case 77:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:555
+//line t5-cxpartialparsing/cxpartialparsing.y:557
 		{
 			yyVAL.ints = append(yyDollar[1].ints, 0)
 		}
 	case 97:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:616
+//line t5-cxpartialparsing/cxpartialparsing.y:618
 		{
 			yyVAL.i32 = yyDollar[1].i32
 		}
 	case 98:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:620
+//line t5-cxpartialparsing/cxpartialparsing.y:622
 		{
 			yyVAL.i32 = -yyDollar[2].i32
 		}
 	case 184:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:764
+//line t5-cxpartialparsing/cxpartialparsing.y:766
 		{
 			Program.ReleaseCXArgBuilder(yyDollar[2].argument)
 			Program.ReleaseCXArgBuilder(yyDollar[3].argument)
 		}
 	case 185:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line t5-cxpartialparsing/cxpartialparsing.y:769
+//line t5-cxpartialparsing/cxpartialparsing.y:771
 		{
 			Program.ReleaseCXArgBuilder(yyDollar[2].argument)
 			Program.ReleaseCXArgBuilder(yyDollar[3].argument)

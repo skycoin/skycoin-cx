@@ -380,7 +380,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-global-redeclaration.cx", types.CX_COMPILATION_ERROR, "a global declared twice in one package (skycoin-cx#57)",
 		"test-global-redeclaration.cx:4 'i' redeclared")
 	t.RunWant("test-index-comma.cx", types.CX_COMPILATION_ERROR, "a comma inside an index is a syntax error (skycoin-cx#59)",
-		"test-index-comma.cx:7: syntax error")
+		"test-index-comma.cx:7 syntax error: unexpected comma, expected ]")
 	t.Run("issue-22.cx", types.CX_COMPILATION_ERROR, "commas inside slice indexers of a struct field (skycoin-cx#59)")
 	t.RunWant("test-goto-label-missing.cx", types.CX_COMPILATION_ERROR, "goto to a label that does not exist",
 		"test-goto-label-missing.cx:4 label 'nowhere' is not defined")
@@ -423,7 +423,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("issue-68.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an argument (skycoin-cx#18)", "issue-68.cx:7 syntax error")
 	t.RunWant("test-incdec-value.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an operand (skycoin-cx#18)", "test-incdec-value.cx:5 syntax error")
 	t.RunWant("test-incdec-prefix.cx", types.CX_COMPILATION_ERROR, "there is no prefix ++", "test-incdec-prefix.cx:5 syntax error")
-	t.RunWant("issue-62.cx", types.CX_COMPILATION_ERROR, "a comma list is not a statement (skycoin-cx#23)", "issue-62.cx:16 syntax error")
+	t.RunWant("issue-62.cx", types.CX_COMPILATION_ERROR, "a comma list is not a statement (skycoin-cx#23)", "issue-62.cx:15 syntax error: unexpected newline")
 	t.Run("issue-34.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)")
 	t.RunWant("issue-512.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)", "2\n1\n")
 	t.RunWant("issue-512b.cx", types.CX_SUCCESS, "several values in := (skycoin-cx#44)", "20\n10\n")
@@ -602,6 +602,53 @@ func runTestCases(t *runner.TestRunner) {
 		"test-error-call-count-continue.cx:12 operator 'f' expects 1 input/s, but 0 input arguments were provided",
 		"test-error-call-count-continue.cx:14 operator 'g' expects to return 2 output/s, but 1 receiving argument/s were provided",
 		"test-error-call-count-continue.cx:16 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunWant("test-error-function-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing function leaves the later errors reported",
+		"test-error-function-missing-continue.cx:8:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:9:7 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:12:4 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:13:12 function 'bar' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:14:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-function-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing function leaves the later errors reported",
+		"expects", "invalid type", "does not exist", ":11 ")
+	t.RunWant("test-error-native-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing or renamed native leaves the later errors reported",
+		"test-error-native-missing-continue.cx:4:2 function 'i32.nope' does not exist\nerror: test-error-native-missing-continue.cx:5:7 function 'i32.nope2' does not exist\nerror: test-error-native-missing-continue.cx:6:2 str.print was renamed to string.PrintLine",
+		"test-error-native-missing-continue.cx:8:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-native-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing or renamed native leaves the later errors reported",
+		":7 ", "invalid type", "expects")
+	t.RunWant("test-error-package-member-continue.cx", types.CX_COMPILATION_ERROR, "a missing package member or an unimported built-in package leaves the later errors reported",
+		"test-error-package-member-continue.cx:5:2 identifier 'os.Nope' does not exist\nerror: test-error-package-member-continue.cx:6:7 identifier 'os.Nope2' does not exist\nerror: test-error-package-member-continue.cx:7:7 identifier 'os.NoVal' does not exist\nerror: test-error-package-member-continue.cx:9:2 built-in package time is used without importing it, add import \"sys/time\"\nerror: test-error-package-member-continue.cx:10:2 identifier 'os.ReadAllHmm' does not exist\nerror: test-error-package-member-continue.cx:11:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-package-member-continue.cx", types.CX_COMPILATION_ERROR, "a missing package member or an unimported built-in package leaves the later errors reported",
+		":8 ", "not found", "invalid type", "expects")
+	t.RunWant("test-error-package-unimported-continue.cx", types.CX_COMPILATION_ERROR, "each use of an unimported built-in package is reported",
+		"test-error-package-unimported-continue.cx:4:2 built-in package os is used without importing it, add import \"sys/os\"\nerror: test-error-package-unimported-continue.cx:5:7 built-in package os is used without importing it",
+		"test-error-package-unimported-continue.cx:6:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunWant("test-error-loop-indirection-continue.cx", types.CX_COMPILATION_ERROR, "a loop condition without a value and an invalid indirection leave the later errors reported",
+		"test-error-loop-indirection-continue.cx:7:6 loop condition has no value\nerror: test-error-loop-indirection-continue.cx:10:7 invalid indirection\nerror: test-error-loop-indirection-continue.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-loop-indirection-continue.cx", types.CX_COMPILATION_ERROR, "a loop condition without a value and an invalid indirection leave the later errors reported",
+		"outputless", "expects", ":11 ", ":9 ")
+	t.RunWant("test-error-preliminary-continue.cx", types.CX_COMPILATION_ERROR, "a missing type in a declaration leaves the errors in the bodies reported once",
+		"test-error-preliminary-continue.cx:4:12 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:18 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:15 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunWant("test-error-syntax-a.cx test-error-syntax-b.cx", types.CX_COMPILATION_ERROR, "a syntax error is a record, sorted with the errors of the other files",
+		"error: test-error-syntax-a.cx:4:11 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected comma or semicolon or newline\n")
+	t.RunWant("test-error-syntax-body.cx", types.CX_COMPILATION_ERROR, "a syntax error names the unexpected and the expected token",
+		"error: test-error-syntax-body.cx:6:5 syntax error: unexpected comma, expected ]\n")
+	t.RunWant("test-error-column.cx", types.CX_COMPILATION_ERROR, "compile errors print file:line:column, in column order on one line",
+		"error: test-error-column.cx:4:7 function 'foo' not found in package 'main' or its imports\nerror: test-error-column.cx:4:16 function 'bar' not found in package 'main' or its imports\nerror: test-error-column.cx:5:14 cannot assign value of type 'str' to identifier 'y' of type 'i32'\n")
+	t.RunWant("test-dereference-non-pointer.cx", types.CX_COMPILATION_ERROR, "dereferencing a non-pointer is one error that names the type (skycoin-cx#15)",
+		"test-dereference-non-pointer.cx:9:8 cannot dereference non-pointer 'x' of type 'i32'\nerror: test-dereference-non-pointer.cx:11:15 cannot dereference non-pointer 'x' of type 'i32'\nerror: test-dereference-non-pointer.cx:13:8 cannot dereference non-pointer 'p' of type 'P'\nerror: test-dereference-non-pointer.cx:17:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-dereference-non-pointer.cx", types.CX_COMPILATION_ERROR, "dereferencing a non-pointer is one error that names the type (skycoin-cx#15)",
+		"'32'", "invalid type", ":10 ", ":15 ", ":16 ")
+	t.RunWant("test-slice-literal-nested-type.cx", types.CX_SUCCESS, "nested slice literal elements have their full type",
+		"[[1 2] [3] [7]] 1\n[[{x: 1}] []]\n[[1] [2 3]]\n")
+	t.RunWant("test-slice-literal-nested-type-errors.cx", types.CX_COMPILATION_ERROR, "a nested slice literal element of the wrong type is reported",
+		"test-slice-literal-nested-type-errors.cx:4 function 'append' expected argument of type '[]i32'; '[]i64' was provided",
+		"test-slice-literal-nested-type-errors.cx:5:15 function 'append' expected argument of type '[]i32'; 'i32' was provided",
+		"test-slice-literal-nested-type-errors.cx:6 function 'append' expected argument of type '[][]i32'; '[]i32' was provided",
+		"test-slice-literal-nested-type-errors.cx:7:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunWant("test-error-call-count-once.cx", types.CX_COMPILATION_ERROR, "a call with the wrong number of inputs reports only that",
+		"test-error-call-count-once.cx:8:2 operator 'f' expects 1 input/s, but 2 input arguments were provided\nerror: test-error-call-count-once.cx:9:2 operator 'f' expects to return 1 output/s, but 0 receiving argument/s were provided\nerror: test-error-call-count-once.cx:10:2 operator 'f' expects 1 input/s, but 0 input arguments were provided\nerror: test-error-call-count-once.cx:11:17")
+	t.RunMissing("test-error-call-count-once.cx", types.CX_COMPILATION_ERROR, "a call with the wrong number of inputs reports only that",
+		"test-error-call-count-once.cx:8:2 operator 'f' expects to return", "test-error-call-count-once.cx:10:2 operator 'f' expects to return")
+	t.RunWant("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start",
+		"error: test-error-string-unterminated.cx:5:14 string not terminated\n")
+	t.RunMissing("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start",
+		"invalid string literal")
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")
@@ -709,7 +756,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-245a.cx issue-245.cx", types.CX_COMPILATION_ERROR, "No compilation error when using var without package qualification.")
 	t.Run("issue-246.cx", types.CX_SUCCESS, "No compilation error when passing *i32 as an i32 arg and conversely")
 	t.Run("issue-246a.cx", types.CX_COMPILATION_ERROR, "No compilation error when passing *i32 as an i32 arg and conversely")
-	t.RunEx("issue-247.cx", types.CX_COMPILATION_ERROR, "No compilation error when dereferencing an i32 var.", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#15
+	t.RunWant("issue-247.cx", types.CX_COMPILATION_ERROR, "dereferencing an i32 var is a compile error (skycoin-cx#15)", "issue-247.cx:7:24 cannot dereference non-pointer 'i' of type 'i32'")
 	t.Run("issue-248.cx", types.CX_SUCCESS, "Wrong pointer behaviour.")
 	t.Run("issue-249.cx", types.CX_SUCCESS, "Return from a function doesnt work")
 	t.Run("issue-249b.cx", types.CX_COMPILATION_ERROR, "Mismatched number of returning arguments is not throwing an error")

@@ -271,8 +271,9 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		}
 
 		declaration_specifiers.Name = declarator.Name
-		_, declaratorLine := ast.CXArgumentDebugFileLine(prgrm, declarator.ArgDetails)
-		prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declaration_specifiers.ArgDetails).FileLine = declaratorLine
+		_, declaratorLine, declaratorColumn := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
+		declaratorDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declaration_specifiers.ArgDetails)
+		declaratorDetails.FileLine, declaratorDetails.FileColumn = declaratorLine, declaratorColumn
 		declaration_specifiers.Offset = glblArg.Offset
 		declaration_specifiers.Size = glblArg.Size
 		prgrm.ReleaseCXArgBuilder(glblArg)
@@ -428,8 +429,9 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	declarationSpecifiers.Name = declarator.Name
-	_, declaratorLine := ast.CXArgumentDebugFileLine(prgrm, declarator.ArgDetails)
-	prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declarationSpecifiers.ArgDetails).FileLine = declaratorLine
+	_, declaratorLine, declaratorColumn := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
+	declaratorDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(declarationSpecifiers.ArgDetails)
+	declaratorDetails.FileLine, declaratorDetails.FileColumn = declaratorLine, declaratorColumn
 	declarationSpecifiers.Package = ast.CXPackageIndex(pkg.Index)
 	declarationSpecifiers.PreviouslyDeclared = true
 	declSpecIdx := ast.CXArgumentIndex(declarationSpecifiers.Index)

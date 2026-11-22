@@ -136,6 +136,10 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 				// nested expressions. Then use that variable as part of the slice literal.
 
 				outTypeSig := getOutputType(prgrm, &expr)
+				if outputs := exprAtomicOp.GetOutputs(prgrm); len(outputs) > 0 {
+					// A nested slice literal, whose output has its full type.
+					outTypeSig = prgrm.GetCXTypeSignatureFromArray(outputs[0])
+				}
 				var outArg *ast.CXArgument
 				var outTypeSigIdx ast.CXTypeSignatureIndex
 				if outTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
@@ -147,6 +151,8 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 					// Now a constructor call, site S0994.
 					_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), exprCXLine.FileName, exprCXLine.LineNumber)
 					out.SetType(outArg.Type)
+					out.DeclarationSpecifiers = append(out.DeclarationSpecifiers[:0], outArg.DeclarationSpecifiers...)
+					out.Lengths = outArg.Lengths
 					out.PointerTargetType = outArg.PointerTargetType
 					out.StructType = outArg.StructType
 					out.Size = outArg.Size
@@ -159,6 +165,15 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 					newTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 					newTypeSig.Package = ast.CXPackageIndex(pkg.Index)
 					outTypeSigIdx = newTypeSig.Index
+				} else if outTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+					arrDetails := prgrm.GetCXTypeSignatureArrayFromArray(outTypeSig.Meta)
+					_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), exprCXLine.FileName, exprCXLine.LineNumber)
+					out.SetType(types.Code(arrDetails.Meta))
+					out.DeclarationSpecifiers = declarationSpecifiersSlice(len(arrDetails.Lengths))
+					out.Lengths = arrDetails.Lengths
+					out.PreviouslyDeclared = true
+					out.Package = ast.CXPackageIndex(pkg.Index)
+					outTypeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
 				} else {
 					panic("type is not known")
 				}
@@ -420,6 +435,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 					argDetails.FileName = CurrentFile
 					argDetails.FileLine = LineNo
+					argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 					_, newCXArg := prgrm.AllocCXArgument()
 					newCXArg.ArgDetails = argDetailsGid
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
@@ -450,6 +466,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 					argDetails.FileName = CurrentFile
 					argDetails.FileLine = LineNo
+					argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 					_, newCXArg := prgrm.AllocCXArgument()
 					newCXArg.ArgDetails = argDetailsGid
 					newCXArg.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)

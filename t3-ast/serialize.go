@@ -859,6 +859,7 @@ func serializeExpressions(prgrm *CXProgram, encoder *serializeEncoder) error {
 	}, func(line *CXLine) error {
 		encoder.serializeEncoderInt(int64(line.FileName))
 		encoder.serializeEncoderInt(int64(line.LineNumber))
+		encoder.serializeEncoderInt(int64(line.LineColumn))
 		encoder.serializeEncoderInt(int64(line.LineStr))
 		return nil
 	})
@@ -884,6 +885,7 @@ func deserializeExpressions(prgrm *CXProgram, decoder *serializeDecoder) {
 	objects, slots := deserializeManager(decoder, "CXLineMng", func(line *CXLine) {
 		line.FileName = SourceFileGid(decoder.serializeDecoderInt())
 		line.LineNumber = decoder.serializeDecoderIntValue()
+		line.LineColumn = decoder.serializeDecoderIntValue()
 		line.LineStr = stringpool.StringGid(decoder.serializeDecoderInt())
 	})
 	if decoder.serializeDecoderError != nil {
@@ -977,6 +979,7 @@ func serializeArguments(prgrm *CXProgram, encoder *serializeEncoder) error {
 	}, func(details *CXArgumentDebug) error {
 		encoder.serializeEncoderInt(int64(details.FileName))
 		encoder.serializeEncoderInt(int64(details.FileLine))
+		encoder.serializeEncoderInt(int64(details.FileColumn))
 		return nil
 	})
 }
@@ -993,6 +996,7 @@ func deserializeArguments(prgrm *CXProgram, decoder *serializeDecoder) {
 	debug, slots := deserializeManager(decoder, "CXArgumentDebugMng", func(details *CXArgumentDebug) {
 		details.FileName = SourceFileGid(decoder.serializeDecoderInt())
 		details.FileLine = decoder.serializeDecoderIntValue()
+		details.FileColumn = decoder.serializeDecoderIntValue()
 	})
 	if decoder.serializeDecoderError != nil {
 		return

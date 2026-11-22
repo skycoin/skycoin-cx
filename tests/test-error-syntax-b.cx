@@ -1,0 +1,8 @@
+package main
+
+func helper() {
+	var x i32 = 1
+	x y
+	var z i32 = 2
+	z w
+}

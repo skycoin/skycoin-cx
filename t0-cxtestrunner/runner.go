@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -110,8 +111,10 @@ func (t *TestRunner) runEx(args string, input string, exitCode int, desc string,
 		return
 	}
 
+	output := string(out) + "\n" + string(stderr)
+	fileLineOutput := compileErrorColumn.ReplaceAllString(output, "$1")
 	for _, w := range want {
-		if !strings.Contains(string(out), w) && !strings.Contains(string(stderr), w) {
+		if !strings.Contains(output, w) && !strings.Contains(fileLineOutput, w) {
 			if Has(t.cfg.LogMask, LogFail) {
 				fmt.Printf("#%s%d | FAILED  | %s | '%s' | output does not contain %q\n",
 					padding(t), t.TestCount, timing, args, w)
@@ -121,7 +124,8 @@ func (t *TestRunner) runEx(args string, input string, exitCode int, desc string,
 	}
 
 	for _, absent := range missing {
-		if strings.Contains(string(out), absent) || strings.Contains(string(stderr), absent) {
+		// A missing ":17 " names a line, not the column of another line.
+		if strings.Contains(fileLineOutput, absent) || (compileErrorColumn.MatchString(absent) && strings.Contains(output, absent)) {
 			if Has(t.cfg.LogMask, LogFail) {
 				fmt.Printf("#%s%d | FAILED  | %s | '%s' | output contains %q\n",
 					padding(t), t.TestCount, timing, args, absent)
@@ -162,3 +166,7 @@ func padding(t *TestRunner) string {
 	}
 	return padding
 }
+
+// compileErrorColumn matches the column of a file:line:column position, so a
+// want or missing text written as file:line also matches with the column.
+var compileErrorColumn = regexp.MustCompile(`(\.cx:\d+):\d+`)

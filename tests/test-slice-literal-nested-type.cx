@@ -1,0 +1,19 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func row() (r []i32) {
+	r = []i32{7}
+	return r
+}
+
+func main() {
+	a := [][]i32{[]i32{1, 2}, []i32{3}, row()}
+	printf("%v %d\n", a, len(a[2]))
+	ps := [][]P{[]P{P{x: 1}}, []P{}}
+	printf("%v\n", ps)
+	e := [][]i32{{1}, {2, 3}}
+	printf("%v\n", e)
+}

@@ -50,8 +50,9 @@ func (strct *CXStruct) AddField(prgrm *CXProgram, cxArgument *CXArgument) *CXStr
 		// Now an arena getter, site S0263.
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Name == cxArgument.Name {
-			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, typeSignature.ArgDetails, CompileErrorOperands{})
-			prgrm.CXProgramCompileErrorExit()
+			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, cxArgument.ArgDetails, CompileErrorOperands{int64(cxArgument.Name)})
+			prgrm.ReleaseCXArgBuilder(cxArgument)
+			return strct
 		}
 	}
 
@@ -96,8 +97,8 @@ func (strct *CXStruct) AddField_TypeSignature(prgrm *CXProgram, fieldIdx CXTypeS
 		// Now an arena getter, site S0266.
 		field := prgrm.GetCXTypeSignatureFromArray(fieldIdx)
 		if typeSignature.Name == field.Name {
-			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, typeSignature.ArgDetails, CompileErrorOperands{})
-			prgrm.CXProgramCompileErrorExit()
+			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, field.ArgDetails, CompileErrorOperands{int64(field.Name)})
+			return strct
 		}
 	}
 
@@ -123,8 +124,8 @@ func (strct *CXStruct) AddField_Globals_CXAtomicOps(prgrm *CXProgram, cxArgIdx C
 		// Now an arena getter, site S0268.
 		typeSignature := prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx)
 		if typeSignature.Name == cxArgument.Name {
-			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, typeSignature.ArgDetails, CompileErrorOperands{})
-			prgrm.CXProgramCompileErrorExit()
+			prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeStructFieldDuplicate, cxArgument.ArgDetails, CompileErrorOperands{int64(cxArgument.Name)})
+			return strct
 		}
 	}
 

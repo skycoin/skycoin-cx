@@ -751,7 +751,7 @@ func getFormattedType_CXArg(prgrm *CXProgram, arg *CXArgument) string {
 					pkg, err := prgrm.GetPackageFromArray(arg.Package)
 					if err != nil {
 						prgrm.CXProgramCompileErrorAddDebug(CompileErrorCodeMessage, elt.ArgDetails, CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
-						prgrm.CXProgramCompileErrorExit()
+						return typ
 					}
 
 					fn, err := pkg.GetFunction(prgrm, elt.Name)

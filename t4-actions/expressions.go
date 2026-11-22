@@ -86,8 +86,11 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)) < 1 {
 		if len(lastCondExpressionOperatorOutputs) == 0 {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeLoopConditionNoValue, CurrentFile, LineNo, ast.CompileErrorOperands{})
-			prgrm.CXProgramCompileErrorExit()
+			// At the condition, which the parser rule of the loop makes the token position.
+			list := &prgrm.CxIrState.CompileErrorList
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeLoopConditionNoValue, list.CompileErrorListTokenFile, list.CompileErrorListTokenLine, list.CompileErrorListTokenColumn, ast.CompileErrorOperands{})
+			// The condition reads a placeholder, so it reports nothing more.
+			lastCondExpressionOperatorOutputs = []ast.CXTypeSignatureIndex{invalidPlaceholderTypeSig(prgrm, ast.CXPackageIndex(pkg.Index))}
 		}
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0614.
@@ -596,6 +599,7 @@ func operandResultOutputAdd(prgrm *ast.CXProgram, pkg *ast.CXPackage, exprs []as
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		_, typeSig := prgrm.AllocCXTypeSignature()
 		typeSig.ArgDetails = argDetailsGid
 		typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
@@ -610,6 +614,7 @@ func operandResultOutputAdd(prgrm *ast.CXProgram, pkg *ast.CXPackage, exprs []as
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		_, typeSig := prgrm.AllocCXTypeSignature()
 		typeSig.ArgDetails = argDetailsGid
 		typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
@@ -784,8 +789,9 @@ func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpressi
 
 	if len(lastPrevExpression.GetOutputs(prgrm)) == 0 {
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeInvalidIndirection, CurrentFile, LineNo, ast.CompileErrorOperands{})
-		// needs to be stopped immediately
-		prgrm.CXProgramCompileErrorExit()
+		// A stand in typed types.INVALID calls the operand, so its uses report nothing more.
+		lastPrevExpression.Operator = invalidFunctionIndex(prgrm, lastPrevExpression.Package, prgrm.CXProgramNameIntern(op))
+		return prevExprs
 	}
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -972,6 +978,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
 		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
@@ -985,6 +992,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
 		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
@@ -998,6 +1006,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		_, newCXTypeSig := prgrm.AllocCXTypeSignature()
 		newCXTypeSig.ArgDetails = argDetailsGid
 		newCXTypeSig.Name = fnOutputTypeSig.Name
@@ -1013,6 +1022,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 		argDetails.FileName = CurrentFile
 		argDetails.FileLine = LineNo
+		argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 		newCXTypeSig.ArgDetails = argDetailsGid
 		typeSigIdx = newCXTypeSig.Index
 	} else {
@@ -1207,4 +1217,14 @@ func unaryOperatorOnValue(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExp
 	prgrm.CXAtomicOps[expr.Index].Package = ast.CXPackageIndex(pkg.Index)
 	prgrm.CXAtomicOps[expr.Index].AddInput(prgrm, prgrm.CXAtomicOps[lastIdx].GetOutputs(prgrm)[0])
 	return append(operand, *expr), true
+}
+
+// invalidPlaceholderTypeSig returns a temporary of types.INVALID, the value
+// of an expression whose compile error is recorded.
+func invalidPlaceholderTypeSig(prgrm *ast.CXProgram, pkgIdx ast.CXPackageIndex) ast.CXTypeSignatureIndex {
+	_, placeholder := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
+	placeholder.SetType(types.INVALID)
+	placeholder.Package = pkgIdx
+	placeholder.PreviouslyDeclared = true
+	return ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, placeholder)
 }

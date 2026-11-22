@@ -326,6 +326,7 @@ func MakeCXLineExpression(prgrm *CXProgram, fileName SourceFileGid, lineNo int, 
 	line := prgrm.CxIrState.CXLineMng.CXLineGet(lineGid)
 	line.FileName = fileName
 	line.LineNumber = lineNo
+	line.LineColumn = prgrm.CXProgramCompileErrorColumn(fileName, lineNo)
 	line.LineStr = lineStr
 	index := int(objmodel.GidIndex(int64(lineGid)))
 

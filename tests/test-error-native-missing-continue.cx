@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	i32.nope(1)
+	x := i32.nope2(2)
+	str.print("a")
+	i32.print(x + 1)
+	var late i32 = "s"
+}

@@ -73,9 +73,12 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	actions.AST = cxpartialparsing.Program
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
-	if globals.FoundCompileErrors || parseErrors > 0 {
+	// A syntax error leaves the declarations incomplete. After other errors the
+	// bodies are compiled too, and report each error pass one found once.
+	if parseErrors > 0 {
 		return ErrCompilation
 	}
+	actions.AST.CxIrState.CompileErrorList.CompileErrorListPreliminary = len(actions.AST.CxIrState.CompileErrorList.CompileErrorListRecords)
 
 	/*
 		Adding global variables `OS_ARGS` to the `os` (operating system)

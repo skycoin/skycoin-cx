@@ -1,0 +1,18 @@
+package main
+
+type P struct {
+	n i32
+}
+
+func main() {
+	var x i32
+	y := *x
+	i32.print(y + 1)
+	var z i32 = *x
+	var p P
+	q := *p
+	var ok *i32 = &x
+	w := *ok
+	i32.print(w + *&x)
+	var late i32 = "s"
+}

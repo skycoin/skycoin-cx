@@ -320,3 +320,24 @@ func IsAllArgsBasicTypes(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 	}
 	return true
 }
+
+// TokenPosition is a position of the parser, see TokenPositionPush.
+type TokenPosition struct {
+	TokenPositionLine   int
+	TokenPositionColumn int
+}
+
+// TokenPositionPush makes line and column, where the rule being reduced
+// starts, the column of the records made until TokenPositionPop, as the
+// parser may have read the token after the rule already.
+func TokenPositionPush(line int, column int) TokenPosition {
+	list := &AST.CxIrState.CompileErrorList
+	position := TokenPosition{list.CompileErrorListTokenLine, list.CompileErrorListTokenColumn}
+	AST.CXProgramCompileErrorTokenSet(CurrentFile, line, column)
+	return position
+}
+
+// TokenPositionPop restores the position TokenPositionPush returned.
+func TokenPositionPop(position TokenPosition) {
+	AST.CXProgramCompileErrorTokenSet(CurrentFile, position.TokenPositionLine, position.TokenPositionColumn)
+}

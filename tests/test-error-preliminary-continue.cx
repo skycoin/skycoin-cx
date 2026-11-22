@@ -1,0 +1,14 @@
+package main
+
+type S struct {
+	m Missing2
+}
+
+func h(a Missing3) {
+}
+
+func main() {
+	var y Missing
+	foo()
+	var late i32 = "s"
+}

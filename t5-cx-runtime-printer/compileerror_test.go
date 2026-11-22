@@ -56,7 +56,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeStrConcatenation, ast.CompileErrorOperands{text("+")}, header + " str + str is not allowed, use string.Concatenation\n"},
 		{ast.CompileErrorCodeStrEqualityOperator, ast.CompileErrorOperands{text("==")}, header + " " + fmt.Sprintf("str %s str is not allowed, use string.EqualityByByteValue or string.EqualityByHeapPointer", "==") + "\n"},
 		{ast.CompileErrorCodeStrOrderingOperator, ast.CompileErrorOperands{text("<")}, header + " " + fmt.Sprintf("str %s str is not allowed, use string.OrderingByByteValue", "<") + "\n"},
-		{ast.CompileErrorCodeStructFieldDuplicate, ast.CompileErrorOperands{}, fmt.Sprintf("%s : duplicate field", header)},
+		{ast.CompileErrorCodeStructFieldDuplicate, ast.CompileErrorOperands{text("x")}, header + " duplicate field x\n"},
 		{ast.CompileErrorCodeStructFieldMultiplyDefined, ast.CompileErrorOperands{text("x")}, header + " Multiply defined struct field: x\n"},
 		{ast.CompileErrorCodeStructLiteralFieldType, ast.CompileErrorOperands{text("x"), text("S"), text("i32"), text("str")}, header + " " + fmt.Sprintf("field '%s' in struct literal of type '%s' expected argument of type '%s'; '%s' was provided", "x", "S", "i32", "str") + "\n"},
 		{ast.CompileErrorCodeMethodMissing, ast.CompileErrorOperands{text("T"), text("Nope")}, header + " type 'T' has no method 'Nope'\n"},
@@ -77,6 +77,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeLiteralElementType, ast.CompileErrorOperands{text("i32")}, header + " invalid composite literal type 'i32'\n"},
 		{ast.CompileErrorCodeStructLiteralFieldNames, ast.CompileErrorOperands{text("Point")}, header + " struct literal of type 'Point' must name its fields\n"},
 		{ast.CompileErrorCodeSliceLiteralElementType, ast.CompileErrorOperands{text("U"), text("T")}, header + " cannot use value of type 'U' as type 'T' in slice literal\n"},
+		{ast.CompileErrorCodeSyntax, ast.CompileErrorOperands{text("unexpected comma, expected ]")}, header + " syntax error: unexpected comma, expected ]\n"},
+		{ast.CompileErrorCodeDereferenceNonPointer, ast.CompileErrorOperands{text("x"), text("i32")}, header + " cannot dereference non-pointer 'x' of type 'i32'\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}
@@ -91,5 +93,51 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		if !covered[code] {
 			t.Errorf("code %d has no case", code)
 		}
+	}
+}
+
+// TestPrinterCompileErrorColumn checks the file:line:column header, which
+// leaves out an unknown column.
+func TestPrinterCompileErrorColumn(t *testing.T) {
+	state := &ast.CxIrState{}
+	state.CxIrStateInit()
+	prgrm := &ast.CXProgram{CxIrState: state}
+	file := prgrm.CXProgramSourceFileIntern("a.cx")
+	record := ast.CompileErrorRecord{CompileErrorRecordCode: ast.CompileErrorCodeInvalidExpression, CompileErrorRecordFile: file, CompileErrorRecordLine: 7, CompileErrorRecordColumn: 12}
+	if got, want := string(PrinterCompileErrorAppend(nil, prgrm, &record)), "error: a.cx:7:12 invalid expression\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	record.CompileErrorRecordColumn = 0
+	if got, want := string(PrinterCompileErrorAppend(nil, prgrm, &record)), "error: a.cx:7 invalid expression\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// TestPrinterCompileErrorsOrder checks that the records sort by file, line
+// and column, and that the body pass does not record an error of the
+// preliminary stage again.
+func TestPrinterCompileErrorsOrder(t *testing.T) {
+	state := &ast.CxIrState{}
+	state.CxIrStateInit()
+	prgrm := &ast.CXProgram{CxIrState: state}
+	file := prgrm.CXProgramSourceFileIntern("a.cx")
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeInvalidExpression, file, 3, 9, ast.CompileErrorOperands{})
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeInvalidIndexing, file, 3, 2, ast.CompileErrorOperands{})
+	state.CompileErrorList.CompileErrorListPreliminary = len(state.CompileErrorList.CompileErrorListRecords)
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeInvalidExpression, file, 3, 5, ast.CompileErrorOperands{})
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeInvalidIndirection, file, 1, 4, ast.CompileErrorOperands{})
+	records := state.CompileErrorList.CompileErrorListRecords
+	if len(records) != 3 {
+		t.Fatalf("got %d records, want 3, the repeated one dropped", len(records))
+	}
+	pending := append([]ast.CompileErrorRecord(nil), records...)
+	printerCompileErrorsSort(pending)
+	var got string
+	for i := range pending {
+		got += string(PrinterCompileErrorAppend(nil, prgrm, &pending[i]))
+	}
+	want := "error: a.cx:1:4 invalid indirection\nerror: a.cx:3:2 invalid indexing\nerror: a.cx:3:9 invalid expression\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }

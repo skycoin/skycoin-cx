@@ -1,0 +1,9 @@
+package main
+
+type S struct {
+	m Missing
+}
+
+func main() {
+	helper()
+}

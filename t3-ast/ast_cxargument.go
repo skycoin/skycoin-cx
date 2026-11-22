@@ -403,6 +403,7 @@ func argumentDebugAlloc(prgrm *CXProgram, fileName SourceFileGid, fileLine int) 
 	details := manager.CXArgumentDebugGet(gid)
 	details.FileName = fileName
 	details.FileLine = fileLine
+	details.FileColumn = prgrm.CXProgramCompileErrorColumn(fileName, fileLine)
 	return gid
 }
 

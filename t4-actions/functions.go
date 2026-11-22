@@ -483,14 +483,15 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	}
 
 	file, line := exprLine(prgrm, exprs, currIndex)
+	column := prgrm.CXProgramCompileErrorColumn(file, line)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0742.
 	if sig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]); sig.ArgDetails != ast.CXArgumentDebugGidNil {
-		if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, sig.ArgDetails); sigLine > 0 {
-			file, line = sigFile, sigLine
+		if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, sig.ArgDetails); sigLine > 0 {
+			file, line, column = sigFile, sigLine, sigColumn
 		}
 	}
-	prgrm.CXProgramCompileErrorAdd(code, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(sym)})
+	prgrm.CXProgramCompileErrorAddPosition(code, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(sym)})
 }
 
 // checkOperatorResultType rejects an arithmetic or bitwise result stored in
@@ -527,12 +528,13 @@ func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, cur
 		outputName = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outputTypeSig.Meta)).GetAssignmentElement(prgrm).Name
 	}
 	file, line := exprLine(prgrm, exprs, currIndex)
-	if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, outputTypeSig.ArgDetails); sigLine > 0 {
-		file, line = sigFile, sigLine
-	} else if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, inputTypeSig.ArgDetails); sigLine > 0 {
-		file, line = sigFile, sigLine
+	column := prgrm.CXProgramCompileErrorColumn(file, line)
+	if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, outputTypeSig.ArgDetails); sigLine > 0 {
+		file, line, column = sigFile, sigLine, sigColumn
+	} else if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, inputTypeSig.ArgDetails); sigLine > 0 {
+		file, line, column = sigFile, sigLine, sigColumn
 	}
-	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignValueType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(StripNameNumber(prgrm, outputName)), prgrm.CXProgramCompileErrorText(outputType)})
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeAssignValueType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(StripNameNumber(prgrm, outputName)), prgrm.CXProgramCompileErrorText(outputType)})
 }
 
 // FunctionCall completes the array of expressions for postfix function call.
@@ -581,7 +583,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 		} else if fieldless {
 			// then it's not a possible method call
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
-			prgrm.CXProgramCompileErrorExit()
+			expression.Operator = invalidFunctionIndex(prgrm, opPkgIdx, opName)
 		} else {
 			// The receiver names the method as its last field and is the first input.
 			exprs[len(exprs)-1].ExpressionType = ast.CXEXPR_METHOD_CALL
@@ -709,6 +711,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 							argDetails.FileName = CurrentFile
 							argDetails.FileLine = inpExprCXLine.LineNumber
+							argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 							_, outTypeSig := prgrm.AllocCXTypeSignature()
 							outTypeSig.ArgDetails = argDetailsGid
 							outTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
@@ -727,6 +730,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 							argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
 							argDetails.FileName = CurrentFile
 							argDetails.FileLine = inpExprCXLine.LineNumber
+							argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
 							_, outTypeSig := prgrm.AllocCXTypeSignature()
 							outTypeSig.ArgDetails = argDetailsGid
 							outTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
@@ -1493,7 +1497,7 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 	}
 
 	// then we need to be strict in the number of inputs
-	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorInputCount, exprCXLine.FileName, exprCXLine.LineNumber, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorInputs)), int64(len(expression.GetInputs(prgrm)))})
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorInputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorInputs)), int64(len(expression.GetInputs(prgrm)))})
 	return false
 }
 
@@ -1502,7 +1506,7 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) bool {
 	// checking if number of outputs is not the same as the required number of outputs
 	if len(expression.GetOutputs(prgrm)) != len(expressionOperatorOutputs) {
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorOutputCount, exprCXLine.FileName, exprCXLine.LineNumber, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorOutputs)), int64(len(expression.GetOutputs(prgrm)))})
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorOutputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorOutputs)), int64(len(expression.GetOutputs(prgrm)))})
 		return false
 	}
 	return true
@@ -1526,9 +1530,8 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) b
 		expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
-		inputsMatch := checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn())
-		outputsMatch := checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine)
-		if !inputsMatch || !outputsMatch {
+		// A call with the wrong inputs reports that alone, not its receivers too.
+		if !checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn()) || !checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine) {
 			return false
 		}
 	}
@@ -2317,6 +2320,9 @@ func GiveOffset(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.C
 		}
 
 		argTypeSignature, err := lookupSymbol(prgrm, symPkg.Name, symTypeSigName, symbolsData)
+		if err == nil && dereferenceNonPointer(prgrm, symTypeSig, argTypeSignature) {
+			return
+		}
 		if err == nil {
 			ProcessSymbolFields(prgrm, symTypeSig, argTypeSignature)
 			CopyArgFields(prgrm, symTypeSig, argTypeSignature)
@@ -3283,28 +3289,6 @@ func symbolFieldAccessPrimitiveCheck(prgrm *ast.CXProgram, symTypeSignature, arg
 	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, symTypeSignature.ArgDetails, ast.CompileErrorOperands{int64(symTypeSignature.Name), prgrm.CXProgramCompileErrorText(ast.GetFormattedType(prgrm, argTypeSignature))})
 }
 
-// sliceLiteralNestedTemporary reports whether the temporary name is set by an
-// identity before currIndex, as the element of a nested slice literal is.
-// That temporary has only its base type.
-func sliceLiteralNestedTemporary(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int, name stringpool.StringGid) bool {
-	for i := currIndex - 1; i >= 0; i-- {
-		if exprs[i].Type == ast.CX_LINE {
-			continue
-		}
-		expression, err := prgrm.GetCXAtomicOpFromExpressions(exprs, i)
-		if err != nil {
-			continue
-		}
-		outputs := expression.GetOutputs(prgrm)
-		if len(outputs) != 1 || prgrm.GetCXTypeSignatureFromArray(outputs[0]).Name != name {
-			continue
-		}
-		operator := prgrm.GetFunctionFromArray(expression.Operator)
-		return operator != nil && operator.IsBuiltIn() && operator.AtomicOPCode == constants.OP_IDENTITY
-	}
-	return false
-}
-
 // checkSliceBuiltinTypes checks the element and result types of append,
 // insert, resize, remove and copy against the type of their slice.
 func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
@@ -3347,14 +3331,12 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 		if receivedType == expectedType {
 			return
 		}
-		if temporary && !strings.HasPrefix(receivedType, "[") && strings.HasSuffix(expectedType, "]"+receivedType) && sliceLiteralNestedTemporary(prgrm, exprs, currIndex, typeSig.Name) {
-			return
-		}
 		file, line := exprLine(prgrm, exprs, currIndex)
-		if sigFile, sigLine := ast.CXArgumentDebugFileGidLine(prgrm, typeSig.ArgDetails); sigLine > 0 && !temporary {
-			file, line = sigFile, sigLine
+		column := prgrm.CXProgramCompileErrorColumn(file, line)
+		if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, typeSig.ArgDetails); sigLine > 0 && !temporary {
+			file, line, column = sigFile, sigLine, sigColumn
 		}
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeSliceElementType, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSliceElementType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
 	}
 	if elementInput > 0 && elementInput < len(inputs) {
 		operandTypeCheck(inputs[elementInput], sliceType[len("[]"):])
@@ -3810,8 +3792,11 @@ func typeSignatureInvalid(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bo
 }
 
 // expressionOperandInvalid reports whether an input or output of expression
-// is a types.INVALID placeholder.
+// is a types.INVALID placeholder, or its operator stands for a missing function.
 func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) bool {
+	if functionInvalid(prgrm, prgrm.GetFunctionFromArray(expression.Operator)) {
+		return true
+	}
 	for _, typeSigIdx := range expression.GetInputs(prgrm) {
 		if typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(typeSigIdx)) {
 			return true
@@ -3820,6 +3805,69 @@ func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOper
 	for _, typeSigIdx := range expression.GetOutputs(prgrm) {
 		if typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(typeSigIdx)) {
 			return true
+		}
+	}
+	return false
+}
+
+// invalidFunctionIndex adds a function that stands for the missing function
+// name, so that its call is typed. It takes any inputs and returns one
+// types.INVALID result, and the type checks skip its calls.
+func invalidFunctionIndex(prgrm *ast.CXProgram, pkgIdx ast.CXPackageIndex, name stringpool.StringGid) ast.CXFunctionIndex {
+	fn := ast.MakeFunction(prgrm, name, CurrentFile, LineNo)
+	fn.Package = pkgIdx
+	_, input := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("input"), CurrentFile, LineNo)
+	fn.AddInput(prgrm, input.SetType(types.UNDEFINED))
+	_, output := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("output"), CurrentFile, LineNo)
+	fn.AddOutput(prgrm, output.SetType(types.INVALID))
+	return prgrm.AddFunctionInArray(fn)
+}
+
+// functionInvalid reports whether fn is a function of invalidFunctionIndex.
+func functionInvalid(prgrm *ast.CXProgram, fn *ast.CXFunction) bool {
+	if fn == nil || fn.IsBuiltIn() {
+		return false
+	}
+	outputs := fn.GetOutputs(prgrm)
+	return len(outputs) == 1 && typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(outputs[0]))
+}
+
+// dereferenceNonPointer records a use of a symbol, sym, that dereferences
+// more pointers than its declaration, declared, has, as *x of an i32 x. The
+// use then has types.INVALID, so its uses report nothing more.
+func dereferenceNonPointer(prgrm *ast.CXProgram, sym *ast.CXTypeSignature, declared *ast.CXTypeSignature) bool {
+	if sym.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return false
+	}
+	use := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sym.Meta))
+	if len(use.Fields) > 0 || len(use.Indexes) > 0 {
+		return false
+	}
+	var depth int
+	switch declared.Type {
+	case ast.TYPE_ATOMIC, ast.TYPE_ARRAY_ATOMIC, ast.TYPE_SLICE_ATOMIC, ast.TYPE_STRUCT:
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		specs := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(declared.Meta)).DeclarationSpecifiers
+		for i := len(specs) - 1; i >= 0 && specs[i] == constants.DECL_POINTER; i-- {
+			depth++
+		}
+	default:
+		return false
+	}
+	for _, spec := range use.DeclarationSpecifiers {
+		switch spec {
+		case constants.DECL_BASIC:
+		case constants.DECL_POINTER:
+			depth++
+		case constants.DECL_DEREF:
+			depth--
+			if depth < 0 {
+				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeDereferenceNonPointer, use.ArgDetails, ast.CompileErrorOperands{int64(StripNameNumber(prgrm, use.Name)), prgrm.CXProgramCompileErrorText(ast.GetFormattedType(prgrm, declared))})
+				use.Type, use.Size = types.INVALID, 0
+				return true
+			}
+		default:
+			return false
 		}
 	}
 	return false

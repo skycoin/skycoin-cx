@@ -1,0 +1,12 @@
+package main
+
+func f(a i32) (r i32) {
+	return a
+}
+
+func main() {
+	f(1, 2)
+	f(1)
+	x := f()
+	var late i32 = "s"
+}

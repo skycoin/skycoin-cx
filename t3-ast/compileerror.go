@@ -67,6 +67,10 @@ const (
 	CompileErrorCodeLiteralElementType
 	CompileErrorCodeStructLiteralFieldNames
 	CompileErrorCodeSliceLiteralElementType
+	// CompileErrorCodeSyntax is a syntax error, its operand the text of
+	// CompileErrorSyntaxText.
+	CompileErrorCodeSyntax
+	CompileErrorCodeDereferenceNonPointer
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )
@@ -76,36 +80,81 @@ const (
 type CompileErrorOperands [4]int64
 
 // CompileErrorRecord is a compile error as data, see #413. The compiler
-// records it without building text and the printer package prints it.
+// records it without building text and the printer package prints it. A
+// column of 0 is unknown.
 type CompileErrorRecord struct {
 	CompileErrorRecordCode     CompileErrorCode
 	CompileErrorRecordFile     SourceFileGid
 	CompileErrorRecordLine     int
+	CompileErrorRecordColumn   int
 	CompileErrorRecordOperands CompileErrorOperands
 }
 
 // CompileErrorList holds the compile errors of a program in the order they
 // were found. CompileErrorListPrinted counts the records already printed.
+// The token fields hold the position of the token the parser read last.
 type CompileErrorList struct {
-	CompileErrorListRecords []CompileErrorRecord
-	CompileErrorListPrinted int
+	CompileErrorListRecords     []CompileErrorRecord
+	CompileErrorListPrinted     int
+	CompileErrorListTokenFile   SourceFileGid
+	CompileErrorListTokenLine   int
+	CompileErrorListTokenColumn int
+	// CompileErrorListPreliminary counts the records of the preliminary stage,
+	// which the body pass does not record again.
+	CompileErrorListPreliminary int
 }
 
 // CompileErrorListInit sets up an empty list with room for capacity records.
 func (list *CompileErrorList) CompileErrorListInit(capacity int) {
 	list.CompileErrorListRecords = make([]CompileErrorRecord, 0, capacity)
 	list.CompileErrorListPrinted = 0
+	list.CompileErrorListTokenFile, list.CompileErrorListTokenLine, list.CompileErrorListTokenColumn = SourceFileGidNil, 0, 0
+	list.CompileErrorListPreliminary = 0
 }
 
-// CXProgramCompileErrorAdd records a compile error at file and line, and
-// records that the program has a compile error.
+// CXProgramCompileErrorTokenSet records the position of the token the
+// parser is at, the column of the errors and debug records made on its line.
+func (prgrm *CXProgram) CXProgramCompileErrorTokenSet(file SourceFileGid, line int, column int) {
+	if prgrm == nil {
+		// A lexer test runs without a program.
+		return
+	}
+	list := &prgrm.CxIrState.CompileErrorList
+	list.CompileErrorListTokenFile, list.CompileErrorListTokenLine, list.CompileErrorListTokenColumn = file, line, column
+}
+
+// CXProgramCompileErrorColumn returns the column of the token the parser is
+// at when it is on line of file, and 0 otherwise.
+func (prgrm *CXProgram) CXProgramCompileErrorColumn(file SourceFileGid, line int) int {
+	list := &prgrm.CxIrState.CompileErrorList
+	if list.CompileErrorListTokenFile != file || list.CompileErrorListTokenLine != line {
+		return 0
+	}
+	return list.CompileErrorListTokenColumn
+}
+
+// CXProgramCompileErrorAdd records a compile error at file and line, at the
+// column of the token the parser is at when it is on that line.
 func (prgrm *CXProgram) CXProgramCompileErrorAdd(code CompileErrorCode, file SourceFileGid, line int, operands CompileErrorOperands) {
+	prgrm.CXProgramCompileErrorAddPosition(code, file, line, prgrm.CXProgramCompileErrorColumn(file, line), operands)
+}
+
+// CXProgramCompileErrorAddPosition records a compile error at file, line and
+// column, and records that the program has a compile error.
+func (prgrm *CXProgram) CXProgramCompileErrorAddPosition(code CompileErrorCode, file SourceFileGid, line int, column int, operands CompileErrorOperands) {
 	globals.FoundCompileErrors = true
 	list := &prgrm.CxIrState.CompileErrorList
+	for index := range list.CompileErrorListRecords[:list.CompileErrorListPreliminary] {
+		record := &list.CompileErrorListRecords[index]
+		if record.CompileErrorRecordCode == code && record.CompileErrorRecordFile == file && record.CompileErrorRecordLine == line && record.CompileErrorRecordOperands == operands {
+			return
+		}
+	}
 	list.CompileErrorListRecords = append(list.CompileErrorListRecords, CompileErrorRecord{
 		CompileErrorRecordCode:     code,
 		CompileErrorRecordFile:     file,
 		CompileErrorRecordLine:     line,
+		CompileErrorRecordColumn:   column,
 		CompileErrorRecordOperands: operands,
 	})
 }
@@ -128,16 +177,23 @@ func (prgrm *CXProgram) CXProgramCompileErrorExit() {
 // CXArgumentDebugFileGidLine returns the source file and line of the debug
 // record gid, SourceFileGidNil and -1 for CXArgumentDebugGidNil.
 func CXArgumentDebugFileGidLine(prgrm *CXProgram, gid CXArgumentDebugGid) (SourceFileGid, int) {
-	if gid == CXArgumentDebugGidNil {
-		return SourceFileGidNil, -1
-	}
-	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(gid)
-	return details.FileName, details.FileLine
+	file, line, _ := CXArgumentDebugPosition(prgrm, gid)
+	return file, line
 }
 
-// CXProgramCompileErrorAddDebug records a compile error at the source file
-// and line of the debug record details.
+// CXArgumentDebugPosition returns the source file, line and column of the
+// debug record gid, SourceFileGidNil, -1 and 0 for CXArgumentDebugGidNil.
+func CXArgumentDebugPosition(prgrm *CXProgram, gid CXArgumentDebugGid) (SourceFileGid, int, int) {
+	if gid == CXArgumentDebugGidNil {
+		return SourceFileGidNil, -1, 0
+	}
+	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(gid)
+	return details.FileName, details.FileLine, details.FileColumn
+}
+
+// CXProgramCompileErrorAddDebug records a compile error at the source file,
+// line and column of the debug record details.
 func (prgrm *CXProgram) CXProgramCompileErrorAddDebug(code CompileErrorCode, details CXArgumentDebugGid, operands CompileErrorOperands) {
-	file, line := CXArgumentDebugFileGidLine(prgrm, details)
-	prgrm.CXProgramCompileErrorAdd(code, file, line, operands)
+	file, line, column := CXArgumentDebugPosition(prgrm, details)
+	prgrm.CXProgramCompileErrorAddPosition(code, file, line, column, operands)
 }
