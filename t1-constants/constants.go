@@ -22,6 +22,10 @@ const LanguageVersionCurrent int64 = 2611200002
 
 const NON_ASSIGN_PREFIX = "nonAssign"
 const LOCAL_PREFIX = "*tmp"
+
+// SLICE_LITERAL_PREFIX names the slice a slice literal appends its elements
+// to. It starts with LOCAL_PREFIX, so the slice is a temp.
+const SLICE_LITERAL_PREFIX = LOCAL_PREFIX + "slc"
 const LABEL_PREFIX = "*lbl"
 
 // ELEMENT_PREFIX names the variable that holds a struct literal element of a

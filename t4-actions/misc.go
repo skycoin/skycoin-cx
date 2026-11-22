@@ -237,7 +237,7 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile ast
 	if err != nil {
 		panic(err)
 	}
-	prgrmFldCaller := DeclarationSpecifiersStruct(prgrm, prgrm.CXProgramNameText(callStrct.Name), prgrm.CXProgramNameText(strctPkg.Name), false, currentFile, lineNo)
+	prgrmFldCaller := DeclarationSpecifiersStruct(prgrm, prgrm.CXProgramNameText(callStrct.Name), prgrm.CXProgramNameText(strctPkg.Name), false, currentFile, lineNo, 0)
 	prgrmFldCaller.Name = prgrm.CXProgramNameIntern("Caller")
 
 	prgrmStrct.AddField(prgrm, prgrmFldCallCounter)

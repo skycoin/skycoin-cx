@@ -14,7 +14,10 @@ import (
 //		prgrm - a CXProgram that contains all the data and arrays of the program.
 //		structName - name of the struct to declare.
 //	 structFields - fields of the struct to be added.
-func DeclareStruct(prgrm *ast.CXProgram, structName string, structFields []*ast.CXArgument) {
+//	 file, line, column - the position of the name. Both passes declare each
+//				   struct, and a struct of the package declared at another
+//				   position is a redeclaration.
+func DeclareStruct(prgrm *ast.CXProgram, structName string, structFields []*ast.CXArgument, file ast.SourceFileGid, line int, column int) {
 	// Make sure we are inside a package.
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
@@ -28,6 +31,15 @@ func DeclareStruct(prgrm *ast.CXProgram, structName string, structFields []*ast.
 		// FIXME: Should give a relevant error message
 		panic(err)
 	}
+
+	if strct.FileLine != 0 && (strct.FileName != file || strct.FileLine != line || strct.FileColumn != column) {
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeRedeclaredBlock, file, line, column, ast.CompileErrorOperands{int64(strct.Name), int64(strct.FileName), int64(strct.FileLine), int64(strct.FileColumn)})
+		for _, field := range structFields {
+			prgrm.ReleaseCXArgBuilder(field)
+		}
+		return
+	}
+	strct.FileName, strct.FileLine, strct.FileColumn = file, line, column
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureRelease(gid), phase 4 #331.
 	// Now a dropped object, site S1208.

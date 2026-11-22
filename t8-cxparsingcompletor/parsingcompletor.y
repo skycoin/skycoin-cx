@@ -263,18 +263,22 @@ selector:
 global_declaration:
                 VAR declarator declaration_specifiers SEMICOLON
                 {
-			actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, nil, false)
+			if !actions.GlobalRedeclarationCheck(actions.AST, $2) {
+				actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, nil, false)
+			}
                 }
         |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
                 {
-			actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, $5, true)
+			if !actions.GlobalRedeclarationCheck(actions.AST, $2) {
+				actions.DeclareGlobalInPackage(actions.AST,nil,$2, $3, $5, true)
+			}
                 }
                 ;
 
 struct_declaration:
                 TYPE IDENTIFIER STRUCT struct_fields
                 {
-		        actions.DeclareStruct(actions.AST,$2, $4)
+		        actions.DeclareStruct(actions.AST,$2, $4, actions.CurrentFile, $<line>2, $<column>2)
                 }
                 ;
 
@@ -315,11 +319,11 @@ function_header:
                 FUNC IDENTIFIER
                 {
 			// yylval.line = 0
-			$$ = actions.FunctionHeader(actions.AST,$2, nil, false)
+			$$ = actions.FunctionHeader(actions.AST,$2, nil, false, $<line>2, $<column>2)
                 }
         |       FUNC LPAREN parameter_type_list RPAREN IDENTIFIER
                 {
-			$$ = actions.FunctionHeader(actions.AST,$5, $3, true)
+			$$ = actions.FunctionHeader(actions.AST,$5, $3, true, $<line>5, $<column>5)
                 }
         ;
 
@@ -393,7 +397,7 @@ direct_declarator:
 
 id_list:	IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
+			arg := actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, $<line>1, $<column>1)
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1477.
 			$$ = []*ast.CXArgument{arg}
@@ -407,7 +411,7 @@ id_list:	IDENTIFIER
 		}
 	|	id_list COMMA IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(actions.AST,$3, "", false, actions.CurrentFile, actions.LineNo)
+			arg := actions.DeclarationSpecifiersStruct(actions.AST,$3, "", false, actions.CurrentFile, $<line>3, $<column>3)
 			$$ = append($1, arg)
 		}
 	|	id_list COMMA type_specifier
@@ -472,15 +476,15 @@ element_specifiers:
                 }
         |       IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, $<line>1, $<column>1)
                 }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, $<line>1, $<column>1)
                 }
 	|       type_specifier PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, $<line>1, $<column>1)
                 }
                 ;
 
@@ -493,15 +497,15 @@ array_element:
                 }
         |       IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, $<line>1, $<column>1)
                 }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, $<line>1, $<column>1)
                 }
         |       type_specifier PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, actions.LineNo)
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, $<line>1, $<column>1)
                 }
         |       MUL_OP array_element
                 {
@@ -568,7 +572,7 @@ literal_element_list:
 literal_element:
                 assignment_expression
                 {
-			$$ = []actions.LiteralElement{{Expressions: $1}}
+			$$ = []actions.LiteralElement{{Expressions: $1, Line: $<line>1, Column: $<column>1}}
                 }
         |       LBRACE literal_element_list RBRACE
                 {

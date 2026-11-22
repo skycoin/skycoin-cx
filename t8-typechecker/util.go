@@ -81,18 +81,18 @@ func ParseDeclarationSpecifier(prgrm *ast.CXProgram, declarationSpecifierByte []
 			}
 
 			// Structs
-			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[0]), "", false, fileName, lineno)
+			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[0]), "", false, fileName, lineno, 0)
 			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 
 		// External types
 		if val, ok := TypesMap[string(splitDataType[0])]; ok {
-			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), val.Name(), true, fileName, lineno)
+			newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), val.Name(), true, fileName, lineno, 0)
 			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 
 		// External structs
-		newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), string(splitDataType[0]), true, fileName, lineno)
+		newDeclarationSpecifierArg := actions.DeclarationSpecifiersStruct(actions.AST, string(splitDataType[1]), string(splitDataType[0]), true, fileName, lineno, 0)
 		return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 	}
 

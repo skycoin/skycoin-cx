@@ -1,0 +1,17 @@
+package main
+
+import "nope"
+import "sys/os"
+
+var g nope.T
+
+func main() {
+	nope.Foo(1)
+	var x i32 = nope.Bar()
+	var t nope.T
+	t.a = 1
+	var y i32 = nope.V
+	nope.V = 3
+	os.Nope()
+	var late i32 = "s"
+}

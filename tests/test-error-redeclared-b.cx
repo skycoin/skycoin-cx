@@ -1,0 +1,8 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func h() {
+}

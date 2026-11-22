@@ -824,7 +824,8 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 				file, line, column = ast.CXArgumentDebugPosition(prgrm, details)
 			}
 			name := prgrm.CXProgramNameText(imp.Name) + "." + ident
-			if !renamedOpcodeRecord(prgrm, file, line, name) {
+			// A package whose import failed has no members, and its import is the error.
+			if !prgrm.CXProgramImportFailed(imp.Name) && !renamedOpcodeRecord(prgrm, file, line, name) {
 				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodePackageIdentifierMissing, file, line, column, ast.CompileErrorOperands{int64(imp.Name), prgrm.CXProgramCompileErrorText(ident)})
 			}
 			return postfixFieldInvalidate(prgrm, prevExprs, lastExpressionIdx, name)

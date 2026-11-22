@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -58,6 +59,7 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	defer func() { printer.PrinterCompileErrorsPrint(actions.AST) }()
 	cxpartialparsing.Program = actions.AST
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
+	sourceCodeStrings, fileNames = sourcesWithPackageClause(actions.AST, sourceCodeStrings, fileNames)
 
 	/*
 		We need to traverse the elements by hierarchy first add all the
@@ -119,6 +121,8 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 
 		source = source + "\n"
 
+		// Each file selects its package with its package clause.
+		actions.AST.CurrentPackage = -1
 		actions.LineNo = 1
 
 		b := bytes.NewBufferString(source)
@@ -142,4 +146,64 @@ func ParseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 		return ErrCompilation
 	}
 	return nil
+}
+
+// sourcesWithPackageClause records an error at line 1 of each file that does
+// not start with a package clause and returns the other files. Go does not
+// parse such a file further, and its declarations would have no package.
+func sourcesWithPackageClause(prgrm *ast.CXProgram, sources []string, names []string) ([]string, []string) {
+	var keptSources, keptNames []string
+	for i, source := range sources {
+		if sourceHasPackageClause(source) {
+			if keptSources != nil {
+				keptSources = append(keptSources, source)
+				if len(names) > i {
+					keptNames = append(keptNames, names[i])
+				}
+			}
+			continue
+		}
+		if keptSources == nil {
+			keptSources = append(make([]string, 0, len(sources)), sources[:i]...)
+			keptNames = append(make([]string, 0, len(names)), names[:min(i, len(names))]...)
+		}
+		file := ast.SourceFileGidNil
+		if len(names) > i {
+			file = prgrm.CXProgramSourceFileIntern(names[i])
+		}
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeNoPackageDefined, file, 1, 1, ast.CompileErrorOperands{})
+	}
+	if keptSources == nil {
+		return sources, names
+	}
+	return keptSources, keptNames
+}
+
+// sourceHasPackageClause reports whether the first token of source after
+// white space and comments is the keyword package.
+func sourceHasPackageClause(source string) bool {
+	for {
+		trimmed := strings.TrimLeft(source, " \t\r\n\ufeff")
+		switch {
+		case strings.HasPrefix(trimmed, "//"):
+			end := strings.IndexByte(trimmed, '\n')
+			if end < 0 {
+				return false
+			}
+			source = trimmed[end:]
+		case strings.HasPrefix(trimmed, "/*"):
+			end := strings.Index(trimmed[2:], "*/")
+			if end < 0 {
+				return false
+			}
+			source = trimmed[end+4:]
+		default:
+			rest, found := strings.CutPrefix(trimmed, "package")
+			return found && rest != "" && !sourceIdentByte(rest[0])
+		}
+	}
+}
+
+func sourceIdentByte(c byte) bool {
+	return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= 0x80
 }

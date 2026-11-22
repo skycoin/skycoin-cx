@@ -1,9 +1,8 @@
 // https://github.com/skycoin/cx/issues/53
 
-import "sys/cx"
-
 package main
 
+import "sys/cx"
 import "sys/string"
 
 type Too struct {

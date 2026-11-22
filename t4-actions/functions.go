@@ -46,7 +46,9 @@ type SymbolsData struct {
 //				   i.e. func (sampleArg i32) SomeMethod(), sampleArg is the receiver.
 //	 isMethod - If the function is a method (isMethod = true), then it adds the object that
 //				   it's called on as the first argument.
-func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgument, isMethod bool) ast.CXFunctionIndex {
+//	 nameLine, nameColumn - the position of the name, which tells a second
+//				   declaration of the name from the first, 0 when unknown.
+func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgument, isMethod bool, nameLine int, nameColumn int) ast.CXFunctionIndex {
 	if isMethod {
 		if len(receiver) > 1 {
 			panic("method has multiple receivers")
@@ -56,6 +58,7 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 			methodName := prgrm.CXProgramNameIntern(fnName)
 
 			if fnIdx, ok := pkg.Methods[ast.CXPackageMethodKey{CXPackageMethodKeyStruct: receiverName, CXPackageMethodKeyMethod: methodName}]; ok {
+				fnIdx = prgrm.FunctionDeclarationAt(fnIdx, CurrentFile, nameLine, nameColumn)
 				fn := prgrm.GetFunctionFromArray(fnIdx)
 				fn.AddInput(prgrm, receiver[0])
 				pkg.CurrentFunction = fnIdx
@@ -77,8 +80,9 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 		if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 			fnNameGid := prgrm.CXProgramNameIntern(fnName)
 			if fn, err := prgrm.GetFunction(fnNameGid, pkg.Name); err == nil {
-				pkg.CurrentFunction = ast.CXFunctionIndex(fn.Index)
-				return ast.CXFunctionIndex(fn.Index)
+				fnIdx := prgrm.FunctionDeclarationAt(ast.CXFunctionIndex(fn.Index), CurrentFile, nameLine, nameColumn)
+				pkg.CurrentFunction = fnIdx
+				return fnIdx
 			} else {
 				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 				// Now a constructor call, site S0724.
@@ -2920,6 +2924,13 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 // ProcessSymbolFields copies the correct field values for the sym.Fields from their struct fields.
 func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast.CXTypeSignature) {
 	if typeSignatureInvalid(prgrm, argTypeSignature) {
+		// The fields of a value of no valid type have no type either, so their
+		// uses report nothing more.
+		if symTypeSignature.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			for _, fieldIdx := range prgrm.GetCXArgFromArray(ast.CXArgumentIndex(symTypeSignature.Meta)).Fields {
+				prgrm.GetCXArgFromArray(fieldIdx).Type = types.INVALID
+			}
+		}
 		return
 	}
 	var argStructType *ast.CXStruct
@@ -3321,6 +3332,7 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 	if !strings.HasPrefix(sliceType, "[]") {
 		return
 	}
+	literal := opName == "append" && strings.HasPrefix(prgrm.CXProgramNameText(sliceTypeSig.Name), constants.SLICE_LITERAL_PREFIX)
 	operandTypeCheck := func(typeSigIdx ast.CXTypeSignatureIndex, expectedType string) {
 		typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 		if typeSignatureUndefined(prgrm, typeSig) {
@@ -3333,6 +3345,14 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 		}
 		file, line := exprLine(prgrm, exprs, currIndex)
 		column := prgrm.CXProgramCompileErrorColumn(file, line)
+		if literal {
+			// The slice of a slice literal element is at the element.
+			if sliceFile, sliceLine, sliceColumn := ast.CXArgumentDebugPosition(prgrm, sliceTypeSig.ArgDetails); sliceLine > 0 {
+				file, line, column = sliceFile, sliceLine, sliceColumn
+			}
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSliceLiteralElementType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(receivedType), prgrm.CXProgramCompileErrorText(expectedType)})
+			return
+		}
 		if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, typeSig.ArgDetails); sigLine > 0 && !temporary {
 			file, line, column = sigFile, sigLine, sigColumn
 		}

@@ -238,6 +238,9 @@ func serializeStruct(encoder *serializeEncoder, strct *CXStruct) {
 	for _, field := range strct.Fields {
 		encoder.serializeEncoderInt(int64(field))
 	}
+	encoder.serializeEncoderInt(int64(strct.FileName))
+	encoder.serializeEncoderInt(int64(strct.FileLine))
+	encoder.serializeEncoderInt(int64(strct.FileColumn))
 }
 
 func deserializeStruct(decoder *serializeDecoder, strct *CXStruct) {
@@ -250,6 +253,9 @@ func deserializeStruct(decoder *serializeDecoder, strct *CXStruct) {
 			strct.Fields[i] = CXTypeSignatureIndex(decoder.serializeDecoderIntValue())
 		}
 	}
+	strct.FileName = SourceFileGid(decoder.serializeDecoderInt())
+	strct.FileLine = decoder.serializeDecoderIntValue()
+	strct.FileColumn = decoder.serializeDecoderIntValue()
 }
 
 // ----------------------------------------------------------------
@@ -718,6 +724,7 @@ func serializeFunction(prgrm *CXProgram, encoder *serializeEncoder, fn *CXFuncti
 	encoder.serializeEncoderPointer(fn.Size)
 	encoder.serializeEncoderInt(int64(fn.FileName))
 	encoder.serializeEncoderInt(int64(fn.FileLine))
+	encoder.serializeEncoderInt(int64(fn.FileColumn))
 	encoder.serializeEncoderLength(len(fn.ListOfPointers), fn.ListOfPointers == nil)
 	for _, arg := range fn.ListOfPointers {
 		encoder.serializeEncoderBool(arg != nil)
@@ -783,6 +790,7 @@ func deserializeFunction(prgrm *CXProgram, decoder *serializeDecoder, fn *CXFunc
 	fn.Size = decoder.serializeDecoderPointer()
 	fn.FileName = SourceFileGid(decoder.serializeDecoderInt())
 	fn.FileLine = decoder.serializeDecoderIntValue()
+	fn.FileColumn = decoder.serializeDecoderIntValue()
 	if length := decoder.serializeDecoderLength(1); length >= 0 {
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 		// Now a slice of pointers, as compiled programs hold the GC roots.

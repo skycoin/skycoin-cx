@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/skycoin/skycoin-cx/t4-actions"
 )
 
 type Lexer struct {
@@ -23,7 +21,6 @@ type Lexer struct {
 	bsize     uint //buffer size
 	nlsemi    bool //whether or not newline is SCOLON
 	eof       bool //eof
-	crash     bool //used for crash behaviour
 	colbefore bool //used for colon keywords
 
 	// VIOLATION: pointer at rest; becomes yySymTypeGid in phase 3.
@@ -171,9 +168,6 @@ func (s *Lexer) next() {
 	nlsemi := s.nlsemi
 	s.nlsemi = false
 	if s.eof {
-		if s.crash {
-			actions.AST.CXProgramCompileErrorExit()
-		}
 		s.tok.yys = -1
 		return
 	}
@@ -199,9 +193,6 @@ redonext:
 	case -1, 0:
 		s.eof = true
 		s.tok.yys = -1
-		if s.crash {
-			actions.AST.CXProgramCompileErrorExit()
-		}
 	case '\n':
 		s.nextch()
 		if nlsemi {
@@ -824,11 +815,11 @@ func (s *Lexer) stdString() {
 			continue
 		}
 		if s.ch == '\n' {
-			//TODO: ISSUE #152 (old #133a) THIS FIXES IT.
-			//s.errorf("newline in string")
-			//break
-			s.crash = true
-			s.nextch()
+			// As Go, end the literal at the newline and go on with the next line.
+			s.errh(s.tok.line, s.tok.column, "newline in string")
+			s.tok.yys = STRING_LITERAL
+			s.nlsemi = true
+			return
 		}
 		if s.ch < 0 {
 			s.errh(s.tok.line, s.tok.column, "string not terminated")

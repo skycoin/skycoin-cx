@@ -875,6 +875,15 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 	// Now an arena getter, site S0591.
 	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
+	// A target that does not exist, such as pkg.x of a package whose import
+	// failed, has its error already, and only a computed value is kept.
+	if target, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, len(toExprs)-1); err == nil && len(target.GetOutputs(prgrm)) == 0 && functionInvalid(prgrm, prgrm.GetFunctionFromArray(target.Operator)) {
+		if fromExpressionOperator == nil {
+			return nil
+		}
+		return fromExprs
+	}
+
 	if checkIfFunctionCallNeedsAnOutput(prgrm, fromExpressionOperator, toExpression) {
 		// The call stays as a statement, so the errors after it are found too.
 		if assignOp != ":=" {

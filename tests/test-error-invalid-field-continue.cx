@@ -1,0 +1,13 @@
+package main
+
+func g() {
+}
+
+func main() {
+	y := g()
+	y.a = 1
+	var z i32 = y.b
+	var w i32 = foo()
+	w = foo().c
+	var late i32 = "s"
+}

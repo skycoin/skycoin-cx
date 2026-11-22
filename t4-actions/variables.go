@@ -471,16 +471,33 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 
 }
 
-// GlobalRedeclarationCheck errors when pass one meets a global a second time.
-// Only a global that pass one already declared has a valid offset.
-func GlobalRedeclarationCheck(prgrm *ast.CXProgram, declarator *ast.CXArgument) {
+// GlobalRedeclarationCheck reports whether declarator declares a global of
+// the current package a second time, and records the error. The first
+// declaration gives the global the position of its name, which pass two
+// meets again. A global without a debug record is declared once it has an
+// offset.
+func GlobalRedeclarationCheck(prgrm *ast.CXProgram, declarator *ast.CXArgument) bool {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
-		return
+		return false
 	}
 	glbl, err := pkg.GetGlobal(prgrm, declarator.Name)
-	if err != nil || !glbl.Offset.IsValid() {
-		return
+	if err != nil {
+		return false
 	}
-	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeRedeclared, declarator.ArgDetails, ast.CompileErrorOperands{int64(declarator.Name)})
+	file, line, column := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
+	firstFile, firstLine, firstColumn := ast.CXArgumentDebugPosition(prgrm, glbl.ArgDetails)
+	if glbl.ArgDetails == ast.CXArgumentDebugGidNil {
+		if !glbl.Offset.IsValid() {
+			return false
+		}
+	} else if firstLine == 0 {
+		details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(glbl.ArgDetails)
+		details.FileName, details.FileLine, details.FileColumn = file, line, column
+		return false
+	} else if firstFile == file && firstLine == line && firstColumn == column {
+		return false
+	}
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeRedeclaredBlock, file, line, column, ast.CompileErrorOperands{int64(declarator.Name), int64(firstFile), int64(firstLine), int64(firstColumn)})
+	return true
 }

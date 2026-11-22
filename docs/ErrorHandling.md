@@ -130,7 +130,9 @@ Three error records exist.
   `CompileErrorRecordLine`, `CompileErrorRecordColumn`, 0 when unknown, and
   `CompileErrorRecordOperands`. The code is a `CompileErrorCode` from
   `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeDereferenceNonPointer` (7053). 7041 is
+  `CompileErrorCodeImportFailed` (7055). 7009
+  `CompileErrorCodeRedeclaredBlock` is a type, function or global declared
+  twice in a package, whose operands give the first declaration. 7041 is
   `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
   7042 a slice built-in argument or result of the wrong type, 7043
   `CompileErrorCodeCallResultCall`, a call of a call result such as
@@ -149,8 +151,11 @@ Three error records exist.
   `CompileErrorCodeSliceLiteralElementType`, a slice literal element of the
   wrong type, such as `u` of type `U` in `[]T{u}`. 7052
   `CompileErrorCodeSyntax` is a syntax error, whose operand names the
-  unexpected and the expected tokens, and 7053
-  `CompileErrorCodeDereferenceNonPointer` a `*x` of a non-pointer `x`. 7000 is
+  unexpected and the expected tokens, 7053
+  `CompileErrorCodeDereferenceNonPointer` a `*x` of a non-pointer `x`, 7054
+  `CompileErrorCodeMethodRedeclared` a method declared twice, and 7055
+  `CompileErrorCodeImportFailed` an import of a package that cannot be
+  loaded, whose members then report nothing more. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the

@@ -195,20 +195,22 @@ stepping:       TSTEP int_value int_value
 global_declaration:
                 VAR declarator declaration_specifiers SEMICOLON
                 {
-			actions.GlobalRedeclarationCheck(Program, $2)
-			actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
+			if !actions.GlobalRedeclarationCheck(Program, $2) {
+				actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
+			}
                 }
         |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
                 {
-			actions.GlobalRedeclarationCheck(Program, $2)
-			actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
+			if !actions.GlobalRedeclarationCheck(Program, $2) {
+				actions.DeclareGlobalInPackage(Program,nil,$2, $3, nil, false)
+			}
                 }
                 ;
 
 struct_declaration:
                 TYPE IDENTIFIER STRUCT struct_fields
                 {
-			actions.DeclareStruct(Program,$2, $4)
+			actions.DeclareStruct(Program,$2, $4, CurrentFile, $<line>2, $<column>2)
                 }
                 ;
 
@@ -251,7 +253,8 @@ function_header:
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 				// Now a constructor call, site S1400.
-				fn := ast.MakeFunction(Program, Program.CXProgramNameIntern($2), CurrentFile, lineNo)
+				fn := ast.MakeFunction(Program, Program.CXProgramNameIntern($2), CurrentFile, $<line>2)
+				fn.FileColumn = $<column>2
 				_,fnIdx:=pkg.AddFunction(Program,fn)
                                 pkg.CurrentFunction=fnIdx
 
@@ -272,7 +275,8 @@ function_header:
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
 				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 				// Now a constructor call, site S1401.
-				fn := ast.MakeFunction(Program, Program.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, lineNo)
+				fn := ast.MakeFunction(Program, Program.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, $<line>5)
+				fn.FileColumn = $<column>5
 				_,fnIdx:=pkg.AddMethod(Program,fn,receiverName,methodName)
                                 // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
                                 // Now an arena getter, site S1402.
@@ -366,7 +370,7 @@ direct_declarator:
 
 id_list:	IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
+			arg := actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, $<line>1, $<column>1)
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1405.
 			$$ = []*ast.CXArgument{arg}
@@ -380,7 +384,7 @@ id_list:	IDENTIFIER
 		}
 	|	id_list COMMA IDENTIFIER
 		{
-			arg := actions.DeclarationSpecifiersStruct(Program,$3, "", false, CurrentFile, lineNo)
+			arg := actions.DeclarationSpecifiersStruct(Program,$3, "", false, CurrentFile, $<line>3, $<column>3)
 			$$ = append($1, arg)
 		}
 	|	id_list COMMA type_specifier
@@ -438,15 +442,15 @@ element_specifiers:
                 }
         |       IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, $<line>1, $<column>1)
                 }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, $<line>1, $<column>1)
                 }
 	|       type_specifier PERIOD IDENTIFIER
 		{
-			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, $<line>1, $<column>1)
 		}
                 ;
 
@@ -459,15 +463,15 @@ array_element:
                 }
         |       IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, $<line>1, $<column>1)
                 }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, $<line>1, $<column>1)
                 }
         |       type_specifier PERIOD IDENTIFIER
                 {
-			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, lineNo)
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, $<line>1, $<column>1)
                 }
         |       MUL_OP array_element
                 {

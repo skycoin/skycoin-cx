@@ -1,0 +1,14 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func h() {
+}
+
+func main() {
+	var t T
+	t.a = 1
+	i32.print(t.a)
+}

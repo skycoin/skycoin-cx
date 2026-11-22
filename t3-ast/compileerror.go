@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t2-globals" // thin: only FoundCompileErrors; core globals, keep
 )
 
@@ -24,7 +25,10 @@ const (
 	CompileErrorCodeFunctionInputType
 	CompileErrorCodeFunctionMissing
 	CompileErrorCodeFunctionReceiverType
-	CompileErrorCodeFunctionRedeclaration
+	// CompileErrorCodeRedeclaredBlock is a package level name declared twice.
+	// Its operands are the name and the file, line and column of the first
+	// declaration.
+	CompileErrorCodeRedeclaredBlock
 	CompileErrorCodeFunctionReturnCount
 	CompileErrorCodeIdentifierMissing
 	CompileErrorCodeIndexType
@@ -71,6 +75,12 @@ const (
 	// CompileErrorSyntaxText.
 	CompileErrorCodeSyntax
 	CompileErrorCodeDereferenceNonPointer
+	// CompileErrorCodeMethodRedeclared has the operands of
+	// CompileErrorCodeRedeclaredBlock.
+	CompileErrorCodeMethodRedeclared
+	// CompileErrorCodeImportFailed is an import of a package that cannot be
+	// loaded. Its operands are the import path and the reason.
+	CompileErrorCodeImportFailed
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )
@@ -102,6 +112,9 @@ type CompileErrorList struct {
 	// CompileErrorListPreliminary counts the records of the preliminary stage,
 	// which the body pass does not record again.
 	CompileErrorListPreliminary int
+	// CompileErrorListImportsFailed names the packages whose import failed,
+	// whose members report no error of their own.
+	CompileErrorListImportsFailed []stringpool.StringGid
 }
 
 // CompileErrorListInit sets up an empty list with room for capacity records.
@@ -110,6 +123,7 @@ func (list *CompileErrorList) CompileErrorListInit(capacity int) {
 	list.CompileErrorListPrinted = 0
 	list.CompileErrorListTokenFile, list.CompileErrorListTokenLine, list.CompileErrorListTokenColumn = SourceFileGidNil, 0, 0
 	list.CompileErrorListPreliminary = 0
+	list.CompileErrorListImportsFailed = nil
 }
 
 // CXProgramCompileErrorTokenSet records the position of the token the
@@ -196,4 +210,20 @@ func CXArgumentDebugPosition(prgrm *CXProgram, gid CXArgumentDebugGid) (SourceFi
 func (prgrm *CXProgram) CXProgramCompileErrorAddDebug(code CompileErrorCode, details CXArgumentDebugGid, operands CompileErrorOperands) {
 	file, line, column := CXArgumentDebugPosition(prgrm, details)
 	prgrm.CXProgramCompileErrorAddPosition(code, file, line, column, operands)
+}
+
+// CXProgramImportFailedAdd records that the import of the package name failed.
+func (prgrm *CXProgram) CXProgramImportFailedAdd(name stringpool.StringGid) {
+	list := &prgrm.CxIrState.CompileErrorList
+	list.CompileErrorListImportsFailed = append(list.CompileErrorListImportsFailed, name)
+}
+
+// CXProgramImportFailed reports whether the import of the package name failed.
+func (prgrm *CXProgram) CXProgramImportFailed(name stringpool.StringGid) bool {
+	for _, failed := range prgrm.CxIrState.CompileErrorList.CompileErrorListImportsFailed {
+		if failed == name {
+			return true
+		}
+	}
+	return false
 }

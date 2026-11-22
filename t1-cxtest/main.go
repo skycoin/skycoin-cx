@@ -236,7 +236,7 @@ func runTestCases(t *runner.TestRunner) {
 		"test-slice-literal-struct-errors.cx:23 function 'makeU' expected receiving variable of type 'U'; 'T' was provided",
 		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
 		"test-slice-literal-struct-errors.cx:25 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
-		"test-slice-literal-struct-errors.cx:26 function 'append' expected argument of type 'i32'; 'T' was provided")
+		"test-slice-literal-struct-errors.cx:26:13 cannot use value of type 'T' as type 'i32' in slice literal")
 	t.RunWant("test-call-index-operator.cx", types.CX_SUCCESS, "f()[i] of an array or slice result as an operator operand",
 		"7\n9\n42\n2\n6 14 2.5\ncond\n")
 	t.RunWant("test-import-global-array-number.cx test-import-global-array.cx", types.CX_SUCCESS, "pkg.A[i] reads and writes a global array or slice of another package",
@@ -623,9 +623,9 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunMissing("test-error-loop-indirection-continue.cx", types.CX_COMPILATION_ERROR, "a loop condition without a value and an invalid indirection leave the later errors reported",
 		"outputless", "expects", ":11 ", ":9 ")
 	t.RunWant("test-error-preliminary-continue.cx", types.CX_COMPILATION_ERROR, "a missing type in a declaration leaves the errors in the bodies reported once",
-		"test-error-preliminary-continue.cx:4:12 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:18 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:15 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+		"test-error-preliminary-continue.cx:4:4 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:10 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:8 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunWant("test-error-syntax-a.cx test-error-syntax-b.cx", types.CX_COMPILATION_ERROR, "a syntax error is a record, sorted with the errors of the other files",
-		"error: test-error-syntax-a.cx:4:11 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected comma or semicolon or newline\n")
+		"error: test-error-syntax-a.cx:4:4 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected comma or semicolon or newline\n")
 	t.RunWant("test-error-syntax-body.cx", types.CX_COMPILATION_ERROR, "a syntax error names the unexpected and the expected token",
 		"error: test-error-syntax-body.cx:6:5 syntax error: unexpected comma, expected ]\n")
 	t.RunWant("test-error-column.cx", types.CX_COMPILATION_ERROR, "compile errors print file:line:column, in column order on one line",
@@ -637,18 +637,46 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-slice-literal-nested-type.cx", types.CX_SUCCESS, "nested slice literal elements have their full type",
 		"[[1 2] [3] [7]] 1\n[[{x: 1}] []]\n[[1] [2 3]]\n")
 	t.RunWant("test-slice-literal-nested-type-errors.cx", types.CX_COMPILATION_ERROR, "a nested slice literal element of the wrong type is reported",
-		"test-slice-literal-nested-type-errors.cx:4 function 'append' expected argument of type '[]i32'; '[]i64' was provided",
-		"test-slice-literal-nested-type-errors.cx:5:15 function 'append' expected argument of type '[]i32'; 'i32' was provided",
-		"test-slice-literal-nested-type-errors.cx:6 function 'append' expected argument of type '[][]i32'; '[]i32' was provided",
-		"test-slice-literal-nested-type-errors.cx:7:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+		"error: test-slice-literal-nested-type-errors.cx:4:15 cannot use value of type '[]i64' as type '[]i32' in slice literal\nerror: test-slice-literal-nested-type-errors.cx:4:21 cannot use value of type 'i32' as type 'i64' in slice literal\nerror: test-slice-literal-nested-type-errors.cx:5:15 cannot use value of type 'i32' as type '[]i32' in slice literal\nerror: test-slice-literal-nested-type-errors.cx:6:36 cannot use value of type '[]i32' as type '[][]i32' in slice literal\nerror: test-slice-literal-nested-type-errors.cx:7:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-slice-literal-nested-type-errors.cx", types.CX_COMPILATION_ERROR, "a nested slice literal element of the wrong type is reported",
+		"function 'append'")
 	t.RunWant("test-error-call-count-once.cx", types.CX_COMPILATION_ERROR, "a call with the wrong number of inputs reports only that",
 		"test-error-call-count-once.cx:8:2 operator 'f' expects 1 input/s, but 2 input arguments were provided\nerror: test-error-call-count-once.cx:9:2 operator 'f' expects to return 1 output/s, but 0 receiving argument/s were provided\nerror: test-error-call-count-once.cx:10:2 operator 'f' expects 1 input/s, but 0 input arguments were provided\nerror: test-error-call-count-once.cx:11:17")
 	t.RunMissing("test-error-call-count-once.cx", types.CX_COMPILATION_ERROR, "a call with the wrong number of inputs reports only that",
 		"test-error-call-count-once.cx:8:2 operator 'f' expects to return", "test-error-call-count-once.cx:10:2 operator 'f' expects to return")
-	t.RunWant("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start",
-		"error: test-error-string-unterminated.cx:5:14 string not terminated\n")
-	t.RunMissing("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start",
+	t.RunWant("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start, and the other errors print",
+		"error: test-error-string-unterminated.cx:4:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\nerror: test-error-string-unterminated.cx:5:14 newline in string\n")
+	t.RunMissing("test-error-string-unterminated.cx", types.CX_COMPILATION_ERROR, "an unterminated string is one error at its start, and the other errors print",
 		"invalid string literal")
+	t.RunWant("test-error-string-newline.cx", types.CX_COMPILATION_ERROR, "a string ends at its line, and the next lines compile",
+		"error: test-error-string-newline.cx:4:14 newline in string\nerror: test-error-string-newline.cx:5:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\nerror: test-error-string-newline.cx:6:14 newline in string\nerror: test-error-string-newline.cx:7:18 cannot assign value of type 'str' to identifier 'later' of type 'i32'\n")
+	t.RunMissing("test-error-string-newline.cx", types.CX_COMPILATION_ERROR, "a string ends at its line, and the next lines compile",
+		"invalid string literal", "syntax error")
+	t.RunWant("test-error-package-clause-missing.cx", types.CX_COMPILATION_ERROR, "a file without a package clause is one error at line 1",
+		"error: test-error-package-clause-missing.cx:1:1 no package clause\n")
+	t.RunMissing("test-error-package-clause-missing.cx", types.CX_COMPILATION_ERROR, "a file without a package clause is one error at line 1",
+		"panic", "tcp", "not checked", ":6")
+	t.RunWant("test-error-package-clause-missing.cx test-error-package-clause-main.cx", types.CX_COMPILATION_ERROR, "a file without a package clause leaves the other files compiled",
+		"error: test-error-package-clause-missing.cx:1:1 no package clause\nerror: test-error-package-clause-main.cx:4:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunWant("test-error-redeclared.cx", types.CX_COMPILATION_ERROR, "a type, function, global or method declared twice is reported with both positions, and the uses take the first",
+		"error: test-error-redeclared.cx:7:6 'T' redeclared in this block, other declaration at test-error-redeclared.cx:3:6\nerror: test-error-redeclared.cx:9:4 struct 'Missing' not found in package 'main'\nerror: test-error-redeclared.cx:16:6 'f' redeclared in this block, other declaration at test-error-redeclared.cx:12:6\nerror: test-error-redeclared.cx:17:16 cannot assign value of type 'str' to identifier 'bad' of type 'i32'\nerror: test-error-redeclared.cx:21:5 'g' redeclared in this block, other declaration at test-error-redeclared.cx:20:5\nerror: test-error-redeclared.cx:27:12 method T.m already declared at test-error-redeclared.cx:23:12\nerror: test-error-redeclared.cx:28:17 cannot assign value of type 'str' to identifier 'bad2' of type 'i32'\nerror: test-error-redeclared.cx:37:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-redeclared.cx", types.CX_COMPILATION_ERROR, "a type, function, global or method declared twice is reported with both positions, and the uses take the first",
+		"panic", ":33", ":34", ":35", ":36", "function redeclaration")
+	t.RunWant("test-error-redeclared-a.cx test-error-redeclared-b.cx", types.CX_COMPILATION_ERROR, "a type or function declared in two files of a package is reported with both files",
+		"error: test-error-redeclared-b.cx:3:6 'T' redeclared in this block, other declaration at test-error-redeclared-a.cx:3:6\nerror: test-error-redeclared-b.cx:7:6 'h' redeclared in this block, other declaration at test-error-redeclared-a.cx:7:6\n")
+	t.RunWant("test-slice-literal-element-errors.cx", types.CX_COMPILATION_ERROR, "every slice literal element of the wrong type is one error at the element",
+		"error: test-slice-literal-element-errors.cx:17:16 cannot use value of type 'str' as type 'i32' in slice literal\nerror: test-slice-literal-element-errors.cx:17:21 cannot use value of type 'f32' as type 'i32' in slice literal\nerror: test-slice-literal-element-errors.cx:18:11 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-element-errors.cx:19:25 cannot use value of type '[]i64' as type '[]i32' in slice literal\nerror: test-slice-literal-element-errors.cx:19:36 cannot use value of type 'i32' as type '[]i32' in slice literal\nerror: test-slice-literal-element-errors.cx:20:17 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-element-errors.cx:20:21 cannot use value of type '[]U' as type '[]T' in slice literal\nerror: test-slice-literal-element-errors.cx:21:31 cannot use value of type 'i64' as type 'i32' in slice literal\nerror: test-slice-literal-element-errors.cx:21:37 cannot use value of type '[]i64' as type '[]i32' in slice literal\nerror: test-slice-literal-element-errors.cx:22:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-slice-literal-element-errors.cx", types.CX_COMPILATION_ERROR, "every slice literal element of the wrong type is one error at the element",
+		"function 'append'", "'[]U' as type 'T'")
+	t.RunWant("test-error-import-missing.cx", types.CX_COMPILATION_ERROR, "a package that cannot be loaded is one error at its import, and its members report nothing more",
+		"error: test-error-import-missing.cx:3:8 could not import nope (",
+		"\nerror: test-error-import-missing.cx:15:2 identifier 'os.Nope' does not exist\nerror: test-error-import-missing.cx:16:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-import-missing.cx", types.CX_COMPILATION_ERROR, "a package that cannot be loaded is one error at its import, and its members report nothing more",
+		"panic", "'nope.", "struct 'T'", "'ident'", ":6:", ":9:", ":10:", ":11:", ":12:", ":13:", ":14:")
+	t.RunWant("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
+		"error: test-error-invalid-field-continue.cx:7:2 trying to use an outputless operator in an assignment\nerror: test-error-invalid-field-continue.cx:10:14 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:11:6 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+	t.RunMissing("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
+		"'ident'", ":0 ", ":8:", ":9:")
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	var s str = "abc
+	var late i32 = "s"
+	var t str = "x
+	var later i32 = "t"
+}

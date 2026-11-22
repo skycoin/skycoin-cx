@@ -30,7 +30,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeFunctionInputType, ast.CompileErrorOperands{text("f"), text("i32"), text("str")}, header + " " + fmt.Sprintf("function '%s' expected input argument of type '%s'; '%s' was provided", "f", "i32", "str") + "\n"},
 		{ast.CompileErrorCodeFunctionMissing, ast.CompileErrorOperands{text("i32.foo")}, header + " function '" + "i32.foo" + "' does not exist\n"},
 		{ast.CompileErrorCodeFunctionReceiverType, ast.CompileErrorOperands{text("f"), text("i32"), text("str")}, header + " " + fmt.Sprintf("function '%s' expected receiving variable of type '%s'; '%s' was provided", "f", "i32", "str") + "\n"},
-		{ast.CompileErrorCodeFunctionRedeclaration, ast.CompileErrorOperands{}, header + " function redeclaration\n"},
+		{ast.CompileErrorCodeRedeclaredBlock, ast.CompileErrorOperands{text("T"), int64(file), 3, 6}, header + " 'T' redeclared in this block, other declaration at a.cx:3:6\n"},
+		{ast.CompileErrorCodeRedeclaredBlock, ast.CompileErrorOperands{text("g"), int64(file), 3, 0}, header + " 'g' redeclared in this block, other declaration at a.cx:3\n"},
 		{ast.CompileErrorCodeFunctionReturnCount, ast.CompileErrorOperands{text("f"), 0, 1}, header + " " + fmt.Sprintf("function '%s' expects to return %d argument%s, but %d output argument%s %s provided", "f", 0, "", 1, "", "was") + "\n"},
 		{ast.CompileErrorCodeFunctionReturnCount, ast.CompileErrorOperands{text("f"), 1, 2}, header + " " + fmt.Sprintf("function '%s' expects to return %d argument%s, but %d output argument%s %s provided", "f", 1, "", 2, "s", "were") + "\n"},
 		{ast.CompileErrorCodeFunctionReturnCount, ast.CompileErrorOperands{text("f"), 2, 0}, header + " " + fmt.Sprintf("function '%s' expects to return %d argument%s, but %d output argument%s %s provided", "f", 2, "s", 0, "s", "were") + "\n"},
@@ -42,7 +43,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeInvalidIndirection, ast.CompileErrorOperands{}, header + " invalid indirection\n"},
 		{ast.CompileErrorCodeLoopConditionNoValue, ast.CompileErrorOperands{}, header + " loop condition has no value\n"},
 		{ast.CompileErrorCodeNoFields, ast.CompileErrorOperands{text("x")}, header + " " + fmt.Sprintf("'%s' has no fields", "x") + "\n"},
-		{ast.CompileErrorCodeNoPackageDefined, ast.CompileErrorOperands{}, header + " No package defined\n"},
+		{ast.CompileErrorCodeNoPackageDefined, ast.CompileErrorOperands{}, header + " no package clause\n"},
 		{ast.CompileErrorCodeOpcodeRenamed, ast.CompileErrorOperands{text("str.concat"), text("string.Concatenation"), 2611200002}, header + " " + fmt.Sprintf("%s was renamed to %s in language version %d", "str.concat", "string.Concatenation", 2611200002) + "\n"},
 		{ast.CompileErrorCodeOpcodeRenamedImport, ast.CompileErrorOperands{text("str.concat"), text("string.Concatenation"), 2611200002, text("string")}, header + " " + fmt.Sprintf("%s was renamed to %s in language version %d", "str.concat", "string.Concatenation", 2611200002) + fmt.Sprintf(", import \"%s%s\"", "sys/", "string") + "\n"},
 		{ast.CompileErrorCodeOperatorArgumentTypes, ast.CompileErrorOperands{text("i32.add")}, header + " " + fmt.Sprintf("invalid argument types for '%s' operator", "i32.add") + "\n"},
@@ -79,6 +80,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeSliceLiteralElementType, ast.CompileErrorOperands{text("U"), text("T")}, header + " cannot use value of type 'U' as type 'T' in slice literal\n"},
 		{ast.CompileErrorCodeSyntax, ast.CompileErrorOperands{text("unexpected comma, expected ]")}, header + " syntax error: unexpected comma, expected ]\n"},
 		{ast.CompileErrorCodeDereferenceNonPointer, ast.CompileErrorOperands{text("x"), text("i32")}, header + " cannot dereference non-pointer 'x' of type 'i32'\n"},
+		{ast.CompileErrorCodeMethodRedeclared, ast.CompileErrorOperands{text("T.m"), int64(file), 20, 13}, header + " method T.m already declared at a.cx:20:13\n"},
+		{ast.CompileErrorCodeImportFailed, ast.CompileErrorOperands{text("nope"), text("not found")}, header + " could not import nope (not found)\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

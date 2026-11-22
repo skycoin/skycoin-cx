@@ -17,6 +17,7 @@ type LiteralElement struct {
 	Elided      bool
 	Keyed       bool
 	Line        int
+	Column      int
 }
 
 // LiteralType is the type of an array or slice literal. Lengths are
@@ -41,7 +42,12 @@ func LiteralElementsFlatten(prgrm *ast.CXProgram, typ LiteralType, elems []Liter
 				continue
 			}
 		}
-		result = append(result, SliceLiteralElement(prgrm, exprs)...)
+		// Only a slice literal reads the position, from the line it adds.
+		sliceColumn := 0
+		if typ.Slice {
+			sliceColumn = elem.Column
+		}
+		result = append(result, SliceLiteralElement(prgrm, exprs, elem.Line, sliceColumn)...)
 	}
 	return result
 }

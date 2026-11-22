@@ -1,0 +1,38 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type T struct {
+	b str
+	c Missing
+}
+
+func f(x i32) (y i32) {
+	y = x + 1
+}
+
+func f(s str) {
+	var bad i32 = "in second f"
+}
+
+var g i32 = 5
+var g str = "x"
+
+func (t T) m() (r i32) {
+	r = t.a
+}
+
+func (t T) m() {
+	var bad2 i32 = "in second m"
+}
+
+func main() {
+	var t T
+	t.a = 3
+	var r i32 = f(1)
+	r = t.m()
+	r = g
+	var late i32 = "s"
+}

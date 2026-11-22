@@ -36,8 +36,9 @@ type CXFunction struct {
 	Size types.Pointer // automatic memory size
 
 	// Debugging
-	FileName SourceFileGid
-	FileLine int
+	FileName   SourceFileGid
+	FileLine   int
+	FileColumn int
 
 	// Used by the GC
 	// OBJMODEL: CXArgumentGid, phase 5 #327.

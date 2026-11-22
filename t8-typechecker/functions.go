@@ -62,7 +62,7 @@ func ParseFuncHeaders(files []*loader.File, funcs []declaration_extractor.FuncDe
 
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1508.
-			fnIdx := actions.FunctionHeader(actions.AST, fun.FuncName, []*ast.CXArgument{receiverArg}, true)
+			fnIdx := actions.FunctionHeader(actions.AST, fun.FuncName, []*ast.CXArgument{receiverArg}, true, 0, 0)
 
 			var inputs []*ast.CXArgument
 			var outputs []*ast.CXArgument
@@ -88,7 +88,7 @@ func ParseFuncHeaders(files []*loader.File, funcs []declaration_extractor.FuncDe
 			reFuncRegular := regexp.MustCompile(`func\s*\S+\s*\(([\s\w,]*)\)(?:\s*\(([\s\w,]*)\))*`)
 			funcRegular := reFuncRegular.FindSubmatch(funcDeclarationLine)
 
-			fnIdx := actions.FunctionHeader(actions.AST, fun.FuncName, nil, false)
+			fnIdx := actions.FunctionHeader(actions.AST, fun.FuncName, nil, false, 0, 0)
 
 			var inputs []*ast.CXArgument
 			var outputs []*ast.CXArgument

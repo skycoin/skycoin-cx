@@ -69,7 +69,7 @@ func ParseStructs(files []*loader.File, structs []declaration_extractor.StructDe
 			structFields = append(structFields, structFieldSpecifier)
 		}
 
-		actions.DeclareStruct(actions.AST, strct.StructName, structFields)
+		actions.DeclareStruct(actions.AST, strct.StructName, structFields, prgrm.CXProgramSourceFileIntern(strct.FileID), strct.LineNumber, 0)
 
 	}
 	return nil

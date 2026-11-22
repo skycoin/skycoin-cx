@@ -12,7 +12,8 @@ import (
 
 // printerCompileErrorFormat is the text of one compile error code. In
 // Format, %H is the "error: file:line:column" header, without a column of 0,
-// %s the next operand as a StringGid and %d the next as an integer. %+ is
+// %s the next operand as a StringGid and %d the next as an integer. %P is
+// the next three operands as file:line:column, without a column of 0. %+ is
 // "s" when the last integer is above 1, and %~ is " was" when it is 1 and
 // "s were" otherwise.
 // Stdout sends the text to stdout instead of stderr.
@@ -30,7 +31,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeFunctionInputType - ast.CompileErrorCodeNil:          {Format: "%H function '%s' expected input argument of type '%s'; '%s' was provided\n"},
 	ast.CompileErrorCodeFunctionMissing - ast.CompileErrorCodeNil:            {Format: "%H function '%s' does not exist\n"},
 	ast.CompileErrorCodeFunctionReceiverType - ast.CompileErrorCodeNil:       {Format: "%H function '%s' expected receiving variable of type '%s'; '%s' was provided\n"},
-	ast.CompileErrorCodeFunctionRedeclaration - ast.CompileErrorCodeNil:      {Format: "%H function redeclaration\n"},
+	ast.CompileErrorCodeRedeclaredBlock - ast.CompileErrorCodeNil:            {Format: "%H '%s' redeclared in this block, other declaration at %P\n"},
 	ast.CompileErrorCodeFunctionReturnCount - ast.CompileErrorCodeNil:        {Format: "%H function '%s' expects to return %d argument%+, but %d output argument%~ provided\n"},
 	ast.CompileErrorCodeIdentifierMissing - ast.CompileErrorCodeNil:          {Format: "%H identifier '%s' does not exist\n"},
 	ast.CompileErrorCodeIndexType - ast.CompileErrorCodeNil:                  {Format: "%H wrong index type; expected either 'i32' or 'i64', got '%s'\n"},
@@ -40,7 +41,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeInvalidIndirection - ast.CompileErrorCodeNil:         {Format: "%H invalid indirection\n"},
 	ast.CompileErrorCodeLoopConditionNoValue - ast.CompileErrorCodeNil:       {Format: "%H loop condition has no value\n"},
 	ast.CompileErrorCodeNoFields - ast.CompileErrorCodeNil:                   {Format: "%H '%s' has no fields\n"},
-	ast.CompileErrorCodeNoPackageDefined - ast.CompileErrorCodeNil:           {Format: "%H No package defined\n"},
+	ast.CompileErrorCodeNoPackageDefined - ast.CompileErrorCodeNil:           {Format: "%H no package clause\n"},
 	ast.CompileErrorCodeOpcodeRenamed - ast.CompileErrorCodeNil:              {Format: "%H %s was renamed to %s in language version %d\n"},
 	ast.CompileErrorCodeOpcodeRenamedImport - ast.CompileErrorCodeNil:        {Format: "%H %s was renamed to %s in language version %d, import \"" + cxpackages.SysPrefix + "%s\"\n"},
 	ast.CompileErrorCodeOperatorArgumentTypes - ast.CompileErrorCodeNil:      {Format: "%H invalid argument types for '%s' operator\n"},
@@ -75,6 +76,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeSliceLiteralElementType - ast.CompileErrorCodeNil:    {Format: "%H cannot use value of type '%s' as type '%s' in slice literal\n"},
 	ast.CompileErrorCodeSyntax - ast.CompileErrorCodeNil:                     {Format: "%H syntax error: %s\n"},
 	ast.CompileErrorCodeDereferenceNonPointer - ast.CompileErrorCodeNil:      {Format: "%H cannot dereference non-pointer '%s' of type '%s'\n"},
+	ast.CompileErrorCodeMethodRedeclared - ast.CompileErrorCodeNil:           {Format: "%H method %s already declared at %P\n"},
+	ast.CompileErrorCodeImportFailed - ast.CompileErrorCodeNil:               {Format: "%H could not import %s (%s)\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through
@@ -118,13 +121,11 @@ func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.Co
 		switch format[index] {
 		case 'H':
 			text = append(text, "error: "...)
-			text = append(text, prgrm.CXProgramSourceFileText(record.CompileErrorRecordFile)...)
-			text = append(text, ':')
-			text = strconv.AppendInt(text, int64(record.CompileErrorRecordLine), 10)
-			if record.CompileErrorRecordColumn > 0 {
-				text = append(text, ':')
-				text = strconv.AppendInt(text, int64(record.CompileErrorRecordColumn), 10)
-			}
+			text = printerCompileErrorPositionAppend(text, prgrm, record.CompileErrorRecordFile, int64(record.CompileErrorRecordLine), int64(record.CompileErrorRecordColumn))
+		case 'P':
+			operands := &record.CompileErrorRecordOperands
+			text = printerCompileErrorPositionAppend(text, prgrm, ast.SourceFileGid(operands[operand]), operands[operand+1], operands[operand+2])
+			operand += 3
 		case 's':
 			text = append(text, prgrm.CXProgramNameBytes(stringpool.StringGid(record.CompileErrorRecordOperands[operand]))...)
 			operand++
@@ -145,6 +146,19 @@ func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.Co
 		default:
 			text = append(text, '%', format[index])
 		}
+	}
+	return text
+}
+
+// printerCompileErrorPositionAppend appends file:line:column to text, without
+// a column of 0.
+func printerCompileErrorPositionAppend(text []byte, prgrm *ast.CXProgram, file ast.SourceFileGid, line int64, column int64) []byte {
+	text = append(text, prgrm.CXProgramSourceFileText(file)...)
+	text = append(text, ':')
+	text = strconv.AppendInt(text, line, 10)
+	if column > 0 {
+		text = append(text, ':')
+		text = strconv.AppendInt(text, column, 10)
 	}
 	return text
 }

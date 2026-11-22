@@ -74,12 +74,17 @@ func DeclarationSpecifiersBasic(prgrm *ast.CXProgram, typeCode types.Code) *ast.
 	return DeclarationSpecifiers(arg, []types.Pointer{0}, constants.DECL_BASIC)
 }
 
-// DeclarationSpecifiersStruct() declares a struct
+// DeclarationSpecifiersStruct() declares a struct. The errors of a missing
+// struct or package are at currentFile, lineNo and column, where the type
+// name starts, or at the token the parser is at for a column of 0.
 func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName string,
-	isExternal bool, currentFile ast.SourceFileGid, lineNo int) *ast.CXArgument {
+	isExternal bool, currentFile ast.SourceFileGid, lineNo int, column int) *ast.CXArgument {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
+	}
+	if column == 0 {
+		column = prgrm.CXProgramCompileErrorColumn(currentFile, lineNo)
 	}
 
 	identGid := prgrm.CXProgramNameIntern(ident)
@@ -88,14 +93,21 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		// custom type in an imported package
 		imp, err := pkg.GetImport(prgrm, prgrm.CXProgramNameIntern(pkgName))
 		if err != nil {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, currentFile, lineNo, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
 			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}
 
 		strct, err = prgrm.GetStruct(identGid, imp.Name)
 		if err != nil {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+			// A package whose import failed has no types, and its import is the
+			// error. Its uses report nothing more.
+			if prgrm.CXProgramImportFailed(imp.Name) {
+				placeholder := declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
+				placeholder.Type = types.INVALID
+				return placeholder
+			}
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, currentFile, lineNo, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
 			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}
@@ -103,7 +115,7 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		// custom type in the current package
 		strct, err = prgrm.GetStruct(identGid, pkg.Name)
 		if err != nil {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, currentFile, lineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, currentFile, lineNo, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 
 			return declarationSpecifiersPlaceholder(prgrm, currentFile, lineNo)
 		}

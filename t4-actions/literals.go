@@ -44,7 +44,7 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 		panic(err)
 	}
 
-	symName := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+	symName := generateTempVarName(prgrm, constants.SLICE_LITERAL_PREFIX)
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 	// Now a constructor call, site S0980.
@@ -99,6 +99,12 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 			_, symInp := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 			sliceLiteralSetType(prgrm, symInp, typeCode, strct, false)
 			symInp.Package = ast.CXPackageIndex(pkg.Index)
+			// The slice the element is appended to is at the element, where the type
+			// errors of the append print.
+			if exprCXLine.LineNumber > 0 && symInp.ArgDetails != ast.CXArgumentDebugGidNil {
+				details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(symInp.ArgDetails)
+				details.FileName, details.FileLine, details.FileColumn = exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn
+			}
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S0987.
@@ -250,19 +256,29 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 }
 
 // SliceLiteralElement marks the last expression of one slice literal element.
-// An element with no expressions, T{}, gets an expression with no output.
-func SliceLiteralElement(prgrm *ast.CXProgram, element []ast.CXExpression) []ast.CXExpression {
+// An element with no expressions, T{}, gets an expression with no output. A
+// column above 0 puts a line at line and column, where the element starts,
+// before the last expression, and the append of the element takes it.
+func SliceLiteralElement(prgrm *ast.CXProgram, element []ast.CXExpression, line int, column int) []ast.CXExpression {
 	if len(element) == 0 {
 		element = []ast.CXExpression{*ast.MakeAtomicOperatorExpression(prgrm, nil)}
 	}
-	element[len(element)-1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
+	last := len(element) - 1
+	element[last].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
+	if column > 0 {
+		cxLine := ast.MakeCXLineExpression(prgrm, CurrentFile, line, prgrm.CXProgramNameIntern(LineStr))
+		if position, err := prgrm.GetCXLine(cxLine.Index); err == nil {
+			position.LineColumn = column
+		}
+		element = append(element[:last:last], *cxLine, element[last])
+	}
 	return element
 }
 
 // SliceLiteralStructExpression handles a slice literal of the struct
 // structName, `[]T{T{x: 1}, t}`, as SliceLiteralExpression does for []i32.
 func SliceLiteralStructExpression(prgrm *ast.CXProgram, structName string, exprs []ast.CXExpression) []ast.CXExpression {
-	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo)
+	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo, 0)
 	if elt.StructType == nil {
 		return nil
 	}
@@ -287,7 +303,7 @@ func sliceLiteralStructElements(prgrm *ast.CXProgram, strct *ast.CXStruct, exprs
 // sliceLiteralStructElement assigns one element of a []strct literal to a new
 // variable and ends with that variable, so it is appended like a literal.
 func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression) []ast.CXExpression {
-	if sliceLiteralStructInner(prgrm, strct, element) {
+	if sliceLiteralStructInner(prgrm, element) {
 		return element
 	}
 	pkg, err := prgrm.GetCurrentPackage()
@@ -617,7 +633,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 // ArrayLiteralStructExpression handles an array literal of the struct
 // structName, `[2]T{T{x: 1}, t}`, as ArrayLiteralExpression does for [2]i32.
 func ArrayLiteralStructExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, structName string, exprs []ast.CXExpression) []ast.CXExpression {
-	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo)
+	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo, 0)
 	if elt.StructType == nil {
 		return nil
 	}
@@ -933,9 +949,10 @@ func structLiteralFieldRepeatedCheck(prgrm *ast.CXProgram, fieldNames *[]stringp
 	*fieldNames = append(*fieldNames, name)
 }
 
-// sliceLiteralStructInner reports whether element is a []strct literal, an
-// element of [][]strct{...} that the outer [] gives its extra dimension.
-func sliceLiteralStructInner(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression) bool {
+// sliceLiteralStructInner reports whether element is a slice, such as a
+// []T literal, an element of [][]T{...} that the outer [] gives its
+// extra dimension. The append of the element checks its type.
+func sliceLiteralStructInner(prgrm *ast.CXProgram, element []ast.CXExpression) bool {
 	last := len(element) - 1
 	for last > 0 && element[last].Type == ast.CX_LINE {
 		last--
@@ -944,9 +961,11 @@ func sliceLiteralStructInner(prgrm *ast.CXProgram, strct *ast.CXStruct, element 
 		return false
 	}
 	sig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)[0])
-	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
-		return false
+	switch sig.Type {
+	case ast.TYPE_SLICE_ATOMIC, ast.TYPE_POINTER_SLICE_ATOMIC:
+		return true
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		return hasDeclSpec(prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta)), constants.DECL_SLICE)
 	}
-	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
-	return arg.StructType == strct && hasDeclSpec(arg, constants.DECL_SLICE)
+	return false
 }

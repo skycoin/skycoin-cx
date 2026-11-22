@@ -148,7 +148,7 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 * `Expressions []CXExpression`, the body,
 * `LineCount`, equal to `len(Expressions)`,
 * `Size types.Pointer`, the frame size in bytes, parameters included,
-* `FileName`, `FileLine` and `LocalVariables`, used while compiling,
+* `FileName`, `FileLine`, `FileColumn` and `LocalVariables`, used while compiling,
 * `ListOfPointers []*CXArgument` and `ListOfSlots []CXFunctionSlot`, the GC
   roots of the frame. A slot is a local with its declared type, and the GC
   walks it by the `ast.GCType` that `ast.GCTypeOf` builds from that type
@@ -160,9 +160,11 @@ calls a native operator gets its own copy of the native, made by
 `ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
 `Expressions`.
 
-`ast.CXStruct` (`t3-ast/cxstruct_def.go`) has `Index`, `Name`, `Package`
-and `Fields []CXTypeSignatureIndex`. The same type is reused as the
-parameter list of a function or operator and as a package's globals.
+`ast.CXStruct` (`t3-ast/cxstruct_def.go`) has `Index`, `Name`, `Package`,
+`Fields []CXTypeSignatureIndex`, and `FileName`, `FileLine` and
+`FileColumn`, the position of a declared type name, used while compiling.
+The same type is reused as the parameter list of a function or operator and
+as a package's globals.
 
 ## Expressions
 
@@ -529,7 +531,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 4 |
+| 8 to 11 | format | `serializeFormatVersion`, now 5 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 

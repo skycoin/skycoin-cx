@@ -13,7 +13,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t2-globals"   // thin: only FoundCompileErrors, SRCPATH; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"                // thin: only PrinterCompileErrorsPrint; no depth gain
 	cxpartialparsing "github.com/skycoin/skycoin-cx/t5-cxpartialparsing" // thin: only CurrentFile, Parse, Program; no depth gain
 )
 
@@ -113,9 +112,8 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 				}
 
 				if match := reStrctName.FindStringSubmatch(string(line)); match != nil {
-					if prePkg == nil {
-						cxpartialparsing.Program.CXProgramCompileErrorAdd(ast.CompileErrorCodeNoPackageDefined, cxpartialparsing.Program.CXProgramSourceFileIntern(srcName), lineno, ast.CompileErrorOperands{})
-					} else if _, err := cxpartialparsing.Program.GetStruct(cxpartialparsing.Program.CXProgramNameIntern(match[len(match)-1]), prePkg.Name); err != nil {
+					// sourcesWithPackageClause dropped every file without a package clause.
+					if _, err := cxpartialparsing.Program.GetStruct(cxpartialparsing.Program.CXProgramNameIntern(match[len(match)-1]), prePkg.Name); err != nil {
 						// then it hasn't been added
 						// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
 						// Now a constructor call, site S1623.
@@ -140,9 +138,11 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 		var inBlock int
 		var commentedCode bool
 
+		var lineno int
 		scanner := bufio.NewScanner(strings.NewReader(source))
 		for scanner.Scan() {
 			line := scanner.Bytes()
+			lineno++
 
 			// we need to ignore function bodies
 			// it'll also ignore struct declaration's bodies, but this doesn't matter
@@ -173,15 +173,15 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 					continue
 				}
 
-				if match := reImpName.FindStringSubmatch(string(line)); match != nil {
-					pkgName := match[len(match)-1]
+				if match := reImpName.FindSubmatchIndex(line); match != nil {
+					pkgName := string(line[match[len(match)-2]:match[len(match)-1]])
 					// Checking if `pkgName` already exists and if it's not a standard library package.
 					if _, err := cxpartialparsing.Program.GetPackage(cxpartialparsing.Program.CXProgramNameIntern(pkgName)); err != nil && !cxpackages.IsBuiltinImport(pkgName) {
 						_, sourceCode, fileNames, err := util.ParseArgsForCX([]string{filepath.Join(globals.SRCPATH, pkgName)}, false)
 						if err != nil {
-							printer.PrinterCompileErrorsPrint(cxpartialparsing.Program)
-							println(err.Error())
-							return parseErrors + 1
+							// The column is the opening quote of the path.
+							preliminaryImportFailed(cxpartialparsing.Program, pkgName, srcNames[i], lineno, match[len(match)-2], err)
+							continue
 						}
 						ParseSourceCode(sourceCode, fileNames)
 					}
@@ -301,6 +301,8 @@ func Preliminarystage(srcStrs, srcNames []string) int {
 		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 		profiling.StartProfile(srcNames[i])
 		source = source + "\n"
+		// Each file selects its package with its package clause.
+		actions.AST.CurrentPackage = -1
 		cxpartialparsing.CurrentFile = ast.SourceFileGidNil
 		if len(srcNames) > 0 {
 			cxpartialparsing.CurrentFile = actions.AST.CXProgramSourceFileIntern(srcNames[i])
@@ -335,4 +337,16 @@ func AddInitFunction(prgrm *ast.CXProgram) error {
 		return err
 	}
 	return nil
+}
+
+// preliminaryImportFailed records that the import of path at line and column
+// of the file name cannot be loaded, and adds an empty package in its place, so
+// the passes import it and its members report no error of their own.
+func preliminaryImportFailed(prgrm *ast.CXProgram, path string, name string, line int, column int, err error) {
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeImportFailed, prgrm.CXProgramSourceFileIntern(name), line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(path), prgrm.CXProgramCompileErrorText(err.Error())})
+	ident := prgrm.CXProgramNameIntern(path[strings.LastIndexByte(path, '/')+1:])
+	prgrm.CXProgramImportFailedAdd(ident)
+	if _, err := prgrm.GetPackage(ident); err != nil {
+		prgrm.AddPackage(ast.MakePackage(ident))
+	}
 }

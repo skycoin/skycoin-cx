@@ -1,0 +1,23 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type U struct {
+	b i32
+}
+
+func f() (r i64) {
+	r = 1L
+}
+
+func main() {
+	var u U
+	x := []i32{1, "a", 2.0}
+	y := []T{u}
+	z := [][]i32{[]i32{1}, []i64{2L}, 3}
+	w := [][]T{[]T{u}, []U{u}}
+	c := [][][]i32{[][]i32{[]i32{f()}, []i64{1L}}, [][]i32{}}
+	var late i32 = "s"
+}

@@ -1,0 +1,7 @@
+type T struct {
+	a i32
+}
+
+func helper() {
+	var x i32 = "not checked"
+}
