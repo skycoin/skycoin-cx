@@ -1,0 +1,83 @@
+// Arrays of slices as locals, globals and struct fields, with nested forms.
+
+package main
+
+import "sys/string"
+
+type P struct {
+	x i32
+	name str
+}
+
+type T struct {
+	n i32
+	rows [2][]i32
+	names [3][]str
+}
+
+var g [2][]i32
+
+func sum(s []i32) (out i32) {
+	var i i32
+	for i = 0; i < len(s); i++ {
+		out = out + s[i]
+	}
+}
+
+func main() {
+	var a [2][]i32
+	var i i32
+	for i = 0; i < 5; i++ {
+		a[i%2] = append(a[i%2], i)
+	}
+	i32.print(len(a[0]))
+	i32.print(len(a[1]))
+	i32.print(sum(a[0]))
+	i32.print(sum(a[1]))
+	var j i32
+	j = 1
+	i32.print(a[j][j])
+	var s []i32
+	s = a[0]
+	i32.print(s[2])
+	var b []i32
+	b = a[1]
+	i32.print(b[1])
+	a[1][0] = 40
+	i32.print(a[1][0])
+	a[0] = []i32{7, 8}
+	i32.print(a[0][1])
+
+	var ps [2][]P
+	ps[1] = append(ps[1], P{x: 3, name: "three"})
+	i32.print(ps[1][0].x)
+	string.PrintLine(ps[1][0].name)
+
+	g[1] = append(g[1], 11)
+	i32.print(g[1][0])
+
+	var t T
+	t.rows[0] = append(t.rows[0], 21)
+	t.names[2] = append(t.names[2], "nm")
+	i32.print(t.rows[0][0])
+	string.PrintLine(t.names[2][0])
+
+	pt := &T{n: 1}
+	pt.rows[1] = append(pt.rows[1], 31)
+	pt.rows[1] = append(pt.rows[1], 32)
+	i32.print(pt.rows[1][1])
+	i32.print(len(pt.rows[1]))
+	i32.print(len(a))
+
+	var m [2][3][]i32
+	m[1][2] = append(m[1][2], 9)
+	i32.print(m[1][2][0])
+	i32.print(len(m[0][1]))
+	var q [2][][]i32
+	q[1] = append(q[1], s)
+	i32.print(q[1][0][2])
+
+	var v [2][]i32
+	v = a
+	i32.print(v[1][0])
+}

@@ -35,11 +35,11 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:  "enable-tests",
-				Usage: "Enable test set (all, stable, issue, gui, examples)",
+				Usage: "Enable test set (all, stable, issue, gui, examples, ptr32)",
 			},
 			&cli.StringFlag{
 				Name:  "disable-tests",
-				Usage: "Disable test set (all, stable, issue, gui, examples)",
+				Usage: "Disable test set (all, stable, issue, gui, examples, ptr32)",
 			},
 			&cli.BoolFlag{
 				Name:  "debug",
@@ -419,7 +419,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-incdec-operand.cx", types.CX_SUCCESS, "++, -- and compound assignment on unsigned types, fields, indexes and pointers (skycoin-cx#45)",
 		"0\n65535\n42\n0\n5\n9\n15\n4\n6\n3.5\n2\n14\n8\n3\n3\n2\n1\n")
 	t.RunWant("test-operator-operand-line.cx", types.CX_COMPILATION_ERROR, "an operand type mismatch is reported at its line (skycoin-cx#45)",
-		"test-operator-operand-line.cx:8 operands are not of the same type")
+		"test-operator-operand-line.cx:8 operands are not of the same type: i32 != i8")
 	t.RunWant("issue-68.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an argument (skycoin-cx#18)", "issue-68.cx:7 syntax error")
 	t.RunWant("test-incdec-value.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an operand (skycoin-cx#18)", "test-incdec-value.cx:5 syntax error")
 	t.RunWant("test-incdec-prefix.cx", types.CX_COMPILATION_ERROR, "there is no prefix ++", "test-incdec-prefix.cx:5 syntax error")
@@ -538,7 +538,25 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("-h", types.CX_SUCCESS, "cx -h names the real flags (skycoin/cx#567)", "alias for -lexer\n", "alias for -heap-initial\n", "alias for -heap-max\n", "-lexer-output string")
 	t.RunWant("test-append-struct-field.cx", types.CX_SUCCESS, "append and len on a slice field of a struct and of a struct pointer",
 		"1 7 9000000000 cee\n2 7 9000000000 cee\n2 2.5 3.5\none two\n4 5\n3 3 9000000000 cee\n2 9000000000 cee\n")
-	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, (*p).s[i] through a global p, skycoin/skycoin-cx#13
+	t.RunWant("--executor=old test-operator-precedence.cx", types.CX_SUCCESS, "binary operators bind as in Go, on the old loop",
+		"true\ntrue\n17\n12\n3\n8\n4\n6\n8\n6\ntrue\ntrue\n1\n0\n")
+	t.RunWant("--executor=vm test-operator-precedence.cx", types.CX_SUCCESS, "binary operators bind as in Go, on vm",
+		"true\ntrue\n17\n12\n3\n8\n4\n6\n8\n6\ntrue\ntrue\n1\n0\n")
+	t.RunWant("test-error-cascade.cx", types.CX_COMPILATION_ERROR, "a compile error in one function leaves the locals of another declared",
+		"test-error-cascade.cx:6 operands are not of the same type: i32 != ui64")
+	t.RunMissing("test-error-cascade.cx", types.CX_COMPILATION_ERROR, "a compile error in one function leaves the locals of another declared", "does not exist")
+	t.RunWant("test-undeclared-target.cx", types.CX_COMPILATION_ERROR, "assignments to undeclared variables are compile errors, not a panic",
+		"test-undeclared-target.cx:12 identifier 'x' does not exist")
+	t.RunMissing("test-undeclared-target.cx", types.CX_COMPILATION_ERROR, "assignments to undeclared variables are compile errors, not a panic", "panic")
+	t.RunWant("test-global-pointer-slice-field.cx", types.CX_SUCCESS, "slice fields through a global pointer to a struct (skycoin/skycoin-cx#13)",
+		"b\na\n7\n4\n2\n9\nb\ng\n2\n8\n")
+	t.RunWant("test-array-of-slices.cx", types.CX_SUCCESS, "arrays of slices as locals, globals and struct fields",
+		"3\n2\n6\n4\n3\n4\n3\n40\n8\n3\nthree\n11\n21\nnm\n32\n2\n2\n9\n0\n4\n40\n")
+	t.RunWant("-heap-initial 0 test-gc-array-of-slices.cx", types.CX_SUCCESS, "the GC follows the slices in arrays of slices", "gc ok\n")
+	t.RunWant("--executor=old test-array-struct-field-sum.cx", types.CX_SUCCESS, "a sum of fields of local array elements, on the old loop", "11\n7\n17\n")
+	t.RunWant("--executor=vm test-array-struct-field-sum.cx", types.CX_SUCCESS, "a sum of fields of local array elements, on vm", "11\n7\n17\n")
+	// A ptr64 build fails at line 54, a slice of strs under the GC.
+	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector, with slice fields through a global pointer (skycoin/skycoin-cx#13)", runner.TestStable|runner.TestPtr32, 0)
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

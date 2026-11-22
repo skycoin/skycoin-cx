@@ -141,8 +141,11 @@ func declarationArgSize(arg *ast.CXArgument) (types.Pointer, bool) {
 	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
 		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
-			total := uint64(arg.Size)
-			for _, length := range arg.Lengths {
+			total, lengths := uint64(arg.Size), arg.Lengths
+			if dims := arg.ArraySliceDimensions(); dims > 0 {
+				total, lengths = uint64(types.POINTER_SIZE), lengths[:dims]
+			}
+			for _, length := range lengths {
 				high, low := bits.Mul64(total, uint64(length))
 				if high != 0 || low > declarationSizeLimit {
 					return 0, false

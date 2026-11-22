@@ -868,7 +868,12 @@ func (s *state) placeDereferences(code []ir.Instr, p *place, arg *ast.CXArgument
 				return code, ReasonOperandIndexed
 			}
 			elementSize := ast.GetDerefSize(s.statePrgrm, arg, indexCount, derefPointer, true)
-			stride := pointerToUint32(types.TotalLength(arg.Lengths[indexCount+1:]) * elementSize)
+			lengths := arg.Lengths[indexCount+1:]
+			if dims := arg.ArraySliceDimensions(); dims > indexCount {
+				// The elements of [N][]T are slice headers.
+				elementSize, lengths = types.POINTER_SIZE, arg.Lengths[indexCount+1:dims]
+			}
+			stride := pointerToUint32(types.TotalLength(lengths) * elementSize)
 			derefPointer = false
 			if code, reason = s.placeIndex(code, p, arg.Indexes[indexCount], stride); reason != ReasonNone {
 				return code, reason

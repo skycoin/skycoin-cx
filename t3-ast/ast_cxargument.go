@@ -85,6 +85,18 @@ func (arg CXArgument) IsStruct() bool {
 }
 
 func (arg CXArgument) IsSlice() bool {
+	if dims := arg.ArraySliceDimensions(); dims > 0 {
+		// An element of [N][]T, as a[i] is, is a slice.
+		if len(arg.Indexes) < dims || len(arg.Indexes) >= len(arg.Lengths) {
+			return false
+		}
+		for _, val := range arg.Lengths[len(arg.Indexes):] {
+			if val != 0 {
+				return false
+			}
+		}
+		return true
+	}
 	if len(arg.Lengths) > 0 {
 		for _, val := range arg.Lengths {
 			if val != 0 {
@@ -407,4 +419,24 @@ func cxArgumentPointerField(arg *CXArgument) bool {
 	}
 	specs := arg.DeclarationSpecifiers
 	return arg.StructType == nil && len(arg.DereferenceOperations) == 0 && len(arg.Indexes) == 0 && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER
+}
+
+// ArraySliceDimensions returns the number of array dimensions of an array
+// of slices, 1 for [N][]T, and 0 for any other type.
+func (arg CXArgument) ArraySliceDimensions() int {
+	for i, length := range arg.Lengths {
+		if length == 0 {
+			return i
+		}
+	}
+	return 0
+}
+
+// ArraySize returns the size in bytes of the array arg, whose elements are
+// slice headers when it is an array of slices.
+func (arg CXArgument) ArraySize() types.Pointer {
+	if dims := arg.ArraySliceDimensions(); dims > 0 {
+		return types.POINTER_SIZE * types.TotalLength(arg.Lengths[:dims])
+	}
+	return arg.Size * types.TotalLength(arg.Lengths)
 }

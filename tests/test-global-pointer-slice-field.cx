@@ -1,0 +1,44 @@
+// Slice fields read and written through a global pointer to a struct (skycoin-cx#13).
+
+package main
+
+import "sys/string"
+
+type S struct {
+	n i32
+	txt []str
+	vals []i32
+	arr [3]i32
+}
+
+var gp *S
+var gs S
+
+func main() {
+	var s S
+	s.txt = append(s.txt, "a")
+	s.txt = append(s.txt, "b")
+	s.vals = append(s.vals, 7)
+	s.arr[1] = 4
+	gp = &s
+	string.PrintLine(gp.txt[1])
+	string.PrintLine((*gp).txt[0])
+	i32.print(gp.vals[0])
+	i32.print(gp.arr[1])
+	i32.print(len(gp.txt))
+	gp.vals[0] = 9
+	i32.print(s.vals[0])
+	lp := &s
+	string.PrintLine(lp.txt[1])
+	gs.txt = append(gs.txt, "g")
+	string.PrintLine(gs.txt[0])
+	heap()
+}
+
+func heap() {
+	gp = &S{n: 3}
+	gp.vals = append(gp.vals, 7)
+	gp.vals = append(gp.vals, 8)
+	i32.print(len(gp.vals))
+	i32.print((*gp).vals[1])
+}

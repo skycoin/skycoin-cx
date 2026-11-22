@@ -6,7 +6,9 @@ const (
 	TestIssue
 	TestGui
 	TestExamples
-	TestAll = TestStable | TestIssue | TestGui | TestExamples
+	// TestPtr32 is a test that fails on a ptr64 build for a known bug.
+	TestPtr32
+	TestAll = TestStable | TestIssue | TestGui | TestExamples | TestPtr32
 )
 
 var TestBits = map[string]Bits{
@@ -15,6 +17,7 @@ var TestBits = map[string]Bits{
 	"issue":    TestIssue,
 	"gui":      TestGui,
 	"examples": TestExamples,
+	"ptr32":    TestPtr32,
 }
 
 const (

@@ -1,0 +1,60 @@
+// The GC follows the slices in arrays of slices in locals, globals and a
+// struct on the heap.
+
+package main
+
+import "sys/string"
+
+type T struct {
+	n i32
+	rows [2][]i32
+	names [2][]str
+}
+
+var g [2][]str
+var gt *T
+
+func churn(n i32) {
+	var junk []i32
+	var i i32
+	for i = 0; i < n; i++ {
+		junk = append(junk, i)
+	}
+}
+
+func main() {
+	var a [2][]i32
+	var w [2][]str
+	gt = &T{n: 1}
+	var i i32
+	for i = 0; i < 300; i++ {
+		a[i%2] = append(a[i%2], i)
+		w[i%2] = append(w[i%2], string.Concatenation("w", i32.str(i)))
+		g[i%2] = append(g[i%2], string.Concatenation("g", i32.str(i)))
+		gt.rows[i%2] = append(gt.rows[i%2], i*2)
+		gt.names[i%2] = append(gt.names[i%2], string.Concatenation("t", i32.str(i)))
+		churn(50)
+	}
+	var ok bool
+	ok = true
+	for i = 0; i < 300; i++ {
+		if a[i%2][i/2] != i {
+			ok = false
+		}
+		if !string.EqualityByByteValue(w[i%2][i/2], string.Concatenation("w", i32.str(i))) {
+			ok = false
+		}
+		if !string.EqualityByByteValue(g[i%2][i/2], string.Concatenation("g", i32.str(i))) {
+			ok = false
+		}
+		if gt.rows[i%2][i/2] != i*2 {
+			ok = false
+		}
+		if !string.EqualityByByteValue(gt.names[i%2][i/2], string.Concatenation("t", i32.str(i))) {
+			ok = false
+		}
+	}
+	if ok {
+		string.PrintLine("gc ok")
+	}
+}

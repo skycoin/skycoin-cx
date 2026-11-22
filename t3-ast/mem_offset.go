@@ -47,7 +47,7 @@ func GetArgSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
 		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
-			return arg.Size * types.TotalLength(arg.Lengths)
+			return arg.ArraySize()
 		case constants.DECL_POINTER:
 			return arg.Size
 		case constants.DECL_SLICE:
@@ -78,7 +78,7 @@ func GetNativeSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
 		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
-			return arg.Size * types.TotalLength(arg.Lengths)
+			return arg.ArraySize()
 		case constants.DECL_POINTER:
 			return arg.Size
 		case constants.DECL_SLICE:
@@ -430,12 +430,21 @@ func CalculateDereference_Array(prgrm *CXProgram, drfsStruct *DereferenceStruct)
 		return
 	}
 	var subSize = types.Pointer(1)
+	elementSlice := false
 	for _, len := range drfsStruct.arg.Lengths[drfsStruct.idxCounter+1:] {
+		if len == 0 {
+			// The elements of [N][]T are slices.
+			elementSlice = true
+			break
+		}
 		subSize *= len
 	}
 
 	//TODO: Delete
 	sizeToUse := GetDerefSize(prgrm, drfsStruct.arg, drfsStruct.idxCounter, drfsStruct.derefPointer, true) //TODO: is always arg.Size unless arg.StructType != nil
+	if elementSlice {
+		sizeToUse = types.POINTER_SIZE
+	}
 	drfsStruct.derefPointer = false
 	drfsStruct.baseOffset = drfsStruct.finalOffset
 	drfsStruct.sizeofElement = subSize * sizeToUse
@@ -491,8 +500,9 @@ func calculateDereferencesCompute(prgrm *CXProgram, arg *CXArgument, finalOffset
 	if drfsStruct.finalOffset.IsValid() && drfsStruct.finalOffset >= prgrm.Heap.StartsAt && drfsStruct.isPointer {
 		// then it's an object
 		drfsStruct.finalOffset += types.OBJECT_HEADER_SIZE
-		// An element of a slice, as ps[i] is, is not the slice.
-		if drfsStruct.arg.IsSlice() && !drfsStruct.sliceIndexed {
+		// An element of a slice, as ps[i] is, is not the slice. The Lengths of
+		// an arg with fields, as in gp.s, are those of its last field.
+		if drfsStruct.arg.IsSlice() && !drfsStruct.sliceIndexed && len(drfsStruct.arg.Fields) == 0 {
 			drfsStruct.finalOffset += constants.SLICE_HEADER_SIZE
 			offsetSliceIndexCheck(IsValidSliceIndex(prgrm, drfsStruct.baseOffset, drfsStruct.finalOffset, drfsStruct.sizeofElement), drfsStruct.fault)
 		}

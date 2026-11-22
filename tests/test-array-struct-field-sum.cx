@@ -1,0 +1,39 @@
+// A sum of fields of elements of a local array of structs, on both loops.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Item struct {
+	n i32
+	p Point
+}
+
+type Ref struct {
+	p *Point
+	n i32
+}
+
+func sum(k i32) (out i32) {
+	var local [3]Item
+	var i i32
+	for i = 0; i < 3; i++ {
+		local[i].n = i + k
+		local[i].p.y = 2 * i + 1
+	}
+	out = local[0].p.y + local[1].n
+	i32.print(local[2].p.y + local[1].n)
+}
+
+func main() {
+	i32.print(sum(5))
+	var pa Point
+	pa.y = 5
+	var local [3]Ref
+	local[0].p = &pa
+	local[1].n = 12
+	i32.print(local[0].p.y + local[1].n)
+}

@@ -123,8 +123,7 @@ func main() {
 `
 
 // runBenchPrograms are count, fib, bubble sort, the fixed array sort and the
-// struct walk plus the BenchmarkCompile programs. test-gc is left out because
-// it fails on (*p).s[i] through a global p (#13).
+// struct walk plus the BenchmarkCompile programs.
 // The ceilings are the counts measured when the test was added. The target
 // is 0, see #407.
 func runBenchPrograms(tb testing.TB) []runBenchProgram {
@@ -142,11 +141,10 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 		"test-array.cx":                                     13,
 		"test-slices.cx":                                    8,
 		"examples/testing-pointers-to-arrays-of-structs.cx": 6,
+		// Nearly all are Go strings made by CXValue.Get_str.
+		"test-gc.cx": 202756,
 	}
 	for _, programPath := range compileBenchmarkPrograms {
-		if programPath == "test-gc.cx" {
-			continue
-		}
 		source, err := os.ReadFile(filepath.Join("..", "tests", programPath))
 		if err != nil {
 			tb.Fatal(err)

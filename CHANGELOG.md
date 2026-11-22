@@ -4,6 +4,8 @@
 
 #### Language
 
+- Binary operators bind as in Go. `&`, `&^`, `<<` and `>>` bind like `*`, and `|` and `^` like `+`, all tighter than comparisons. `d & 1 == 1` was `d & (1 == 1)` and is `(d & 1) == 1`, and `1 + 2 << 3` was 24 and is 17. No program in the repository changes meaning
+- Arrays of slices such as `[2][]i32` can be declared as variables, globals and struct fields, and the GC follows their slices
 - Program file paths are confined to a sandbox directory, the working directory or `cx --sandbox <dir>`, opened once at run start with `os.OpenRoot`. Every path a program passes to `os.Open`, `os.Create`, `os.ReadAllText`, `json.Open`, `StartCPUProfile`, the `gl` texture and GIF loaders and `al.LoadWav` must be relative, `/` separated, without NUL, at most 4096 bytes, and may not leave the sandbox by `..` or a symlink. An absolute path such as one built from `os.GetWorkingDirectory` is now rejected. A rejected path fails like a missing file. `t0-util` has `FileError` with the first file failure and operation codes (#433)
 - Language version 2611200002. Every built-in library lives under `sys/` and needs an explicit import, for example `import "sys/os"`. A bare import of a built-in package, an unknown `sys/` path and a built-in package used without its import are compile errors (#380)
 - The `str` functions moved to `sys/string` with verbose camel case names, for example `str.concat` is `string.Concatenation` and `str.compare_by_value` is `string.OrderingByByteValue`, and `glfw.func_i32_i32` and `glfw.call_i32_i32` are `glfw.RegisterCallbackI32I32` and `glfw.InvokeCallbackI32I32`. Opcodes keep their numbers, `OpcodeRenameTable` and the `former_names` column of `docs/opcodes.csv` record the renames, and an old name is a compile error that names the new one (#380, #382, #391)
@@ -59,6 +61,10 @@
 
 #### Fixed
 
+- After a compile error in one function, every `var` in later functions was dropped, which reported false `identifier does not exist` errors and could panic the compiler in `ProcessShortDeclaration`. An assignment to an undeclared variable is a compile error, not a panic
+- `operands are not of the same type` names the types, as in `i32 != ui64`, instead of type codes
+- A slice field read through a global pointer to a heap struct, as in `gp.s[i]`, `(*gp).s[i]` or `len(gp.s)`, failed with `CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE`. `tests/test-gc.cx` passes and runs in `make test` (#13)
+- The temporary of `a[0].p.y + a[1].n` took the size of the array element, so vm refused the function with `operand outside frame`
 - `[3]*i32`, `[3]*Point` and `[3]pack.T` were syntax errors, and `[3]pack.T` without the import also printed a second error. An array of pointers or of a struct of another package can be declared in variables, fields, parameters and results, and an array of pointers is sized as pointers. Without the import the error is `package 'pack' not imported` (#42, #43, skycoin/cx#521, skycoin/cx#526)
 - An element of an array or slice literal can leave out its type, as in Go: `[][]i32{{1, 2}}`, `[2][2]i32{{1, 2}, {3, 4}}` and `[]Point{{x: 1}}`. An elided element of a type that cannot take one is the compile error `invalid composite literal type 'i32'`, `CompileErrorCodeLiteralElementType` (7049), and an elided struct element without field names is `struct literal of type 'Point' must name its fields`, `CompileErrorCodeStructLiteralFieldNames` (7050). `x := [][]i32{...}` typed `x` as `[]i32`, and `f([][]i32{...})` and `f(g())` with a `[][]i32` result failed to compile or panicked the compiler (#50, skycoin/cx#37)
 - The type checker stored the lengths of a parameter or result array innermost first and the grammar outermost first, so `m = f()` with `f` returning `[2][3]i32` was the false error `expected receiving variable of type '[2][3]i32'; '[3][2]i32' was provided`. Lengths are outermost first everywhere, and type errors print them in that order
