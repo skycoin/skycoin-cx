@@ -252,9 +252,7 @@ array of the struct `T` of the imported package `pack`. Slices and
 pointers of such types, `[]pack.T` and `*pack.T`, work the same way.
 An array of slices, an array of pointers to arrays and an array of
 functions, such as `[2][]i32`, `[2]*[3]i32` and `[2]func(i32)()`, are
-not supported yet and are syntax errors. Copying a pointer to a struct
-from one place to another, as in `q = p` or `q = pa[0]`, does not work
-yet either.
+not supported yet and are syntax errors.
 
 ### [Slices](#table-of-contents)
 
@@ -1617,6 +1615,42 @@ case, instead of sending `num` by value, we send it by reference,
 using the `&` operator. `foo` also changed, and it now accepts a
 pointer to a 32-bit integer, i.e. `*i32`. After running the example,
 you'll notice that, this time, `foo` is now changing `num`'s value.
+
+Assigning a pointer copies the pointer, so both point to the same value.
+A field after an index reads through the pointer, whether it is an
+array of pointers or a pointer to an array.
+
+```cx
+package main
+
+type Point struct {
+	x i32
+}
+
+func main () {
+	var arr [2]Point
+	arr[1].x = 5
+
+	var p *Point
+	p = &arr[1]
+	var q *Point
+	q = p
+	q.x = 7
+	i32.print(arr[1].x) // prints 7
+
+	var pa [2]*Point
+	pa[1] = q
+	var parr *[2]Point
+	parr = &arr
+	i32.print(pa[1].x + parr[1].x) // prints 14
+}
+```
+
+Indexing a pointer to an array without a field, as in `parr[1]`, is a
+compile error. Write `(*parr)[1]` instead.
+A field of a pointer field, as in `b.p.x`, still reads the wrong value,
+which is an open bug. Copy the pointer first, as in `r = b.p` and then
+`r.x`.
 
 ### [Escape Analysis](#table-of-contents)
 

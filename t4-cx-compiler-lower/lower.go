@@ -433,19 +433,19 @@ func (s *state) identity(code []ir.Instr, inputs []ast.CXTypeSignatureIndex, out
 	switch output.Type {
 	case ast.TYPE_CXARGUMENT_DEPRECATE:
 		element := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta)).GetAssignmentElement(prgrm)
-		address = element.IsPointer() && element.PointerTargetType != types.STR && element.Type != types.AFF || element.PassBy == constants.PASSBY_REFERENCE
+		address = ast.CXArgumentTakesAddress(prgrm, element, input)
 		if ast.CXArgumentStringSlicePointer(element) {
 			address = ast.CXTypeSignaturePassBy(prgrm, input) == constants.PASSBY_REFERENCE
 		}
 	case ast.TYPE_ATOMIC, ast.TYPE_SLICE_ATOMIC, ast.TYPE_STRUCT:
 		address = output.PassBy == constants.PASSBY_REFERENCE
 	case ast.TYPE_POINTER_ATOMIC:
-		address = true
+		address = !ast.CXTypeSignaturePointerValue(prgrm, input)
 	case ast.TYPE_ARRAY_ATOMIC:
 	case ast.TYPE_POINTER_ARRAY_ATOMIC, ast.TYPE_POINTER_SLICE_ATOMIC:
 		address = input.PassBy == constants.PASSBY_REFERENCE
 	case ast.TYPE_POINTER_STRUCT:
-		address = !output.IsDeref
+		address = !output.IsDeref && !ast.CXTypeSignaturePointerValue(prgrm, input)
 	default:
 		return code, ReasonOperandNotScalar
 	}

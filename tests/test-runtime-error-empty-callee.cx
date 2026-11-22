@@ -1,0 +1,9 @@
+package main
+
+func f(x i32) {
+}
+
+func main() {
+	var s [][]i32
+	f(s[0][1])
+}

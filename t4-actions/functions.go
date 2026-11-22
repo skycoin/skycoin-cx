@@ -2693,6 +2693,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	if symLine != argLine {
 		// FIXME Maybe we can unify this later.
 		if len(sym.Fields) > 0 {
+			indexedFieldBaseDeref(sym, arg)
 			elt := sym.GetAssignmentElement(prgrm)
 
 			declSpec := []int{}
@@ -3353,4 +3354,23 @@ func functionCallArguments(arguments [][]ast.CXExpression) ([]ast.CXExpression, 
 		}
 	}
 	return args, argumentLast
+}
+
+// indexedFieldBaseDeref fixes the base of p[i].f before its fields are typed.
+// A *[N]T reads through p before it indexes, a [N]*T keeps its pointer stride.
+func indexedFieldBaseDeref(sym *ast.CXArgument, declared *ast.CXArgument) {
+	specs := declared.DeclarationSpecifiers
+	if len(sym.Indexes) == 0 || len(specs) < 2 || len(sym.DereferenceOperations) == 0 || sym.DereferenceOperations[0] != constants.DEREF_ARRAY {
+		return
+	}
+	switch {
+	case specs[len(specs)-1] == constants.DECL_POINTER && specs[len(specs)-2] == constants.DECL_ARRAY:
+		if !hasDerefOp(sym, constants.DEREF_POINTER) {
+			sym.DereferenceOperations = append([]int{constants.DEREF_POINTER}, sym.DereferenceOperations...)
+		}
+	case specs[len(specs)-1] == constants.DECL_ARRAY && specs[len(specs)-2] == constants.DECL_POINTER:
+		if len(sym.DeclarationSpecifiers) > 0 && sym.DeclarationSpecifiers[0] == constants.DECL_BASIC {
+			sym.DeclarationSpecifiers = append(append([]int{}, specs...), sym.DeclarationSpecifiers[1:]...)
+		}
+	}
 }

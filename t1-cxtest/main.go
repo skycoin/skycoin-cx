@@ -466,6 +466,10 @@ func runTestCases(t *runner.TestRunner) {
 		"test-literal-elided-errors.cx:11 invalid composite literal type '[]i32'",
 		"test-literal-elided-errors.cx:12 invalid composite literal type 'i32'",
 		"test-literal-elided-errors.cx:13 struct literal of type 'Point' must name its fields")
+	t.RunWant("test-pointer-copy.cx", types.CX_SUCCESS, "copying a pointer copies its value, and p[i].f indexes a *[N]T and a [N]*T",
+		"11\n11\n21\n12\n1\n3\n5\n6\n11\n9\n12\n32\n")
+	t.RunWant("test-runtime-error-empty-callee.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error in the argument of an empty function prints the call site",
+		"test-runtime-error-empty-callee.cx:8, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
 	t.Run("test-struct-literal-value.cx", types.CX_SUCCESS, "a struct literal is a value: var initializer, T{} zeroes, argument, result and a swap of fields")
 	t.Run("test-struct-literal-nested.cx", types.CX_SUCCESS, "struct, slice and array literals nested in each other, with calls in the fields")
 	t.Run("test-struct-literal-package.cx", types.CX_SUCCESS, "struct literals in global initializers and of another package")

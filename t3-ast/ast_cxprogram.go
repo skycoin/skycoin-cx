@@ -583,6 +583,11 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 }
 
 func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex int) (*CXLine, error) {
+	// A runtime error while the inputs of an empty function are copied stops at
+	// line 0 of a call with no expressions.
+	if currIndex >= len(exprs) {
+		currIndex = len(exprs) - 1
+	}
 	for i := currIndex; i >= 0; i-- {
 		if exprs[i].Type == CX_LINE {
 			_, cxLine, err := cxprogram.GetOperation(&exprs[i])

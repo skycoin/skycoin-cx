@@ -1,0 +1,65 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Box struct {
+	p *Point
+}
+
+func pass(p *[3]Point) (q *[3]Point) {
+	q = p
+}
+
+func main() {
+	var a [2]Point
+	a[0] = Point{x: 11, y: 12}
+	a[1] = Point{x: 21, y: 22}
+
+	var s *Point
+	s = &a[0]
+	var q *Point
+	q = s
+	i32.print(q.x)
+
+	var pa [2]*Point
+	pa[0] = &a[0]
+	pa[1] = &a[1]
+	q = pa[0]
+	i32.print(q.x)
+	i32.print(pa[1].x)
+	i32.print(pa[0].y)
+
+	var arr [3]Point
+	arr[0] = Point{x: 1, y: 2}
+	arr[1] = Point{x: 3, y: 4}
+	arr[2] = Point{x: 5, y: 6}
+	var p *[3]Point
+	p = &arr
+	for i := 0; i < 3; i++ {
+		i32.print(p[i].x)
+	}
+	var r *[3]Point
+	r = pass(p)
+	i32.print(r[2].y)
+
+	var b Box
+	b.p = q
+	var c *Point
+	c = b.p
+	i32.print(c.x)
+
+	var n i32 = 7
+	var pn *i32 = &n
+	var qn *i32 = pn
+	n = 9
+	i32.print(*qn)
+	var t *Point = s
+	i32.print(t.y)
+
+	var lit *Point
+	lit = &Point{x: 31, y: 32}
+	i32.print(lit.y)
+}

@@ -23,6 +23,43 @@ func CXArgumentStringSlicePointer(arg *CXArgument) bool {
 	return arg.IsPointer() && arg.PointerTargetType == types.STR && arg.IsSlice()
 }
 
+// CXArgumentTakesAddress reports whether assigning input to the output element
+// out writes the address of input rather than copying its bytes.
+func CXArgumentTakesAddress(prgrm *CXProgram, out *CXArgument, input *CXTypeSignature) bool {
+	if out.PassBy == constants.PASSBY_REFERENCE {
+		return true
+	}
+	return out.IsPointer() && out.PointerTargetType != types.STR && out.Type != types.AFF && !CXTypeSignaturePointerValue(prgrm, input)
+}
+
+// CXTypeSignaturePointerValue reports whether sig reads a pointer by value, as s
+// or pa[0] do, so assigning it copies the pointer. &x and a struct literal do not.
+func CXTypeSignaturePointerValue(prgrm *CXProgram, sig *CXTypeSignature) bool {
+	if CXTypeSignaturePassBy(prgrm, sig) == constants.PASSBY_REFERENCE || sig.IsDeref {
+		return false
+	}
+	switch sig.Type {
+	case TYPE_STRUCT, TYPE_POINTER_STRUCT:
+		// A field access such as b.p is decided by its last field.
+		if fields := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).Fields; len(fields) > 0 {
+			return prgrm.GetCXArgFromArray(fields[len(fields)-1]).GetAssignmentElement(prgrm).IsPointer()
+		}
+		return sig.Type == TYPE_POINTER_STRUCT
+	case TYPE_POINTER_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
+		return true
+	case TYPE_CXARGUMENT_DEPRECATE:
+		elt := prgrm.GetCXArgFromArray(CXArgumentIndex(sig.Meta)).GetAssignmentElement(prgrm)
+		if elt.IsPointer() {
+			return true
+		}
+		// A *i32 keeps the type i32 and ends its specifiers with the pointer. A
+		// &T{} literal ends them so too but is a struct.
+		specs := elt.DeclarationSpecifiers
+		return elt.StructType == nil && len(elt.DereferenceOperations) == 0 && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER
+	}
+	return false
+}
+
 func (arg CXArgument) IsStruct() bool {
 	return arg.StructType != nil
 }

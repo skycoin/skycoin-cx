@@ -1,7 +1,6 @@
 package opcodes
 
 import (
-	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
@@ -28,8 +27,7 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 			} else {
 				outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 			}
-		} else if elt.IsPointer() && elt.PointerTargetType != types.STR && elt.Type != types.AFF || elt.PassBy == constants.PASSBY_REFERENCE {
-			// outputs[0].Set_ptr(prgrm, types.AllocWrite_obj_data(prgrm, prgrm.Memory, inputs[0].Get_bytes(prgrm)))
+		} else if ast.CXArgumentTakesAddress(prgrm, elt, inputs[0].TypeSignature) {
 			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
 		} else {
 			// Pass by value
@@ -42,7 +40,11 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_POINTER_ATOMIC {
-		outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+		if ast.CXTypeSignaturePointerValue(prgrm, inputs[0].TypeSignature) {
+			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
+		} else {
+			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
 		outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || outputs[0].TypeSignature.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
@@ -64,11 +66,10 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else if outputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
-		if outputs[0].TypeSignature.IsDeref {
-			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
-		} else {
+		if !outputs[0].TypeSignature.IsDeref && !ast.CXTypeSignaturePointerValue(prgrm, inputs[0].TypeSignature) {
 			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
-
+		} else {
+			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
 	} else {
 		panic("type is not known")
