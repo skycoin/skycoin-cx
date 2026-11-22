@@ -1,0 +1,100 @@
+// The garbage collector follows the pointers, slices and strs in the struct
+// elements of a slice, and a pointer into the middle of a slice keeps it and
+// moves with it. cxtest runs it with -heap-initial 0, so nearly every
+// allocation collects.
+
+package main
+
+import "sys/string"
+
+type Box struct {
+	v i32
+}
+
+type Item struct {
+	name str
+	box  *Box
+	vals []i32
+}
+
+var gItems []Item
+var bad i32
+
+func wantI(got i32, want i32) {
+	if got != want {
+		bad = bad + 1
+		i32.print(got)
+	}
+}
+
+func wantS(got str, want str) {
+	if !string.EqualityByByteValue(got, want) {
+		bad = bad + 1
+		string.PrintLine(got)
+	}
+}
+
+func mkBox(v i32) (r *Box) {
+	var b Box
+	b.v = v
+	r = &b
+}
+
+func mkItems(base i32, n i32) (items []Item) {
+	for i := 0; i < n; i++ {
+		var it Item
+		it.name = string.Concatenation("item", i32.str(base + i))
+		it.box = mkBox(base + i)
+		it.vals = append(it.vals, base + i)
+		it.vals = append(it.vals, (base + i) * 2)
+		items = append(items, it)
+	}
+}
+
+func mid(base i32) (p *Item) {
+	var items []Item
+	items = mkItems(base, 3)
+	p = &items[1]
+}
+
+func churn(n i32) (sum i32) {
+	for i := 0; i < n; i++ {
+		var t *Box
+		t = mkBox(i)
+		sum = sum + t.v
+		var junk []i32
+		junk = append(junk, i)
+	}
+}
+
+func checkItem(it Item, v i32) {
+	wantS(it.name, string.Concatenation("item", i32.str(v)))
+	wantI(it.box.v, v)
+	wantI(len(it.vals), 2)
+	wantI(it.vals[0], v)
+	wantI(it.vals[1], v * 2)
+}
+
+func check(items []Item, p *Item) {
+	for i := 0; i < 4; i++ {
+		checkItem(items[i], 10 + i)
+		checkItem(gItems[i], 20 + i)
+	}
+	checkItem(*p, 31)
+	wantI(p.box.v, 31)
+}
+
+func main() {
+	var items []Item
+	items = mkItems(10, 4)
+	gItems = mkItems(20, 4)
+	var p *Item
+	p = mid(30)
+	check(items, p)
+	var s i32
+	s = churn(20000)
+	check(items, p)
+	if bad == 0 {
+		string.PrintLine("gc ok")
+	}
+}

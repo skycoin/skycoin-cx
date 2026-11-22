@@ -1,0 +1,150 @@
+// The garbage collector follows nested arrays, slices, structs and pointers:
+// an array of structs holding slices of structs that hold pointers and str
+// arrays, in a local, a global and a heap struct, and a ring of pointers.
+// cxtest runs it with -heap-initial 0, so nearly every allocation collects.
+
+package main
+
+import "sys/string"
+
+type Box struct {
+	v i32
+}
+
+type Member struct {
+	box  *Box
+	tags [2]str
+	next *Member
+}
+
+type Group struct {
+	label   str
+	members []Member
+}
+
+type Org struct {
+	groups [2]Group
+	head   *Member
+}
+
+var gGroups []Group
+var gOrg *Org
+var bad i32
+
+func wantI(got i32, want i32) {
+	if got != want {
+		bad = bad + 1
+		i32.print(got)
+	}
+}
+
+func wantS(got str, want str) {
+	if !string.EqualityByByteValue(got, want) {
+		bad = bad + 1
+		string.PrintLine(got)
+	}
+}
+
+func mkBox(v i32) (r *Box) {
+	var b Box
+	b.v = v
+	r = &b
+}
+
+func mkMember(v i32) (m Member) {
+	m.box = mkBox(v)
+	m.tags[0] = string.Concatenation("t", i32.str(v))
+	m.tags[1] = string.Concatenation("u", i32.str(v))
+}
+
+func mkGroup(base i32, n i32) (g Group) {
+	g.label = string.Concatenation("g", i32.str(base))
+	for i := 0; i < n; i++ {
+		g.members = append(g.members, mkMember(base + i))
+	}
+}
+
+func mkRing(base i32) (head *Member) {
+	var a Member
+	var b Member
+	var c Member
+	a = mkMember(base)
+	b = mkMember(base + 1)
+	c = mkMember(base + 2)
+	head = &a
+	a.next = &b
+	b.next = &c
+	c.next = &a
+}
+
+func mkOrg(base i32) (o *Org) {
+	var org Org
+	org.groups[0] = mkGroup(base, 3)
+	org.groups[1] = mkGroup(base + 10, 2)
+	org.head = mkRing(base + 20)
+	o = &org
+}
+
+func churn(n i32) (sum i32) {
+	for i := 0; i < n; i++ {
+		var t *Box
+		t = mkBox(i)
+		sum = sum + t.v
+		var junk []i32
+		junk = append(junk, i)
+		var s str
+		s = string.Concatenation("x", "y")
+	}
+}
+
+func checkMember(m Member, v i32) {
+	wantI(m.box.v, v)
+	wantS(m.tags[0], string.Concatenation("t", i32.str(v)))
+	wantS(m.tags[1], string.Concatenation("u", i32.str(v)))
+}
+
+func checkGroup(g Group, base i32, n i32) {
+	wantS(g.label, string.Concatenation("g", i32.str(base)))
+	wantI(len(g.members), n)
+	for i := 0; i < n; i++ {
+		checkMember(g.members[i], base + i)
+	}
+}
+
+func checkOrg(o *Org, base i32) {
+	checkGroup(o.groups[0], base, 3)
+	checkGroup(o.groups[1], base + 10, 2)
+	var m *Member
+	m = o.head
+	for i := 0; i < 7; i++ {
+		checkMember(*m, base + 20 + i % 3)
+		m = m.next
+	}
+}
+
+func check(local [2]Group, org *Org) {
+	checkGroup(local[0], 100, 2)
+	checkGroup(local[1], 200, 3)
+	checkGroup(gGroups[0], 300, 2)
+	checkGroup(gGroups[1], 400, 1)
+	checkOrg(gOrg, 500)
+	checkOrg(org, 600)
+}
+
+func main() {
+	var local [2]Group
+	local[0] = mkGroup(100, 2)
+	local[1] = mkGroup(200, 3)
+	gGroups = append(gGroups, mkGroup(300, 2))
+	gGroups = append(gGroups, mkGroup(400, 1))
+	gOrg = mkOrg(500)
+	var org *Org
+	org = mkOrg(600)
+	check(local, org)
+	var s i32
+	s = churn(40000)
+	check(local, org)
+	if bad == 0 {
+		string.PrintLine("gc ok")
+	}
+}

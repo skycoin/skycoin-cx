@@ -22,10 +22,10 @@ type DataSegmentStruct struct {
 	StartsAt types.Pointer // Offset at which the data segment starts in a CX program's memory
 }
 
-// HeapVisit is a struct value at an address, which the collection follows once.
+// HeapVisit is a pointer or slice the mark followed, and its GCType.
 type HeapVisit struct {
 	HeapVisitAddress types.Pointer
-	HeapVisitStruct  *CXStruct
+	HeapVisitType    *GCType
 }
 
 type HeapSegmentStruct struct {
@@ -34,10 +34,17 @@ type HeapSegmentStruct struct {
 	Pointer  types.Pointer // At what offset a CX program can insert a new object to the heap
 	// ObjectStarts lists the address of each object, for the collection running.
 	ObjectStarts []types.Pointer
-	// UpdatedSlots lists the pointers the collection moved for one object.
-	UpdatedSlots []types.Pointer
-	// Visited holds the struct values the collection followed.
+	// Slots lists the address of each reference the mark read.
+	Slots []types.Pointer
+	// Visited holds the pointers and slices the mark followed.
 	Visited map[HeapVisit]bool
+	// Work holds the pointers and slices the mark has yet to follow.
+	Work []HeapVisit
+	// Pinned is an address inside an object that Go code holds across an
+	// allocation, or 0. The collection keeps its object and moves it.
+	Pinned types.Pointer
+	// Types holds the GCTypes of the roots, built by the first collection.
+	Types *GCTypeCache
 }
 
 // ----------------------------------------------------------------

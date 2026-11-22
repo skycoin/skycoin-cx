@@ -149,7 +149,10 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 * `LineCount`, equal to `len(Expressions)`,
 * `Size types.Pointer`, the frame size in bytes, parameters included,
 * `FileName`, `FileLine` and `LocalVariables`, used while compiling,
-* `ListOfPointers []*CXArgument`, the GC roots of the frame.
+* `ListOfPointers []*CXArgument` and `ListOfSlots []CXFunctionSlot`, the GC
+  roots of the frame. A slot is a local with its declared type, and the GC
+  walks it by the `ast.GCType` that `ast.GCTypeOf` builds from that type
+  (`t3-ast/gc_type.go`).
 
 `CXFunctions` holds more than the user's functions. Every expression that
 calls a native operator gets its own copy of the native, made by
@@ -526,7 +529,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 2 |
+| 8 to 11 | format | `serializeFormatVersion`, now 3 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 

@@ -378,18 +378,18 @@ const (
 	CXFunctionEscapeHeap
 )
 
-// CXFunctionSlot is a pointer, slice or str inside a local of a function,
-// found from the declared type of the local. The GC reads it as a root.
+// CXFunctionSlot is a local of a function that holds a pointer, slice or str,
+// with its declared type. The GC walks it as a root by its GCType.
 type CXFunctionSlot struct {
 	// CXFunctionSlotOffset is the offset of the local, flagged when it escaped.
 	CXFunctionSlotOffset types.Pointer
-	// CXFunctionSlotInner is how far into the local the slot is.
-	CXFunctionSlotInner types.Pointer
-	// CXFunctionSlotType is types.POINTER for a pointer, else the type of the
-	// elements of a slice or types.STR.
+	// CXFunctionSlotLengths are the lengths of the arrays and slices of the
+	// local, outermost first, as CXArgument.Lengths.
+	CXFunctionSlotLengths []types.Pointer
+	// CXFunctionSlotType is the base type of the local, types.STR for a str.
 	CXFunctionSlotType types.Code
-	// CXFunctionSlotSpecifiers are the declaration specifiers of the slot.
+	// CXFunctionSlotSpecifiers are the declaration specifiers of the local.
 	CXFunctionSlotSpecifiers []int
-	// CXFunctionSlotStruct is the struct a pointer points to, or nil.
+	// CXFunctionSlotStruct is the struct the local is made of, or nil.
 	CXFunctionSlotStruct *CXStruct
 }

@@ -1,0 +1,101 @@
+// The garbage collector follows the pointers, strs and slices in the array
+// fields of a struct on the heap. cxtest runs it with -heap-initial 0, so
+// nearly every allocation collects.
+
+package main
+
+import "sys/string"
+
+type Box struct {
+	v i32
+}
+
+type IntList struct {
+	xs []i32
+}
+
+type Holder struct {
+	id    i32
+	boxes [3]*Box
+	names [2]str
+	lists [2]IntList
+}
+
+var gHolder *Holder
+var bad i32
+
+func wantI(got i32, want i32) {
+	if got != want {
+		bad = bad + 1
+		i32.print(got)
+	}
+}
+
+func wantS(got str, want str) {
+	if !string.EqualityByByteValue(got, want) {
+		bad = bad + 1
+		string.PrintLine(got)
+	}
+}
+
+func mkBox(v i32) (r *Box) {
+	var b Box
+	b.v = v
+	r = &b
+}
+
+func mkHolder(base i32) (r *Holder) {
+	var h Holder
+	h.id = base
+	for i := 0; i < 3; i++ {
+		h.boxes[i] = mkBox(base + i)
+	}
+	h.names[0] = string.Concatenation("a", i32.str(base))
+	h.names[1] = string.Concatenation("b", i32.str(base))
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 5; j++ {
+			h.lists[i].xs = append(h.lists[i].xs, base * 10 + i + j)
+		}
+	}
+	r = &h
+}
+
+func churn(n i32) (sum i32) {
+	for i := 0; i < n; i++ {
+		var t *Box
+		t = mkBox(i)
+		sum = sum + t.v
+		var junk []i32
+		junk = append(junk, i)
+	}
+}
+
+func check(h *Holder, base i32) {
+	wantI(h.id, base)
+	for i := 0; i < 3; i++ {
+		wantI(h.boxes[i].v, base + i)
+	}
+	wantS(h.names[0], string.Concatenation("a", i32.str(base)))
+	wantS(h.names[1], string.Concatenation("b", i32.str(base)))
+	for i := 0; i < 2; i++ {
+		wantI(len(h.lists[i].xs), 5)
+		for j := 0; j < 5; j++ {
+			wantI(h.lists[i].xs[j], base * 10 + i + j)
+		}
+	}
+}
+
+func main() {
+	var h *Holder
+	h = mkHolder(7)
+	gHolder = mkHolder(8)
+	check(h, 7)
+	check(gHolder, 8)
+	var s i32
+	s = churn(20000)
+	check(h, 7)
+	check(gHolder, 8)
+	if bad == 0 {
+		string.PrintLine("gc ok")
+	}
+}

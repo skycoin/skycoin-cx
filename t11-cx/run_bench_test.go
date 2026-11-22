@@ -123,7 +123,8 @@ func main() {
 `
 
 // runBenchPrograms are count, fib, bubble sort, the fixed array sort and the
-// struct walk plus the BenchmarkCompile programs. test-gc is left out because it panics in MarkAndCompact (#13).
+// struct walk plus the BenchmarkCompile programs. test-gc is left out because
+// it fails on (*p).s[i] through a global p (#13).
 // The ceilings are the counts measured when the test was added. The target
 // is 0, see #407.
 func runBenchPrograms(tb testing.TB) []runBenchProgram {

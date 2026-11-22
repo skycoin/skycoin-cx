@@ -735,7 +735,7 @@ func serializeFunction(prgrm *CXProgram, encoder *serializeEncoder, fn *CXFuncti
 	for i := range fn.ListOfSlots {
 		slot := &fn.ListOfSlots[i]
 		encoder.serializeEncoderPointer(slot.CXFunctionSlotOffset)
-		encoder.serializeEncoderPointer(slot.CXFunctionSlotInner)
+		encoder.serializeEncoderPointers(slot.CXFunctionSlotLengths)
 		encoder.serializeEncoderInt(int64(slot.CXFunctionSlotType))
 		encoder.serializeEncoderInts(slot.CXFunctionSlotSpecifiers)
 		strct, err := serializeStructReference(prgrm, slot.CXFunctionSlotStruct)
@@ -812,7 +812,7 @@ func deserializeFunction(prgrm *CXProgram, decoder *serializeDecoder, fn *CXFunc
 		for i := range fn.ListOfSlots {
 			slot := &fn.ListOfSlots[i]
 			slot.CXFunctionSlotOffset = decoder.serializeDecoderPointer()
-			slot.CXFunctionSlotInner = decoder.serializeDecoderPointer()
+			slot.CXFunctionSlotLengths = decoder.serializeDecoderPointers()
 			slot.CXFunctionSlotType = types.Code(decoder.serializeDecoderIntValue())
 			slot.CXFunctionSlotSpecifiers = decoder.serializeDecoderInts()
 			slot.CXFunctionSlotStruct = deserializeStructReference(prgrm, decoder)

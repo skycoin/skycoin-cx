@@ -486,6 +486,10 @@ func runTestCases(t *runner.TestRunner) {
 		"0\n100\n200\n10\n101\n201\n20\n102\n202\n10\n4321\n")
 	t.RunWant("-heap-initial 0 test-escape-gc.cx", types.CX_SUCCESS, "the GC keeps reachable escaped locals and local slices and moves the pointers to them",
 		"0\n2\n4\n6\n7\n321\n41\n42\n")
+	t.RunWant("-heap-initial 0 test-gc-array-pointer.cx", types.CX_SUCCESS, "the GC follows a pointer to an array, in a local, a global and a field, to the pointers and strs in its elements", "gc ok\n")
+	t.RunWant("-heap-initial 0 test-gc-array-field.cx", types.CX_SUCCESS, "the GC follows the pointers, strs and slices in the array fields of a struct on the heap", "gc ok\n")
+	t.RunWant("-heap-initial 0 test-gc-slice-struct.cx", types.CX_SUCCESS, "the GC follows the pointers, slices and strs in the struct elements of a slice, and a pointer into a slice moves with it", "gc ok\n")
+	t.RunWant("-heap-initial 0 test-gc-nested.cx", types.CX_SUCCESS, "the GC follows arrays of structs holding slices of structs holding pointers and str arrays, and a ring of pointers", "gc ok\n")
 	t.RunWant("--executor=vm test-escape-frame.cx", types.CX_SUCCESS, "a local whose address does not outlive the call stays in the frame",
 		"10\n12\n13\n4\n6\n14\n")
 	t.RunWant("test-address-literal.cx", types.CX_SUCCESS, "&T{} as a var initializer, :=, an array element, a field, a struct literal field, append, an argument and a return gives a new T each time",
@@ -534,7 +538,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("-h", types.CX_SUCCESS, "cx -h names the real flags (skycoin/cx#567)", "alias for -lexer\n", "alias for -heap-initial\n", "alias for -heap-max\n", "-lexer-output string")
 	t.RunWant("test-append-struct-field.cx", types.CX_SUCCESS, "append and len on a slice field of a struct and of a struct pointer",
 		"1 7 9000000000 cee\n2 7 9000000000 cee\n2 2.5 3.5\none two\n4 5\n3 3 9000000000 cee\n2 9000000000 cee\n")
-	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#13
+	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector", runner.TestIssue, 0) // known failing, (*p).s[i] through a global p, skycoin/skycoin-cx#13
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

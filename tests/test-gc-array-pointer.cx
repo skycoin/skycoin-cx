@@ -1,0 +1,105 @@
+// The garbage collector follows a pointer to an array, in a local, a global
+// and a struct field, to the pointers and strs in its elements. cxtest runs it
+// with -heap-initial 0, so nearly every allocation collects.
+
+package main
+
+import "sys/string"
+
+type Box struct {
+	v i32
+}
+
+type Item struct {
+	name str
+	box  *Box
+}
+
+type Pair struct {
+	a [2]*Box
+	b *[2]Item
+}
+
+var gArr *[3]*Box
+var gPair Pair
+var bad i32
+
+func wantI(got i32, want i32) {
+	if got != want {
+		bad = bad + 1
+		i32.print(got)
+	}
+}
+
+func wantS(got str, want str) {
+	if !string.EqualityByByteValue(got, want) {
+		bad = bad + 1
+		string.PrintLine(got)
+	}
+}
+
+func mkBox(v i32) (r *Box) {
+	var b Box
+	b.v = v
+	r = &b
+}
+
+func mkArr(base i32) (r *[3]*Box) {
+	var a [3]*Box
+	for i := 0; i < 3; i++ {
+		a[i] = mkBox(base + i)
+	}
+	r = &a
+}
+
+func mkItems(base i32) (r *[2]Item) {
+	var a [2]Item
+	for i := 0; i < 2; i++ {
+		a[i].name = string.Concatenation("n", i32.str(base + i))
+		a[i].box = mkBox(base + i)
+	}
+	r = &a
+}
+
+func churn(n i32) (sum i32) {
+	for i := 0; i < n; i++ {
+		var t *Box
+		t = mkBox(i)
+		sum = sum + t.v
+		var junk []i32
+		junk = append(junk, i)
+	}
+}
+
+func check(p *[3]*Box, items *[2]Item) {
+	for i := 0; i < 3; i++ {
+		wantI((*p)[i].v, 10 + i)
+		wantI((*gArr)[i].v, 20 + i)
+	}
+	wantI(gPair.a[0].v, 30)
+	wantI(gPair.a[1].v, 31)
+	for i := 0; i < 2; i++ {
+		wantS((*gPair.b)[i].name, string.Concatenation("n", i32.str(40 + i)))
+		wantI((*gPair.b)[i].box.v, 40 + i)
+		wantS((*items)[i].name, string.Concatenation("n", i32.str(50 + i)))
+		wantI((*items)[i].box.v, 50 + i)
+	}
+}
+
+func main() {
+	var p *[3]*Box
+	p = mkArr(10)
+	gArr = mkArr(20)
+	gPair.a[0] = mkBox(30)
+	gPair.a[1] = mkBox(31)
+	gPair.b = mkItems(40)
+	var items *[2]Item
+	items = mkItems(50)
+	check(p, items)
+	var s i32
+	s = churn(20000)
+	check(p, items)
+	if bad == 0 {
+		string.PrintLine("gc ok")
+	}
+}

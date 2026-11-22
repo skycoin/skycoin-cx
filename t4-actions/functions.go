@@ -303,7 +303,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	}
 
 	for _, slot := range symbolsData.escapedSlots {
-		gcRootAdd(fn, slot.escapeSlotOffset, gcPointerSlot{gcPointerSlotType: types.POINTER, gcPointerSlotSpecs: []int{constants.DECL_BASIC, constants.DECL_POINTER}})
+		gcRootAddEscapeSlot(fn, slot.escapeSlotOffset)
 	}
 	fn.LineCount = len(fn.Expressions)
 	fn.Size = offset
@@ -1188,7 +1188,7 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	}
 
 	// Ignore if it's a global variable.
-	if sym.Offset > prgrm.Stack.Size && !ast.OffsetEscaped(sym.Offset) {
+	if sym.Offset >= prgrm.Stack.Size && !ast.OffsetEscaped(sym.Offset) {
 		return
 	}
 	// We first need to check if we're going to add `sym` with fields.
