@@ -191,33 +191,19 @@ func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, c
 	   It was not a native, so we need to create another call
 	   with the current expression's operator
 	*/
-	// we're going to use the next call in the callstack
-	prgrm.CallCounter++
-	if prgrm.CallCounter >= constants.CALLSTACK_SIZE {
-		panic(constants.STACK_OVERFLOW_ERROR)
+	newFP := prgrm.Stack.Pointer
+	if prgrm.CallCounter+1 >= constants.CALLSTACK_SIZE || newFP+cxAtomicOpOperator.Size > constants.STACK_SIZE {
+		// Pushes and panics, so RuntimeError pops the frame as before.
+		callPush(prgrm, cxAtomicOpOperator)
 	}
 
-	newCall := &prgrm.CallStack[prgrm.CallCounter]
-	// setting the new call
-	newCall.Operator = cxAtomicOpOperator
-	newCall.Line = 0
-	newCall.FramePointer = prgrm.Stack.Pointer
-	// the stack pointer is moved to create room for the next call
-	// prgrm.MemoryPointer += fn.Size
-	prgrm.Stack.Pointer += newCall.Operator.Size
-
-	// checking if enough memory in stack
-	if prgrm.Stack.Pointer > constants.STACK_SIZE {
-		panic(constants.STACK_OVERFLOW_ERROR)
-	}
-
-	newFP := newCall.FramePointer
-	// wiping next stack frame (removing garbage)
+	// The inputs are copied before the push, so an error in one stops the
+	// caller, as it does on vm.
 	for c := types.Pointer(0); c < cxAtomicOpOperator.Size; c++ {
 		prgrm.Memory[newFP+c] = 0
 	}
 
-	newCallOperatorInputs := newCall.Operator.GetInputs(prgrm)
+	newCallOperatorInputs := cxAtomicOpOperator.GetInputs(prgrm)
 	for i, inputIdx := range cxAtomicOp.GetInputs(prgrm) {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0112.
@@ -259,7 +245,26 @@ func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, c
 			byts)
 	}
 
+	callPush(prgrm, cxAtomicOpOperator)
 	return nil
+}
+
+// callPush makes operator the current call, with its frame at the stack
+// pointer. It panics with STACK_OVERFLOW_ERROR when the call or stack is full.
+func callPush(prgrm *CXProgram, operator *CXFunction) {
+	prgrm.CallCounter++
+	if prgrm.CallCounter >= constants.CALLSTACK_SIZE {
+		panic(constants.STACK_OVERFLOW_ERROR)
+	}
+
+	newCall := &prgrm.CallStack[prgrm.CallCounter]
+	newCall.Operator = operator
+	newCall.Line = 0
+	newCall.FramePointer = prgrm.Stack.Pointer
+	prgrm.Stack.Pointer += operator.Size
+	if prgrm.Stack.Pointer > constants.STACK_SIZE {
+		panic(constants.STACK_OVERFLOW_ERROR)
+	}
 }
 
 func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutputs *[]CXValue) error {

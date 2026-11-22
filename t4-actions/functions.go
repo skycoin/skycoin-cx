@@ -938,6 +938,9 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		} else if argTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
 			continue
 		} else if argTypeSig.Type == ast.TYPE_STRUCT {
+			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
+			// Now an arena getter.
+			pointerFieldsDeref(prgrm, prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta).Fields)
 			continue
 		} else if argTypeSig.Type == ast.TYPE_POINTER_STRUCT {
 			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
@@ -945,45 +948,14 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 			structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 			if len(structDetails.Fields) > 0 {
 				argTypeSig.IsDeref = true
-
-				for _, fldIdx := range structDetails.Fields {
-					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-					// Now an arena getter, site S0793.
-					fld := prgrm.GetCXArgFromArray(fldIdx)
-					doesFieldHaveDerefPointer := false
-					for _, deref := range fld.DereferenceOperations {
-						if deref == constants.DEREF_POINTER {
-							doesFieldHaveDerefPointer = true
-						}
-					}
-					if fld.IsPointer() && !doesFieldHaveDerefPointer {
-						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-						// Now an arena getter, site S1677.
-						prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).DereferenceOperations = append(prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).DereferenceOperations, constants.DEREF_POINTER)
-					}
-				}
+				pointerFieldsDeref(prgrm, structDetails.Fields)
 			}
 			continue
 		} else {
 			panic("type is not known")
 		}
 
-		for _, fldIdx := range arg.Fields {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now an arena getter, site S0794.
-			fld := prgrm.GetCXArgFromArray(fldIdx)
-			doesFieldHaveDerefPointer := false
-			for _, deref := range fld.DereferenceOperations {
-				if deref == constants.DEREF_POINTER {
-					doesFieldHaveDerefPointer = true
-				}
-			}
-			if fld.IsPointer() && !doesFieldHaveDerefPointer {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-				// Now an arena getter, site S1678.
-				prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).DereferenceOperations = append(prgrm.GetCXArg(ast.CXArgumentIndex(fldIdx)).DereferenceOperations, constants.DEREF_POINTER)
-			}
-		}
+		pointerFieldsDeref(prgrm, arg.Fields)
 
 		doesArgHaveDerefPointer := false
 		for _, deref := range arg.DereferenceOperations {
@@ -995,6 +967,19 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1679.
 			prgrm.GetCXArg(ast.CXArgumentIndex(arg.Index)).DereferenceOperations = append(arg.DereferenceOperations, constants.DEREF_POINTER)
+		}
+	}
+}
+
+// pointerFieldsDeref makes a pointer field read through the pointer when another
+// field follows, so a.p.x reads x of *a.p while a.p stays the pointer.
+func pointerFieldsDeref(prgrm *ast.CXProgram, fields []ast.CXArgumentIndex) {
+	for _, fldIdx := range fields[:max(len(fields)-1, 0)] {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0793.
+		fld := prgrm.GetCXArgFromArray(fldIdx)
+		if fld.IsPointer() && !hasDerefOp(fld, constants.DEREF_POINTER) {
+			fld.DereferenceOperations = append(fld.DereferenceOperations, constants.DEREF_POINTER)
 		}
 	}
 }
@@ -2525,7 +2510,8 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		symTypeSignature.PassBy = sym.PassBy
 
 		for _, decl := range sym.DeclarationSpecifiers {
-			if decl == constants.DECL_DEREF {
+			// parr[i] indexes *parr, as in Go.
+			if decl == constants.DECL_DEREF || decl == constants.DECL_INDEXING {
 				symTypeSignature.IsDeref = true
 			}
 		}
@@ -2718,6 +2704,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 			elt.DeclarationSpecifiers = declSpec
 		} else {
+			pointerArrayIndexed := pointerArrayIndexDeref(sym, arg)
 			declSpec := make([]int, len(arg.DeclarationSpecifiers))
 
 			for i, spec := range arg.DeclarationSpecifiers {
@@ -2729,7 +2716,11 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 				// also we could be removing
 				switch spec {
 				case constants.DECL_INDEXING:
-					if declSpec[len(declSpec)-1] == constants.DECL_ARRAY || declSpec[len(declSpec)-1] == constants.DECL_SLICE {
+					if pointerArrayIndexed {
+						// parr[i] indexes *parr, as in Go.
+						declSpec = declSpec[:len(declSpec)-2]
+						pointerArrayIndexed = false
+					} else if declSpec[len(declSpec)-1] == constants.DECL_ARRAY || declSpec[len(declSpec)-1] == constants.DECL_SLICE {
 						declSpec = declSpec[:len(declSpec)-1]
 					} else {
 						prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidIndexing, sym.ArgDetails, ast.CompileErrorOperands{})
@@ -2766,6 +2757,11 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	// sym.Lengths = arg.Lengths
 	sym.Package = arg.Package
 	sym.Size = arg.Size
+	elementStruct := pointerArrayElementStruct(sym, arg)
+	if elementStruct {
+		// (*parr)[i] is a T, while parr has the size of a pointer.
+		sym.Size = arg.StructType.GetStructSize(prgrm)
+	}
 
 	// Checking if it's a slice struct field. We'll do the same process as
 	// below (as in the `arg.IsSlice` check), but the process differs in the
@@ -2812,6 +2808,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 			sym.Type = symField.Type
 			sym.PointerTargetType = symField.PointerTargetType
 		}
+	} else if elementStruct {
+		sym.Type = arg.PointerTargetType
+		sym.PointerTargetType = types.UNUSED
 	} else {
 		sym.Type = arg.Type
 		sym.PointerTargetType = arg.PointerTargetType
@@ -2990,9 +2989,12 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_POINTER_ATOMIC {
 					nameField.Type = types.Code(typeSignature.Meta)
 					nameField.StructType = nil
-					nameField.Size = types.Code(typeSignature.Meta).Size()
-
-					nameField.DereferenceOperations = append([]int{constants.DECL_BASIC, constants.DEREF_POINTER}, nameField.DereferenceOperations...)
+					nameField.Size = types.POINTER_SIZE
+					specs := []int{constants.DECL_BASIC, constants.DECL_POINTER}
+					if len(nameField.DeclarationSpecifiers) > 0 {
+						specs = append(specs, nameField.DeclarationSpecifiers[1:]...)
+					}
+					nameField.DeclarationSpecifiers = specs
 
 					break
 				} else if nameField.Name == typeSignature.Name && typeSignature.Type == ast.TYPE_ARRAY_ATOMIC {
@@ -3360,17 +3362,60 @@ func functionCallArguments(arguments [][]ast.CXExpression) ([]ast.CXExpression, 
 // A *[N]T reads through p before it indexes, a [N]*T keeps its pointer stride.
 func indexedFieldBaseDeref(sym *ast.CXArgument, declared *ast.CXArgument) {
 	specs := declared.DeclarationSpecifiers
-	if len(sym.Indexes) == 0 || len(specs) < 2 || len(sym.DereferenceOperations) == 0 || sym.DereferenceOperations[0] != constants.DEREF_ARRAY {
+	if pointerArrayElementPointerDeref(sym, declared) || pointerArrayIndexDeref(sym, declared) || len(sym.Indexes) == 0 || len(specs) < 2 || len(sym.DereferenceOperations) == 0 || sym.DereferenceOperations[0] != constants.DEREF_ARRAY {
 		return
 	}
-	switch {
-	case specs[len(specs)-1] == constants.DECL_POINTER && specs[len(specs)-2] == constants.DECL_ARRAY:
-		if !hasDerefOp(sym, constants.DEREF_POINTER) {
-			sym.DereferenceOperations = append([]int{constants.DEREF_POINTER}, sym.DereferenceOperations...)
-		}
-	case specs[len(specs)-1] == constants.DECL_ARRAY && specs[len(specs)-2] == constants.DECL_POINTER:
+	if specs[len(specs)-1] == constants.DECL_ARRAY && specs[len(specs)-2] == constants.DECL_POINTER {
 		if len(sym.DeclarationSpecifiers) > 0 && sym.DeclarationSpecifiers[0] == constants.DECL_BASIC {
 			sym.DeclarationSpecifiers = append(append([]int{}, specs...), sym.DeclarationSpecifiers[1:]...)
 		}
 	}
+}
+
+// pointerArrayElementStruct reports whether sym reads one struct element of
+// the *[N]T declared, as (*p)[i] and p[i] do, with no field after it.
+func pointerArrayElementStruct(sym *ast.CXArgument, declared *ast.CXArgument) bool {
+	specs := declared.DeclarationSpecifiers
+	if declared.StructType == nil || len(sym.Fields) > 0 || len(sym.Indexes) != 1 || len(specs) != 3 {
+		return false
+	}
+	return specs[1] == constants.DECL_ARRAY && specs[2] == constants.DECL_POINTER && hasDerefOp(sym, constants.DEREF_POINTER)
+}
+
+// pointerArrayIndexDeref makes p[i] on a *[N]T read through p before it
+// indexes, as Go does, and reports whether p is so indexed.
+func pointerArrayIndexDeref(sym *ast.CXArgument, declared *ast.CXArgument) bool {
+	specs := declared.DeclarationSpecifiers
+	if len(sym.Indexes) == 0 || len(specs) < 2 || len(sym.DereferenceOperations) == 0 || sym.DereferenceOperations[0] != constants.DEREF_ARRAY {
+		return false
+	}
+	if specs[len(specs)-1] != constants.DECL_POINTER || specs[len(specs)-2] != constants.DECL_ARRAY {
+		return false
+	}
+	if !hasDerefOp(sym, constants.DEREF_POINTER) {
+		sym.DereferenceOperations = append([]int{constants.DEREF_POINTER}, sym.DereferenceOperations...)
+	}
+	return true
+}
+
+// pointerArrayElementPointerDeref makes p[i].f and (*p)[i].f on a *[N]*T read
+// through p and then the element, with the stride of a pointer.
+func pointerArrayElementPointerDeref(sym *ast.CXArgument, declared *ast.CXArgument) bool {
+	specs := declared.DeclarationSpecifiers
+	if len(sym.Fields) == 0 || len(sym.Indexes) != 1 || len(specs) != 4 || specs[1] != constants.DECL_POINTER || specs[2] != constants.DECL_ARRAY || specs[3] != constants.DECL_POINTER {
+		return false
+	}
+	ops := sym.DereferenceOperations
+	switch {
+	case len(ops) == 1 && ops[0] == constants.DEREF_ARRAY:
+		sym.DereferenceOperations = []int{constants.DEREF_POINTER, constants.DEREF_ARRAY, constants.DEREF_POINTER}
+	case len(ops) == 2 && ops[0] == constants.DEREF_POINTER && ops[1] == constants.DEREF_ARRAY:
+		sym.DereferenceOperations = append(ops, constants.DEREF_POINTER)
+	default:
+		return false
+	}
+	if len(sym.DeclarationSpecifiers) > 0 && sym.DeclarationSpecifiers[0] == constants.DECL_BASIC {
+		sym.DeclarationSpecifiers = append(append([]int{}, specs...), sym.DeclarationSpecifiers[1:]...)
+	}
+	return true
 }

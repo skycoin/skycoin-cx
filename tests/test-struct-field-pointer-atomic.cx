@@ -1,0 +1,21 @@
+package main
+
+type Box struct {
+	k i32
+	n *i32
+}
+
+func main() {
+	var x i32
+	x = 4
+	var b Box
+	b.k = 9
+	b.n = &x
+	var m *i32
+	m = b.n
+	i32.print(*m)
+	i32.print(*b.n)
+	*b.n = 6
+	i32.print(x)
+	i32.print(b.k)
+}

@@ -1,0 +1,66 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Box struct {
+	k i32
+	p *Point
+}
+
+type Outer struct {
+	j i32
+	b Box
+	pb *Box
+}
+
+func show(p *Point) {
+	i32.print(p.x)
+}
+
+func main() {
+	var pad [4]i32
+	pad[0] = 1
+	var pt Point
+	pt = Point{x: 7, y: 9}
+	var b Box
+	b.k = 3
+	b.p = &pt
+	i32.print(b.p.x)
+	i32.print(b.p.y)
+
+	var rb *Box
+	rb = &b
+	i32.print(rb.p.y)
+	var q *Point
+	q = rb.p
+	i32.print(q.y)
+	q = b.p
+	i32.print(q.x)
+
+	var o Outer
+	o.b = b
+	o.pb = &b
+	i32.print(o.b.p.y)
+	i32.print(o.pb.k)
+	i32.print(o.pb.p.y)
+
+	b.p.x = 70
+	i32.print(pt.x)
+	rb.p.x = 71
+	i32.print(pt.x)
+	o.pb.p.x = 72
+	i32.print(pt.x)
+	show(b.p)
+	show(rb.p)
+
+	var pt2 Point
+	pt2 = Point{x: 5, y: 6}
+	rb.p = &pt2
+	i32.print(b.p.x)
+	b.p = q
+	i32.print(rb.p.y)
+	i32.print(pad[0])
+}

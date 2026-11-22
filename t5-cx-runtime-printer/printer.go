@@ -23,10 +23,6 @@ func PrinterRuntimeErrorPrint(prgrm *ast.CXProgram) int {
 	record := &prgrm.RuntimeError
 	call := prgrm.CallStack[record.RuntimeErrorRecordCall]
 	cxLine, _ := prgrm.GetPreviousCXLine(call.Operator.Expressions, record.RuntimeErrorRecordLine)
-	if printerInputCopyStop(&call, record) {
-		caller := prgrm.CallStack[record.RuntimeErrorRecordCall-1]
-		cxLine, _ = prgrm.GetPreviousCXLine(caller.Operator.Expressions, caller.Line)
-	}
 	fileName := prgrm.CXProgramSourceFileText(cxLine.FileName)
 
 	if record.RuntimeErrorRecordAssertLine {
@@ -58,14 +54,4 @@ func PrinterOpcodesRegister(prgrm *ast.CXProgram) {
 
 func printerOpDebugPrintStack(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	PrinterStackPrint(prgrm)
-}
-
-// printerInputCopyStop reports whether the error stopped call while its inputs
-// were copied, at line 0 before any expression ran, so it is at the call site.
-func printerInputCopyStop(call *ast.CXCall, record *ast.RuntimeErrorRecord) bool {
-	if record.RuntimeErrorRecordCall == 0 || record.RuntimeErrorRecordLine != 0 {
-		return false
-	}
-	exprs := call.Operator.Expressions
-	return len(exprs) == 0 || exprs[0].Type == ast.CX_LINE
 }

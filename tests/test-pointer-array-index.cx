@@ -1,0 +1,83 @@
+package main
+
+import "sys/string"
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func second(p *[3]Point) (r i32) {
+	r = p[1].y + p[2].x
+}
+
+func first(p *[3]Point) {
+	p[0] = Point{x: 40, y: 41}
+}
+
+func main() {
+	var pad i32
+	pad = 1
+	var n [3]i32
+	n[1] = 5
+	n[2] = 8
+	var pn *[3]i32
+	pn = &n
+	var v i32
+	v = pn[1]
+	i32.print(v)
+	pn[0] = 11
+	i32.print(n[0] + (*pn)[2])
+	var i i32
+	i = 2
+	i32.print(pn[i] + pn[1])
+	var m [2][3]i32
+	m[1][2] = 42
+	var pm *[2][3]i32
+	pm = &m
+	i32.print(pm[1][2])
+
+	var a [3]Point
+	a[1] = Point{x: 5, y: 6}
+	a[2] = Point{x: 7, y: 8}
+	var parr *[3]Point
+	parr = &a
+	var q Point
+	q = parr[1]
+	i32.print(q.x)
+	i = 2
+	q = parr[i]
+	i32.print(q.y)
+	var pp *Point
+	pp = &parr[2]
+	i32.print(pp.x)
+	parr[1] = Point{x: 15, y: 16}
+	i32.print(a[1].y)
+	parr[2] = a[1]
+	i32.print(a[2].x)
+	i32.print(second(&a))
+	first(&a)
+	i32.print(a[0].y)
+
+	var pa [2]*Point
+	pa[1] = &a[2]
+	var ppa *[2]*Point
+	ppa = &pa
+	pp = ppa[1]
+	i32.print(pp.y)
+	i32.print(ppa[1].y + (*ppa)[1].x)
+	ppa[1].x = 70
+	i32.print(a[2].x)
+
+	var f [3]f64
+	f[2] = 2.5D
+	var pf *[3]f64
+	pf = &f
+	f64.print(pf[2])
+	var s [2]str
+	s[1] = "hi"
+	var ps *[2]str
+	ps = &s
+	string.PrintLine(ps[1])
+	i32.print(pad)
+}

@@ -1,0 +1,10 @@
+package main
+
+func g(i i32) (r i32) {
+	var a [3]i32
+	return a[i]
+}
+
+func main() {
+	i32.print(g(-1))
+}

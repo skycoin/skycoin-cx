@@ -469,7 +469,19 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-pointer-copy.cx", types.CX_SUCCESS, "copying a pointer copies its value, and p[i].f indexes a *[N]T and a [N]*T",
 		"11\n11\n21\n12\n1\n3\n5\n6\n11\n9\n12\n32\n")
 	t.RunWant("test-runtime-error-empty-callee.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error in the argument of an empty function prints the call site",
-		"test-runtime-error-empty-callee.cx:8, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
+		"test-runtime-error-empty-callee.cx:8, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE", "===Callstack===\n>>> main()")
+	t.RunWant("test-pointer-field-chain.cx", types.CX_SUCCESS, "b.p.x reads and writes through the pointer field p, and b.p = &x stores the pointer",
+		"7\n9\n9\n9\n7\n9\n3\n9\n70\n71\n72\n72\n72\n5\n9\n1\n")
+	t.RunWant("test-pointer-array-index.cx", types.CX_SUCCESS, "p[i] on a *[N]T indexes *p as in Go, for atomic, struct and pointer elements",
+		"5\n19\n13\n42\n5\n8\n7\n16\n15\n31\n41\n16\n31\n70\n2.5\nhi\n1\n")
+	t.RunWant("test-struct-field-pointer-atomic.cx", types.CX_SUCCESS, "a struct field of type *i32 has the type *i32",
+		"4\n4\n6\n9\n")
+	t.RunWant("test-runtime-error-input-copy.cx", types.CX_RUNTIME_INVALID_CAST, "a runtime error in an argument stops the caller, not the callee",
+		"test-runtime-error-input-copy.cx:12, CX_RUNTIME_INVALID_CAST", "===Callstack===\n>>> main()")
+	t.RunWant("test-runtime-error-return-line.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error in return s[0][1] prints the line of the return",
+		"test-runtime-error-return-line.cx:4, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
+	t.RunWant("test-runtime-error-return-line-index.cx", types.CX_RUNTIME_INVALID_CAST, "a runtime error in return a[i] prints the line of the return",
+		"test-runtime-error-return-line-index.cx:5, CX_RUNTIME_INVALID_CAST")
 	t.Run("test-struct-literal-value.cx", types.CX_SUCCESS, "a struct literal is a value: var initializer, T{} zeroes, argument, result and a swap of fields")
 	t.Run("test-struct-literal-nested.cx", types.CX_SUCCESS, "struct, slice and array literals nested in each other, with calls in the fields")
 	t.Run("test-struct-literal-package.cx", types.CX_SUCCESS, "struct literals in global initializers and of another package")

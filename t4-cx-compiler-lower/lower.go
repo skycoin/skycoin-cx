@@ -437,15 +437,15 @@ func (s *state) identity(code []ir.Instr, inputs []ast.CXTypeSignatureIndex, out
 		if ast.CXArgumentStringSlicePointer(element) {
 			address = ast.CXTypeSignaturePassBy(prgrm, input) == constants.PASSBY_REFERENCE
 		}
-	case ast.TYPE_ATOMIC, ast.TYPE_SLICE_ATOMIC, ast.TYPE_STRUCT:
+	case ast.TYPE_ATOMIC, ast.TYPE_SLICE_ATOMIC:
 		address = output.PassBy == constants.PASSBY_REFERENCE
 	case ast.TYPE_POINTER_ATOMIC:
 		address = !ast.CXTypeSignaturePointerValue(prgrm, input)
 	case ast.TYPE_ARRAY_ATOMIC:
 	case ast.TYPE_POINTER_ARRAY_ATOMIC, ast.TYPE_POINTER_SLICE_ATOMIC:
 		address = input.PassBy == constants.PASSBY_REFERENCE
-	case ast.TYPE_POINTER_STRUCT:
-		address = !output.IsDeref && !ast.CXTypeSignaturePointerValue(prgrm, input)
+	case ast.TYPE_STRUCT, ast.TYPE_POINTER_STRUCT:
+		address = ast.CXTypeSignatureStructTakesAddress(prgrm, output, input)
 	default:
 		return code, ReasonOperandNotScalar
 	}

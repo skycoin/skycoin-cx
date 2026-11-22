@@ -99,7 +99,9 @@ func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer boo
 	if arg.StructType != nil && !cxArgumentElementPointer(arg) {
 		return arg.StructType.GetStructSize(prgrm)
 	}
-	if derefPointer {
+	// &(*p)[i] on a *[N]T ends its specifiers with a pointer but has the size
+	// of a T.
+	if derefPointer && arg.StructType == nil {
 		return arg.Type.Size()
 	}
 	return arg.Size

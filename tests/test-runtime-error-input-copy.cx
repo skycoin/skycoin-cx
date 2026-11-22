@@ -1,0 +1,14 @@
+package main
+
+func f(x i32) (y i32) {
+	y = x + 1
+}
+
+func main() {
+	var a [3]i32
+	var i i32
+	i = -1
+	var r i32
+	r = f(a[i])
+	i32.print(r)
+}

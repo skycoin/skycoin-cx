@@ -32,19 +32,39 @@ func CXArgumentTakesAddress(prgrm *CXProgram, out *CXArgument, input *CXTypeSign
 	return out.IsPointer() && out.PointerTargetType != types.STR && out.Type != types.AFF && !CXTypeSignaturePointerValue(prgrm, input)
 }
 
+// CXTypeSignatureStructTakesAddress reports whether assigning input to the
+// struct or pointer struct output out writes the address of input.
+func CXTypeSignatureStructTakesAddress(prgrm *CXProgram, out *CXTypeSignature, input *CXTypeSignature) bool {
+	if out.Type == TYPE_STRUCT && out.PassBy == constants.PASSBY_REFERENCE {
+		return true
+	}
+	// A field such as b.p is the pointer when it is last.
+	pointer := out.Type == TYPE_POINTER_STRUCT && !out.IsDeref
+	if fields := prgrm.GetCXTypeSignatureStructFromArray(out.Meta).Fields; len(fields) > 0 {
+		pointer = prgrm.GetCXArgFromArray(fields[len(fields)-1]).IsPointer()
+	}
+	return pointer && !CXTypeSignaturePointerValue(prgrm, input)
+}
+
 // CXTypeSignaturePointerValue reports whether sig reads a pointer by value, as s
 // or pa[0] do, so assigning it copies the pointer. &x and a struct literal do not.
 func CXTypeSignaturePointerValue(prgrm *CXProgram, sig *CXTypeSignature) bool {
-	if CXTypeSignaturePassBy(prgrm, sig) == constants.PASSBY_REFERENCE || sig.IsDeref {
+	if CXTypeSignaturePassBy(prgrm, sig) == constants.PASSBY_REFERENCE {
 		return false
 	}
 	switch sig.Type {
 	case TYPE_STRUCT, TYPE_POINTER_STRUCT:
-		// A field access such as b.p is decided by its last field.
+		// A field access such as b.p is decided by its last field. IsDeref of
+		// rb.p reads rb, not the field.
 		if fields := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).Fields; len(fields) > 0 {
 			return prgrm.GetCXArgFromArray(fields[len(fields)-1]).GetAssignmentElement(prgrm).IsPointer()
 		}
-		return sig.Type == TYPE_POINTER_STRUCT
+		return sig.Type == TYPE_POINTER_STRUCT && !sig.IsDeref
+	}
+	if sig.IsDeref {
+		return false
+	}
+	switch sig.Type {
 	case TYPE_POINTER_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
 		return true
 	case TYPE_CXARGUMENT_DEPRECATE:

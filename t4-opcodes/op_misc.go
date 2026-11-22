@@ -59,14 +59,8 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
 		}
-	} else if outputs[0].TypeSignature.Type == ast.TYPE_STRUCT {
-		if outputs[0].TypeSignature.PassBy == constants.PASSBY_REFERENCE {
-			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
-		} else {
-			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
-		}
-	} else if outputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
-		if !outputs[0].TypeSignature.IsDeref && !ast.CXTypeSignaturePointerValue(prgrm, inputs[0].TypeSignature) {
+	} else if outputs[0].TypeSignature.Type == ast.TYPE_STRUCT || outputs[0].TypeSignature.Type == ast.TYPE_POINTER_STRUCT {
+		if ast.CXTypeSignatureStructTakesAddress(prgrm, outputs[0].TypeSignature, inputs[0].TypeSignature) {
 			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
 		} else {
 			outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))

@@ -1039,6 +1039,11 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		lastExpression.Outputs = nil
 
 		lastExpression.AddOutput(prgrm, typeSigIdx)
+		if len(retExprs) < 2 || retExprs[len(retExprs)-2].Type != ast.CX_LINE {
+			// return s[0][1] has no line of its own for a runtime error to report.
+			lineExprs := append([]ast.CXExpression{}, retExprs[:len(retExprs)-1]...)
+			return append(lineExprs, *MakeCXLineExpressionCurrent(prgrm), lastExpr)
+		}
 		return retExprs
 	} else if len(lastExpression.GetOutputs(prgrm)) > 0 {
 		// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.

@@ -1646,11 +1646,11 @@ func main () {
 }
 ```
 
-Indexing a pointer to an array without a field, as in `parr[1]`, is a
-compile error. Write `(*parr)[1]` instead.
-A field of a pointer field, as in `b.p.x`, still reads the wrong value,
-which is an open bug. Copy the pointer first, as in `r = b.p` and then
-`r.x`.
+Indexing a pointer to an array reads through the pointer, as in Go, so
+`parr[1]` is the same element as `(*parr)[1]` whatever the element type.
+A field of a pointer field reads through the pointer too. `b.p.x` is the
+field `x` of the struct that `b.p` points to, and `b.p` alone is the
+pointer.
 
 ### [Escape Analysis](#table-of-contents)
 
