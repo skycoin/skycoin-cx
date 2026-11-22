@@ -69,7 +69,7 @@ check-recovers: ## Check that no non-vendor code calls recover(, see recover-all
 check-objmodel: ## Check the object model rules of docs/ObjectModel.md and that the generated managers are up to date
 	./check-objmodel.sh
 
-generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast
+generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
 check: check-tiers check-inits check-ifaces check-recovers check-objmodel vet test-go test test-ptr64 ## tier, init, interface, recover and object model checks, vet, Go tests and CX program tests (default and ptr64)

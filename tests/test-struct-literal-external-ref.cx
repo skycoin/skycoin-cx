@@ -1,0 +1,47 @@
+package main
+
+// &pkg.T{...} and pkg.T{...} in every position.
+import "math/geometry"
+
+type Holder struct {
+	c *geometry.Circle
+}
+
+func double(c *geometry.Circle) (r f32) {
+	return c.radius * 2.0
+}
+
+func newCircle() (c *geometry.Circle) {
+	return &geometry.Circle{radius: 4.0}
+}
+
+func two() (r f32) {
+	return 2.0
+}
+
+func main() {
+	var a *geometry.Circle
+	a = &geometry.Circle{radius: 1.0}
+	b := &geometry.Circle{radius: 2.0}
+	var g *geometry.Circle = &geometry.Circle{radius: 2.5}
+	printf("assign %f %f %f\n", a.radius, b.radius, g.radius)
+	printf("argument %f\n", double(&geometry.Circle{radius: 3.0}))
+	n := newCircle()
+	printf("return %f\n", n.radius)
+	var s []*geometry.Circle
+	s = append(s, &geometry.Circle{radius: 5.0})
+	printf("append %f\n", s[0].radius)
+	var h Holder
+	h.c = &geometry.Circle{radius: 6.0}
+	h2 := Holder{c: &geometry.Circle{radius: 7.0}}
+	printf("field %f %f\n", h.c.radius, h2.c.radius)
+	var arr [2]*geometry.Circle
+	arr[1] = &geometry.Circle{radius: 9.0}
+	printf("index %f\n", arr[1].radius)
+	var x f32
+	x = 1.5
+	c := &geometry.Circle{radius: x * 2.0}
+	r := &geometry.Rectangle{sideA: x, sideB: two()}
+	printf("values %f %f\n", c.radius, r.Area())
+	printf("method %f %f\n", (&geometry.Circle{radius: 1.0}).Area(), geometry.Rectangle{sideA: 2.0, sideB: 4.0}.Area())
+}

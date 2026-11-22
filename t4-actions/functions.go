@@ -1474,7 +1474,8 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			if inpType != outType && isInputs {
 				targetName := StripNameNumber(prgrm, expressionOutputTypeSigName)
 				if bytes.HasPrefix(prgrm.CXProgramNameBytes(targetName), []byte(constants.ELEMENT_PREFIX)) {
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), prgrm.CXProgramCompileErrorText(outType)})
+					// The element of a []T literal is at the element start.
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), prgrm.CXProgramCompileErrorText(outType)})
 				} else {
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignValueType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), int64(targetName), prgrm.CXProgramCompileErrorText(outType)})
 				}
@@ -2242,12 +2243,33 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	expression.Operator = fnIdx
 	receiver.Fields = receiver.Fields[:len(receiver.Fields)-1]
 	methodInputs := prgrm.GetFunctionFromArray(fnIdx).GetInputs(prgrm)
-	if !receiverPointer && len(methodInputs) > 0 && typeSignaturePointer(prgrm, prgrm.GetCXTypeSignatureFromArray(methodInputs[0])) {
+	methodPointer := len(methodInputs) > 0 && typeSignaturePointer(prgrm, prgrm.GetCXTypeSignatureFromArray(methodInputs[0]))
+	if !receiverPointer && methodPointer {
 		receiver.PassBy = constants.PASSBY_REFERENCE
 		receiverTypeSig.PassBy = constants.PASSBY_REFERENCE
 	}
+	if len(methodInputs) > 0 && !methodPointer {
+		methodCallReceiverValue(prgrm, receiver, receiverTypeSig, receiverPointer)
+	}
 
 	return methodCallResultsType(prgrm, expression, strct, method)
+}
+
+// methodCallReceiverValue passes a pointer receiver to a value receiver as
+// the value it points to, as Go does for p.m() and (&t).m().
+func methodCallReceiverValue(prgrm *ast.CXProgram, receiver *ast.CXArgument, receiverTypeSig *ast.CXTypeSignature, receiverPointer bool) {
+	elt := receiver.GetAssignmentElement(prgrm)
+	specs := elt.DeclarationSpecifiers
+	if receiver.PassBy == constants.PASSBY_REFERENCE && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER {
+		receiver.PassBy = constants.PASSBY_VALUE
+		receiverTypeSig.PassBy = constants.PASSBY_VALUE
+		elt.DeclarationSpecifiers = specs[:len(specs)-1]
+		return
+	}
+	if receiverPointer {
+		elt.DereferenceOperations = append(elt.DereferenceOperations, constants.DEREF_POINTER)
+		elt.DeclarationSpecifiers = append(elt.DeclarationSpecifiers, constants.DECL_DEREF)
+	}
 }
 
 // methodCallInvalidate types the result variables of a method call that

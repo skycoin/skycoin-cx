@@ -230,13 +230,15 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-slice-literal-struct.cx", types.CX_SUCCESS, "slice literals of structs and empty slice literals (skycoin-cx#47)",
 		"len 1\nlen 1 hmmmm\n4 [{x: 3, y: 1.5}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 0, y: 0}]\nloop 1 2\nmany 7 28\ndecl 1 8\nglobal 2 [{x: 1, y: 0}, {x: 2, y: 2.5}]\nempty 0 0\n")
 	t.RunWant("test-slice-literal-struct-errors.cx", types.CX_COMPILATION_ERROR, "elements of the wrong type in a struct slice literal (skycoin-cx#47)",
-		"test-slice-literal-struct-errors.cx:20 cannot use value of type 'U' as type 'T' in slice literal",
-		"test-slice-literal-struct-errors.cx:21 cannot use value of type 'U' as type 'T' in slice literal",
-		"test-slice-literal-struct-errors.cx:22 cannot use value of type 'i32' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:20:11 cannot use value of type 'U' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:21:11 cannot use value of type 'U' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:22:11 cannot use value of type 'i32' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:23:11 cannot use value of type 'U' as type 'T' in slice literal",
 		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
 		"test-slice-literal-struct-errors.cx:25 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
-		"test-slice-literal-struct-errors.cx:26:13 cannot use value of type 'T' as type 'i32' in slice literal")
+		"test-slice-literal-struct-errors.cx:26:13 cannot use value of type 'T' as type 'i32' in slice literal",
+		"test-slice-literal-struct-errors.cx:27:20 cannot use value of type 'U' as type 'T' in slice literal",
+		"test-slice-literal-struct-errors.cx:29:3 cannot use value of type 'U' as type 'T' in slice literal")
 	t.RunWant("test-call-index-operator.cx", types.CX_SUCCESS, "f()[i] of an array or slice result as an operator operand",
 		"7\n9\n42\n2\n6 14 2.5\ncond\n")
 	t.RunWant("test-import-global-array-number.cx test-import-global-array.cx", types.CX_SUCCESS, "pkg.A[i] reads and writes a global array or slice of another package",
@@ -305,6 +307,16 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("--cxpath test-workspace test-workspace-a.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-b.cx", types.CX_SUCCESS, "Testing if CX can set a workspace and then import a nested library, taking that workspace as the new relative path.")
 	t.Run("--cxpath test-workspace test-workspace-c.cx test-workspace-d.cx", types.CX_SUCCESS, "Testing if files supplied to the CLI override libraries in the workspace.")
+	t.RunWant("--cxpath test-workspace test-import-twice-a.cx test-import-twice-b.cx", types.CX_SUCCESS, "two files that import math/geometry compile it once",
+		"38.4844780\n6.0000000\n")
+	t.RunWant("--cxpath test-workspace test-import-twice-c.cx", types.CX_SUCCESS, "main and an imported package that both import math/geometry compile it once",
+		"3.1415901 12.5663605\n")
+	t.RunWant("--cxpath test-workspace test-struct-literal-external-ref.cx", types.CX_SUCCESS, "&pkg.T{...} in an assignment, argument, return, append, field and index",
+		"assign 1.0000000 2.0000000 2.5000000\nargument 6.0000000\nreturn 4.0000000\nappend 5.0000000\nfield 6.0000000 7.0000000\nindex 9.0000000\nvalues 3.0000000 3.0000000\nmethod 3.1415901 8.0000000\n")
+	t.RunWant("test-struct-literal-method.cx", types.CX_SUCCESS, "a selector, method call or index after a struct literal, T{a: 1}.m()",
+		"10\n16\n5\n3\n6\n12\n18\n6\n8\n")
+	t.RunWant("test-method-pointer-value-receiver.cx", types.CX_SUCCESS, "a method of value receiver called on a pointer gets a copy of the value",
+		"104 4\n5\n107 7\n8\n101 1\n101 1\n105\n101\n")
 	t.Run("test-slices-index-out-of-range-a.cx", types.CX_RUNTIME_INVALID_CAST, "Test index < 0")
 	t.Run("test-slices-index-out-of-range-b.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "Test index >= len")
 	t.Run("test-slices-resize-out-of-range-a.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "Test out of range after resize")

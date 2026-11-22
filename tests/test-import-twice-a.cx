@@ -1,0 +1,12 @@
+package main
+
+// This file and test-import-twice-b.cx both import math/geometry, which is
+// compiled once.
+import "math/geometry"
+
+func main() {
+	var c geometry.Circle
+	c.radius = 3.5
+	printf("%f\n", c.Area())
+	rectangle()
+}

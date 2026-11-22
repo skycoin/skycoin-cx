@@ -1,0 +1,41 @@
+package main
+
+// A selector, a method call or an index may follow a struct literal, as in Go.
+type T struct {
+	a i32
+}
+func (t T) m() (r i32) {
+	return t.a * 2
+}
+func (t T) add(n i32) (r i32) {
+	return t.a + n
+}
+func (t T) twice() (r T) {
+	return T{a: t.a * 2}
+}
+func (t *T) p() (r i32) {
+	return t.a * 3
+}
+func f() (r i32) {
+	return T{a: 4}.add(1)
+}
+func show(n i32) {
+	printf("%d\n", n)
+}
+func main() {
+	x := T{a: 5}.m()
+	show(x)
+	var y i32
+	y = T{a: 6}.add(10)
+	show(y)
+	show(f())
+	show(T{a: 3}.a)
+	show(T{a: 3}.twice().a)
+	show(T{a: 3}.twice().m())
+	var s []i32
+	s = append(s, T{a: 9}.m())
+	show(s[0])
+	z := (&T{a: 2}).p()
+	show(z)
+	show((&T{a: 2}).p() + (T{a: 1}).m())
+}

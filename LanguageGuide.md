@@ -383,9 +383,11 @@ an array, a slice or a struct, as in `[]i32{{1}}`, is a compile error.
 
 Some forms of Go are not supported yet. A struct literal names its
 fields, so `Point{1, 2}` is a syntax error and `[]Point{{1, 2}}` is a
-compile error. A field or a method of a
-literal, as in `Point{x: 1}.x`, is a syntax error too. A field of a call
-result, as in `mk().x`, works as in Go.
+compile error. A field of a call result, as in `mk().x`, works as in
+Go, and so do a field, a method call or an index after a struct
+literal, as in `Point{x: 1}.x` and `Point{x: 1}.norm()`. Such an
+expression is not yet an operand of a binary operator, so
+`Point{x: 1}.norm() + 1` needs parentheses around the call.
 
 ### [Functions](#table-of-contents)
 
@@ -554,7 +556,8 @@ another call, and its arguments can be any expressions.
 
 A method with a pointer receiver can be called on a value or on a
 pointer. Called on a value, it gets the address of the value, so it can
-change it.
+change it. A method with a value receiver called on a pointer gets a
+copy of the value the pointer points to, as in Go.
 
 ```cx
 package main

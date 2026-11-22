@@ -1,0 +1,11 @@
+package main
+
+// main and math/measure both import math/geometry.
+import "math/geometry"
+import "math/measure"
+
+func main() {
+	var c geometry.Circle
+	c.radius = 1.0
+	printf("%f %f\n", c.Area(), measure.CircleArea(2.0))
+}

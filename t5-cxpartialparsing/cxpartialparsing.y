@@ -703,11 +703,25 @@ conditional_expression:
 	|       logical_or_expression '?' expression COLON conditional_expression
                 ;
 
+struct_literal_value:
+		IDENTIFIER LBRACE struct_literal_fields RBRACE
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+        ;
+
+struct_literal_postfix:
+		struct_literal_value PERIOD IDENTIFIER
+	|       struct_literal_postfix PERIOD IDENTIFIER
+	|       struct_literal_postfix LPAREN RPAREN
+	|       struct_literal_postfix LPAREN argument_expression_list RPAREN
+	|       struct_literal_postfix LBRACK assignment_expression RBRACK
+        ;
+
 struct_literal_expression:
                 conditional_expression
-	|       IDENTIFIER LBRACE struct_literal_fields RBRACE
+	|       struct_literal_value
+	|       struct_literal_postfix
 	|       unary_operator IDENTIFIER LBRACE struct_literal_fields RBRACE
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+	|       unary_operator postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
         ;
 
 assignment_expression:

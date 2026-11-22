@@ -24,4 +24,7 @@ func main() {
 	ts = []T{T{n: "s"}}
 	t = T{n: "s"}
 	is = []i32{T{}}
+	ts = []T{T{n: 1}, U{a: 1}}
+	ts = []T{T{n: 1},
+		U{a: 22}}
 }

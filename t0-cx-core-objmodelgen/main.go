@@ -1,6 +1,7 @@
 // Command objmodelgen writes the Gid file, the manager and the manager test of
 // every IR object type into t3-ast, and the type tag name table into
-// t1-cx-core-objmodel, see docs/ObjectModel.md. The 14 managers differ only in
+// t1-cx-core-objmodel, see docs/ObjectModel.md, and the site counts of that
+// document from docs/objectmodel-sites.csv. The 14 managers differ only in
 // their type, so one template is kept instead of 14 copies.
 //
 //	go run ./t0-cx-core-objmodelgen -dir t3-ast         write the files
@@ -197,9 +198,16 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 func main() {
 	dir := flag.String("dir", "t3-ast", "directory of package ast")
 	objmodelDir := flag.String("objmodeldir", "t1-cx-core-objmodel", "directory of package objmodel")
+	docsDir := flag.String("docsdir", "docs", "directory of ObjectModel.md and objectmodel-sites.csv")
 	check := flag.Bool("check", false, "report stale files instead of writing them")
 	flag.Parse()
 	files, err := objmodelgenFiles(*dir, *objmodelDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "objmodelgen:", err)
+		os.Exit(1)
+	}
+	docPath := filepath.Join(*docsDir, "ObjectModel.md")
+	files[docPath], err = objmodelgenSitesDoc(docPath, filepath.Join(*docsDir, "objectmodel-sites.csv"))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "objmodelgen:", err)
 		os.Exit(1)

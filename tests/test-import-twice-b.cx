@@ -1,0 +1,10 @@
+package main
+
+import "math/geometry"
+
+func rectangle() {
+	var r geometry.Rectangle
+	r.sideA = 2.0
+	r.sideB = 3.0
+	printf("%f\n", r.Area())
+}

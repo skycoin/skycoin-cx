@@ -331,6 +331,17 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 		last--
 	}
 	element[last].ExpressionType = ast.CXEXPR_UNUSED
+	// The element written is at the element start, for the type error.
+	elementAt := func() ast.CXTypeSignatureIndex {
+		output := elementArg(false)
+		if elementCXLine, _ := prgrm.GetPreviousCXLine(element, last); elementCXLine != nil && elementCXLine.LineNumber > 0 {
+			if details := prgrm.GetCXTypeSignatureFromArray(output).ArgDetails; details != ast.CXArgumentDebugGidNil {
+				debug := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(details)
+				debug.FileName, debug.FileLine, debug.FileColumn = elementCXLine.FileName, elementCXLine.LineNumber, elementCXLine.LineColumn
+			}
+		}
+		return output
+	}
 	switch {
 	case len(prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)) == 0 && prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[element[last].Index].Operator) == nil:
 		// T{} leaves the declared variable zero.
@@ -340,21 +351,13 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 		result = append(result, element[:last]...)
 		assign := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])
 		prgrm.CXAtomicOps[assign.Index].Package = ast.CXPackageIndex(pkg.Index)
-		prgrm.CXAtomicOps[assign.Index].AddOutput(prgrm, elementArg(false))
+		prgrm.CXAtomicOps[assign.Index].AddOutput(prgrm, elementAt())
 		prgrm.CXAtomicOps[assign.Index].AddInput(prgrm, value[0])
 		result = append(result, *assign)
 	default:
-		// A call writes its result to elementName, which is at the call for
-		// the type error of the result.
+		// A call writes its result to elementName.
 		prgrm.CXAtomicOps[element[last].Index].Outputs = nil
-		output := elementArg(false)
-		if callCXLine, _ := prgrm.GetPreviousCXLine(element, last); callCXLine != nil && callCXLine.LineNumber > 0 {
-			if details := prgrm.GetCXTypeSignatureFromArray(output).ArgDetails; details != ast.CXArgumentDebugGidNil {
-				debug := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(details)
-				debug.FileName, debug.FileLine, debug.FileColumn = callCXLine.FileName, callCXLine.LineNumber, callCXLine.LineColumn
-			}
-		}
-		prgrm.CXAtomicOps[element[last].Index].AddOutput(prgrm, output)
+		prgrm.CXAtomicOps[element[last].Index].AddOutput(prgrm, elementAt())
 		result = append(result, element...)
 	}
 
@@ -976,4 +979,17 @@ func sliceLiteralStructInner(prgrm *ast.CXProgram, element []ast.CXExpression) b
 		return hasDeclSpec(prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta)), constants.DECL_SLICE)
 	}
 	return false
+}
+
+// PrimaryStructLiteralExternalOf creates pkg.T{...}, where pkgExprs is the
+// expression pkg, as PrimaryStructLiteralExternal does.
+func PrimaryStructLiteralExternalOf(prgrm *ast.CXProgram, pkgExprs []ast.CXExpression, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+	cxAtomicOp, err := prgrm.GetCXAtomicOpFromExpressions(pkgExprs, 0)
+	if err != nil {
+		panic(err)
+	}
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S1492.
+	importName := prgrm.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(prgrm)[0]).Name
+	return PrimaryStructLiteralExternal(prgrm, prgrm.CXProgramNameText(importName), structName, structFields)
 }

@@ -168,6 +168,8 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   unary_expression
 %type   <arrayArguments>   argument_expression_list
 %type   <expressions>   postfix_expression
+%type   <expressions>   struct_literal_value
+%type   <expressions>   struct_literal_postfix
 %type   <expressions>   primary_expression
 
 %type   <expressions>   struct_literal_expression
@@ -1003,26 +1005,66 @@ conditional_expression:
 	|       logical_or_expression '?' expression COLON conditional_expression
                 ;
 
-struct_literal_expression:
-		conditional_expression
-	|       IDENTIFIER LBRACE struct_literal_fields RBRACE
+// A struct literal is not a primary expression, so `if x {` and `for b {`
+// reach the body. A selector, call or index may follow it, as in T{a: 1}.m().
+struct_literal_value:
+		IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
 			$$ = actions.PrimaryStructLiteral(actions.AST,$1, $3)
+                }
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+                {
+			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $5)
+                }
+                ;
+
+struct_literal_postfix:
+		struct_literal_value PERIOD IDENTIFIER
+                {
+			position := actions.TokenPositionPush($<line>3, $<column>3)
+			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+	|       struct_literal_postfix PERIOD IDENTIFIER
+                {
+			position := actions.TokenPositionPush($<line>3, $<column>3)
+			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+	|       struct_literal_postfix LPAREN RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionEmptyFunCall(actions.AST,$1)
+			actions.TokenPositionPop(position)
+                }
+	|       struct_literal_postfix LPAREN argument_expression_list RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+	|       struct_literal_postfix LBRACK assignment_expression RBRACK
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionArray(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+                ;
+
+struct_literal_expression:
+		conditional_expression
+	|       struct_literal_value
+	|       struct_literal_postfix
+                {
+			$$ = actions.MethodCallValue(actions.AST, $1)
                 }
 	|       unary_operator IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
 			$$ = actions.PrimaryStructLiteralReference(actions.AST, $1, $2, $4)
                 }
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+	|       unary_operator postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
-                        cxAtomicOp, err := actions.AST.GetCXAtomicOpFromExpressions($1,0)
-                        if err != nil {
-                                panic(err)
-                        }
-                        // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                        // Now an arena getter, site S1492.
-                        cxAtomicOpOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(actions.AST)[0])
-			$$ = actions.PrimaryStructLiteralExternal(actions.AST,actions.AST.CXProgramNameText(cxAtomicOpOutputTypeSig.Name), $3, $5)
+			$$ = actions.UnaryExpression(actions.AST, $1, actions.PrimaryStructLiteralExternalOf(actions.AST, $2, $4, $6))
                 }
                 ;
 

@@ -1,0 +1,9 @@
+package measure
+
+import "math/geometry"
+
+func CircleArea(r f32) (a f32) {
+	var c geometry.Circle
+	c.radius = r
+	a = c.Area()
+}

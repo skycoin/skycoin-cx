@@ -1,0 +1,36 @@
+package main
+
+// p.m() and (&t).m() pass the value p points to when m has a value receiver.
+type T struct {
+	a i32
+}
+type H struct {
+	c *T
+	v T
+}
+func (t T) m() (r i32) {
+	t.a = t.a + 100
+	return t.a
+}
+func (t *T) inc() {
+	t.a = t.a + 1
+}
+func main() {
+	p := &T{a: 4}
+	printf("%d %d\n", p.m(), p.a)
+	p.inc()
+	printf("%d\n", p.a)
+	var h H
+	h.c = &T{a: 7}
+	printf("%d %d\n", h.c.m(), h.c.a)
+	h.c.inc()
+	printf("%d\n", h.c.a)
+	h.v.inc()
+	printf("%d %d\n", h.v.m(), h.v.a)
+	var t T
+	t.inc()
+	printf("%d %d\n", t.m(), t.a)
+	printf("%d\n", (&T{a: 5}).m())
+	q := &t
+	printf("%d\n", q.m())
+}
