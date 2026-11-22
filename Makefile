@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel check build-parser clean help
+.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -73,6 +73,11 @@ generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-a
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
 check: check-tiers check-inits check-ifaces check-recovers check-objmodel vet test-go test test-ptr64 ## tier, init, interface, recover and object model checks, vet, Go tests and CX program tests (default and ptr64)
+
+bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
+	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
+	go build -tags="$(TAGS) cxopcount" -o ./bin/cx-opcount$(EXE) ./t11-cx
+	./t0-benchmarks/compare/run.sh
 
 build-parser: ## Regenerate the CX parsers from the .y grammars
 	go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y

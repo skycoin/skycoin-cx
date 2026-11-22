@@ -27,6 +27,7 @@ func main() {
 }
 
 func Run(args []string) {
+	defer operationCountPrint()
 	options, cxArgs, sourceCode, fileNames, start := runStart(args)
 	if !start {
 		return

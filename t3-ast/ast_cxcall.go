@@ -293,6 +293,9 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 		call.Line++
 		return nil
 	}
+	if operationCountEnabled {
+		OperationCount++
+	}
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S0116.
