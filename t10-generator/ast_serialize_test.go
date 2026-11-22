@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
-	"strings"
+	"regexp"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-lz4codec"
@@ -23,6 +23,9 @@ import (
 // t.Logf("heap starts at=%v\n", tc.program.HeapStartsAt)
 // t.Logf("memory len=%v\n", len(tc.program.Memory))
 // t.Logf("value at memory data offset=%v\n", tc.program.Memory[tc.program.DataSegmentStartsAt:tc.program.DataSegmentStartsAt+tc.program.DataSegmentSize])
+
+// sampleOperand matches an expression input in ToString, as in i32.add(15 i32, 11 i32).
+var sampleOperand = regexp.MustCompile(`\(\w+ (i32|bool)[,)]`)
 
 // TestSerialize round trips the sample program, whose operands are TYPE_ATOMIC
 // type signatures, with and without memory and compression. See #12.
@@ -61,8 +64,8 @@ func TestSerialize(t *testing.T) {
 			if got != want {
 				t.Errorf("%+v\n!=\n%+v\n", got, want)
 			}
-			if !strings.Contains(want, "i32.add") {
-				t.Errorf("the sample program has no i32.add expression to compare:\n%s", want)
+			if !sampleOperand.MatchString(want) {
+				t.Errorf("the sample program has no expression with an operand to compare:\n%s", want)
 			}
 
 			if tc.includeDataMemory || tc.useCompression {
