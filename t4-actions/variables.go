@@ -4,7 +4,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
-	"github.com/skycoin/skycoin-cx/t2-globals" // thin: only FoundCompileErrors; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -91,7 +90,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		case constants.DECL_POINTER, constants.DECL_SLICE:
 			totalSize = types.POINTER_SIZE
 		case constants.DECL_ARRAY:
-			totalSize = declaration_specifiers.Size * types.TotalLength(declaration_specifiers.Lengths)
+			totalSize = declaration_specifiers.ArraySize()
 		}
 	}
 	if size, fits := declarationArgSize(declaration_specifiers); !fits || !declarationSizeSumFits(prgrm.Data.StartsAt+prgrm.Data.Size, size) {
@@ -116,7 +115,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 					make([]byte, types.POINTER_SIZE), true)
 			} else {
 				glblArg = WritePrimary(prgrm, declaration_specifiers.Type,
-					make([]byte, totalSize), false)
+					make([]byte, totalSize), declaration_specifiers.ArraySliceDimensions() > 0)
 			}
 			glblArgOffset = glblArg.Offset
 			glblArgPassBy = glblArg.PassBy
@@ -268,7 +267,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, types.POINTER_SIZE), true)
 		} else {
-			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, totalSize), false)
+			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, totalSize), declaration_specifiers.ArraySliceDimensions() > 0)
 		}
 
 		declaration_specifiers.Name = declarator.Name
@@ -397,9 +396,6 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 //	doesInitialize - true if var is initialized or given a value.
 func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationSpecifiers *ast.CXArgument,
 	initializer []ast.CXExpression, doesInitialize bool) []ast.CXExpression {
-	if globals.FoundCompileErrors {
-		return nil
-	}
 	if _, fits := declarationArgSize(declarationSpecifiers); !fits {
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeDeclarationTooLarge, declarator.ArgDetails, ast.CompileErrorOperands{int64(declarator.Name)})
 	}

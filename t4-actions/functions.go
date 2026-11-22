@@ -849,7 +849,7 @@ func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
 		}
 
 		if inpType != typeCode {
-			return errors.New(fmt.Sprintf("operands are not of the same type: %v!=%v", inpType, typeCode))
+			return fmt.Errorf("operands are not of the same type: %s != %s", inpType.Name(), typeCode.Name())
 		}
 
 		typeCode = inpType
@@ -1688,7 +1688,8 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 	// process short declaration
 	if len(expression.GetOutputs(prgrm)) > 0 && len(expression.GetInputs(prgrm)) > 0 && expressionOutputArgType == types.IDENTIFIER && !expr.IsStructLiteral() && !isParseOp(prgrm, expr) {
 		prevExpression, err := prgrm.GetPreviousCXAtomicOpFromExpressions(expressions, idx-1)
-		if err != nil {
+		// An undeclared target has no declaration before it, and was reported already.
+		if err != nil || len(prevExpression.GetOutputs(prgrm)) == 0 {
 			return
 		}
 
@@ -1701,6 +1702,9 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// Now an arena getter, site S0845.
 			expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 			expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
+			if len(expressionOperatorOutputs) == 0 {
+				return
+			}
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S0846.
 			expressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorOutputs[0])
@@ -2303,7 +2307,8 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 					// Now an arena getter, site S0931.
 					expressionInputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(expressionInputTypeSig.Meta))
 
-					expressionInput := expressionInputArg
+					// x.f is sized by its field, not by the element of x.
+					expressionInput := expressionInputArg.GetAssignmentElement(prgrm)
 					// then it's a temporary variable and it needs to adopt its input's type
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1728.
@@ -2797,7 +2802,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 	// below (as in the `arg.IsSlice` check), but the process differs in the
 	// case of a slice struct field.
 	assignElement := sym.GetAssignmentElement(prgrm)
-	if (!arg.IsSlice() || hasDerefOp(sym, constants.DEREF_ARRAY)) && arg.StructType != nil && assignElement.IsSlice() && assignElement != sym {
+	if (!arg.IsSlice() || hasDerefOp(sym, constants.DEREF_ARRAY)) && arg.StructType != nil && assignElement.IsSlice() && assignElement.ArraySliceDimensions() == 0 && assignElement != sym {
 		for i, deref := range assignElement.DereferenceOperations {
 			// The cxgo when reading `foo[5]` in postfix.go does not know if `foo`
 			// is a slice or an array. At this point we now know it's a slice and we need
@@ -2810,6 +2815,10 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		if len(assignElement.DereferenceOperations) > 0 && assignElement.DereferenceOperations[0] == constants.DEREF_POINTER {
 			assignElement.DereferenceOperations = assignElement.DereferenceOperations[1:]
 		}
+	}
+
+	if dims := arg.ArraySliceDimensions(); dims > 0 {
+		arraySliceDerefs(sym, dims)
 	}
 
 	if arg.IsSlice() {
@@ -2993,6 +3002,9 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 
 						if field.IsSlice() {
 							nameField.DereferenceOperations = append([]int{constants.DEREF_POINTER}, nameField.DereferenceOperations...)
+						}
+						if dims := field.ArraySliceDimensions(); dims > 0 {
+							arraySliceDerefs(nameField, dims)
 						}
 
 						nameField.PassBy = field.PassBy
@@ -3530,4 +3542,20 @@ func assignmentTargetFormattedType(prgrm *ast.CXProgram, sig *ast.CXTypeSignatur
 func pointerTypeOfLastField(prgrm *ast.CXProgram, arg *ast.CXArgument) bool {
 	field := prgrm.GetCXArgFromArray(arg.Fields[len(arg.Fields)-1])
 	return field.IsPointer() && arg.PointerTargetType != types.POINTER
+}
+
+// arraySliceDerefs makes the indexes of arg after the dims array dimensions
+// of an array of slices, as j in a[i][j] on a [N][]T, index a slice.
+func arraySliceDerefs(arg *ast.CXArgument, dims int) {
+	index := 0
+	for i, op := range arg.DereferenceOperations {
+		if op != constants.DEREF_ARRAY && op != constants.DEREF_SLICE {
+			continue
+		}
+		arg.DereferenceOperations[i] = constants.DEREF_ARRAY
+		if index >= dims {
+			arg.DereferenceOperations[i] = constants.DEREF_SLICE
+		}
+		index++
+	}
 }

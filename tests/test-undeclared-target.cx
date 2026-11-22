@@ -1,0 +1,27 @@
+// Assignments to undeclared variables are compile errors, not a compiler panic.
+
+package main
+
+func powmod(base ui64, exp ui64, n ui64) (out ui64) {
+	out = base % n
+}
+
+func witness(a ui64, d ui64, s ui64, n ui64) (composite bool) {
+	composite = false
+	if a % n != 0UL {
+		x = powmod(a, d, n)
+		if x != 1UL && x != n - 1UL {
+			composite = true
+			for r = 1UL; r < s && composite; r++ {
+				x = x * x % n
+				if x == n - 1UL {
+					composite = false
+				}
+			}
+		}
+	}
+}
+
+func main() {
+	bool.print(witness(2UL, 3UL, 1UL, 7UL))
+}

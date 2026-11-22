@@ -1,0 +1,24 @@
+// A compile error in f does not stop the locals of g from being declared.
+
+package main
+
+func f(d ui64) (out ui64) {
+	if d == 1 {
+		out = 1UL
+	}
+}
+
+func g(a ui64) (c bool) {
+	var y ui64
+	y = a
+	c = y == 1UL
+	if a != 0UL {
+		var x ui64
+		x = f(a)
+		c = x == 1UL
+	}
+}
+
+func main() {
+	bool.print(g(3UL))
+}
