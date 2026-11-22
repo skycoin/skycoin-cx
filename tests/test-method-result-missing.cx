@@ -1,0 +1,16 @@
+// A method with no output used as a value.
+
+package main
+
+type Point struct {
+	x i32
+}
+
+func (p Point) show() {
+	i32.print(p.x)
+}
+
+func main() {
+	var p Point
+	i32.print(p.show())
+}

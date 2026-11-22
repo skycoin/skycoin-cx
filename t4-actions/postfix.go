@@ -18,6 +18,7 @@ import (
 //		prevExprs - the previous expressions that compose the postfix expression.
 //	 postExprs - the array expressions.
 func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, postExprs []ast.CXExpression) []ast.CXExpression {
+	prevExprs = MethodCallValue(prgrm, prevExprs)
 	var elt *ast.CXArgument
 
 	prevExpressionIdx := prevExprs[len(prevExprs)-1].Index
@@ -328,6 +329,11 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		}
 	}
 
+	// An index read after a method call keeps the call.
+	if postExpressionOperator == nil && len(postExprs) > 1 {
+		prevExprs = append(append([]ast.CXExpression{}, postExprs[:len(postExprs)-1]...), prevExprs...)
+	}
+
 	return prevExprs
 }
 
@@ -381,6 +387,9 @@ func PostfixExpressionNative(prgrm *ast.CXProgram, typeCode types.Code, opStrCod
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
 //	prevExprs - the previous expressions that compose the postfix expression.
 func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression) []ast.CXExpression {
+	if functionCallRepeated(prgrm, prevExprs) {
+		return prevExprs
+	}
 	prevExpression, err := prgrm.GetCXAtomicOpFromExpressions(prevExprs, len(prevExprs)-1)
 	if err != nil {
 		panic(err)
@@ -420,7 +429,7 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S1153.
 		prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
-		if opCode, ok := ast.OpCodes[prgrm.CXProgramNameText(prevExpressionOutputTypeSig.Name)]; ok {
+		if opCode, ok := ast.OpCodes[prgrm.CXProgramNameText(prevExpressionOutputTypeSig.Name)]; ok && !functionDeclared(prgrm, prevExpressionOutputTypeSig) {
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 				prgrm.CXAtomicOps[firstPrevExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 			}
@@ -448,6 +457,9 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 	// An unresolved callee has already been reported as a compile error.
 	if len(prevExprs) == 0 {
 		return nil
+	}
+	if functionCallRepeated(prgrm, prevExprs) {
+		return prevExprs
 	}
 
 	lastPrevExpression, err := prgrm.GetCXAtomicOpFromExpressions(prevExprs, len(prevExprs)-1)
@@ -485,7 +497,7 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 		// prevExprs[len(prevExprs) - 1].IsMethodCall = true
 
 	} else if lastPrevExpressionOperator == nil {
-		if opCode, ok := ast.OpCodes[prgrm.CXProgramNameText(lastPrevExpressionOutputTypeSig.Name)]; ok {
+		if opCode, ok := ast.OpCodes[prgrm.CXProgramNameText(lastPrevExpressionOutputTypeSig.Name)]; ok && !functionDeclared(prgrm, lastPrevExpressionOutputTypeSig) {
 			if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 				prgrm.CXAtomicOps[firstPrevExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 			}
@@ -567,6 +579,7 @@ func PostfixExpressionIncDec(prgrm *ast.CXProgram, prevExprs []ast.CXExpression,
 //					i.e. 'foo' in the example above.
 //	 ident - field name or the identifier after the dot notation.
 func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, ident string) []ast.CXExpression {
+	prevExprs = MethodCallValue(prgrm, prevExprs)
 	lastExpr := prevExprs[len(prevExprs)-1]
 
 	lastExpressionIdx := lastExpr.Index
@@ -832,11 +845,13 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			} else {
 				panic("type is not known")
 			}
-		} else if fn, err := imp.GetFunction(prgrm, identGid); err == nil {
-			// then it's a function
-			// not sure about this next line
-			prgrm.CXAtomicOps[lastExpressionIdx].Outputs = nil
-			prgrm.CXAtomicOps[lastExpressionIdx].Operator = ast.CXFunctionIndex(fn.Index)
+		} else if _, found := imp.Functions[identGid]; found {
+			// A function of imp, not of its imports (skycoin/cx#9). Like a local
+			// function name it is a call only with parentheses (skycoin-cx#48).
+			leftExprOutputTypeSig.Name = identGid
+			if leftExprOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+				prgrm.GetCXArg(ast.CXArgumentIndex(leftExprOutputTypeSig.Meta)).Name = identGid
+			}
 		} else if strct, err := prgrm.GetStruct(identGid, imp.Name); err == nil {
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S1196.
@@ -939,4 +954,93 @@ func renamedOpcodeRecord(prgrm *ast.CXProgram, file ast.SourceFileGid, line int,
 	}
 	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOpcodeRenamed, file, line, operands)
 	return true
+}
+
+// MethodCallValue gives the method call that ends exprs a result variable,
+// which ProcessMethodCall types, and appends an expression that reads it.
+func MethodCallValue(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXExpression {
+	if len(exprs) == 0 || !exprs[len(exprs)-1].IsMethodCall() {
+		return exprs
+	}
+	callOp := &prgrm.CXAtomicOps[exprs[len(exprs)-1].Index]
+	if len(callOp.GetOutputs(prgrm)) > 0 {
+		return exprs
+	}
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+
+	resultName := generateTempVarName(prgrm, constants.METHOD_RESULT_PREFIX)
+	// A local name, so the result is declared even when typed by a signature.
+	fn, err := prgrm.GetCurrentFunction()
+	if err != nil {
+		panic(err)
+	}
+	if err := fn.AddLocalVariableName(resultName); err != nil {
+		panic(err)
+	}
+	_, result := ast.MakeArgument(prgrm, resultName, CurrentFile, LineNo)
+	result.Type = types.UNDEFINED
+	result.Package = ast.CXPackageIndex(pkg.Index)
+	result.PreviouslyDeclared = true
+	callOp.AddOutput(prgrm, ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, result))
+	return append(exprs, primaryIdentifierExpressions(prgrm, resultName)...)
+}
+
+// MethodCallStatement undoes MethodCallValue for a method call whose result
+// is not used, so exprs end with the method call again.
+func MethodCallStatement(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXExpression {
+	if len(exprs) < 2 || !exprs[len(exprs)-2].IsMethodCall() || exprs[len(exprs)-1].Type == ast.CX_LINE {
+		return exprs
+	}
+	readOp := &prgrm.CXAtomicOps[exprs[len(exprs)-1].Index]
+	callOp := &prgrm.CXAtomicOps[exprs[len(exprs)-2].Index]
+	if prgrm.GetFunctionFromArray(readOp.Operator) != nil || len(callOp.GetOutputs(prgrm)) != 1 || len(readOp.GetOutputs(prgrm)) != 1 {
+		return exprs
+	}
+	resultTypeSig := prgrm.GetCXTypeSignatureFromArray(callOp.GetOutputs(prgrm)[0])
+	readTypeSig := prgrm.GetCXTypeSignatureFromArray(readOp.GetOutputs(prgrm)[0])
+	if readTypeSig.Name != resultTypeSig.Name || readTypeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return exprs
+	}
+	read := prgrm.GetCXArg(ast.CXArgumentIndex(readTypeSig.Meta))
+	if len(read.Fields) > 0 || len(read.Indexes) > 0 || len(read.DereferenceOperations) > 0 {
+		return exprs
+	}
+	callOp.Outputs = nil
+	if fn, err := prgrm.GetCurrentFunction(); err == nil {
+		if err := fn.RemoveLocalVariableFromArray(resultTypeSig.Name); err != nil {
+			panic(err)
+		}
+	}
+	return exprs[:len(exprs)-1]
+}
+
+// functionCallRepeated records the compile error for a call of a call
+// result, as in f() () (skycoin-cx#22).
+func functionCallRepeated(prgrm *ast.CXProgram, prevExprs []ast.CXExpression) bool {
+	if len(prevExprs) == 0 {
+		return false
+	}
+	last := prevExprs[len(prevExprs)-1]
+	if last.ExpressionType != ast.CXEXPR_FUNCTION_CALL && !last.IsMethodCall() {
+		return false
+	}
+	prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeCallResultCall, CurrentFile, LineNo, ast.CompileErrorOperands{})
+	return true
+}
+
+// functionDeclared reports whether the package of sig declares a function
+// named sig.Name, which then shadows a built-in (skycoin-cx#294).
+func functionDeclared(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) bool {
+	if sig.Package < 0 {
+		return false
+	}
+	pkg, err := prgrm.GetPackageFromArray(sig.Package)
+	if err != nil {
+		return false
+	}
+	_, found := pkg.Functions[sig.Name]
+	return found
 }

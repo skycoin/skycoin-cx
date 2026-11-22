@@ -1,0 +1,33 @@
+// A function declared in a package shadows a built-in of the same name in
+// that package (skycoin-cx#294).
+
+package main
+import "other"
+
+func add(a i32, b i32) (c i32) {
+	c = a - b
+}
+
+func len(s str) (n i32) {
+	n = 99
+}
+
+func main() {
+	var x i32 = add(3, 4)
+	i32.print(x)
+	i32.print(len("abc"))
+	i32.print(3 + 4)
+	i32.print(other.sub(10, 2))
+	other.check()
+}
+
+package other
+
+func sub(a i32, b i32) (c i32) {
+	c = a * b
+}
+
+func check() {
+	i32.print(add(3, 4))
+	i32.print(sub(10, 2))
+}

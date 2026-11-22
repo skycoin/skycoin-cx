@@ -376,6 +376,11 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 				if expr.Type == ast.CX_LINE {
 					continue
 				}
+				// A method call computes the value of the field after it.
+				if expr.IsMethodCall() {
+					result = append(result, expr)
+					continue
+				}
 				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 				// Now an arena getter, site S1009.
 				cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
@@ -522,6 +527,10 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 			if strct, err := prgrm.GetStruct(structNameGid, importNameGid); err == nil {
 				for _, expr := range structFields {
 					if expr.Type == ast.CX_LINE {
+						continue
+					}
+					if expr.IsMethodCall() {
+						result = append(result, expr)
 						continue
 					}
 					// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.

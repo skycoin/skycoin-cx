@@ -912,6 +912,9 @@ argument_expression_list:
 
 unary_expression:
                 postfix_expression
+                {
+			$$ = actions.MethodCallValue(actions.AST, $1)
+                }
 	|       INC_OP unary_expression
                 {
 			// TODO

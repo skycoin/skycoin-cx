@@ -1,0 +1,37 @@
+// A pointer receiver method changes a value receiver, a pointer receiver
+// and a struct field receiver.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Line struct {
+	a Point
+	b Point
+}
+
+func (p *Point) move(n i32) {
+	(*p).x = (*p).x + n
+	p.y = p.y + n
+}
+
+func main() {
+	var p Point
+	p.x = 1
+	p.y = 2
+	p.move(10)
+	printf("%d %d\n", p.x, p.y)
+
+	var pp *Point
+	pp = &p
+	pp.move(100)
+	printf("%d %d\n", p.x, p.y)
+
+	var l Line
+	l.b.x = 5
+	l.b.move(1)
+	printf("%d %d %d %d\n", l.a.x, l.a.y, l.b.x, l.b.y)
+}

@@ -1,0 +1,17 @@
+// pkg.F without parentheses is not a call (skycoin-cx#48).
+
+package main
+import "pkg"
+
+func main() {
+	var x i32
+	x = pkg.Value
+	i32.print(pkg.Value)
+	i32.print(pkg.Value())
+}
+
+package pkg
+
+func Value() (r i32) {
+	r = 7
+}

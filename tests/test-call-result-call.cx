@@ -1,0 +1,24 @@
+// Calling the result of a call is a compile error (skycoin-cx#22).
+
+package main
+
+type Point struct {
+	x i32
+}
+
+func (p Point) get() (r i32) {
+	r = p.x
+}
+
+func foo() (r i32) {
+	r = 1
+}
+
+func main() {
+	var p Point
+	foo() ()
+	i32.print(3) ()
+	p.get() ()
+	var x i32
+	x = foo()()
+}

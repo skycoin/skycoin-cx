@@ -1,0 +1,152 @@
+// Method calls anywhere an expression can appear (skycoin-cx#24).
+
+package main
+
+import "sys/string"
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Line struct {
+	a Point
+	b Point
+}
+
+type Counter struct {
+	n i32
+}
+
+func (p Point) sum() (r i32) {
+	r = p.x + p.y
+}
+
+func (p Point) add(n i32) (r i32) {
+	r = p.x + n
+}
+
+func (p Point) shifted(n i32) (q Point) {
+	q.x = p.x + n
+	q.y = p.y + n
+}
+
+func (p Point) label(s str) (r str) {
+	r = sprintf("%s(%d,%d)", s, p.x, p.y)
+}
+
+func (p Point) hit(q *Point) {
+	(*q).x = (*q).x - p.x
+}
+
+func (p Point) positive() (r bool) {
+	r = p.x > 0
+}
+
+func (l Line) start() (p Point) {
+	p = l.a
+}
+
+func (c *Counter) next() (more bool) {
+	(*c).n = (*c).n + 1
+	more = (*c).n < 4
+}
+
+func (c *Counter) bump(n i32) {
+	c.n = c.n + n
+}
+
+func twice(p Point) (r i32) {
+	r = p.sum() * 2
+}
+
+func viaReturn(p Point) (r i32) {
+	return p.add(100)
+}
+
+func main() {
+	var p Point
+	p.x = 3
+	p.y = 4
+	var q Point
+	q.x = 10
+	q.y = 1
+	var n i32 = 5
+	var s str = "p"
+
+	i32.print(p.sum())
+	i32.print(p.sum() + 1)
+	i32.print(1 + p.sum())
+	i32.print(p.sum() * q.sum())
+	i32.print(p.add(n))
+	i32.print(p.add(q.x))
+	i32.print(p.add(p.sum()))
+	i32.print(p.add(q.add(n)))
+	string.PrintLine(p.label(s))
+	p.hit(&q)
+	i32.print(q.x)
+
+	var a i32
+	a = p.sum()
+	i32.print(a)
+	var b i32 = p.add(2)
+	i32.print(b)
+	c := p.sum() - 1
+	i32.print(c)
+	d := p.label("d")
+	string.PrintLine(d)
+
+	if p.sum() == 7 {
+		printf("if sum\n")
+	}
+	if p.positive() {
+		printf("if positive\n")
+	}
+	if p.positive() && q.positive() {
+		printf("both positive\n")
+	}
+
+	var cnt Counter
+	for cnt.next() {
+		printf("loop %d\n", cnt.n)
+	}
+	cnt.bump(10)
+	i32.print(cnt.n)
+	var pc *Counter
+	pc = &cnt
+	pc.bump(1)
+	i32.print(cnt.n)
+
+	i32.print(p.shifted(1).x)
+	i32.print(p.shifted(1).sum())
+	i32.print(p.shifted(1).shifted(1).add(n))
+
+	var l Line
+	l.a = p
+	l.b = q
+	i32.print(l.a.sum())
+	i32.print(l.start().sum())
+
+	var arr [3]i32
+	arr[0] = 7
+	arr[1] = 8
+	arr[2] = 9
+	i32.print(arr[p.add(-2)])
+
+	i32.print(twice(p))
+	i32.print(viaReturn(p))
+
+	var t i32 = 1
+	t += p.sum()
+	i32.print(t)
+	var r Point
+	r = Point{x: p.sum(), y: p.add(1) + 1}
+	printf("%d %d\n", r.x, r.y)
+	var sl []i32
+	sl = []i32{p.sum(), 2}
+	sl = append(sl, p.add(10))
+	printf("%d %d %d\n", sl[0], sl[1], sl[2])
+	i32.print(-p.sum())
+	bool.print(!p.positive())
+	printf("%d %s\n", p.sum(), p.label("x"))
+}

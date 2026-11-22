@@ -369,6 +369,33 @@ func main () {
 In this case, `foo` is declared to receive one input parameter, and
 `bar` is declared to return one output parameter.
 
+CX has no function values, so a function is used only by calling it.
+`foo` or `pkg.foo` without parentheses is not a call. As a statement it
+is the compile error `invalid expression`, and as a value it is a type
+error. The result of a call cannot be called either, so `foo() ()` is
+the compile error `the result of a call is not a function`.
+
+`pkg.foo` names a function declared in the package `pkg`, not one of
+the packages `pkg` imports.
+
+A function may have the name of a built-in function, such as `add` or
+`len`. Inside its package a call by that name calls the function, and
+other packages still get the built-in. Operators such as `+` always use
+the built-in.
+
+```cx
+package main
+
+func add (a i32, b i32) (c i32) {
+	c = a - b
+}
+
+func main () {
+	i32.print(add(3, 4)) // prints -1
+	i32.print(3 + 4) // prints 7
+}
+```
+
 ### [Custom Types](#table-of-contents)
 
 If primitive types are not enough, you can define your own custom
@@ -453,6 +480,50 @@ type *Point* and another for the type *Line*. In the case of
 `Point.print`, we just print the two coordinates, and in
 the case of `Line.print` we print the coordinates of the two points
 that define the *Line* instance.
+
+A method call is an expression like a function call. Its result can be
+an operand, an argument, an index, a condition or the receiver of
+another call, and its arguments can be any expressions.
+
+A method with a pointer receiver can be called on a value or on a
+pointer. Called on a value, it gets the address of the value, so it can
+change it.
+
+```cx
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func (p Point) sum () (r i32) {
+	r = p.x + p.y
+}
+
+func (p Point) shifted (n i32) (q Point) {
+	q.x = p.x + n
+	q.y = p.y + n
+}
+
+func (p *Point) move (n i32) {
+	p.x = p.x + n
+}
+
+func main () {
+	var p Point
+	p.x = 1
+	p.y = 2
+	var n i32 = 10
+
+	i32.print(p.sum() * 2) // prints 6
+	i32.print(p.shifted(n).sum()) // prints 23
+	if p.sum() == 3 {
+		p.move(n)
+	}
+	i32.print(p.x) // prints 11
+}
+```
 
 ### [Packages](#table-of-contents)
 
@@ -1968,12 +2039,11 @@ func main () {
 Lastly, we can see how we use a *for* loop to create something similar
 to a REPL for the program that we have been building in the last few sections.
 
-The attacks are plain functions rather than methods because of an
-open bug. A method call whose first argument is not a literal, such
-as `player.attack(cmd, &monster)` or `p.move(&q)`, fails to compile
-with "illegal method call or field access". A second open bug: when
-several lines are piped into this program at once, the second `read`
-fails with a runtime error. Typing the commands works.
+The attacks could also be methods, such as
+`func (player Player) attack (cmd str, monster *Monster)` called as
+`player.attack(cmd, &monster)`. One open bug remains: when several
+lines are piped into this program at once, the second `read` fails
+with a runtime error. Typing the commands works.
 
 ### [Go-to](#table-of-contents)
 

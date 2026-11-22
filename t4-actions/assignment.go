@@ -25,7 +25,7 @@ func assignStructLiteralFields(prgrm *ast.CXProgram, toExprs []ast.CXExpression,
 	}
 
 	for _, exprInfo := range fromExprs {
-		if exprInfo.Type == ast.CX_LINE {
+		if exprInfo.Type == ast.CX_LINE || exprInfo.IsMethodCall() {
 			continue
 		}
 		// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -306,11 +306,11 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	}
 
-	//must check if from expression is naked previously declared variable
-	if len(fromExprs) == 1 && fromExpressionOperator == nil && len(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)) > 0 && len(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)) == 0 {
+	// A variable read is an input, and the expressions before it still run.
+	if fromExpressionOperator == nil && len(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)) > 0 && len(prgrm.CXAtomicOps[fromExpressionIdx].GetInputs(prgrm)) == 0 {
 		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 		// Now a slice of objects, site S0543.
-		return []ast.CXExpression{*exprCXLine, *expr}
+		return append(fromExprs[:len(fromExprs)-1], *exprCXLine, *expr)
 	} else {
 		return append(fromExprs, *exprCXLine, *expr)
 	}
@@ -624,17 +624,7 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 			panic("type is not known")
 		}
 
-		if fromExprs[lastFromExpressionIdx].IsMethodCall() {
-			newInputs := prgrm.CXAtomicOps[fromExpressionIdx].Outputs
-			if prgrm.CXAtomicOps[fromExpressionIdx].Inputs != nil {
-				for _, typeSig := range prgrm.CXAtomicOps[fromExpressionIdx].Inputs.Fields {
-					newInputs.AddField_CXAtomicOps(prgrm, typeSig)
-				}
-			}
-			prgrm.CXAtomicOps[fromExpressionIdx].Inputs = newInputs
-		} else {
-			prgrm.CXAtomicOps[fromExpressionIdx].Inputs = prgrm.CXAtomicOps[fromExpressionIdx].Outputs
-		}
+		prgrm.CXAtomicOps[fromExpressionIdx].Inputs = prgrm.CXAtomicOps[fromExpressionIdx].Outputs
 
 		prgrm.CXAtomicOps[fromExpressionIdx].Outputs = toLastExpr.Outputs
 
@@ -916,5 +906,49 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 		return ShortAssignment(prgrm, expr, exprCXLine, toExprs, fromExprs, pkg)
 	}
 
-	return processAssignment(prgrm, toExprs, fromExprs, toExpression)
+	declarationCount := len(toExprs) - 1
+	exprs := processAssignment(prgrm, toExprs, fromExprs, toExpression)
+	if assignOp == ":=" && methodCallFound(fromExprs) {
+		exprs = shortDeclarationAfterMethodCalls(exprs, declarationCount)
+	}
+	return exprs
+}
+
+// methodCallFound reports whether exprs hold a method call.
+func methodCallFound(exprs []ast.CXExpression) bool {
+	for _, expr := range exprs {
+		if expr.IsMethodCall() {
+			return true
+		}
+	}
+	return false
+}
+
+// shortDeclarationAfterMethodCalls moves the declaration of a := to just
+// before its assignment, which ProcessShortDeclaration types from it.
+func shortDeclarationAfterMethodCalls(exprs []ast.CXExpression, declarationCount int) []ast.CXExpression {
+	last := len(exprs) - 1
+	if declarationCount <= 0 || declarationCount > last {
+		return exprs
+	}
+	reordered := make([]ast.CXExpression, 0, len(exprs))
+	reordered = append(reordered, exprs[declarationCount:last]...)
+	reordered = append(reordered, exprs[:declarationCount]...)
+	return append(reordered, exprs[last])
+}
+
+// AssignmentStatement is Assignment for an assignment statement. A method
+// call assigned with = writes its result to the target, with no copy.
+func AssignmentStatement(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp string, fromExprs []ast.CXExpression) []ast.CXExpression {
+	if assignOp == "=" {
+		if callExprs := MethodCallStatement(prgrm, fromExprs); len(callExprs) < len(fromExprs) {
+			toLastExpr, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, len(toExprs)-1)
+			if err != nil {
+				panic(err)
+			}
+			prgrm.CXAtomicOps[callExprs[len(callExprs)-1].Index].Outputs = toLastExpr.Outputs
+			return append(toExprs[:len(toExprs)-1], callExprs...)
+		}
+	}
+	return Assignment(prgrm, toExprs, assignOp, fromExprs)
 }

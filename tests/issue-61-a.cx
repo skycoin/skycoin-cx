@@ -3,10 +3,12 @@
 package main
 
 type too struct {
+	n i32
 }
 
 func (t *too)foo()(b bool) {
-	b = true
+	(*t).n = (*t).n + 1
+	b = (*t).n < 3
 	printf("foo\n")
 }
 
@@ -15,4 +17,5 @@ func main()() {
 	for t.foo() {
 		printf("true\n")
 	}
+	test(t.n, 3, "")
 }

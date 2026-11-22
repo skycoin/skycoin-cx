@@ -72,7 +72,7 @@ func ParserActionAssignmentExpression(left []ast.CXExpression, operator string, 
 					}
 					result = actions.StructLiteralAssignment(actions.AST, left, right)
 				} else {
-					result = actions.Assignment(actions.AST, left, operator, right)
+					result = actions.AssignmentStatement(actions.AST, left, operator, right)
 				}
 
 				break
@@ -102,6 +102,7 @@ func ParserActionExpressionList(left []ast.CXExpression, right []ast.CXExpressio
 // ParserActionExpressionStatement is the action of an expression statement,
 // shared by expression_statement and the for clauses.
 func ParserActionExpressionStatement(exprs []ast.CXExpression) []ast.CXExpression {
+	exprs = actions.MethodCallStatement(actions.AST, exprs)
 	var result []ast.CXExpression
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
 	// Now a heap literal, site S1497.

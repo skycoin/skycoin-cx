@@ -249,6 +249,11 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile ast
 
 // PrimaryIdentifier creates an identifier expression with an output name of 'ident'.
 func PrimaryIdentifier(prgrm *ast.CXProgram, ident string) []ast.CXExpression {
+	return primaryIdentifierExpressions(prgrm, prgrm.CXProgramNameIntern(ident))
+}
+
+// primaryIdentifierExpressions is PrimaryIdentifier for an interned name.
+func primaryIdentifierExpressions(prgrm *ast.CXProgram, identGid stringpool.StringGid) []ast.CXExpression {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
@@ -256,7 +261,7 @@ func PrimaryIdentifier(prgrm *ast.CXProgram, ident string) []ast.CXExpression {
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1079.
-	_, arg := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern(ident), CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
+	_, arg := ast.MakeArgument(prgrm, identGid, CurrentFile, LineNo) // fix: line numbers in errors sometimes report +1 or -1. Issue #195
 	arg.SetType(types.IDENTIFIER)
 	arg.Package = ast.CXPackageIndex(pkg.Index)
 

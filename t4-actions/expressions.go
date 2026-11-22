@@ -58,8 +58,9 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	// A literal or variable condition is read in place, as in SelectionExpressions.
 	// Running it would zero it as a declaration (skycoin-cx#20).
 	loopConditionExprs := conditionExprs
-	if lastCondExpressionOperator == nil && !conditionExprs[len(conditionExprs)-1].IsMethodCall() {
-		loopConditionExprs = nil
+	conditionInPlace := lastCondExpressionOperator == nil
+	if conditionInPlace {
+		loopConditionExprs = conditionExprs[:len(conditionExprs)-1]
 	}
 
 	// -2 for the cx line expression addition for up and down expr
@@ -125,7 +126,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 
 		prgrm.CXAtomicOps[lastCondExpressionIdx].AddOutput(prgrm, typeSigIdx)
 		prgrm.CXAtomicOps[downExpressionIdx].AddInput(prgrm, typeSigIdx)
-	} else if loopConditionExprs == nil {
+	} else if conditionInPlace {
 		prgrm.CXAtomicOps[downExpressionIdx].AddInput(prgrm, prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0])
 	} else {
 		predicateTypeSigIdx := prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
@@ -270,7 +271,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 
 	var predicateTypeSigIdx ast.CXTypeSignatureIndex
-	if lastCondExpressionOperator == nil && !conditionExprs[len(conditionExprs)-1].IsMethodCall() {
+	if lastCondExpressionOperator == nil {
 		// then it's a literal
 		predicateTypeSigIdx = prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
 	} else {
@@ -278,33 +279,25 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 		// Now a constructor call, site S0632.
 		_, predicate := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
-		if conditionExprs[len(conditionExprs)-1].IsMethodCall() {
-			// we'll change this once we have access to method's types in
-			// ProcessMethodCall
-			predicate.SetType(types.BOOL)
-			prgrm.CXAtomicOps[lastCondExpressionIdx].Inputs.Fields = append(prgrm.CXAtomicOps[lastCondExpressionIdx].Outputs.Fields, prgrm.CXAtomicOps[lastCondExpressionIdx].Inputs.Fields...)
-			prgrm.CXAtomicOps[lastCondExpressionIdx].Outputs = nil
-		} else {
-			lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
-			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-			// Now an arena getter, site S0633.
-			lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
+		lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
+		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+		// Now an arena getter, site S0633.
+		lastCondExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastCondExpressionOperatorOutputs[0])
 
-			var lastCondExpressionOperatorOutputArgType types.Code
-			if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-				// Now an arena getter, site S0634.
-				lastCondExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastCondExpressionOperatorOutputTypeSig.Meta))
-				lastCondExpressionOperatorOutputArgType = lastCondExpressionOperatorOutputArg.Type
-			} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-				lastCondExpressionOperatorOutputArgType = types.Code(lastCondExpressionOperatorOutputTypeSig.Meta)
-			} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-				lastCondExpressionOperatorOutputArgType = types.Code(lastCondExpressionOperatorOutputTypeSig.Meta)
-			} else {
-				panic("type is not known")
-			}
-			predicate.SetType(lastCondExpressionOperatorOutputArgType)
+		var lastCondExpressionOperatorOutputArgType types.Code
+		if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+			// Now an arena getter, site S0634.
+			lastCondExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastCondExpressionOperatorOutputTypeSig.Meta))
+			lastCondExpressionOperatorOutputArgType = lastCondExpressionOperatorOutputArg.Type
+		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+			lastCondExpressionOperatorOutputArgType = types.Code(lastCondExpressionOperatorOutputTypeSig.Meta)
+		} else if lastCondExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+			lastCondExpressionOperatorOutputArgType = types.Code(lastCondExpressionOperatorOutputTypeSig.Meta)
+		} else {
+			panic("type is not known")
 		}
+		predicate.SetType(lastCondExpressionOperatorOutputArgType)
 		predicate.PreviouslyDeclared = true
 		predicate.Package = ast.CXPackageIndex(pkg.Index)
 
@@ -339,8 +332,10 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	prgrm.CXAtomicOps[skipExpressionIdx].ElseLines = 0
 
 	var exprs []ast.CXExpression
-	if lastCondExpressionOperator != nil || conditionExprs[len(conditionExprs)-1].IsMethodCall() {
+	if lastCondExpressionOperator != nil {
 		exprs = append(exprs, conditionExprs...)
+	} else {
+		exprs = append(exprs, conditionExprs[:len(conditionExprs)-1]...)
 	}
 
 	exprs = append(exprs, *ifExprCXLine, *ifExpr)
@@ -631,6 +626,8 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	} else {
 		typeSigIdx := prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0]
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
+		// A variable read after a method call keeps the call.
+		out = append(out, leftExprs[:len(leftExprs)-1]...)
 	}
 	leftCount := len(out)
 
@@ -667,6 +664,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	} else {
 		typeSigIdx := prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0]
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
+		out = append(out, rightExprs[:len(rightExprs)-1]...)
 	}
 
 	if opcode == constants.OP_BOOL_AND || opcode == constants.OP_BOOL_OR {

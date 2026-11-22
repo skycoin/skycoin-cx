@@ -15,11 +15,13 @@ const (
 	CXEXPR_METHOD_CALL
 	CXEXPR_STRUCT_LITERAL
 	CXEXPR_ARRAY_LITERAL
+	// CXEXPR_FUNCTION_CALL is a resolved call, which cannot be called again.
+	CXEXPR_FUNCTION_CALL
 )
 
 // String returns alias for constants defined for cx edpression type
 func (cxet CXEXPR_TYPE) String() string {
-	return [...]string{"Unused", "MethodCall", "StructLiteral", "ArrayLiteral"}[int(cxet)]
+	return [...]string{"Unused", "MethodCall", "StructLiteral", "ArrayLiteral", "FunctionCall"}[int(cxet)]
 }
 
 // IsMethodCall checks if expression type is method call

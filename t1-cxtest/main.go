@@ -388,6 +388,26 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-field-access-primitive.cx", types.CX_COMPILATION_ERROR, "a field of a variable that is not a struct",
 		"test-field-access-primitive.cx:5 illegal method call or field access on identifier 'x' of primitive type 'i32'",
 		"test-field-access-primitive.cx:7 illegal method call or field access on identifier 'f' of primitive type 'f32'")
+	t.RunWant("test-method-call-value.cx", types.CX_SUCCESS, "method calls in operands, arguments, return values, if and for conditions and chains (skycoin-cx#24)",
+		"7\n8\n8\n77\n8\n13\n10\n18\np(3,4)\n7\n7\n5\n6\nd(3,4)\nif sum\nif positive\nboth positive\nloop 1\nloop 2\nloop 3\n14\n15\n4\n9\n10\n7\n7\n8\n14\n103\n8\n7 5\n7 2 13\n-7\nfalse\n7 x(3,4)\n")
+	t.RunWant("test-method-pointer-receiver.cx", types.CX_SUCCESS, "a pointer receiver method on a value, a pointer and a struct field",
+		"11 12\n111 112\n0 0 6 1\n")
+	t.RunWant("test-method-result-missing.cx", types.CX_COMPILATION_ERROR, "a method with no output used as a value",
+		"test-method-result-missing.cx:15 method 'Point.show' returns no value")
+	t.RunWant("test-call-result-call.cx", types.CX_COMPILATION_ERROR, "calling the result of a call (skycoin-cx#22)",
+		"test-call-result-call.cx:19 the result of a call is not a function",
+		"test-call-result-call.cx:20 the result of a call is not a function",
+		"test-call-result-call.cx:21 the result of a call is not a function",
+		"test-call-result-call.cx:23 the result of a call is not a function")
+	t.RunWant("test-package-function-qualified.cx", types.CX_COMPILATION_ERROR, "pkg.f does not find a function of an import of pkg (skycoin/cx#9)",
+		"test-package-function-qualified.cx:25 identifier 'main.test1' does not exist")
+	t.RunWant("test-package-function-value.cx", types.CX_COMPILATION_ERROR, "pkg.F without parentheses is not a call (skycoin-cx#48)",
+		"test-package-function-value.cx:8 cannot assign value of type 'func()(i32)' to identifier '1:x' of type 'i32'",
+		"test-package-function-value.cx:9 function 'i32.print' expected input argument of type 'i32'; 'func()(i32)' was provided")
+	t.RunWant("issue-136.cx", types.CX_COMPILATION_ERROR, "pkg.F without parentheses is not a call (skycoin-cx#48)",
+		"issue-136.cx:7 invalid expression")
+	t.RunWant("test-function-shadows-builtin.cx", types.CX_SUCCESS, "a function shadows a built-in of the same name in its package (skycoin-cx#294)",
+		"-1\n99\n7\n20\n7\n20\n")
 	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
@@ -570,12 +590,13 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-303.cx", types.CX_SUCCESS, "Concatenation of str variables with + operator doesn't work")
 	t.Run("issue-304.cx", types.CX_SUCCESS, "Short declaration doesn't compile with opcode return value")
 	t.Run("issue-305.cx", types.CX_SUCCESS, "Compilation error when struct field is named 'input' or 'output'")
-	t.RunEx("issue-63.cx", types.CX_COMPILATION_ERROR, "No compilation error when using empty argument list after function call", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#22
+	t.RunWant("issue-63.cx", types.CX_COMPILATION_ERROR, "No compilation error when using empty argument list after function call (skycoin-cx#22)",
+		"issue-63.cx:10 the result of a call is not a function")
 	t.Run("issue-306.cx", types.CX_COMPILATION_ERROR, "No compilation error when using float value in place of boolean expression")
 	t.Run("issue-308.cx", types.CX_COMPILATION_ERROR, "Panic when package contains duplicate function signature")
-	t.RunEx("issue-62.cx", types.CX_COMPILATION_ERROR, "Left hand side of , is not compiled", runner.TestIssue, 0)                                  // known failing, skycoin/skycoin-cx#23
-	t.RunEx("issue-61-a.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#24
-	t.RunEx("issue-61-b.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#24
+	t.RunEx("issue-62.cx", types.CX_COMPILATION_ERROR, "Left hand side of , is not compiled", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#23
+	t.Run("issue-61-a.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
+	t.Run("issue-61-b.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
 	t.Run("issue-309.cx", types.CX_SUCCESS, "Compilation error when left hand side of an assignment expression is a struct field")
 	t.RunEx("--heap-initial=1M issue-60.cx", types.CX_SUCCESS, "Crash when INIT_HEAP_SIZE limit is reached ", runner.TestIssue, 0)
 	t.RunEx("--heap-initial=1M issue-59-a.cx", types.CX_SUCCESS, "Crash in garbage collector when heap is resized", runner.TestIssue, 0)

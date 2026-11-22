@@ -28,6 +28,10 @@ const LABEL_PREFIX = "*lbl"
 // slice literal. It is not a temp, so its field assignments are typed normally.
 const ELEMENT_PREFIX = "*elt"
 
+// METHOD_RESULT_PREFIX names the variable that holds the result of a method
+// call used as a value. It is not a temp, so a read of it is looked up.
+const METHOD_RESULT_PREFIX = "*mrs"
+
 // Used in `PrintProgram` to represent literals (`CXArgument`s with no name).
 const LITERAL_PLACEHOLDER = "*lit"
 const ID_FN = "identity"

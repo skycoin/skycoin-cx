@@ -56,6 +56,13 @@
 
 #### Fixed
 
+- A method call used as an operand, an argument, an index, a condition, a struct literal field, the right side of `+=` or a receiver compiled to a read of a field named like the method, so `i32.print(p.sum())` printed garbage, and `p.show(s)` or `p.hit(&q)` with a first argument that is not a literal was `illegal method call or field access`. A method call now works anywhere an expression can appear, with any arguments, and `for c.next() {` runs its condition every time (#24)
+- A pointer receiver method called on a value, `p.move(1)` with `func (p *Point) move(n i32)`, got the value as the pointer and wrote to the wrong address, and the same call on a `*Point` variable was a type error. The value is passed by reference and the pointer as it is
+- A method with no output used as a value is the compile error `method 'Point.show' returns no value`, `CompileErrorCodeMethodResultMissing` (7044)
+- `pkg.F` without parentheses called `F`. CX has no function values, so it is read like a bare `F`, which is `invalid expression` as a statement and a type error elsewhere (#48)
+- `f() ()` called `f` once and ignored the second argument list. Calling the result of a call is the compile error `the result of a call is not a function`, `CompileErrorCodeCallResultCall` (7043) (#22)
+- `main.test1()` in another package found `test1` in whichever package main imported last. `pkg.f` names only a function declared in pkg, and is `identifier 'main.test1' does not exist` otherwise, as for a global (skycoin/cx#9)
+- A function named like a built-in, such as `add` or `len`, was never called, as the built-in won. A function declared in a package shadows the built-in of the same name in that package, and operators such as `+` still use the built-in (#294)
 - An arithmetic or bitwise result was stored in a variable of another type without a check, so `var f f32 = -1` printed NaN and `var x i64 = -1` printed 4294967295. It is the compile error `cannot assign value of type 'i32' to identifier 'f' of type 'f32'`, as for a literal. Use `-1.0` or `-1L` (#27)
 - `append`, `insert`, `resize`, `remove` and `copy` did not check the element type, so `append(s, b)` with a `fooB` into a `[]fooA` compiled and ran. A value or result of the wrong type is the compile error `function 'append' expected argument of type 'fooA'; 'fooB' was provided`, `CompileErrorCodeSliceElementType` (7042) (#55)
 - A struct field slice with more than one dimension, `m [][]i32`, reported the type of `st.m` as `[]i32` and of `st.m[0]` as `i32`, and `st.m[i][j]` was `invalid indexing`. Its type has one `[]` per dimension and each index reads the next slice

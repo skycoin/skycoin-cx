@@ -66,6 +66,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeSliceArgumentType, ast.CompileErrorOperands{text("append"), text("*[]i32")}, header + " function 'append' expected a slice as input argument; '*[]i32' was provided\n"},
 		{ast.CompileErrorCodeGotoLabelMissing, ast.CompileErrorOperands{text("nowhere")}, header + " label 'nowhere' is not defined\n"},
 		{ast.CompileErrorCodeSliceElementType, ast.CompileErrorOperands{text("append"), text("fooA"), text("fooB")}, header + " function 'append' expected argument of type 'fooA'; 'fooB' was provided\n"},
+		{ast.CompileErrorCodeCallResultCall, ast.CompileErrorOperands{}, header + " the result of a call is not a function\n"},
+		{ast.CompileErrorCodeMethodResultMissing, ast.CompileErrorOperands{text("P"), text("show")}, header + " method 'P.show' returns no value\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

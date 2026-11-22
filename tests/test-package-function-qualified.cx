@@ -1,0 +1,26 @@
+// pkg.f names only a function of pkg, not one of its imports (skycoin/cx#9).
+
+package main
+import "foo"
+import "bar"
+import "xyzzy"
+
+func main() {
+	xyzzy.testprint()
+}
+
+package foo
+func test1() {
+	printf("foo\n")
+}
+
+package bar
+func test1() {
+	printf("bar\n")
+}
+
+package xyzzy
+import "main"
+func testprint() {
+	main.test1()
+}

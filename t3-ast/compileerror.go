@@ -58,6 +58,8 @@ const (
 	CompileErrorCodeSliceArgumentType
 	CompileErrorCodeGotoLabelMissing
 	CompileErrorCodeSliceElementType
+	CompileErrorCodeCallResultCall
+	CompileErrorCodeMethodResultMissing
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )
