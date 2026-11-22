@@ -83,6 +83,9 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeMethodRedeclared, ast.CompileErrorOperands{text("T.m"), int64(file), 20, 13}, header + " method T.m already declared at a.cx:20:13\n"},
 		{ast.CompileErrorCodeImportFailed, ast.CompileErrorOperands{text("nope"), text("not found")}, header + " could not import nope (not found)\n"},
 		{ast.CompileErrorCodeMethodReceiversMultiple, ast.CompileErrorOperands{}, header + " method has multiple receivers\n"},
+		{ast.CompileErrorCodeMethodPointerValue, ast.CompileErrorOperands{text("p"), text("T")}, header + " cannot call pointer method p on T\n"},
+		{ast.CompileErrorCodeArrayLiteralElementType, ast.CompileErrorOperands{text("U"), text("T")}, header + " cannot use value of type 'U' as type 'T' in array literal\n"},
+		{ast.CompileErrorCodeReturnValueType, ast.CompileErrorOperands{text("bool"), text("i32")}, header + " cannot use value of type 'bool' as type 'i32' in return statement\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

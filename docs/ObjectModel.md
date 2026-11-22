@@ -690,12 +690,12 @@ constructors create it.
 
 | Step | Objects (phase 4, phase 5 sites each) | Phase 4 sites | Phase 5 sites |
 | --- | --- | --- | --- |
-| 1 | `CXArgumentDebug` (0, 0), `CXLine` (2, 2), `CXTypeSignature_Array` (0, 60), `CXTypeSignature_Struct` (0, 33) | 2 | 95 |
-| 2 | `CXArgument` (107, 322), `CXTypeSignature` (23, 181) | 130 | 503 |
-| 3 | `CXStruct` (33, 10) | 33 | 10 |
-| 4 | `CXAtomicOperator` (14, 87), `CXExpression` (115, 9) | 129 | 96 |
-| 5 | `CXFunction` (38, 79), `CXNativeFunction` (6, 0) | 44 | 79 |
-| 6 | `CXPackage` (45, 66), `CXCall` (8, 1), `CXProgram` (59, 2) | 112 | 69 |
+| 1 | `CXArgumentDebug` (0, 0), `CXLine` (2, 2), `CXTypeSignature_Array` (0, 60), `CXTypeSignature_Struct` (0, 28) | 2 | 90 |
+| 2 | `CXArgument` (102, 265), `CXTypeSignature` (18, 171) | 120 | 436 |
+| 3 | `CXStruct` (31, 10) | 31 | 10 |
+| 4 | `CXAtomicOperator` (14, 85), `CXExpression` (113, 9) | 127 | 94 |
+| 5 | `CXFunction` (38, 78), `CXNativeFunction` (6, 0) | 44 | 78 |
+| 6 | `CXPackage` (45, 55), `CXCall` (8, 1), `CXProgram` (59, 2) | 112 | 58 |
 
 `CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
 the object in `ArgDetails`, a pointer field that a `CXArgument` and its
@@ -715,7 +715,7 @@ every site in the table, in one PR. Phase 6 adds the teardown functions and thei
 ## Inventory
 
 [objectmodel-sites.csv](objectmodel-sites.csv) has one row for every site
-that breaks the standard today, 1302 in all, plus one row for
+that breaks the standard today, 1202 in all, plus one row for
 `DereferenceStruct.arg`, which lives on the stack and needs no change. Its
 columns are
 
@@ -731,6 +731,11 @@ columns are
 * `phase`, 4 for allocation and release or 5 for Gid,
 * `issue`, the issue of that object and phase,
 * `depends_on`, the phase that must be done first.
+
+`make check-objmodel` fails when a row names a site that no comment
+names, when a comment names a site that has no row, or when the file of a
+row does not hold the comment. A site fixed by a PR loses its row and its
+comment in that PR. The line numbers are not checked.
 
 | Category | Meaning |
 | --- | --- |
@@ -758,18 +763,18 @@ The counts per object.
 | `CXArgumentDebug` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `CXLine` | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 2 | 4 |
 | `CXTypeSignature_Array` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
-| `CXTypeSignature_Struct` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 33 | 0 | 0 | 0 | 0 | 0 | 33 | 33 |
-| `CXArgument` | 5 | 66 | 8 | 0 | 2 | 0 | 3 | 0 | 13 | 0 | 6 | 319 | 0 | 7 | 0 | 0 | 107 | 322 | 429 |
-| `CXTypeSignature` | 0 | 0 | 4 | 0 | 7 | 1 | 2 | 0 | 0 | 0 | 9 | 180 | 0 | 1 | 0 | 0 | 23 | 181 | 204 |
-| `CXStruct` | 1 | 15 | 1 | 1 | 12 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 3 | 7 | 0 | 0 | 33 | 10 | 43 |
-| `CXAtomicOperator` | 0 | 0 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 86 | 1 | 0 | 0 | 0 | 14 | 87 | 101 |
-| `CXExpression` | 2 | 78 | 0 | 0 | 2 | 0 | 7 | 0 | 18 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 115 | 9 | 124 |
-| `CXFunction` | 1 | 7 | 17 | 2 | 3 | 0 | 2 | 0 | 1 | 2 | 1 | 77 | 1 | 3 | 0 | 0 | 38 | 79 | 117 |
+| `CXTypeSignature_Struct` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 0 | 0 | 0 | 0 | 28 | 28 |
+| `CXArgument` | 5 | 66 | 8 | 0 | 2 | 0 | 3 | 0 | 13 | 0 | 1 | 262 | 0 | 7 | 0 | 0 | 102 | 265 | 367 |
+| `CXTypeSignature` | 0 | 0 | 4 | 0 | 7 | 1 | 2 | 0 | 0 | 0 | 4 | 170 | 0 | 1 | 0 | 0 | 18 | 171 | 189 |
+| `CXStruct` | 1 | 15 | 1 | 1 | 10 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 3 | 7 | 0 | 0 | 31 | 10 | 41 |
+| `CXAtomicOperator` | 0 | 0 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 84 | 1 | 0 | 0 | 0 | 14 | 85 | 99 |
+| `CXExpression` | 2 | 76 | 0 | 0 | 2 | 0 | 7 | 0 | 18 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 113 | 9 | 122 |
+| `CXFunction` | 1 | 7 | 17 | 2 | 3 | 0 | 2 | 0 | 1 | 2 | 1 | 76 | 1 | 3 | 0 | 0 | 38 | 78 | 116 |
 | `CXNativeFunction` | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 0 | 6 |
-| `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 65 | 1 | 0 | 0 | 0 | 45 | 66 | 111 |
+| `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 54 | 1 | 0 | 0 | 0 | 45 | 55 | 100 |
 | `CXCall` | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 1 | 9 |
 | `CXProgram` | 3 | 34 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 2 | 0 | 59 | 2 | 61 |
-| total | 16 | 219 | 56 | 5 | 44 | 2 | 15 | 2 | 36 | 4 | 40 | 822 | 6 | 22 | 4 | 9 | 450 | 852 | 1302 |
+| total | 16 | 217 | 56 | 5 | 42 | 2 | 15 | 2 | 36 | 4 | 30 | 736 | 6 | 22 | 4 | 9 | 436 | 766 | 1202 |
 
 
 

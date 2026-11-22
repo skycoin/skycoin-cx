@@ -79,6 +79,9 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeMethodRedeclared - ast.CompileErrorCodeNil:           {Format: "%H method %s already declared at %P\n"},
 	ast.CompileErrorCodeImportFailed - ast.CompileErrorCodeNil:               {Format: "%H could not import %s (%s)\n"},
 	ast.CompileErrorCodeMethodReceiversMultiple - ast.CompileErrorCodeNil:    {Format: "%H method has multiple receivers\n"},
+	ast.CompileErrorCodeMethodPointerValue - ast.CompileErrorCodeNil:         {Format: "%H cannot call pointer method %s on %s\n"},
+	ast.CompileErrorCodeArrayLiteralElementType - ast.CompileErrorCodeNil:    {Format: "%H cannot use value of type '%s' as type '%s' in array literal\n"},
+	ast.CompileErrorCodeReturnValueType - ast.CompileErrorCodeNil:            {Format: "%H cannot use value of type '%s' as type '%s' in return statement\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

@@ -42,9 +42,10 @@ func LiteralElementsFlatten(prgrm *ast.CXProgram, typ LiteralType, elems []Liter
 				continue
 			}
 		}
-		// Only a slice literal reads the position, from the line it adds.
+		// Only a slice or struct array literal reads the position, from the
+		// line it adds.
 		sliceColumn := 0
-		if typ.Slice {
+		if typ.Slice || typ.StructName != "" {
 			sliceColumn = elem.Column
 		}
 		result = append(result, SliceLiteralElement(prgrm, exprs, elem.Line, sliceColumn)...)

@@ -1,0 +1,24 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type U struct {
+	b i32
+}
+
+func mkU() U {
+	return U{b: 1}
+}
+
+func main() {
+	var u U
+	var a [2]T = [2]T{T{a: 1},
+		U{b: 2}}
+	var b [2]T = [2]T{T{a: 1}, u}
+	var c [2]T = [2]T{T{a: 1}, mkU()}
+	var s []T = []T{T{a: 1},
+		U{b: 2}}
+	i32.print(a[0].a + b[0].a + c[0].a + s[0].a)
+}

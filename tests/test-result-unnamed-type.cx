@@ -1,0 +1,7 @@
+package main
+
+func f() i32 { return true }
+
+func main() {
+	i32.print(f())
+}

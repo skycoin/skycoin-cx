@@ -56,8 +56,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 	slcVarExprAtomicOpIdx := slcVarExpr.Index
 
 	prgrm.CXAtomicOps[slcVarExprAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S0982.
 	_, slcVar := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, slcVar, typeCode, strct, true)
 	slcVar = DeclarationSpecifiers(slcVar, []types.Pointer{0}, constants.DECL_SLICE)
@@ -94,8 +92,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 				continue
 			}
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0986.
 			_, symInp := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 			sliceLiteralSetType(prgrm, symInp, typeCode, strct, false)
 			symInp.Package = ast.CXPackageIndex(pkg.Index)
@@ -106,8 +102,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 				details.FileName, details.FileLine, details.FileColumn = exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn
 			}
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0987.
 			_, symOut := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 			sliceLiteralSetType(prgrm, symOut, typeCode, strct, false)
 			symOut.Package = ast.CXPackageIndex(pkg.Index)
@@ -153,8 +147,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 					// Now an arena getter, site S0993.
 					outArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outTypeSig.Meta))
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a constructor call, site S0994.
 					_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), exprCXLine.FileName, exprCXLine.LineNumber)
 					out.SetType(outArg.Type)
 					out.DeclarationSpecifiers = append(out.DeclarationSpecifiers[:0], outArg.DeclarationSpecifiers...)
@@ -215,16 +207,12 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 
 	symNameOutput := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1002.
 	_, symOutput := ast.MakeArgument(prgrm, symNameOutput, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, symOutput, typeCode, strct, true)
 	symOutput = DeclarationSpecifiers(symOutput, []types.Pointer{0}, constants.DECL_SLICE)
 	symOutput.Package = ast.CXPackageIndex(pkg.Index)
 	symOutput.PreviouslyDeclared = true
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1003.
 	_, symInput := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, symInput, typeCode, strct, false)
 	symInput.Package = ast.CXPackageIndex(pkg.Index)
@@ -282,19 +270,19 @@ func SliceLiteralStructExpression(prgrm *ast.CXProgram, structName string, exprs
 	if elt.StructType == nil {
 		return nil
 	}
-	return sliceLiteralExpressionOf(prgrm, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs))
+	return sliceLiteralExpressionOf(prgrm, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs, constants.ELEMENT_PREFIX))
 }
 
 // sliceLiteralStructElements gives each element of a literal of the struct strct
-// its own variable, as sliceLiteralStructElement does.
-func sliceLiteralStructElements(prgrm *ast.CXProgram, strct *ast.CXStruct, exprs []ast.CXExpression) []ast.CXExpression {
+// its own variable named with prefix, as sliceLiteralStructElement does.
+func sliceLiteralStructElements(prgrm *ast.CXProgram, strct *ast.CXStruct, exprs []ast.CXExpression, prefix string) []ast.CXExpression {
 	var elements []ast.CXExpression
 	start := 0
 	for i := range exprs {
 		if exprs[i].Type == ast.CX_LINE || !exprs[i].IsArrayLiteral() {
 			continue
 		}
-		elements = append(elements, sliceLiteralStructElement(prgrm, strct, exprs[start:i+1])...)
+		elements = append(elements, sliceLiteralStructElement(prgrm, strct, exprs[start:i+1], prefix)...)
 		start = i + 1
 	}
 	return elements
@@ -302,7 +290,7 @@ func sliceLiteralStructElements(prgrm *ast.CXProgram, strct *ast.CXStruct, exprs
 
 // sliceLiteralStructElement assigns one element of a []strct literal to a new
 // variable and ends with that variable, so it is appended like a literal.
-func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression) []ast.CXExpression {
+func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression, prefix string) []ast.CXExpression {
 	if sliceLiteralStructInner(prgrm, element) {
 		return element
 	}
@@ -310,7 +298,7 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 	if err != nil {
 		panic(err)
 	}
-	elementName := generateTempVarName(prgrm, constants.ELEMENT_PREFIX)
+	elementName := generateTempVarName(prgrm, prefix)
 	elementArg := func(declaration bool) ast.CXTypeSignatureIndex {
 		_, arg := ast.MakeArgument(prgrm, elementName, CurrentFile, LineNo)
 		sliceLiteralSetType(prgrm, arg, types.STRUCT, strct, declaration)
@@ -420,8 +408,6 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					name := prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name
 					structLiteralValueTypeSet(prgrm, strct, prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)), name)
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a constructor call, site S1011.
 					_, field := ast.MakeArgument(prgrm, name, CurrentFile, LineNo)
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1742.
@@ -473,8 +459,6 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					newCXArg.Size = strct.GetStructSize(prgrm)
 					newCXArg.Name = outputName
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a constructor call, site S1015.
 					_, field := ast.MakeArgument(prgrm, cxAtomicOpOutputTypeSig.Name, CurrentFile, LineNo)
 					field.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					field.StructType = strct
@@ -505,8 +489,6 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					newCXArg.Size = strct.GetStructSize(prgrm)
 					newCXArg.Name = outputName
 
-					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-					// Now a constructor call, site S1020.
 					_, field := ast.MakeArgument(prgrm, cxAtomicOpOutputTypeSig.Name, CurrentFile, LineNo)
 					field.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					field.StructType = strct
@@ -576,8 +558,6 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 					cxAtomicOpOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(prgrm)[0])
 					if cxAtomicOpOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 						cxAtomicOpOutputIdx := cxAtomicOpOutputTypeSig.Meta
-						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-						// Now a constructor call, site S1025.
 						_, field := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
 						field.SetType(types.IDENTIFIER)
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -648,7 +628,7 @@ func ArrayLiteralStructExpression(prgrm *ast.CXProgram, arraySizes []types.Point
 	if elt.StructType == nil {
 		return nil
 	}
-	return arrayLiteralExpressionOf(prgrm, arraySizes, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs))
+	return arrayLiteralExpressionOf(prgrm, arraySizes, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs, constants.ARRAY_ELEMENT_PREFIX))
 }
 
 // arrayLiteralExpressionOf is ArrayLiteralExpression for elements of type
@@ -672,8 +652,6 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 	arrVarExprAtomicOpIdx := arrVarExpr.Index
 
 	prgrm.CXAtomicOps[arrVarExprAtomicOpIdx].Package = ast.CXPackageIndex(pkg.Index)
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1029.
 	_, arrVar := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, arrVar, typeCode, strct, true)
 	arrVar = DeclarationSpecifiers(arrVar, arraySizes, constants.DECL_ARRAY)
@@ -703,8 +681,6 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 		if expr.IsArrayLiteral() {
 			expr.ExpressionType = ast.CXEXPR_UNUSED
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S1033.
 			_, sym := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 			sliceLiteralSetType(prgrm, sym, typeCode, strct, false)
 			sym.Package = ast.CXPackageIndex(pkg.Index)
@@ -777,16 +753,12 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 
 	symNameOutput := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1042.
 	_, symOutput := ast.MakeArgument(prgrm, symNameOutput, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, symOutput, typeCode, strct, true)
 	symOutput = DeclarationSpecifiers(symOutput, arraySizes, constants.DECL_ARRAY)
 	symOutput.Package = ast.CXPackageIndex(pkg.Index)
 	symOutput.PreviouslyDeclared = true
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1043.
 	_, symInput := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
 	sliceLiteralSetType(prgrm, symInput, typeCode, strct, false)
 	symInput.Lengths = arraySizes
@@ -830,8 +802,6 @@ func StructLiteralFields(prgrm *ast.CXProgram, structName string) ast.CXExpressi
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1048.
 	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
 	arg.SetType(types.IDENTIFIER)
 	arg.Name = prgrm.CXProgramNameIntern(structName)

@@ -162,8 +162,6 @@
 %type   <ints>          indexing_literal
 %type   <ints>          indexing_slice_literal
 
-                        // for struct literals
-%right                  IDENTIFIER LBRACE
 
 //%start
                         
@@ -204,22 +202,25 @@ struct_declaration:
                 }
                 ;
 
+// A semicolon may be omitted before the closing brace, as in Go.
 struct_fields:
                 LBRACE RBRACE SEMICOLON
                 { $$ = nil }
         |       LBRACE fields RBRACE SEMICOLON
                 { $$ = $2 }
+        |       LBRACE fields SEMICOLON RBRACE SEMICOLON
+                { $$ = $2 }
         ;
 
-fields:         parameter_declaration SEMICOLON
+fields:         parameter_declaration
                 {
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1399.
 			$$ = []*ast.CXArgument{$1}
                 }
-        |       fields parameter_declaration SEMICOLON
+        |       fields SEMICOLON parameter_declaration
                 {
-			$$ = append($1, $2)
+			$$ = append($1, $3)
                 }
         ;
 
@@ -288,13 +289,17 @@ function_parameters:
                 ;
 
 function_declaration:
-                function_header function_parameters compound_statement
+                function_header function_parameters compound_statement SEMICOLON
                 {
 			PreFunctionDeclaration($1, $2, nil)
                 }
-        |       function_header function_parameters function_parameters compound_statement
+        |       function_header function_parameters function_parameters compound_statement SEMICOLON
                 {
 			PreFunctionDeclaration($1, $2, $3)
+                }
+        |       function_header function_parameters declaration_specifiers compound_statement SEMICOLON
+                {
+			PreFunctionDeclaration($1, $2, actions.FunctionResultUnnamed(Program, $3))
                 }
         ;
 
@@ -337,8 +342,6 @@ direct_declarator:
                 IDENTIFIER
                 {
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a constructor call, site S1404.
 				_, arg := ast.MakeArgument(Program, stringpool.StringGidNil, CurrentFile, lineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = Program.CXProgramNameIntern($1)
@@ -400,8 +403,6 @@ declaration_specifiers:
 element_specifiers:
 		FUNC types_list types_list
 		{
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S1407.
 			_, arg := ast.MakeArgument(Program, stringpool.StringGidNil, actions.CurrentFile, actions.LineNo)
 			arg.SetType(types.FUNC)
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -509,8 +510,8 @@ type_specifier:
 
 struct_literal_fields:
                 // empty
-        |       IDENTIFIER COLON struct_literal_expression
-        |       struct_literal_fields COMMA IDENTIFIER COLON struct_literal_expression
+        |       IDENTIFIER COLON conditional_expression
+        |       struct_literal_fields COMMA IDENTIFIER COLON conditional_expression
                 ;
 
 literal_element_list:
@@ -626,8 +627,11 @@ after_period:   type_specifier
         |       IDENTIFIER
         ;
 
+// A struct literal is an operand, as in Go. An if or for header uses the _nc
+// rules, which hold no bare struct literal (skycoin-cx#21).
 postfix_expression:
                 primary_expression
+        |       struct_literal_value
 	|       postfix_expression LBRACK assignment_expression RBRACK
         |       type_specifier PERIOD after_period
 	|       postfix_expression LPAREN RPAREN
@@ -635,8 +639,12 @@ postfix_expression:
 	|       postfix_expression INC_OP
         |       postfix_expression DEC_OP
         |       postfix_expression PERIOD IDENTIFIER
-        /* |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE */
                 ;
+
+struct_literal_value:
+		IDENTIFIER LBRACE struct_literal_fields RBRACE
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+        ;
 
 argument_expression_list:
                 assignment_expression
@@ -647,7 +655,7 @@ unary_expression:
                 postfix_expression
 	|       INC_OP unary_expression
 	|       DEC_OP unary_expression
-	|       unary_operator unary_expression // check
+	|       unary_operator unary_expression
                 ;
 
 unary_operator:
@@ -703,30 +711,72 @@ conditional_expression:
 	|       logical_or_expression '?' expression COLON conditional_expression
                 ;
 
-struct_literal_value:
-		IDENTIFIER LBRACE struct_literal_fields RBRACE
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
-        ;
+// The expression rules of an if or for header, which hold no bare struct
+// literal. One in parentheses, brackets or braces is a full expression.
+postfix_nc:
+                primary_expression
+	|       postfix_nc LBRACK assignment_expression RBRACK
+        |       type_specifier PERIOD after_period
+	|       postfix_nc LPAREN RPAREN
+	|       postfix_nc LPAREN argument_expression_list RPAREN
+	|       postfix_nc INC_OP
+        |       postfix_nc DEC_OP
+        |       postfix_nc PERIOD IDENTIFIER
+                ;
 
-struct_literal_postfix:
-		struct_literal_value PERIOD IDENTIFIER
-	|       struct_literal_postfix PERIOD IDENTIFIER
-	|       struct_literal_postfix LPAREN RPAREN
-	|       struct_literal_postfix LPAREN argument_expression_list RPAREN
-	|       struct_literal_postfix LBRACK assignment_expression RBRACK
-        ;
+unary_nc:
+                postfix_nc
+	|       INC_OP unary_nc
+	|       DEC_OP unary_nc
+	|       unary_operator unary_nc
+                ;
 
-struct_literal_expression:
-                conditional_expression
-	|       struct_literal_value
-	|       struct_literal_postfix
-	|       unary_operator IDENTIFIER LBRACE struct_literal_fields RBRACE
-	|       unary_operator postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
-        ;
+// Binary operator precedence follows https://go.dev/ref/spec#Operator_precedence
+multiplicative_nc:
+                unary_nc
+	|       multiplicative_nc MUL_OP unary_nc
+	|       multiplicative_nc DIV_OP unary_nc
+	|       multiplicative_nc MOD_OP unary_nc
+	|       multiplicative_nc LEFT_OP unary_nc
+	|       multiplicative_nc RIGHT_OP unary_nc
+	|       multiplicative_nc REF_OP unary_nc
+	|       multiplicative_nc BITCLEAR_OP unary_nc
+                ;
+
+additive_nc:
+                multiplicative_nc
+	|       additive_nc ADD_OP multiplicative_nc
+	|       additive_nc SUB_OP multiplicative_nc
+	|       additive_nc BITOR_OP multiplicative_nc
+	|       additive_nc BITXOR_OP multiplicative_nc
+                ;
+
+relational_nc:
+                additive_nc
+	|       relational_nc EQ_OP additive_nc
+	|       relational_nc NE_OP additive_nc
+	|       relational_nc LT_OP additive_nc
+	|       relational_nc GT_OP additive_nc
+	|       relational_nc LTEQ_OP additive_nc
+	|       relational_nc GTEQ_OP additive_nc
+                ;
+
+logical_and_nc:
+                relational_nc
+	|       logical_and_nc AND_OP relational_nc
+                ;
+
+logical_or_nc:
+                logical_and_nc
+	|       logical_or_nc OR_OP logical_and_nc
+                ;
+
+conditional_nc:
+                logical_or_nc
+                ;
 
 assignment_expression:
-                /* conditional_expression */
-                struct_literal_expression
+                conditional_expression
 	|       unary_expression assignment_operator assignment_expression
                 ;
 
@@ -744,7 +794,6 @@ assignment_operator:
 	|       XOR_ASSIGN
 	|       OR_ASSIGN
                 ;
-
 expression:     assignment_expression
 	|       expression COMMA assignment_expression
                 ;
@@ -754,12 +803,12 @@ constant_expression:
                 ;
 
 declaration:
-                VAR declarator declaration_specifiers SEMICOLON
+                VAR declarator declaration_specifiers
                 {
 			Program.ReleaseCXArgBuilder($2)
 			Program.ReleaseCXArgBuilder($3)
                 }
-        |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
+        |       VAR declarator declaration_specifiers ASSIGN initializer
                 {
 			Program.ReleaseCXArgBuilder($2)
 			Program.ReleaseCXArgBuilder($3)
@@ -786,37 +835,35 @@ labeled_statement:
                 ;
 
 compound_statement:
-                LBRACE RBRACE SEMICOLON
-	|       LBRACE block_item_list RBRACE SEMICOLON
+                LBRACE block_item_list RBRACE
                 ;
 
+// Statements are separated by semicolons and a statement may be empty, as in
+// Go, so the semicolon before a closing brace may be omitted
+// (https://go.dev/ref/spec#Semicolons).
 block_item_list:
                 block_item
-	|       block_item_list block_item
+	|       block_item_list SEMICOLON block_item
                 ;
 
-block_item:     declaration
+block_item:
+        |       declaration
         |       statement
                 ;
 
 expression_statement:
-                SEMICOLON
-	|       expression SEMICOLON
+                expression
                 ;
 
 selection_statement:
-                IF conditional_expression LBRACE block_item_list RBRACE elseif_list else_statement SEMICOLON
-        |       IF conditional_expression LBRACE block_item_list RBRACE else_statement SEMICOLON
-        |       IF conditional_expression LBRACE RBRACE else_statement SEMICOLON //
-        |       IF conditional_expression LBRACE block_item_list RBRACE elseif_list SEMICOLON
-        |       IF conditional_expression LBRACE RBRACE elseif_list SEMICOLON
-        |       IF conditional_expression LBRACE RBRACE elseif_list else_statement SEMICOLON
-        |       IF conditional_expression compound_statement
+                IF conditional_nc compound_statement elseif_list else_statement
+        |       IF conditional_nc compound_statement else_statement
+        |       IF conditional_nc compound_statement elseif_list
+        |       IF conditional_nc compound_statement
 	|       SWITCH LPAREN conditional_expression RPAREN statement
                 ;
 
-elseif:         ELSE IF conditional_expression LBRACE block_item_list RBRACE
-        |       ELSE IF conditional_expression LBRACE RBRACE
+elseif:         ELSE IF conditional_nc compound_statement
         ;
 
 elseif_list:
@@ -825,22 +872,22 @@ elseif_list:
         ;
 
 else_statement:
-                ELSE LBRACE block_item_list RBRACE
-	|      	ELSE LBRACE RBRACE
+                ELSE compound_statement
         ;
 
 iteration_statement:
-                FOR conditional_expression compound_statement
+                FOR conditional_nc compound_statement
         |       FOR for_clause_statement for_condition_statement compound_statement
         |       FOR for_clause_statement for_condition_statement for_clause_expression compound_statement
-        |       FOR declaration for_condition_statement compound_statement
-        |       FOR declaration for_condition_statement for_clause_expression compound_statement
+        |       FOR declaration SEMICOLON for_condition_statement compound_statement
+        |       FOR declaration SEMICOLON for_condition_statement for_clause_expression compound_statement
                 ;
 
-// A for header starts with no bare struct literal (skycoin-cx#21).
+// A for header holds no bare struct literal outside its init values
+// (skycoin-cx#21).
 for_clause_assignment:
-                conditional_expression
-	|       unary_expression assignment_operator for_clause_assignment
+                conditional_nc
+	|       unary_nc assignment_operator for_clause_assignment
                 ;
 
 for_clause_expression:
@@ -849,8 +896,8 @@ for_clause_expression:
                 ;
 
 for_init_assignment:
-                conditional_expression
-	|       unary_expression assignment_operator assignment_expression
+                conditional_nc
+	|       unary_nc assignment_operator assignment_expression
                 ;
 
 for_init_expression:
@@ -868,11 +915,10 @@ for_condition_statement:
 	|       for_clause_expression SEMICOLON
                 ;
 
-jump_statement: GOTO IDENTIFIER SEMICOLON
-	|       CONTINUE SEMICOLON
-	|       BREAK SEMICOLON
-	|       RETURN SEMICOLON
-	|       RETURN expression SEMICOLON
+jump_statement: GOTO IDENTIFIER
+	|       CONTINUE
+	|       BREAK
+	|       RETURN
+	|       RETURN expression
                 ;
-
 %%

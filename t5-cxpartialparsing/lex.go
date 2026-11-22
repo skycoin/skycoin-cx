@@ -343,7 +343,13 @@ redonext:
 			goto redonext
 		} else if s.ch == '*' {
 			s.nextch()
-			s.fullComment()
+			// A comment holding a newline acts like a newline
+			// (https://go.dev/ref/spec#Comments).
+			if s.fullComment() && nlsemi {
+				s.tok.yys = SEMICOLON
+				s.tok.tok = "\n"
+				break
+			}
 			goto redonext
 		}
 		s.tok.yys = DIV_OP
@@ -734,18 +740,24 @@ func baseName(base int) string {
 	panic("invalid base")
 }
 
-func (s *Lexer) fullComment() {
+// fullComment reads a /* */ comment and reports whether it holds a newline.
+func (s *Lexer) fullComment() bool {
+	newline := false
 	for s.ch >= 0 {
 		for s.ch == '*' {
 			s.nextch()
 			if s.ch == '/' {
 				s.nextch()
-				return
+				return newline
 			}
+		}
+		if s.ch == '\n' {
+			newline = true
 		}
 		s.nextch()
 	}
 	s.errorf("comment not terminated")
+	return newline
 }
 
 func (s *Lexer) lineComment() {

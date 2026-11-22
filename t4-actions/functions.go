@@ -109,6 +109,34 @@ func MethodReceiver(prgrm *ast.CXProgram, receiver []*ast.CXArgument) []*ast.CXA
 	return receiver[:1]
 }
 
+// literalElementTypeCode is the error code of a literal element of the wrong
+// type, written to the element variable name.
+func literalElementTypeCode(prgrm *ast.CXProgram, name stringpool.StringGid) ast.CompileErrorCode {
+	if bytes.HasPrefix(prgrm.CXProgramNameBytes(name), []byte(constants.ARRAY_ELEMENT_PREFIX)) {
+		return ast.CompileErrorCodeArrayLiteralElementType
+	}
+	return ast.CompileErrorCodeSliceLiteralElementType
+}
+
+// assignValueTypeError is the error of a value of type inputType written to
+// target of type outputType. The unnamed result of func f() T is a return.
+func assignValueTypeError(prgrm *ast.CXProgram, inputType string, target stringpool.StringGid, outputType string) (ast.CompileErrorCode, ast.CompileErrorOperands) {
+	if prgrm.CXProgramNameText(target) == constants.RESULT_NAME {
+		return ast.CompileErrorCodeReturnValueType, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), prgrm.CXProgramCompileErrorText(outputType)}
+	}
+	return ast.CompileErrorCodeAssignValueType, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(target), prgrm.CXProgramCompileErrorText(outputType)}
+}
+
+// FunctionResultUnnamed makes the result list of func f() T. The result
+// gets a name no identifier can spell, so the body cannot refer to it.
+func FunctionResultUnnamed(prgrm *ast.CXProgram, result *ast.CXArgument) []*ast.CXArgument {
+	if pkg, err := prgrm.GetCurrentPackage(); err == nil {
+		result.Package = ast.CXPackageIndex(pkg.Index)
+	}
+	result.Name = prgrm.CXProgramNameIntern(constants.RESULT_NAME)
+	return []*ast.CXArgument{result}
+}
+
 // FunctionAddParameters adds the function's input and output parameters.
 //
 // Input arguments description:
@@ -549,7 +577,8 @@ func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, cur
 	} else if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, inputTypeSig.ArgDetails); sigLine > 0 {
 		file, line, column = sigFile, sigLine, sigColumn
 	}
-	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeAssignValueType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inputType), int64(StripNameNumber(prgrm, outputName)), prgrm.CXProgramCompileErrorText(outputType)})
+	code, operands := assignValueTypeError(prgrm, inputType, StripNameNumber(prgrm, outputName), outputType)
+	prgrm.CXProgramCompileErrorAddPosition(code, file, line, column, operands)
 }
 
 // FunctionCall completes the array of expressions for postfix function call.
@@ -708,14 +737,17 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 							// Now an arena getter, site S0758.
 							inpExprAtomicOpInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inpExprAtomicOpInputTypeSig.Meta))
 
-							// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-							// Now a constructor call, site S0759.
 							_, out = ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber)
-							out.SetType(inpExprAtomicOpInputArg.Type)
-							out.StructType = inpExprAtomicOpInputArg.StructType
-							out.Size = inpExprAtomicOpInputArg.Size
-							out.Type = inpExprAtomicOpInputArg.Type
-							out.PointerTargetType = inpExprAtomicOpInputArg.PointerTargetType
+							if len(inpExprAtomicOpInputArg.Fields) == 0 {
+								out.SetType(inpExprAtomicOpInputArg.Type)
+								out.StructType = inpExprAtomicOpInputArg.StructType
+								out.Size = inpExprAtomicOpInputArg.Size
+								out.Type = inpExprAtomicOpInputArg.Type
+								out.PointerTargetType = inpExprAtomicOpInputArg.PointerTargetType
+							} else {
+								// T{a: 1}.a is typed by its field, which is resolved later.
+								out.SetType(types.UNDEFINED)
+							}
 							out.PreviouslyDeclared = true
 
 							out.Package = inpExprAtomicOp.Package
@@ -760,8 +792,6 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 						}
 
 					} else {
-						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-						// Now a constructor call, site S0767.
 						_, out = ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, inpExprCXLine.LineNumber)
 						out.SetType(inpExprAtomicOpOperatorOutputArg.Type)
 						out.DeclarationSpecifiers = inpExprAtomicOpOperatorOutputArg.DeclarationSpecifiers
@@ -1431,7 +1461,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 				expressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[i])
 				// A call element of a []T literal writes its result to the element.
 				if bytes.HasPrefix(prgrm.CXProgramNameBytes(expressionOutputTypeSig.Name), []byte(constants.ELEMENT_PREFIX)) {
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+					prgrm.CXProgramCompileErrorAddDebug(literalElementTypeCode(prgrm, expressionOutputTypeSig.Name), expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
 					continue
 				}
 				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeFunctionReceiverType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
@@ -1475,9 +1505,10 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 				targetName := StripNameNumber(prgrm, expressionOutputTypeSigName)
 				if bytes.HasPrefix(prgrm.CXProgramNameBytes(targetName), []byte(constants.ELEMENT_PREFIX)) {
 					// The element of a []T literal is at the element start.
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeSliceLiteralElementType, expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), prgrm.CXProgramCompileErrorText(outType)})
+					prgrm.CXProgramCompileErrorAddDebug(literalElementTypeCode(prgrm, targetName), expressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), prgrm.CXProgramCompileErrorText(outType)})
 				} else {
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignValueType, expressionInputTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(inpType), int64(targetName), prgrm.CXProgramCompileErrorText(outType)})
+					code, operands := assignValueTypeError(prgrm, inpType, targetName, outType)
+					prgrm.CXProgramCompileErrorAddDebug(code, expressionInputTypeSig.ArgDetails, operands)
 				}
 			}
 
@@ -2061,8 +2092,6 @@ func lookupSymbol(prgrm *ast.CXProgram, pkgName stringpool.StringGid, ident stri
 	}
 	// Then we found a function by that name. Let's create a `cxcore.CXArgument` of
 	// type `func` with that name.
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S0873.
 	_, fnArg := ast.MakeArgument(prgrm, ident, fn.FileName, fn.FileLine)
 	fnArg.SetType(types.FUNC)
 	fnArg.Package = ast.CXPackageIndex(pkg.Index)
@@ -2204,10 +2233,13 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	typeSig := symbolTypeSig
 	receiverPointer := typeSignaturePointer(prgrm, symbolTypeSig)
 	methodIdx := receiver.Fields[len(receiver.Fields)-1]
+	// indirect is a receiver reached through a pointer, which is addressable.
+	indirect := false
 	for _, fieldIdx := range receiver.Fields[:len(receiver.Fields)-1] {
 		if strct == nil {
 			break
 		}
+		indirect = indirect || receiverPointer
 		field, err := strct.GetField(prgrm, prgrm.GetCXArgFromArray(fieldIdx).Name)
 		if err != nil {
 			break
@@ -2245,6 +2277,11 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	methodInputs := prgrm.GetFunctionFromArray(fnIdx).GetInputs(prgrm)
 	methodPointer := len(methodInputs) > 0 && typeSignaturePointer(prgrm, prgrm.GetCXTypeSignatureFromArray(methodInputs[0]))
 	if !receiverPointer && methodPointer {
+		if !indirect && receiver.PassBy != constants.PASSBY_REFERENCE && len(receiver.Indexes) == 0 && IsTempVar(prgrm, receiver.Name) {
+			// A literal or a call result is not addressable
+			// (https://go.dev/ref/spec#Calls).
+			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMethodPointerValue, method.ArgDetails, ast.CompileErrorOperands{int64(method.Name), int64(strct.Name)})
+		}
 		receiver.PassBy = constants.PASSBY_REFERENCE
 		receiverTypeSig.PassBy = constants.PASSBY_REFERENCE
 	}

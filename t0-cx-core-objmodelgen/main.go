@@ -5,7 +5,8 @@
 // their type, so one template is kept instead of 14 copies.
 //
 //	go run ./t0-cx-core-objmodelgen -dir t3-ast         write the files
-//	go run ./t0-cx-core-objmodelgen -dir t3-ast -check  fail if a file is stale
+//	go run ./t0-cx-core-objmodelgen -dir t3-ast -check  fail if a file is stale or the
+//	                                                   sites CSV and the site comments disagree
 package main
 
 import (
@@ -199,6 +200,7 @@ func main() {
 	dir := flag.String("dir", "t3-ast", "directory of package ast")
 	objmodelDir := flag.String("objmodeldir", "t1-cx-core-objmodel", "directory of package objmodel")
 	docsDir := flag.String("docsdir", "docs", "directory of ObjectModel.md and objectmodel-sites.csv")
+	root := flag.String("root", ".", "directory whose Go and grammar files hold the site comments")
 	check := flag.Bool("check", false, "report stale files instead of writing them")
 	flag.Parse()
 	files, err := objmodelgenFiles(*dir, *objmodelDir)
@@ -213,6 +215,14 @@ func main() {
 		os.Exit(1)
 	}
 	if *check {
+		siteProblems, err := objmodelgenSitesCodeCheck(*root, filepath.Join(*docsDir, "objectmodel-sites.csv"))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "objmodelgen:", err)
+			os.Exit(1)
+		}
+		for _, problem := range siteProblems {
+			fmt.Println(problem)
+		}
 		problems, err := objmodelgenCheck(*dir, files)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "objmodelgen:", err)
@@ -223,6 +233,9 @@ func main() {
 		}
 		if len(problems) > 0 {
 			fmt.Println("run make generate-objmodel")
+			os.Exit(1)
+		}
+		if len(siteProblems) > 0 {
 			os.Exit(1)
 		}
 		fmt.Printf("%d generated object model files up to date\n", len(files))

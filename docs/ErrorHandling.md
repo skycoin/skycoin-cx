@@ -130,7 +130,7 @@ Three error records exist.
   `CompileErrorRecordLine`, `CompileErrorRecordColumn`, 0 when unknown, and
   `CompileErrorRecordOperands`. The code is a `CompileErrorCode` from
   `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeMethodReceiversMultiple` (7056). 7009
+  `CompileErrorCodeReturnValueType` (7059). 7009
   `CompileErrorCodeRedeclaredBlock` is a name a package declares twice, as
   two of a type, a function and a global or twice as one of them, whose
   operands give the first declaration. 7041 is
@@ -156,9 +156,14 @@ Three error records exist.
   `CompileErrorCodeDereferenceNonPointer` a `*x` of a non-pointer `x`, 7054
   `CompileErrorCodeMethodRedeclared` a method declared twice, and 7055
   `CompileErrorCodeImportFailed` an import of a package that cannot be
-  loaded, whose members then report nothing more, and 7056
+  loaded, whose members then report nothing more, 7056
   `CompileErrorCodeMethodReceiversMultiple` a method with more than one
-  receiver, at the second. A package that loads but has compile errors
+  receiver, at the second, 7057 `CompileErrorCodeMethodPointerValue` a
+  pointer method called on a value that is not addressable, such as
+  `T{}.p()`, 7058 `CompileErrorCodeArrayLiteralElementType` an array
+  literal element of the wrong type, at the element, and 7059
+  `CompileErrorCodeReturnValueType` a value of the wrong type returned as
+  the unnamed result of `func f() T`. A package that loads but has compile errors
   prints them with the errors of the program and fails like an import
   that cannot be loaded, without an error at the import. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.

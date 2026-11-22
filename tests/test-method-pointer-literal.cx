@@ -1,0 +1,23 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type W struct {
+	t T
+}
+
+func (t *T) p() i32 {
+	return t.a
+}
+
+func mk() T {
+	return T{a: 3}
+}
+
+func main() {
+	i32.print(T{a: 5}.p())
+	i32.print(mk().p())
+	i32.print(W{t: T{a: 1}}.t.p())
+}

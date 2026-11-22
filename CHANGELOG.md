@@ -4,6 +4,10 @@
 
 #### Language
 
+- A struct can be declared on one line, `type T struct { a i32; b i32 }`, and so can a function body or block, `func f() i32 { return 1 }`, since the semicolon before a closing `}` may be left out, as in Go. A function with one output may give only its type, `func f() i32`. A multi-line comment that holds a newline ends a statement like a newline
+- A struct literal is an operand, so `T{a: 1}.m() + 1` and `f(T{a: 1}.a * 2)` work. An if or for header still needs it in parentheses, as in Go (skycoin-cx#21)
+- A pointer method called on a struct literal or a call result, such as `T{a: 5}.p()`, is the compile error `cannot call pointer method p on T`, as in Go. `(&T{a: 5}).p()` works
+- An array literal element of the wrong type says `in array literal` and points at the element
 - Binary operators bind as in Go. `&`, `&^`, `<<` and `>>` bind like `*`, and `|` and `^` like `+`, all tighter than comparisons. `d & 1 == 1` was `d & (1 == 1)` and is `(d & 1) == 1`, and `1 + 2 << 3` was 24 and is 17. No program in the repository changes meaning
 - Arrays of slices such as `[2][]i32` can be declared as variables, globals and struct fields, and the GC follows their slices
 - Slices of arrays such as `[][2]i32` and `[][2]Point` take `append`, indexing, `len` and element field access, and the GC follows them
@@ -26,6 +30,7 @@
 - `BenchmarkRun` in `t11-cx` times `execute.RunCompiled` alone over count, fib and bubble sort programs and the `BenchmarkCompile` programs, compiling outside the timer. `TestRunAllocs` fails when the allocations per run of any of them go above the counts recorded when it was added. The target is 0 (#407, #417)
 - The object model managers grow only at grow boundaries between compile stages and REPL iterations, to the next power of two when less than half of a manager is free, and print a warning on stderr when they do. Alloc on a full manager between two boundaries is an assert, see the Growth section of docs/ObjectModel.md (#299)
 - The object model managers, stage 3 of #299. Package `objmodel` (`t1-cx-core-objmodel`) holds the Gid layout and checks, and `t3-ast` has a generated `<obj>_gid.go`, `<obj>_mng.go` and manager test for each of the 14 IR object types, plus `CxIrState` with every manager. Nothing in the compiler uses them yet (#299)
+- `make check-objmodel` fails when `docs/objectmodel-sites.csv` and the site comments of the code disagree. 100 rows of sites rewritten away and the comments of 71 sites #429 fixed are gone, and 22 rows name the file their site moved to
 - `t0-cx-core-objmodelgen` generates the Gid and manager files from one template, `make generate-objmodel` runs it, and `make check-objmodel`, part of `make check`, fails on stale generated files, a Def file with more than its struct, or a Fon or Fof file that names a manager or `CxIrState` (#299)
 - `docs/ObjectModel.md`, the object model standard for the compiler IR. Def, Mng and Gid files per object type, the generational index layout, one `CxIrState` owning every manager, no pointers at rest, and every manager empty at teardown. `docs/objectmodel-sites.csv` lists every site still to migrate, and `BenchmarkCompile` in `t11-cx` is the compile speed baseline (#299)
 - `docs/IR.md`, what the compiler emits. It describes the in-memory program the VM runs, its arenas, expressions, operands and memory layout, a compiled example, and the serialized form

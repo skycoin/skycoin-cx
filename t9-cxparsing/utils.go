@@ -291,8 +291,6 @@ func Preliminarystage(srcStrs, srcNames []string) (int, []*ast.CXPackage) {
 				if match := reGlblName.FindStringSubmatch(string(line)); match != nil {
 					if _, err := prePkg.GetGlobal(actions.AST, actions.AST.CXProgramNameIntern(match[len(match)-1])); err != nil {
 						// then it hasn't been added
-						// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-						// Now a constructor call, site S1627.
 						_, arg := ast.MakeArgument(actions.AST, actions.AST.CXProgramNameIntern(match[len(match)-1]), ast.SourceFileGidNil, 0)
 						arg.Offset = types.InvalidPointer
 						arg.Package = ast.CXPackageIndex(prePkg.Index)

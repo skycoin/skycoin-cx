@@ -191,8 +191,6 @@ func calcFnSize(prgrm *cxast.CXProgram, fn *cxast.CXFunction) types.Pointer {
 
 // newSlot adds an atomic type signature for the slot of expression exprPos.
 func newSlot(prgrm *cxast.CXProgram, fn *cxast.CXFunction, exprPos int, typ types.Code) cxast.CXTypeSignatureIndex {
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S0032.
 	_, arg := cxast.MakeField(prgrm, prgrm.CXProgramNameIntern(strconv.Itoa(exprPos)), typ, cxast.SourceFileGidNil, -1)
 	arg.SetType(typ)
 	arg.Package = fn.Package

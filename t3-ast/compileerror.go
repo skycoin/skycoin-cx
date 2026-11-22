@@ -84,6 +84,16 @@ const (
 	// CompileErrorCodeMethodReceiversMultiple is a method with more than one
 	// receiver, at the second.
 	CompileErrorCodeMethodReceiversMultiple
+	// CompileErrorCodeMethodPointerValue is a pointer method called on a value
+	// that is not addressable, such as T{}.p(). Its operands are the method and
+	// the type.
+	CompileErrorCodeMethodPointerValue
+	// CompileErrorCodeArrayLiteralElementType is an array literal element of
+	// the wrong type, at the element. Its operands are the two types.
+	CompileErrorCodeArrayLiteralElementType
+	// CompileErrorCodeReturnValueType is a value of the wrong type returned as
+	// the unnamed result of func f() T. Its operands are the two types.
+	CompileErrorCodeReturnValueType
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

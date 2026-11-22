@@ -103,8 +103,6 @@ func IterationExpressions(prgrm *ast.CXProgram,
 			// Now an arena getter, site S0615.
 			lastCondExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastCondExpressionOperatorOutputTypeSig.Meta))
 			lastCondExpressionOperatorOutputType = lastCondExpressionOperatorOutputArg.Type
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0616.
 			_, predicate := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			predicate.SetType(lastCondExpressionOperatorOutputType)
 			predicate.Package = ast.CXPackageIndex(pkg.Index)
@@ -279,8 +277,6 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 		predicateTypeSigIdx = prgrm.CXAtomicOps[lastCondExpressionIdx].GetOutputs(prgrm)[0]
 	} else {
 		// then it's an expression
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S0632.
 		_, predicate := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
 		lastCondExpressionOperatorOutputs := lastCondExpressionOperator.GetOutputs(prgrm)
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -583,8 +579,6 @@ func operandResultOutputAdd(prgrm *ast.CXProgram, pkg *ast.CXPackage, exprs []as
 		// Now an arena getter, site S0649.
 		resultArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(resultTypeSig.Meta))
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S0650.
 		_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
 		out.SetType(resolveTypeForUnd(prgrm, &exprs[len(exprs)-1]))
 		out.Size = resultArg.Size
@@ -965,8 +959,6 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		// Now an arena getter, site S0701.
 		outParam = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fnOutputTypeSig.Meta))
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S0702.
 		_, out := ast.MakeArgument(prgrm, outParam.Name, CurrentFile, LineNo)
 		out.SetType(outParam.Type)
 		out.StructType = outParam.StructType

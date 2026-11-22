@@ -27,8 +27,6 @@ func ParseParameterDeclaration(prgrm *ast.CXProgram, parameterString []byte, pkg
 	}
 
 	// Set the declarator or the name of the param
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1560.
 	_, declarator := ast.MakeArgument(prgrm, stringpool.StringGidNil, fileName, lineno)
 	declarator.SetType(types.UNDEFINED)
 	declarator.Package = ast.CXPackageIndex(pkg.Index)

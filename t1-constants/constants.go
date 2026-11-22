@@ -28,9 +28,16 @@ const LOCAL_PREFIX = "*tmp"
 const SLICE_LITERAL_PREFIX = LOCAL_PREFIX + "slc"
 const LABEL_PREFIX = "*lbl"
 
+// RESULT_NAME names the result of func f() T, which has no name in the source.
+const RESULT_NAME = "*result"
+
 // ELEMENT_PREFIX names the variable that holds a struct literal element of a
 // slice literal. It is not a temp, so its field assignments are typed normally.
 const ELEMENT_PREFIX = "*elt"
+
+// ARRAY_ELEMENT_PREFIX names the element variable of an array literal. It starts
+// with ELEMENT_PREFIX, so the element is typed as a slice literal element.
+const ARRAY_ELEMENT_PREFIX = ELEMENT_PREFIX + "arr"
 
 // METHOD_RESULT_PREFIX names the variable that holds the result of a method
 // call used as a value. It is not a temp, so a read of it is looked up.

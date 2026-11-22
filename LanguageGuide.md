@@ -2,6 +2,7 @@
 
 * [Syntax](#syntax)
   * [Comments](#comments)
+  * [Semicolons](#semicolons)
   * [Declarations](#declarations)
     * [Allowed Names](#allowed-names)
     * [Strict Type System](#strict-type-system)
@@ -90,6 +91,29 @@ closed by writing asterisk-slash (\*/).
 /* This code won't be executed
 string.PrintLine("Hello world!")
 */
+```
+
+## [Semicolons](#table-of-contents)
+
+As in Go, statements and struct fields are separated by semicolons, and
+the lexer adds one at the end of a line that ends with a name, a
+literal, `return`, `break`, `continue`, `++`, `--`, `)`, `]` or `}`. A
+multi-line comment that holds a newline acts like a newline. The
+semicolon before a closing `}` may be left out, so short declarations
+fit on one line.
+
+```cx
+package main
+
+type Point struct { x i32; y i32 }
+
+func double (n i32) i32 { return n * 2 }
+
+func sign (n i32) i32 { if n < 0 { return -1 } else { return 1 } }
+
+func main () {
+    i32.print(double(Point{x: 3}.x) + sign(-4)) // prints 5
+}
 ```
 
 ## [Declarations](#table-of-contents)
@@ -385,15 +409,17 @@ Some forms of Go are not supported yet. A struct literal names its
 fields, so `Point{1, 2}` is a syntax error and `[]Point{{1, 2}}` is a
 compile error. A field of a call result, as in `mk().x`, works as in
 Go, and so do a field, a method call or an index after a struct
-literal, as in `Point{x: 1}.x` and `Point{x: 1}.norm()`. Such an
-expression is not yet an operand of a binary operator, so
-`Point{x: 1}.norm() + 1` needs parentheses around the call.
+literal, as in `Point{x: 1}.x` and `Point{x: 1}.norm()`. A struct
+literal is an operand like any other, so `Point{x: 1}.norm() + 1` and
+`f(Point{x: 2}.x * 2)` work. As in Go, a struct literal in the header
+of an `if` or `for` must be in parentheses, `if (Point{x: 1}.x == 1) {`,
+since `if p {` opens the body.
 
 ### [Functions](#table-of-contents)
 
-Functions in CX are similar in syntax to functions in Go. The only
-exception is that named outputs are enforced at the moment (this will
-most likely change in the future).
+Functions in CX are similar in syntax to functions in Go. A function
+with one output may give only its type, as in `func double (n i32) i32`.
+Several outputs must be named, as in `func pair () (a i32, b i32)`.
 
 ```cx
 package main
@@ -556,7 +582,10 @@ another call, and its arguments can be any expressions.
 
 A method with a pointer receiver can be called on a value or on a
 pointer. Called on a value, it gets the address of the value, so it can
-change it. A method with a value receiver called on a pointer gets a
+change it. As in Go, the value must be addressable, so
+`Point{x: 1}.move(2)` and `mk().move(2)` are the compile error
+`cannot call pointer method move on Point`, and `(&Point{x: 1}).move(2)`
+works. A method with a value receiver called on a pointer gets a
 copy of the value the pointer points to, as in Go.
 
 ```cx

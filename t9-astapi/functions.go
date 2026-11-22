@@ -119,8 +119,6 @@ func AddNativeInputToFunction(cxprogram *cxast.CXProgram, packageName, functionN
 		return err
 	}
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1604.
 	_, arg := cxast.MakeField(cxprogram, cxprogram.CXProgramNameIntern(inputName), inputType, cxast.SourceFileGidNil, -1)
 	arg.SetType(types.Code(inputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)
@@ -200,8 +198,6 @@ func AddNativeOutputToFunction(cxprogram *cxast.CXProgram, packageName, function
 	if err != nil {
 		return err
 	}
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S1605.
 	_, arg := cxast.MakeField(cxprogram, cxprogram.CXProgramNameIntern(outputName), outputType, cxast.SourceFileGidNil, -1)
 	arg.SetType(types.Code(outputType))
 	arg.Package = cxast.CXPackageIndex(pkg.Index)

@@ -1,0 +1,51 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type P struct {
+	t T
+	x i32
+}
+
+func (t T) m() i32 {
+	return t.a * 10
+}
+
+func half(t T) i32 {
+	return t.a / 2
+}
+
+func value() i32 {
+	return T{a: 4}.a + 1
+}
+
+func main() {
+	i32.print(T{a: 1}.m() + 1)
+	i32.print(-T{a: 2}.a)
+	i32.print(T{a: 3}.a * 2)
+	i32.print(1 + T{a: 3}.m())
+	var s []i32 = []i32{T{a: 4}.a, T{a: 5}.m()}
+	i32.print(s[0] + s[1])
+	x := T{a: 6}.m() - T{a: 1}.a
+	i32.print(x)
+	i32.print(value())
+	i32.print(half(T{a: 8}) + T{a: 2}.a)
+	i32.print(P{t: T{a: 2}, x: 3}.t.a + P{x: 4}.x)
+	var y i32 = T{a: 3}.a << 2
+	i32.print(y)
+	if (T{a: 1}.a == 1) {
+		i32.print(11)
+	}
+	b := T{a: 2}.a > 1
+	if b {
+		i32.print(12)
+	}
+	for b {
+		b = false
+	}
+	for i := 0; i < (T{a: 2}).a; i++ {
+		i32.print(i)
+	}
+}

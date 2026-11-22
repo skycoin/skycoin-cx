@@ -1,0 +1,31 @@
+package main
+
+type T struct {
+	a i32
+}
+
+type W struct {
+	t T
+	p *T
+}
+
+func (t *T) p() i32 {
+	return t.a + 100
+}
+
+func mkp() *T {
+	return &T{a: 4}
+}
+
+func main() {
+	i32.print((&T{a: 5}).p())
+	var t T = T{a: 6}
+	i32.print(t.p())
+	var w W
+	w.t.a = 7
+	i32.print(w.t.p())
+	i32.print(W{p: &T{a: 2}}.p.p())
+	i32.print(mkp().p())
+	var ts []T = []T{T{a: 8}}
+	i32.print(ts[0].p())
+}

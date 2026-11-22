@@ -140,8 +140,6 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		// otherwise we'd be trying to assign the fields to a nil value.
 		outField := lastFromExpressionOutputArg
 		auxName := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S0522.
 		_, aux := ast.MakeArgument(prgrm, auxName, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
 		aux.SetType(outField.Type)
 		aux.DeclarationSpecifiers = append(aux.DeclarationSpecifiers, constants.DECL_POINTER)
@@ -163,8 +161,6 @@ func StructLiteralAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, f
 		prgrm.CXAtomicOps[declExpressionIdx].Package = lastFromExpression.Package
 		prgrm.CXAtomicOps[declExpressionIdx].AddOutput(prgrm, auxTypeSigIdx)
 
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S0526.
 		_, out := ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, lastFromCXLine.FileName, lastFromCXLine.LineNumber)
 		out.Package = lastFromExpression.Package
 		outTypeSigIdx := ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
@@ -285,8 +281,6 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 			// Now an arena getter, site S0537.
 			fromExpressionInputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionInputTypeSig.Meta))
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0538.
 			_, sym := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
 			sym.SetType(fromExpressionInputArg.Type)
 			sym.Package = ast.CXPackageIndex(pkg.Index)
@@ -415,8 +409,6 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			fromExpressionOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionOutputTypeSig.Meta))
 
 			// then it's a literal
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0556.
 			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
 			sym.SetType(fromExpressionOutputArg.Type)
 			if len(fromExpressionOutputArg.Fields) > 0 {
@@ -461,8 +453,6 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			outType := outTypeArg.Type
 			outTypeIsSlice := outTypeArg.IsSlice()
 
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0565.
 			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
 			sym.SetType(outType)
 

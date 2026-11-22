@@ -315,6 +315,25 @@ func runTestCases(t *runner.TestRunner) {
 		"assign 1.0000000 2.0000000 2.5000000\nargument 6.0000000\nreturn 4.0000000\nappend 5.0000000\nfield 6.0000000 7.0000000\nindex 9.0000000\nvalues 3.0000000 3.0000000\nmethod 3.1415901 8.0000000\n")
 	t.RunWant("test-struct-literal-method.cx", types.CX_SUCCESS, "a selector, method call or index after a struct literal, T{a: 1}.m()",
 		"10\n16\n5\n3\n6\n12\n18\n6\n8\n")
+	t.RunWant("test-struct-literal-operand.cx", types.CX_SUCCESS, "a struct literal postfix is an operand of operators, calls, literals and returns, and parenthesized in a header",
+		"11\n-2\n6\n31\n54\n59\n5\n6\n6\n12\n11\n12\n0\n1\n")
+	t.RunWant("test-struct-literal-header.cx", types.CX_COMPILATION_ERROR, "a bare struct literal in an if header is not an operand, so { opens the body (skycoin-cx#21)",
+		"test-struct-literal-header.cx:8:12 syntax error: unexpected .")
+	t.RunWant("test-single-line-forms.cx", types.CX_SUCCESS, "struct, function and block forms on one line, an unparenthesized result type and a comment holding a newline",
+		"5\n6\n7\n10\n42\n9\n5\ntrue\n3\n0\n6\n1\n")
+	t.RunWant("test-result-unnamed-type.cx", types.CX_COMPILATION_ERROR, "a value of the wrong type returned as an unnamed result",
+		"test-result-unnamed-type.cx:3:23 cannot use value of type 'bool' as type 'i32' in return statement")
+	t.RunWant("test-array-literal-element-type.cx", types.CX_COMPILATION_ERROR, "an array literal element of the wrong type is reported at the element",
+		"test-array-literal-element-type.cx:18:3 cannot use value of type 'U' as type 'T' in array literal",
+		"test-array-literal-element-type.cx:19:29 cannot use value of type 'U' as type 'T' in array literal",
+		"test-array-literal-element-type.cx:20:29 cannot use value of type 'U' as type 'T' in array literal",
+		"test-array-literal-element-type.cx:22:3 cannot use value of type 'U' as type 'T' in slice literal")
+	t.RunWant("test-method-pointer-literal.cx", types.CX_COMPILATION_ERROR, "a pointer method of a literal or a call result, which is not addressable",
+		"test-method-pointer-literal.cx:20:20 cannot call pointer method p on T",
+		"test-method-pointer-literal.cx:21:17 cannot call pointer method p on T",
+		"test-method-pointer-literal.cx:22:28 cannot call pointer method p on T")
+	t.RunWant("test-method-pointer-addressable.cx", types.CX_SUCCESS, "a pointer method of &T{}, a variable, a field and a value reached through a pointer",
+		"105\n106\n107\n102\n104\n108\n")
 	t.RunWant("test-method-pointer-value-receiver.cx", types.CX_SUCCESS, "a method of value receiver called on a pointer gets a copy of the value",
 		"104 4\n5\n107 7\n8\n101 1\n101 1\n105\n101\n")
 	t.Run("test-slices-index-out-of-range-a.cx", types.CX_RUNTIME_INVALID_CAST, "Test index < 0")
@@ -637,7 +656,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-error-preliminary-continue.cx", types.CX_COMPILATION_ERROR, "a missing type in a declaration leaves the errors in the bodies reported once",
 		"test-error-preliminary-continue.cx:4:4 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:10 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:8 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunWant("test-error-syntax-a.cx test-error-syntax-b.cx", types.CX_COMPILATION_ERROR, "a syntax error is a record, sorted with the errors of the other files",
-		"error: test-error-syntax-a.cx:4:4 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected comma or semicolon or newline\n")
+		"error: test-error-syntax-a.cx:4:4 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected } or semicolon or newline\n")
 	t.RunWant("test-error-syntax-body.cx", types.CX_COMPILATION_ERROR, "a syntax error names the unexpected and the expected token",
 		"error: test-error-syntax-body.cx:6:5 syntax error: unexpected comma, expected ]\n")
 	t.RunWant("test-error-column.cx", types.CX_COMPILATION_ERROR, "compile errors print file:line:column, in column order on one line",

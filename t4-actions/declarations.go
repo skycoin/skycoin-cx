@@ -62,8 +62,6 @@ func DeclarationSpecifiers(declSpec *ast.CXArgument, arrayLengths []types.Pointe
 
 // DeclarationSpecifiersBasic() returns a type specifier created from one of the builtin types.
 func DeclarationSpecifiersBasic(prgrm *ast.CXProgram, typeCode types.Code) *ast.CXArgument {
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S0605.
 	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
 	arg.SetType(typeCode)
 	if typeCode == types.AFF {
@@ -121,8 +119,6 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 		}
 	}
 
-	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-	// Now a constructor call, site S0606.
 	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, currentFile, lineNo)
 	arg.Type = types.STRUCT
 	arg.StructType = strct

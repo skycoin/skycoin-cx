@@ -1,0 +1,11 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func main() {
+	if T{a: 1}.a == 1 {
+		i32.print(1)
+	}
+}

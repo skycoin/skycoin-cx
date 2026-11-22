@@ -3,7 +3,11 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -151,4 +155,87 @@ func objmodelgenTableEnd(lines []string, start int) int {
 		i++
 	}
 	return i
+}
+
+// objmodelgenSiteComment matches the site ids of an OBJMODEL comment, as in
+// "site S0123." or "sites S0123 S0124.".
+var objmodelgenSiteComment = regexp.MustCompile(`[Ss]ites?((?: S[0-9]{4})+)`)
+
+// objmodelgenSitesCodeCheck reports the sites CSV and the site comments of
+// the Go and grammar files under root that disagree: a row whose id no
+// comment names, a comment id with no row, or a row whose file does not name
+// its id.
+func objmodelgenSitesCodeCheck(root string, csvPath string) ([]string, error) {
+	f, err := os.Open(csvPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	rows, err := csv.NewReader(f).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", csvPath, err)
+	}
+	commented := map[string]map[string]bool{}
+	err = filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case "vendor", ".git", ".claude", "bin":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, ".y") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		file := filepath.ToSlash(path)
+		for _, line := range strings.Split(string(data), "\n") {
+			at := strings.Index(line, "//")
+			if at < 0 {
+				continue
+			}
+			for _, match := range objmodelgenSiteComment.FindAllStringSubmatch(line[at:], -1) {
+				for _, id := range strings.Fields(match[1]) {
+					if commented[id] == nil {
+						commented[id] = map[string]bool{}
+					}
+					commented[id][file] = true
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	var problems []string
+	listed := map[string]bool{}
+	for _, row := range rows[1:] {
+		id, file := row[0], row[3]
+		if listed[id] {
+			problems = append(problems, fmt.Sprintf("%s: site %s has two rows", csvPath, id))
+		}
+		listed[id] = true
+		switch files := commented[id]; {
+		case files == nil:
+			problems = append(problems, fmt.Sprintf("%s: site %s is named by no comment, remove the row", csvPath, id))
+		case !files[file]:
+			problems = append(problems, fmt.Sprintf("%s: site %s is not in %s", csvPath, id, file))
+		}
+	}
+	for id, files := range commented {
+		if !listed[id] {
+			for file := range files {
+				problems = append(problems, fmt.Sprintf("%s: site %s has no row in %s", file, id, csvPath))
+			}
+		}
+	}
+	sort.Strings(problems)
+	return problems, nil
 }

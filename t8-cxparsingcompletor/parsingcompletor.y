@@ -169,10 +169,11 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <arrayArguments>   argument_expression_list
 %type   <expressions>   postfix_expression
 %type   <expressions>   struct_literal_value
-%type   <expressions>   struct_literal_postfix
 %type   <expressions>   primary_expression
 
-%type   <expressions>   struct_literal_expression
+%type   <expressions>   postfix_nc unary_nc multiplicative_nc additive_nc
+%type   <expressions>   relational_nc logical_and_nc logical_or_nc conditional_nc
+%type   <arrayArguments>   assignment_target_list_nc
                         
 %type   <expressions>   array_literal_expression
 
@@ -224,8 +225,6 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <ints>          indexing_literal
 %type   <ints>          indexing_slice_literal
                         
-			// for struct literals
-%right                   IDENTIFIER LBRACE
                         
 /* %start                  translation_unit */
 %%
@@ -256,7 +255,7 @@ debugging:
 
 //delete selector, but cannot because goyacc segfaults
 selector:
-                IMPORT STRING_LITERAL IDENTIFIER SEMICOLON
+                IMPORT STRING_LITERAL IDENTIFIER
                 {
                 //
                 }
@@ -284,22 +283,26 @@ struct_declaration:
                 }
                 ;
 
+// A semicolon may be omitted before the closing brace, as in Go, so a struct
+// fits on one line: type T struct { a i32; b i32 }.
 struct_fields:
                 LBRACE RBRACE SEMICOLON
                 { $$ = nil }
         |       LBRACE fields RBRACE SEMICOLON
                 { $$ = $2 }
+        |       LBRACE fields SEMICOLON RBRACE SEMICOLON
+                { $$ = $2 }
         ;
 
-fields:         parameter_declaration SEMICOLON
+fields:         parameter_declaration
                 {
 			// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 			// Now a slice of objects, site S1474.
 			$$ = []*ast.CXArgument{$1}
                 }
-        |       fields parameter_declaration SEMICOLON
+        |       fields SEMICOLON parameter_declaration
                 {
-			$$ = append($1, $2)
+			$$ = append($1, $3)
                 }
         ;
 
@@ -337,13 +340,17 @@ function_parameters:
                 ;
 
 function_declaration:
-                function_header function_parameters compound_statement
+                function_header function_parameters compound_statement SEMICOLON
                 {
 			actions.FunctionDeclaration(actions.AST,$1, $2, nil, $3)
                 }
-        |       function_header function_parameters function_parameters compound_statement
+        |       function_header function_parameters function_parameters compound_statement SEMICOLON
                 {
 			actions.FunctionDeclaration(actions.AST,$1, $2, $3, $4)
+                }
+        |       function_header function_parameters declaration_specifiers compound_statement SEMICOLON
+                {
+			actions.FunctionDeclaration(actions.AST,$1, $2, actions.FunctionResultUnnamed(actions.AST, $3), $4)
                 }
         ;
 
@@ -382,8 +389,6 @@ direct_declarator:
                 IDENTIFIER
                 {
 			if pkg, err := actions.AST.GetCurrentPackage(); err == nil {
-				// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-				// Now a constructor call, site S1476.
 				_, arg := ast.MakeArgument(actions.AST, stringpool.StringGidNil, actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = actions.AST.CXProgramNameIntern($1)
@@ -451,8 +456,6 @@ declaration_specifiers:
 element_specifiers:
                 FUNC types_list types_list
 		{
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S1479.
 			_, arg := ast.MakeArgument(actions.AST, stringpool.StringGidNil, actions.CurrentFile, actions.LineNo)
 			arg.SetType(types.FUNC)
                        
@@ -552,11 +555,11 @@ type_specifier:
 struct_literal_fields:
                 // empty
                 { $$ = nil }
-        |       IDENTIFIER COLON struct_literal_expression
+        |       IDENTIFIER COLON conditional_expression
                 {
                         $$ = actions.StructLiteralField(actions.AST, $1, $3)
                 }
-        |       struct_literal_fields COMMA IDENTIFIER COLON struct_literal_expression
+        |       struct_literal_fields COMMA IDENTIFIER COLON conditional_expression
                 {
                         $$ = append($1, actions.StructLiteralField(actions.AST, $3, $5)...)
                 }
@@ -837,8 +840,12 @@ after_period:   type_specifier
         |       IDENTIFIER
         ;
 
+// A struct literal is an operand, as in Go, so T{a: 1}.m() + 1 parses. An
+// if or for header uses the _nc rules below, which hold no bare struct
+// literal, so `if x {` opens the body (skycoin-cx#21).
 postfix_expression:
 		primary_expression
+	|       struct_literal_value
 	|       postfix_expression LBRACK assignment_expression RBRACK
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
@@ -868,6 +875,17 @@ postfix_expression:
 			position := actions.TokenPositionPush($<line>3, $<column>3)
 			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
 			actions.TokenPositionPop(position)
+                }
+                ;
+
+struct_literal_value:
+		IDENTIFIER LBRACE struct_literal_fields RBRACE
+                {
+			$$ = actions.PrimaryStructLiteral(actions.AST,$1, $3)
+                }
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+                {
+			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $5)
                 }
                 ;
 
@@ -1005,71 +1023,158 @@ conditional_expression:
 	|       logical_or_expression '?' expression COLON conditional_expression
                 ;
 
-// A struct literal is not a primary expression, so `if x {` and `for b {`
-// reach the body. A selector, call or index may follow it, as in T{a: 1}.m().
-struct_literal_value:
-		IDENTIFIER LBRACE struct_literal_fields RBRACE
-                {
-			$$ = actions.PrimaryStructLiteral(actions.AST,$1, $3)
-                }
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
-                {
-			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $5)
-                }
-                ;
-
-struct_literal_postfix:
-		struct_literal_value PERIOD IDENTIFIER
-                {
-			position := actions.TokenPositionPush($<line>3, $<column>3)
-			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
-			actions.TokenPositionPop(position)
-                }
-	|       struct_literal_postfix PERIOD IDENTIFIER
-                {
-			position := actions.TokenPositionPush($<line>3, $<column>3)
-			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
-			actions.TokenPositionPop(position)
-                }
-	|       struct_literal_postfix LPAREN RPAREN
-                {
-			position := actions.TokenPositionPush($<line>1, $<column>1)
-			$$ = actions.PostfixExpressionEmptyFunCall(actions.AST,$1)
-			actions.TokenPositionPop(position)
-                }
-	|       struct_literal_postfix LPAREN argument_expression_list RPAREN
-                {
-			position := actions.TokenPositionPush($<line>1, $<column>1)
-			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
-			actions.TokenPositionPop(position)
-                }
-	|       struct_literal_postfix LBRACK assignment_expression RBRACK
+// The expression rules of an if or for header, which hold no bare struct
+// literal. One in parentheses, brackets or braces is a full expression.
+postfix_nc:
+		primary_expression
+	|       postfix_nc LBRACK assignment_expression RBRACK
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionArray(actions.AST,$1, $3)
 			actions.TokenPositionPop(position)
                 }
+        |       type_specifier PERIOD after_period
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionNative(actions.AST,types.Code($1), $3)
+			actions.TokenPositionPop(position)
+                }
+	|       postfix_nc LPAREN RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionEmptyFunCall(actions.AST,$1)
+			actions.TokenPositionPop(position)
+                }
+	|       postfix_nc LPAREN argument_expression_list RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+        |       postfix_nc PERIOD IDENTIFIER
+                {
+			position := actions.TokenPositionPush($<line>3, $<column>3)
+			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
                 ;
 
-struct_literal_expression:
-		conditional_expression
-	|       struct_literal_value
-	|       struct_literal_postfix
+unary_nc:
+                postfix_nc
                 {
 			$$ = actions.MethodCallValue(actions.AST, $1)
                 }
-	|       unary_operator IDENTIFIER LBRACE struct_literal_fields RBRACE
+	|       unary_operator unary_nc
                 {
-			$$ = actions.PrimaryStructLiteralReference(actions.AST, $1, $2, $4)
-                }
-	|       unary_operator postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
-                {
-			$$ = actions.UnaryExpression(actions.AST, $1, actions.PrimaryStructLiteralExternalOf(actions.AST, $2, $4, $6))
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.UnaryExpression(actions.AST,$1, $2)
+			actions.TokenPositionPop(position)
                 }
                 ;
 
+multiplicative_nc:
+                unary_nc
+        |       multiplicative_nc MUL_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_MUL)
+                }
+        |       multiplicative_nc DIV_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_DIV)
+                }
+        |       multiplicative_nc MOD_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_MOD)
+                }
+        |       multiplicative_nc LEFT_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHL)
+                }
+        |       multiplicative_nc RIGHT_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHR)
+                }
+        |       multiplicative_nc REF_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITAND)
+                }
+        |       multiplicative_nc BITCLEAR_OP unary_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITCLEAR)
+                }
+                ;
+
+additive_nc:
+                multiplicative_nc
+        |       additive_nc ADD_OP multiplicative_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_ADD)
+                }
+	|       additive_nc SUB_OP multiplicative_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_SUB)
+                }
+        |       additive_nc BITOR_OP multiplicative_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITOR)
+                }
+        |       additive_nc BITXOR_OP multiplicative_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITXOR)
+                }
+                ;
+
+relational_nc:
+                additive_nc
+        |       relational_nc EQ_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_EQUAL)
+                }
+        |       relational_nc NE_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_UNEQUAL)
+                }
+        |       relational_nc LT_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LT)
+                }
+        |       relational_nc GT_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GT)
+                }
+        |       relational_nc LTEQ_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LTEQ)
+                }
+        |       relational_nc GTEQ_OP additive_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GTEQ)
+                }
+                ;
+
+logical_and_nc:
+                relational_nc
+	|       logical_and_nc AND_OP relational_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BOOL_AND)
+                }
+                ;
+
+logical_or_nc:
+                logical_and_nc
+	|       logical_or_nc OR_OP logical_and_nc
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BOOL_OR)
+                }
+                ;
+
+
+conditional_nc:
+                logical_or_nc
+                ;
+
 assignment_expression:
-                struct_literal_expression
+                conditional_expression
 	|       unary_expression assignment_operator assignment_expression
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
@@ -1092,7 +1197,6 @@ assignment_operator:
 	|       XOR_ASSIGN
 	|       OR_ASSIGN
                 ;
-
 expression:     assignment_expression
 	|       assignment_target_list ASSIGN assignment_value_list
                 {
@@ -1120,23 +1224,34 @@ assignment_target_list:
                 }
                 ;
 
+assignment_target_list_nc:
+                conditional_nc COMMA conditional_nc
+                {
+			$$ = [][]ast.CXExpression{$1, $3}
+                }
+	|       assignment_target_list_nc COMMA conditional_nc
+                {
+			$$ = append($1, $3)
+                }
+                ;
+
 assignment_value_list:
-                struct_literal_expression
+                conditional_expression
                 {
 			$$ = [][]ast.CXExpression{$1}
                 }
-	|       assignment_value_list COMMA struct_literal_expression
+	|       assignment_value_list COMMA conditional_expression
                 {
 			$$ = append($1, $3)
                 }
                 ;
 
 for_assignment_value_list:
-                conditional_expression
+                conditional_nc
                 {
 			$$ = [][]ast.CXExpression{$1}
                 }
-	|       for_assignment_value_list COMMA conditional_expression
+	|       for_assignment_value_list COMMA conditional_nc
                 {
 			$$ = append($1, $3)
                 }
@@ -1147,11 +1262,11 @@ constant_expression:
                 ;
 
 declaration:
-                VAR declarator declaration_specifiers SEMICOLON
+                VAR declarator declaration_specifiers
                 {
 			$$ = actions.DeclareLocal(actions.AST,$2, $3, nil, false)
                 }
-        |       VAR declarator declaration_specifiers ASSIGN initializer SEMICOLON
+        |       VAR declarator declaration_specifiers ASSIGN initializer
                 {
 			$$ = actions.DeclareLocal(actions.AST,$2, $3, $5, true)
                 }
@@ -1188,42 +1303,43 @@ labeled_statement:
                 ;
 
 compound_statement:
-                LBRACE RBRACE SEMICOLON
-                { $$ = nil }
-	|       LBRACE block_item_list RBRACE SEMICOLON
+                LBRACE block_item_list RBRACE
                 {
                     $$ = $2
                 }
                 ;
 
+// Statements are separated by semicolons and a statement may be empty, as in
+// Go, so the semicolon before a closing brace may be omitted:
+// func f() i32 { return 1 } (https://go.dev/ref/spec#Semicolons).
 block_item_list:
                 block_item
-	|       block_item_list block_item
+	|       block_item_list SEMICOLON block_item
                 {
-			$$ = append($1, $2...)
+			$$ = append($1, $3...)
                 }
                 ;
 
-block_item:     declaration
+block_item:
+                { $$ = nil }
+        |       declaration
         |       statement
                 ;
 
 expression_statement:
-                SEMICOLON
-                { $$ = nil }
-	|       expression SEMICOLON
-                {          
+                expression
+                {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement($1)
 			actions.TokenPositionPop(position)
                 }
-	|       unary_expression INC_OP SEMICOLON
+	|       unary_expression INC_OP
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, true))
 			actions.TokenPositionPop(position)
                 }
-	|       unary_expression DEC_OP SEMICOLON
+	|       unary_expression DEC_OP
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, false))
@@ -1232,33 +1348,19 @@ expression_statement:
                 ;
 
 selection_statement:
-                IF conditional_expression LBRACE block_item_list RBRACE elseif_list else_statement SEMICOLON
+                IF conditional_nc compound_statement elseif_list else_statement
                 {
-			$$ = actions.CreateSelectionStatement(actions.AST,$2, $4, $6, $7, actions.SEL_ELSEIFELSE)
+			$$ = actions.CreateSelectionStatement(actions.AST,$2, $3, $4, $5, actions.SEL_ELSEIFELSE)
                 }
-        |       IF conditional_expression LBRACE block_item_list RBRACE else_statement SEMICOLON
+        |       IF conditional_nc compound_statement else_statement
                 {
-			$$ = actions.SelectionExpressions(actions.AST,$2, $4, $6)
+			$$ = actions.SelectionExpressions(actions.AST,$2, $3, $4)
                 }
-        |       IF conditional_expression LBRACE RBRACE else_statement SEMICOLON
+        |       IF conditional_nc compound_statement elseif_list
                 {
-			$$ = actions.SelectionExpressions(actions.AST,$2, nil, $5)
+			$$ = actions.CreateSelectionStatement(actions.AST,$2, $3, $4, nil, actions.SEL_ELSEIF)
                 }
-        |       IF conditional_expression LBRACE block_item_list RBRACE elseif_list SEMICOLON
-                {
-			$$ = actions.CreateSelectionStatement(actions.AST,$2, $4, $6, nil, actions.SEL_ELSEIF)
-                }
-        |       IF conditional_expression LBRACE RBRACE elseif_list SEMICOLON
-                {
-			//
-			$$ = actions.CreateSelectionStatement(actions.AST,$2, nil, $5, nil, actions.SEL_ELSEIF)
-                }
-        |       IF conditional_expression LBRACE RBRACE elseif_list else_statement SEMICOLON
-                {
-			//
-			$$ = actions.CreateSelectionStatement(actions.AST,$2, nil, $5, $6, actions.SEL_ELSEIFELSE)
-                }
-        |       IF conditional_expression compound_statement
+        |       IF conditional_nc compound_statement
                 {
 			$$ = actions.SelectionExpressions(actions.AST,$2, $3, nil)
                 }
@@ -1266,20 +1368,13 @@ selection_statement:
                 { $$ = nil }
                 ;
 
-elseif:         ELSE IF conditional_expression LBRACE block_item_list RBRACE
+elseif:         ELSE IF conditional_nc compound_statement
                 {
 			$$ = actions.SelectStatement{
 				Condition: $3,
-				Then: $5,
+				Then: $4,
 			}
                 }
-	|       ELSE IF conditional_expression LBRACE RBRACE
-		{
-			$$ = actions.SelectStatement{
-				Condition: $3,
-				Then: nil,
-			}
-		}
                 ;
 
 elseif_list:    elseif
@@ -1293,18 +1388,14 @@ elseif_list:    elseif
         ;
 
 else_statement:
-                ELSE LBRACE block_item_list RBRACE
+                ELSE compound_statement
                 {
-			$$ = $3
+			$$ = $2
                 }
-	|	ELSE LBRACE RBRACE
-		{
-			$$ = nil
-		}
         ;
 
 iteration_statement:
-                FOR conditional_expression compound_statement
+                FOR conditional_nc compound_statement
                 {
 			position := actions.TokenPositionPush($<line>2, $<column>2)
 			$$ = actions.IterationExpressions(actions.AST,nil, $2, nil, $3)
@@ -1320,11 +1411,11 @@ iteration_statement:
                 }
                 ;
 
-// A for header starts with no bare struct literal and its post statement holds
-// none, so `for b {` and `for ...; i = j {` reach the body (skycoin-cx#21).
+// A for header holds no bare struct literal outside its init value, so
+// `for b {` and `for ...; i = j {` reach the body (skycoin-cx#21).
 for_clause_assignment:
-                conditional_expression
-	|       unary_expression assignment_operator for_clause_assignment
+                conditional_nc
+	|       unary_nc assignment_operator for_clause_assignment
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionAssignmentExpression($1, $2, $3)
@@ -1335,15 +1426,15 @@ for_clause_assignment:
 // i++ and i-- are statements, as in Go, so only a post statement holds them.
 for_post_expression:
                 for_clause_assignment
-	|       unary_expression INC_OP
+	|       unary_nc INC_OP
                 {
 			$$ = actions.PostfixExpressionIncDec(actions.AST, $1, true)
                 }
-	|       unary_expression DEC_OP
+	|       unary_nc DEC_OP
                 {
 			$$ = actions.PostfixExpressionIncDec(actions.AST, $1, false)
                 }
-	|       assignment_target_list ASSIGN for_assignment_value_list
+	|       assignment_target_list_nc ASSIGN for_assignment_value_list
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
@@ -1352,8 +1443,8 @@ for_post_expression:
                 ;
 
 for_init_assignment:
-                conditional_expression
-	|       unary_expression assignment_operator assignment_expression
+                conditional_nc
+	|       unary_nc assignment_operator assignment_expression
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionAssignmentExpression($1, $2, $3)
@@ -1363,13 +1454,13 @@ for_init_assignment:
 
 for_init_expression:
                 for_init_assignment
-	|       assignment_target_list ASSIGN for_assignment_value_list
+	|       assignment_target_list_nc ASSIGN for_assignment_value_list
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
 			actions.TokenPositionPop(position)
                 }
-	|       assignment_target_list CASSIGN for_assignment_value_list
+	|       assignment_target_list_nc CASSIGN for_assignment_value_list
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = ParserActionMultipleAssignment($1, $2, $3)
@@ -1401,13 +1492,13 @@ for_condition_statement:
                 ;
 
 return_expression:
-		struct_literal_expression
+		conditional_expression
 		{
 			retExprs := actions.ReturnExpressions{Expressions: actions.AssociateReturnExpressions(actions.AST,0, $1)}
 			retExprs.Size++
 			$$ = retExprs
 		}
-	|	return_expression COMMA struct_literal_expression
+	|	return_expression COMMA conditional_expression
 		{
 			$1.Expressions = append($1.Expressions, actions.AssociateReturnExpressions(actions.AST,$1.Size, $3)...)
 			$1.Size++
@@ -1415,7 +1506,7 @@ return_expression:
 		}
 		;
 
-jump_statement: GOTO IDENTIFIER SEMICOLON
+jump_statement: GOTO IDENTIFIER
                 {
 			pkg, err := actions.AST.GetCurrentPackage()
                         if err!=nil{
@@ -1436,19 +1527,19 @@ jump_statement: GOTO IDENTIFIER SEMICOLON
                         $$ = []ast.CXExpression{*exprCXLine,*expr}
 			
                 }
-	|       CONTINUE SEMICOLON
+	|       CONTINUE
 		{
 			$$ = actions.ContinueExpressions(actions.AST,)
 		}
-	|       BREAK SEMICOLON
+	|       BREAK
 		{
 			$$ = actions.BreakExpressions(actions.AST,)
 		}
-	|       RETURN SEMICOLON
+	|       RETURN
                 {
 			$$ = actions.AddJmpToReturnExpressions(actions.AST,actions.ReturnExpressions{})
                 }
-	|       RETURN return_expression SEMICOLON
+	|       RETURN return_expression
                 {
 			$$ = actions.AddJmpToReturnExpressions(actions.AST,$2)
                 }

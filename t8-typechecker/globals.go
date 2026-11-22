@@ -57,8 +57,6 @@ func ParseGlobals(files []*loader.File, globals []declaration_extractor.GlobalDe
 		globalTokens := reGlobalDeclaration.FindSubmatch(globalDeclaration)
 
 		// add Global as CX Argument to CX Package
-		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-		// Now a constructor call, site S1513.
 		_, globalArg := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern(global.GlobalVariableName), prgrm.CXProgramSourceFileIntern(global.FileID), global.LineNumber)
 		globalArg.Offset = types.InvalidPointer
 		globalArg.Package = ast.CXPackageIndex(pkg.Index)
