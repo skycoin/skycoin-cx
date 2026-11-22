@@ -250,9 +250,11 @@ in variables, fields, parameters and results. `[3]*i32` is an array of
 three pointers, `[2][2]*Point` a matrix of pointers and `[4]pack.T` an
 array of the struct `T` of the imported package `pack`. Slices and
 pointers of such types, `[]pack.T` and `*pack.T`, work the same way.
-An array of slices, an array of pointers to arrays and an array of
-functions, such as `[2][]i32`, `[2]*[3]i32` and `[2]func(i32)()`, are
-not supported yet and are syntax errors.
+An array can also hold slices. `[2][]i32` is two slices of `i32`, and
+`a[1] = append(a[1], 5)` grows the second one, in a variable, a global
+or a struct field. An array of pointers to arrays and an array of
+functions, such as `[2]*[3]i32` and `[2]func(i32)()`, are not supported
+yet and are syntax errors.
 
 ### [Slices](#table-of-contents)
 
@@ -893,6 +895,22 @@ are ordinary calls and evaluate both arguments.
 The unary operators `-` and `!` apply to any operand, such as a call
 `-f(x)`, a method call `!p.done()`, a struct field `-p.x` or a
 parenthesized expression `!(a && b)`.
+
+Binary operators bind as in Go
+([Operator precedence](https://go.dev/ref/spec#Operator_precedence)).
+There are five levels, from the tightest to the loosest. Operators of
+one level group from the left, so `a - b + c` is `(a - b) + c`.
+
+| Level | Operators |
+|-------|-----------|
+| 5 | `*` `/` `%` `<<` `>>` `&` `&^` |
+| 4 | `+` `-` `\|` `^` |
+| 3 | `==` `!=` `<` `<=` `>` `>=` |
+| 2 | `&&` |
+| 1 | `\|\|` |
+
+So `d & 1 == 1` is `(d & 1) == 1`, and `1 + 2 << 3` is `1 + (2 << 3)`.
+Unary operators bind tighter than any binary operator.
 
 ## [Assignments and Initializations](#table-of-contents)
 

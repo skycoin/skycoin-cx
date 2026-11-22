@@ -471,6 +471,10 @@ array_element:
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
                 }
+        |       LBRACK RBRACK declaration_specifiers
+                {
+			$$ = actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_SLICE)
+                }
                 ;
 
 type_specifier:
@@ -674,53 +678,39 @@ unary_operator:
 	|       NEG_OP
                 ;
 
+// Binary operator precedence follows https://go.dev/ref/spec#Operator_precedence
 multiplicative_expression:
                 unary_expression
 	|       multiplicative_expression MUL_OP unary_expression
 	|       multiplicative_expression DIV_OP unary_expression
 	|       multiplicative_expression MOD_OP unary_expression
+	|       multiplicative_expression LEFT_OP unary_expression
+	|       multiplicative_expression RIGHT_OP unary_expression
+	|       multiplicative_expression REF_OP unary_expression
+	|       multiplicative_expression BITCLEAR_OP unary_expression
                 ;
 
 additive_expression:
                 multiplicative_expression
 	|       additive_expression ADD_OP multiplicative_expression
 	|       additive_expression SUB_OP multiplicative_expression
-                ;
-
-shift_expression:
-                additive_expression
-	|       shift_expression LEFT_OP additive_expression
-	|       shift_expression RIGHT_OP additive_expression
-        |       shift_expression BITCLEAR_OP additive_expression
+	|       additive_expression BITOR_OP multiplicative_expression
+	|       additive_expression BITXOR_OP multiplicative_expression
                 ;
 
 relational_expression:
-                shift_expression
-	|       relational_expression EQ_OP shift_expression
-	|       relational_expression NE_OP shift_expression
-	|       relational_expression LT_OP shift_expression
-	|       relational_expression GT_OP shift_expression
-	|       relational_expression LTEQ_OP shift_expression
-	|       relational_expression GTEQ_OP shift_expression
-                ;
-
-and_expression: relational_expression
-	|       and_expression REF_OP relational_expression
-                ;
-
-exclusive_or_expression:
-                and_expression
-	|       exclusive_or_expression BITXOR_OP and_expression
-                ;
-
-inclusive_or_expression:
-                exclusive_or_expression
-	|       inclusive_or_expression BITOR_OP exclusive_or_expression
+                additive_expression
+	|       relational_expression EQ_OP additive_expression
+	|       relational_expression NE_OP additive_expression
+	|       relational_expression LT_OP additive_expression
+	|       relational_expression GT_OP additive_expression
+	|       relational_expression LTEQ_OP additive_expression
+	|       relational_expression GTEQ_OP additive_expression
                 ;
 
 logical_and_expression:
-                inclusive_or_expression
-	|       logical_and_expression AND_OP inclusive_or_expression
+                relational_expression
+	|       logical_and_expression AND_OP relational_expression
                 ;
 
 logical_or_expression:

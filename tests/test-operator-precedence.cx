@@ -1,0 +1,27 @@
+// Binary operators bind as in Go: * / % << >> & &^, then + - | ^, then
+// comparisons, then &&, then ||.
+
+package main
+
+func low(d ui64) (out ui64) {
+	if d & 1UL == 1UL {
+		out = 1UL
+	}
+}
+
+func main() {
+	bool.print(3 & 1 == 1)
+	bool.print(1 | 2 == 3)
+	i32.print(1 + 2 << 3)
+	i32.print(1 << 2 * 3)
+	i32.print(2 + 3 & 1)
+	i32.print(3 | 4 + 1)
+	i32.print(6 | 1 ^ 3)
+	i32.print(5 &^ 1 + 2)
+	i32.print(10 - 4 >> 1)
+	i32.print(7 % 4 * 2)
+	bool.print(true || false && false)
+	bool.print(1 + 1 == 2 && 6 & 3 == 2)
+	ui64.print(low(3UL))
+	ui64.print(low(4UL))
+}

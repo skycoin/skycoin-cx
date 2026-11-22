@@ -160,11 +160,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   conditional_expression
 %type   <expressions>   logical_or_expression
 %type   <expressions>   logical_and_expression
-%type   <expressions>   exclusive_or_expression
-%type   <expressions>   inclusive_or_expression
-%type   <expressions>   and_expression
 %type   <expressions>   relational_expression
-%type   <expressions>   shift_expression
 %type   <expressions>   additive_expression
 %type   <expressions>   multiplicative_expression
 %type   <expressions>   unary_expression
@@ -508,6 +504,10 @@ array_element:
         |       MUL_OP array_element
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
+                }
+        |       LBRACK RBRACK declaration_specifiers
+                {
+			$$ = actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_SLICE)
                 }
                 ;
 
@@ -857,6 +857,7 @@ unary_operator:
 	|       NEG_OP
                 ;
 
+// Binary operator precedence follows https://go.dev/ref/spec#Operator_precedence
 multiplicative_expression:
                 unary_expression
         |       multiplicative_expression MUL_OP unary_expression
@@ -871,6 +872,22 @@ multiplicative_expression:
                 {
 			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_MOD)
                 }
+        |       multiplicative_expression LEFT_OP unary_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHL)
+                }
+        |       multiplicative_expression RIGHT_OP unary_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHR)
+                }
+        |       multiplicative_expression REF_OP unary_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITAND)
+                }
+        |       multiplicative_expression BITCLEAR_OP unary_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITCLEAR)
+                }
                 ;
 
 additive_expression:
@@ -883,78 +900,47 @@ additive_expression:
                 {
 			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_SUB)
                 }
-                ;
-
-shift_expression:
-                additive_expression
-        |       shift_expression LEFT_OP additive_expression
+        |       additive_expression BITOR_OP multiplicative_expression
                 {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHL)
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITOR)
                 }
-        |       shift_expression RIGHT_OP additive_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITSHR)
-                }
-        |       shift_expression BITCLEAR_OP additive_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITCLEAR)
-                }
-                ;
-
-relational_expression:
-                shift_expression
-        |       relational_expression EQ_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_EQUAL)
-                }
-        |       relational_expression NE_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_UNEQUAL)
-                }
-        |       relational_expression LT_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LT)
-                }
-        |       relational_expression GT_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GT)
-                }
-        |       relational_expression LTEQ_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LTEQ)
-                }
-        |       relational_expression GTEQ_OP shift_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GTEQ)
-                }
-                ;
-
-and_expression: relational_expression
-        |       and_expression REF_OP relational_expression
-                {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITAND)
-                }
-                ;
-
-exclusive_or_expression:
-                and_expression
-        |       exclusive_or_expression BITXOR_OP and_expression
+        |       additive_expression BITXOR_OP multiplicative_expression
                 {
 			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITXOR)
                 }
                 ;
 
-inclusive_or_expression:
-                exclusive_or_expression
-        |       inclusive_or_expression BITOR_OP exclusive_or_expression
+relational_expression:
+                additive_expression
+        |       relational_expression EQ_OP additive_expression
                 {
-			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BITOR)
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_EQUAL)
+                }
+        |       relational_expression NE_OP additive_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_UNEQUAL)
+                }
+        |       relational_expression LT_OP additive_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LT)
+                }
+        |       relational_expression GT_OP additive_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GT)
+                }
+        |       relational_expression LTEQ_OP additive_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_LTEQ)
+                }
+        |       relational_expression GTEQ_OP additive_expression
+                {
+			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_GTEQ)
                 }
                 ;
 
 logical_and_expression:
-                inclusive_or_expression
-	|       logical_and_expression AND_OP inclusive_or_expression
+                relational_expression
+	|       logical_and_expression AND_OP relational_expression
                 {
 			$$ = actions.OperatorExpression(actions.AST,$1, $3, constants.OP_BOOL_AND)
                 }
