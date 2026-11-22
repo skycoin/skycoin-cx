@@ -21,9 +21,10 @@ document or check script.
 5. **Two classes of error.** Path, file and network failures return their
    module's error struct, and every other failure is a crashing assert from
    `t0-cx-core-assert`. See [ErrorHandling.md](ErrorHandling.md).
-6. **Naming.** Verbose, descriptive names, see
-   [skycoin-cx#212](https://github.com/skycoin/skycoin-cx/issues/212) until
-   it has its own document.
+6. **Naming.** Self describing, hierarchical, lexicographically prefixed
+   names in Java type name style. See the Naming section of
+   [AGENTS.md](../AGENTS.md#naming) and
+   [skycoin-cx#212](https://github.com/skycoin/skycoin-cx/issues/212).
 7. **Opcode numbers are fixed.** Every opcode has a fixed number in
    `constants.OpcodeLifecycleTable` in
    [t1-constants/opcodes.go](../t1-constants/opcodes.go), mirrored in
