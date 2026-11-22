@@ -1,0 +1,61 @@
+package main
+
+var calls i32
+
+var early bool = T(0) || T(99)
+
+func T(i i32) (out bool) {
+	printf("T%d ", i)
+	calls = calls + 1
+	out = true
+}
+
+func F(i i32) (out bool) {
+	printf("F%d ", i)
+	calls = calls + 1
+	out = false
+}
+
+func main() {
+	var b bool
+	b = T(1) || T(2)
+	printf("= %v\n", b)
+	b = F(3) || T(4)
+	printf("= %v\n", b)
+	b = F(5) && T(6)
+	printf("= %v\n", b)
+	b = T(7) && F(8)
+	printf("= %v\n", b)
+	c := F(9) || F(10) || T(11) || T(12)
+	printf("= %v\n", c)
+	d := T(13) && T(14) && F(15) && T(16)
+	printf("= %v\n", d)
+	b = T(17) && (F(18) || T(19))
+	printf("= %v\n", b)
+	b = F(20) && (T(21) || T(22))
+	printf("= %v\n", b)
+	b = (F(23) && T(24)) || (T(25) && T(26))
+	printf("= %v\n", b)
+	f27 := F(27)
+	b = !f27 || T(28)
+	printf("= %v\n", b)
+	b = bool.not(T(29) && F(30)) && bool.not(T(31))
+	printf("= %v\n", b)
+	t32 := T(32)
+	b = !t32 && T(33)
+	printf("= %v\n", b)
+	t := true
+	f := false
+	b = t || T(34)
+	printf("= %v\n", b)
+	b = f && T(35)
+	printf("= %v\n", b)
+	b = F(36) || t
+	printf("= %v\n", b)
+	b = !t || !f || T(37)
+	printf("= %v\n", b)
+	b = !t && T(38)
+	printf("= %v\n", b)
+	printf("early %v\n", early)
+	i32.print(calls)
+}

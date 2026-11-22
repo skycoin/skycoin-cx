@@ -1,0 +1,23 @@
+package main
+
+func main() {
+	var s []i32
+	s = append(s, 5)
+	s = append(s, 0)
+	for k := 0; k < len(s) && s[k] > 0; k++ {
+		printf("s[%d] %d\n", k, s[k])
+	}
+	k := 2
+	if k < len(s) && s[k] == 0 {
+		printf("bad\n")
+	}
+	if k >= len(s) || s[k] == 0 {
+		printf("in range check\n")
+	}
+	var bs []bool
+	bs = append(bs, true)
+	ok := len(bs) > 1 && bs[1]
+	printf("%v\n", ok)
+	ok = len(bs) > 0 && bs[0]
+	printf("%v\n", ok)
+}

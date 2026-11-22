@@ -130,8 +130,7 @@ Works:
 Known broken:
 
 - 19 CX program tests fail, among them `for true {}`
-  ([#20](https://github.com/skycoin/skycoin-cx/issues/20)), no short circuit
-  evaluation ([#26](https://github.com/skycoin/skycoin-cx/issues/26)) and
+  ([#20](https://github.com/skycoin/skycoin-cx/issues/20)) and
   `-heap-max` not enforced
   ([#17](https://github.com/skycoin/skycoin-cx/issues/17)). Issues #13 to #29
   cover them all.

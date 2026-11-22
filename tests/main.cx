@@ -368,7 +368,7 @@ func main ()() {
 	runTestEx("issue-53-c.cx", cx.SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", TEST_STABLE, 0)
 	runTestEx("issue-51.cx", cx.COMPILATION_ERROR, "No compilation error when global variable is redeclared at local scope", TEST_ISSUE, 0)
 	runTestEx("issue-49.cx", cx.COMPILATION_ERROR, "No compilation error when assigning an literal which overflow the receiving type", TEST_ISSUE, 0)
-	runTestEx("issue-48.cx", cx.SUCCESS, "Cx is not supporting short-circuit evaluation", TEST_ISSUE, 0)
+	runTestEx("issue-48.cx", cx.SUCCESS, "Cx is not supporting short-circuit evaluation", TEST_STABLE, 0)
 	runTestEx("issue-39.cx", cx.SUCCESS, "func defined with no arguments, called WITH arguments causes PANIC", TEST_ISSUE, 0)
 	runTest("issue-2.cx", cx.SUCCESS, "multi-dimensional arrays are not working")
 	runTest("issue-1.cx", cx.SUCCESS, "multi-dimensional slices are not working")

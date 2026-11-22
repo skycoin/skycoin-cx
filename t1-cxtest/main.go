@@ -309,6 +309,14 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-loop-goto.cx", types.CX_SUCCESS, "goto out of and back into a labelled loop with break and continue", "1 0 0\n2 2 0\n3 0 0\n4\n")
 	t.RunWant("test-loop-for-true.cx", types.CX_SUCCESS, "for true runs its body (skycoin-cx#20)", "55\n4\n")
 	t.RunWant("test-loop-for-bool.cx", types.CX_SUCCESS, "for on a bool variable or expression, an empty condition and an assignment post statement (skycoin-cx#21)", "3\n20\n6\n6\n6\n")
+	t.RunWant("test-shortcircuit-assign.cx", types.CX_SUCCESS, "&& and || in assignments, nested, with ! and in a global initializer short-circuit (skycoin-cx#26)",
+		"T0 T1 = true\nF3 T4 = true\nF5 = false\nT7 F8 = false\nF9 F10 T11 = true\nT13 T14 F15 = false\nT17 F18 T19 = true\nF20 = false\nF23 T25 T26 = true\nF27 = true\nT29 F30 T31 = false\nT32 = false\n= true\n= false\nF36 = true\n= true\n= false\nearly true\n26\n")
+	t.RunWant("test-shortcircuit-control.cx", types.CX_SUCCESS, "&& and || in if and for conditions skip a division by zero and an out of range index (skycoin-cx#26)",
+		"T1 then\nF3 else\nF5 T6 F7 then\nT0 T1 T2 n 3\nT10 T11 \nno divide\na[0] 5\n10\n")
+	t.RunWant("test-shortcircuit-call.cx", types.CX_SUCCESS, "&& and || in arguments and return values short-circuit, bool.and and bool.or evaluate both (skycoin-cx#26)",
+		"T1 F3 show true false\nF5 T100 show true true\nT200 show false true\nT301 pair true true\nT300 pair true false\nT6 F7 T8 F9 T10 F11 show true false\nF0 T0 show false true\nshow true false\nF2 T2 show false true\nT12 T13 = true\nF14 T15 = false\n")
+	t.RunWant("test-shortcircuit-slice.cx", types.CX_SUCCESS, "&& and || guard slice indexes, including a bare indexed operand (skycoin-cx#26)",
+		"s[0] 5\nin range check\nfalse\ntrue\n")
 	t.RunWant("test-loop-break-outside.cx", types.CX_COMPILATION_ERROR, "break outside a loop (skycoin-cx#60)",
 		`test-loop-break-outside.cx:5 break is not in a loop`)
 	t.RunWant("test-loop-continue-outside.cx", types.CX_COMPILATION_ERROR, "continue outside a loop (skycoin-cx#60)",
@@ -510,7 +518,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("issue-53-c.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-51.cx", types.CX_COMPILATION_ERROR, "No compilation error when global variable is redeclared at local scope", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#25
 	t.RunEx("issue-49.cx", types.CX_COMPILATION_ERROR, "No compilation error when assigning an literal which overflow the receiving type", runner.TestIssue, 0)
-	t.RunEx("issue-48.cx", types.CX_SUCCESS, "Cx is not supporting short-circuit evaluation", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#26
+	t.Run("issue-48.cx", types.CX_SUCCESS, "Cx is not supporting short-circuit evaluation")
 	t.Run("issue-39.cx", types.CX_COMPILATION_ERROR, "func defined with no arguments, called WITH arguments causes PANIC")
 	t.Run("issue-2.cx", types.CX_SUCCESS, "multi-dimensional arrays are not working")
 	t.Run("issue-1.cx", types.CX_SUCCESS, "multi-dimensional slices are not working")

@@ -56,6 +56,7 @@
 
 #### Fixed
 
+- `&&` and `||` evaluated both operands, so `i < len(s) && s[i] > 0` read past the end of `s` and a call on the right always ran. A jmp on the left operand now skips the right one, as in Go, on the old loop and on vm. `bool.and` and `bool.or` stay ordinary calls that evaluate both arguments (#26)
 - `break` and `continue` in an inner loop left every enclosing loop, because each enclosing loop retargeted them. A loop now turns each one it resolves into a jump (#39)
 - `for true { ... }` never ran its body and `for b { ... }` on a bool variable was a syntax error. A literal or variable condition is read in place, and the for header no longer takes `b {` as a struct literal, so `for ...; i = j {` parses too. An empty condition, `for i := 0; ; i++`, is true instead of a host panic (#20, #21)
 - `break` or `continue` outside a loop compiled and ran on. It is the compile error `break is not in a loop`, `CompileErrorCodeLoopJumpOutsideLoop` (7039) (#60)

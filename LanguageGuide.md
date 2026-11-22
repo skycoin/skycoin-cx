@@ -740,6 +740,11 @@ For example, the expression `i32.print(foo()[0])` in the code above
 consists of two function calls, and the array returned by the call
 to `foo` is "dereferenced" to its *0th* element.
 
+`&&` and `||` short-circuit as in Go. The right operand runs only when
+the left one does not decide the result, so `i < len(s) && s[i] > 0`
+never reads past the end of `s`. The functions `bool.and` and `bool.or`
+are ordinary calls and evaluate both arguments.
+
 ## [Assignments and Initializations](#table-of-contents)
 
 As in many other C-like languages, assignments are done using the

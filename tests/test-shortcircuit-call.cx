@@ -1,0 +1,48 @@
+package main
+
+func T(i i32) (out bool) {
+	printf("T%d ", i)
+	out = true
+}
+
+func F(i i32) (out bool) {
+	printf("F%d ", i)
+	out = false
+}
+
+func Either(a bool, b bool) (out bool) {
+	out = a || T(100)
+}
+
+func Both(a bool) (out bool) {
+	return a && T(200)
+}
+
+func Pair(a bool) (x bool, y bool) {
+	return a || T(300), a && T(301)
+}
+
+func Show(a bool, b bool) {
+	printf("show %v %v\n", a, b)
+}
+
+func main() {
+	Show(T(1) || T(2), F(3) && T(4))
+	Show(Either(true, F(5)), Either(false, true))
+	Show(Both(false), Both(true))
+	var x bool
+	var y bool
+	x, y = Pair(true)
+	printf("pair %v %v\n", x, y)
+	x, y = Pair(false)
+	printf("pair %v %v\n", x, y)
+	Show(T(6) && (F(7) || T(8)), F(9) || (T(10) && F(11)))
+	for i := 0; i < 3; i++ {
+		Show(i == 1 || F(i), i != 1 && T(i))
+	}
+	var b bool
+	b = bool.or(T(12), T(13))
+	printf("= %v\n", b)
+	b = bool.and(F(14), T(15))
+	printf("= %v\n", b)
+}

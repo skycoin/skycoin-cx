@@ -637,6 +637,7 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		typeSigIdx := prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)[0]
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	}
+	leftCount := len(out)
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0676.
@@ -651,6 +652,11 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		// An atomic output has no indexes.
 	} else {
 		panic("type is not known")
+	}
+
+	if (opcode == constants.OP_BOOL_AND || opcode == constants.OP_BOOL_OR) && lastRightExpressionOperator == nil && lastRightExpressionOutputArg != nil && (len(lastRightExpressionOutputArg.Indexes) > 0 || len(lastRightExpressionOutputArg.DereferenceOperations) > 0) {
+		lastRightExpressionOperator = shortCircuitOperandExpression(prgrm, lastRightExpressionIdx)
+		lastRightExpressionOutputTypeSig = prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)[0])
 	}
 
 	if lastRightExpressionOutputArg != nil && len(lastRightExpressionOutputArg.Indexes) > 0 || lastRightExpressionOperator != nil {
@@ -668,9 +674,133 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
 	}
 
+	if opcode == constants.OP_BOOL_AND || opcode == constants.OP_BOOL_OR {
+		out = shortCircuitExpressions(prgrm, out, leftCount, prgrm.CXAtomicOps[expressionIdx].GetInputs(prgrm)[0], opcode)
+	}
 	out = append(out, *exprCXLine, *expr)
 
 	return
+}
+
+// shortCircuitLinesPending marks the skip of a short-circuit jmp until ProcessShortCircuitJumps sets it.
+const shortCircuitLinesPending = -1 << 30
+
+// shortCircuitExpressions puts a jmp on the left operand before the right operand's expressions.
+// The bool op still runs, and when the right side is skipped the left operand alone decides it.
+func shortCircuitExpressions(prgrm *ast.CXProgram, exprs []ast.CXExpression, leftCount int, leftTypeSigIdx ast.CXTypeSignatureIndex, opcode int) []ast.CXExpression {
+	if leftCount == len(exprs) {
+		return exprs
+	}
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+
+	jmpCXLine := MakeCXLineExpressionCurrent(prgrm)
+	jmpExpr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_JMP])
+	jmpOp := &prgrm.CXAtomicOps[jmpExpr.Index]
+	jmpOp.Package = ast.CXPackageIndex(pkg.Index)
+	jmpOp.AddInput(prgrm, leftTypeSigIdx)
+	if opcode == constants.OP_BOOL_OR {
+		jmpOp.ThenLines = shortCircuitLinesPending
+	} else {
+		jmpOp.ElseLines = shortCircuitLinesPending
+	}
+
+	out := make([]ast.CXExpression, 0, len(exprs)+2)
+	out = append(out, exprs[:leftCount]...)
+	out = append(out, *jmpCXLine, *jmpExpr)
+	return append(out, exprs[leftCount:]...)
+}
+
+// shortCircuitOperandExpression copies an indexed or dereferenced right operand into a bool temp,
+// so the index or pointer is read only when the right side runs.
+func shortCircuitOperandExpression(prgrm *ast.CXProgram, exprIdx int) *ast.CXFunction {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	operandOp := &prgrm.CXAtomicOps[exprIdx]
+	operandOp.Inputs = nil
+	operandOp.AddInput(prgrm, operandOp.GetOutputs(prgrm)[0])
+	operandOp.Outputs = nil
+
+	_, temp := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
+	temp.SetType(types.BOOL)
+	temp.PreviouslyDeclared = true
+	temp.Package = ast.CXPackageIndex(pkg.Index)
+	operandOp.AddOutput(prgrm, ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, temp))
+
+	operandOp.ThenLines = shortCircuitLinesPending
+	operandOp.ElseLines = shortCircuitLinesPending
+	identityIdx := prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY])
+	operandOp.Operator = identityIdx
+	return prgrm.GetFunctionFromArray(identityIdx)
+}
+
+// ShortCircuitJumpCheck reports whether exprs[currIndex] is a short-circuit jmp. Its bool op
+// reads the same left operand and reports a type error on it, so the jmp is not type checked.
+func ShortCircuitJumpCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) bool {
+	jmpOp := &prgrm.CXAtomicOps[exprs[currIndex].Index]
+	jmpOperator := prgrm.GetFunctionFromArray(jmpOp.Operator)
+	if jmpOperator == nil || jmpOperator.AtomicOPCode != constants.OP_JMP || len(jmpOp.GetInputs(prgrm)) != 1 {
+		return false
+	}
+	boolOpcode := constants.OP_BOOL_OR
+	target := currIndex + jmpOp.ThenLines + 1
+	if jmpOp.ThenLines == 0 {
+		boolOpcode = constants.OP_BOOL_AND
+		target = currIndex + jmpOp.ElseLines + 1
+	}
+	if target <= currIndex+1 || target >= len(exprs) || exprs[target].Type != ast.CX_ATOMIC_OPERATOR {
+		return false
+	}
+	boolOp := &prgrm.CXAtomicOps[exprs[target].Index]
+	boolOperator := prgrm.GetFunctionFromArray(boolOp.Operator)
+	return boolOperator != nil && boolOperator.AtomicOPCode == boolOpcode && len(boolOp.GetInputs(prgrm)) > 0 && boolOp.GetInputs(prgrm)[0] == jmpOp.GetInputs(prgrm)[0]
+}
+
+// ProcessShortCircuitJumps points each short-circuit jmp at its bool op, once the function's expressions are final.
+// A jmp whose bool op is not found skips nothing, so both operands run.
+func ProcessShortCircuitJumps(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
+	for i := range exprs {
+		if exprs[i].Type != ast.CX_ATOMIC_OPERATOR {
+			continue
+		}
+		jmpOp := &prgrm.CXAtomicOps[exprs[i].Index]
+		if jmpOp.ThenLines != shortCircuitLinesPending && jmpOp.ElseLines != shortCircuitLinesPending {
+			continue
+		}
+		if jmpOp.ThenLines == shortCircuitLinesPending && jmpOp.ElseLines == shortCircuitLinesPending {
+			// An operand copy from shortCircuitOperandExpression.
+			jmpOp.ThenLines = 0
+			jmpOp.ElseLines = 0
+			continue
+		}
+		boolOpcode := constants.OP_BOOL_AND
+		if jmpOp.ThenLines == shortCircuitLinesPending {
+			boolOpcode = constants.OP_BOOL_OR
+		}
+		jmpOp.ThenLines = 0
+		jmpOp.ElseLines = 0
+		leftTypeSigIdx := jmpOp.GetInputs(prgrm)[0]
+		for j := i + 1; j < len(exprs); j++ {
+			if exprs[j].Type != ast.CX_ATOMIC_OPERATOR {
+				continue
+			}
+			boolOp := &prgrm.CXAtomicOps[exprs[j].Index]
+			boolOperator := prgrm.GetFunctionFromArray(boolOp.Operator)
+			if boolOperator == nil || boolOperator.AtomicOPCode != boolOpcode || len(boolOp.GetInputs(prgrm)) == 0 || boolOp.GetInputs(prgrm)[0] != leftTypeSigIdx {
+				continue
+			}
+			if boolOpcode == constants.OP_BOOL_OR {
+				jmpOp.ThenLines = j - i - 1
+			} else {
+				jmpOp.ElseLines = j - i - 1
+			}
+			break
+		}
+	}
 }
 
 // UnaryExpression creates an expression for unary operations,
@@ -1015,4 +1145,43 @@ func AddJmpToReturnExpressions(prgrm *ast.CXProgram, exprs ReturnExpressions) []
 	retExprs = append(retExprs, *exprCXLine, *expr)
 
 	return retExprs
+}
+
+// ShortCircuitStrip turns the && and || of a struct literal field back into eager bool ops.
+// A struct literal takes every expression of a field value as the field itself.
+func ShortCircuitStrip(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXExpression {
+	out := make([]ast.CXExpression, 0, len(exprs))
+	for i := 0; i < len(exprs); i++ {
+		if exprs[i].Type != ast.CX_ATOMIC_OPERATOR {
+			out = append(out, exprs[i])
+			continue
+		}
+		op := &prgrm.CXAtomicOps[exprs[i].Index]
+		thenPending := op.ThenLines == shortCircuitLinesPending
+		elsePending := op.ElseLines == shortCircuitLinesPending
+		if !thenPending && !elsePending {
+			out = append(out, exprs[i])
+			continue
+		}
+		op.ThenLines = 0
+		op.ElseLines = 0
+		if thenPending && elsePending {
+			copyOutput := op.GetOutputs(prgrm)[0]
+			for j := i + 1; j < len(exprs); j++ {
+				if exprs[j].Type != ast.CX_ATOMIC_OPERATOR {
+					continue
+				}
+				boolInputs := prgrm.CXAtomicOps[exprs[j].Index].GetInputs(prgrm)
+				if len(boolInputs) == 2 && boolInputs[1] == copyOutput {
+					boolInputs[1] = op.GetInputs(prgrm)[0]
+					break
+				}
+			}
+			continue
+		}
+		if len(out) > 0 && out[len(out)-1].Type == ast.CX_LINE {
+			out = out[:len(out)-1]
+		}
+	}
+	return out
 }

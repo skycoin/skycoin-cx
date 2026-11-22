@@ -246,6 +246,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
 	FunctionAddParameters(prgrm, fnIdx, inputs, outputs)
+	ProcessShortCircuitJumps(prgrm, exprs)
 	ProcessGoTos(prgrm, exprs)
 	ProcessLoopJumpsOutsideLoop(prgrm, exprs)
 	AddExprsToFunction(prgrm, fnIdx, exprs)
@@ -517,6 +518,11 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 
 		inpExprCXLine, _ := prgrm.GetPreviousCXLine(args, i)
 
+		if inpExprAtomicOpOperator != nil && inpExprAtomicOpOperator.AtomicOPCode == constants.OP_JMP {
+			// A short-circuit jmp of && or || inside an argument.
+			nestedExprs = append(nestedExprs, inpExpr)
+			continue
+		}
 		if inpExprAtomicOpOperator == nil {
 			typeSigIdx := inpExprAtomicOp.GetOutputs(prgrm)[0]
 
@@ -1471,7 +1477,7 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	}
 
 	// then it's a function call and not a declaration
-	if expressionOperator != nil {
+	if expressionOperator != nil && !ShortCircuitJumpCheck(prgrm, exprs, currIndex) {
 		// checking inputs matching operator's inputs
 		checkMatchParamTypes(prgrm, &exprs[currIndex], expressionOperator.GetInputs(prgrm), expression.GetInputs(prgrm), true)
 

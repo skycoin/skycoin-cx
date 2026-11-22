@@ -527,6 +527,7 @@ struct_literal_fields:
                 { $$ = nil }
         |       IDENTIFIER COLON constant_expression
                 {
+                        $3 = actions.ShortCircuitStrip(actions.AST, $3)
                         for i:=0;i<len($3);i++{
                                 if $3[i].Type!=ast.CX_LINE{
                                         if $3[i].IsStructLiteral() {
@@ -544,6 +545,7 @@ struct_literal_fields:
                 }
         |       struct_literal_fields COMMA IDENTIFIER COLON constant_expression
                 {
+                        $5 = actions.ShortCircuitStrip(actions.AST, $5)
                         for i:=0;i<len($5);i++{
                                 if $5[i].Type!=ast.CX_LINE{
                                         if $5[i].IsStructLiteral() {
