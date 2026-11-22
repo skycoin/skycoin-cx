@@ -6,6 +6,7 @@
 
 - Binary operators bind as in Go. `&`, `&^`, `<<` and `>>` bind like `*`, and `|` and `^` like `+`, all tighter than comparisons. `d & 1 == 1` was `d & (1 == 1)` and is `(d & 1) == 1`, and `1 + 2 << 3` was 24 and is 17. No program in the repository changes meaning
 - Arrays of slices such as `[2][]i32` can be declared as variables, globals and struct fields, and the GC follows their slices
+- Slices of arrays such as `[][2]i32` and `[][2]Point` take `append`, indexing, `len` and element field access, and the GC follows them
 - Program file paths are confined to a sandbox directory, the working directory or `cx --sandbox <dir>`, opened once at run start with `os.OpenRoot`. Every path a program passes to `os.Open`, `os.Create`, `os.ReadAllText`, `json.Open`, `StartCPUProfile`, the `gl` texture and GIF loaders and `al.LoadWav` must be relative, `/` separated, without NUL, at most 4096 bytes, and may not leave the sandbox by `..` or a symlink. An absolute path such as one built from `os.GetWorkingDirectory` is now rejected. A rejected path fails like a missing file. `t0-util` has `FileError` with the first file failure and operation codes (#433)
 - Language version 2611200002. Every built-in library lives under `sys/` and needs an explicit import, for example `import "sys/os"`. A bare import of a built-in package, an unknown `sys/` path and a built-in package used without its import are compile errors (#380)
 - The `str` functions moved to `sys/string` with verbose camel case names, for example `str.concat` is `string.Concatenation` and `str.compare_by_value` is `string.OrderingByByteValue`, and `glfw.func_i32_i32` and `glfw.call_i32_i32` are `glfw.RegisterCallbackI32I32` and `glfw.InvokeCallbackI32I32`. Opcodes keep their numbers, `OpcodeRenameTable` and the `former_names` column of `docs/opcodes.csv` record the renames, and an old name is a compile error that names the new one (#380, #382, #391)
@@ -61,6 +62,10 @@
 
 #### Fixed
 
+- `x := v` typed `x` as the element type when `v` was a slice, an array, an element of a `[][]i32` or `[2][3]i32`, a slice or array field, or `&a` of an array. `x` takes the full type of `v`. `d = r[1]` on a `[2][3]i32` copied one element
+- `append` that collected could lose the elements of the slice it grew, as `tests/test-gc.cx` did on a ptr64 build, which `make test-ptr64` now runs
+- `cx -ast` prints functions, structs and imports in declaration order instead of map order
+- An assignment from a function without outputs stopped the compiler, so the errors after it, such as a missing method, were not reported
 - After a compile error in one function, every `var` in later functions was dropped, which reported false `identifier does not exist` errors and could panic the compiler in `ProcessShortDeclaration`. An assignment to an undeclared variable is a compile error, not a panic
 - `operands are not of the same type` names the types, as in `i32 != ui64`, instead of type codes
 - A slice field read through a global pointer to a heap struct, as in `gp.s[i]`, `(*gp).s[i]` or `len(gp.s)`, failed with `CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE`. `tests/test-gc.cx` passes and runs in `make test` (#13)

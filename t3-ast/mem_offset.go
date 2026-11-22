@@ -37,6 +37,10 @@ func GetArgSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 
 		switch deref {
 		case constants.DEREF_SLICE, constants.DEREF_ARRAY:
+			if len(arg.Indexes) < len(arg.Lengths) {
+				// r[1] of a [2][3]i32 is a [3]i32.
+				return ValueSizeOfLengths(arg.Lengths[len(arg.Indexes):], arg.Size)
+			}
 			return arg.Size
 		case constants.DEREF_POINTER:
 			return arg.Type.Size()
@@ -96,8 +100,17 @@ func GetNativeSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 // GetDerefSize ...
 func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer bool, derefArray bool) types.Pointer {
 	if !derefArray && len(arg.Lengths) > 1 && ((index + 1) < len(arg.Lengths)) {
+		if rest := arg.Lengths[index+1:]; rest[0] != 0 {
+			// An element of [][N]T is an array.
+			return ValueSizeOfLengths(rest, getDerefElementSize(prgrm, arg, derefPointer))
+		}
 		return types.POINTER_SIZE
 	}
+	return getDerefElementSize(prgrm, arg, derefPointer)
+}
+
+// getDerefElementSize returns the size of the innermost elements of arg.
+func getDerefElementSize(prgrm *CXProgram, arg *CXArgument, derefPointer bool) types.Pointer {
 	if arg.StructType != nil && !cxArgumentElementPointer(arg) {
 		return arg.StructType.GetStructSize(prgrm)
 	}
@@ -514,8 +527,16 @@ func calculateDereferencesCompute(prgrm *CXProgram, arg *CXArgument, finalOffset
 // derefSizeSliceOfArg returns the element size of the slice arg.
 func derefSizeSliceOfArg(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	if len(arg.Lengths) > 1 && (len(arg.Lengths)-len(arg.Indexes)) > 1 {
+		if rest := arg.Lengths[len(arg.Indexes)+1:]; rest[0] != 0 {
+			return ValueSizeOfLengths(rest, derefSizeSliceElement(prgrm, arg))
+		}
 		return types.POINTER_SIZE
 	}
+	return derefSizeSliceElement(prgrm, arg)
+}
+
+// derefSizeSliceElement returns the size of the innermost elements of arg.
+func derefSizeSliceElement(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	if arg.StructType != nil && !cxArgumentElementPointer(arg) {
 		return arg.StructType.GetStructSize(prgrm)
 	}

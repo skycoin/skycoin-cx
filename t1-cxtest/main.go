@@ -35,11 +35,11 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:  "enable-tests",
-				Usage: "Enable test set (all, stable, issue, gui, examples, ptr32)",
+				Usage: "Enable test set (all, stable, issue, gui, examples)",
 			},
 			&cli.StringFlag{
 				Name:  "disable-tests",
-				Usage: "Disable test set (all, stable, issue, gui, examples, ptr32)",
+				Usage: "Disable test set (all, stable, issue, gui, examples)",
 			},
 			&cli.BoolFlag{
 				Name:  "debug",
@@ -555,8 +555,17 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("-heap-initial 0 test-gc-array-of-slices.cx", types.CX_SUCCESS, "the GC follows the slices in arrays of slices", "gc ok\n")
 	t.RunWant("--executor=old test-array-struct-field-sum.cx", types.CX_SUCCESS, "a sum of fields of local array elements, on the old loop", "11\n7\n17\n")
 	t.RunWant("--executor=vm test-array-struct-field-sum.cx", types.CX_SUCCESS, "a sum of fields of local array elements, on vm", "11\n7\n17\n")
-	// A ptr64 build fails at line 54, a slice of strs under the GC.
-	t.RunEx("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector, with slice fields through a global pointer (skycoin/skycoin-cx#13)", runner.TestStable|runner.TestPtr32, 0)
+	t.Run("-heap-initial 0 test-gc.cx", types.CX_SUCCESS, "Stress-testing the garbage collector, with slice fields through a global pointer (skycoin/skycoin-cx#13)")
+	t.RunWant("-heap-initial 0 test-gc-slice-resize.cx", types.CX_SUCCESS, "append keeps the elements of a slice the GC moves while it grows", "local 200 2\n")
+	t.RunWant("--executor=old test-short-decl-array.cx", types.CX_SUCCESS, "x := v of an array, an array element, a field or a call result, on the old loop", "7 0 9\n9 6 5\n8 11 11\n4 5\n2 3\n")
+	t.RunWant("--executor=vm test-short-decl-array.cx", types.CX_SUCCESS, "x := v of an array, an array element, a field or a call result, on vm", "7 0 9\n9 6 5\n8 11 11\n4 5\n2 3\n")
+	t.RunWant("-heap-initial 0 test-short-decl-slice.cx", types.CX_SUCCESS, "x := v of a slice, a slice element, a field or a call result", "2 2\n2 1\n2\na b 2\n2\n1 b\n2 8 a\nb\n")
+	t.RunWant("test-slice-of-arrays.cx", types.CX_SUCCESS, "slices of arrays and of arrays of structs", "2 2 1 2 9\n3 9\n40 30 39 b5 seven b39\n2 77 b39\nz1 1 600\n")
+	t.RunWant("-heap-initial 0 test-slice-of-arrays.cx", types.CX_SUCCESS, "the GC follows slices of arrays", "2 2 1 2 9\n3 9\n40 30 39 b5 seven b39\n2 77 b39\nz1 1 600\n")
+	t.RunWant("-ast test-ast-order.cx", types.CX_SUCCESS, "-ast prints functions in declaration order",
+		"\t\t0.- Function: A.m (1:a A) ()\n\t\t1.- Function: zeta () ()\n\t\t2.- Function: alpha () ()\n\t\t3.- Function: mid () ()\n\t\t4.- Function: omega () ()\n\t\t5.- Function: beta () ()\n\t\t6.- Function: main () ()\n")
+	t.RunWant("test-error-outputless-method.cx", types.CX_COMPILATION_ERROR, "an outputless call in an assignment leaves the later errors reported",
+		"test-error-outputless-method.cx:14 trying to use an outputless operator in an assignment", "test-error-outputless-method.cx:12 type 'A' has no method 'missing'")
 	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")

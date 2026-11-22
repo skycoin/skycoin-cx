@@ -1,0 +1,52 @@
+package main
+
+type P struct {
+	xs []i32
+	names []str
+}
+
+func (p P) Names() (out []str) {
+	out = p.names
+}
+
+func mk() (out []i32) {
+	out = append(out, 7)
+	out = append(out, 8)
+}
+
+func main() {
+	var s []i32
+	s = append(s, 1)
+	s = append(s, 2)
+	b := s
+	printf("%d %d\n", len(b), b[1])
+	var m [][]i32
+	m = append(m, s)
+	c := m[0]
+	printf("%d %d\n", len(c), c[0])
+	var m2 [2][]i32
+	m2[1] = s
+	c2 := m2[1]
+	printf("%d\n", len(c2))
+	var ss []str
+	ss = append(ss, "a")
+	ss = append(ss, "b")
+	t := ss
+	printf("%s %s %d\n", t[0], t[1], len(t))
+	var p P
+	p.xs = s
+	p.names = ss
+	e := p.xs
+	printf("%d\n", e[1])
+	var ps []P
+	ps = append(ps, p)
+	q := ps
+	n := q[0].names
+	printf("%d %s\n", len(q), n[1])
+	g := mk()
+	nm := p.Names()
+	printf("%d %d %s\n", len(g), g[1], nm[0])
+	pt := &t
+	w := *pt
+	printf("%s\n", w[1])
+}

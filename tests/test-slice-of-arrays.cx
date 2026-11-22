@@ -1,0 +1,55 @@
+package main
+
+type P struct {
+	x i32
+	s str
+}
+
+type H struct {
+	ps [][2]P
+}
+
+func main() {
+	var a [][2]i32
+	var e [2]i32
+	e[0] = 1
+	e[1] = 2
+	a = append(a, e)
+	e[0] = 3
+	a = append(a, e)
+	a[1][1] = 9
+	printf("%d %d %d %d %d\n", len(a), len(a[0]), a[0][0], a[0][1], a[1][1])
+	x := a[1]
+	printf("%d %d\n", x[0], x[1])
+
+	var b [][2]P
+	var f [2]P
+	for i := 0; i < 40; i++ {
+		f[0].x = i
+		f[0].s = sprintf("a%d", i)
+		f[1].x = i * 10
+		f[1].s = sprintf("b%d", i)
+		b = append(b, f)
+	}
+	b[7][0].s = "seven"
+	var junk []str
+	for i := 0; i < 300; i++ {
+		junk = append(junk, sprintf("junk%d", i))
+	}
+	printf("%d %d %d %s %s %s\n", len(b), b[3][1].x, b[39][0].x, b[5][1].s, b[7][0].s, b[39][1].s)
+
+	var h H
+	h.ps = append(h.ps, f)
+	h.ps = append(h.ps, f)
+	h.ps[1][0].x = 77
+	printf("%d %d %s\n", len(h.ps), h.ps[1][0].x, h.ps[0][1].s)
+
+	var ss [][3]str
+	var t [3]str
+	t[2] = sprintf("z%d", 1)
+	ss = append(ss, t)
+	for i := 0; i < 300; i++ {
+		junk = append(junk, sprintf("junk%d", i))
+	}
+	printf("%s %d %d\n", ss[0][2], len(ss), len(junk))
+}

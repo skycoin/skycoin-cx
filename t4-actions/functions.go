@@ -1729,6 +1729,9 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S0848.
 			expressionInputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
+			if t, ok := shortDeclarationCollectionType(prgrm, expressionInputTypeSig); ok && shortDeclarationCollectionSet(prgrm, prevExpression, expression, t, offset) {
+				return
+			}
 			if expressionInputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 				// Now an arena getter, site S0849.
@@ -2821,7 +2824,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		arraySliceDerefs(sym, dims)
 	}
 
-	if arg.IsSlice() {
+	if dims := arg.SliceArrayDimensions(); dims > 0 && hasDerefOp(sym, constants.DEREF_ARRAY) {
+		sliceArrayDerefs(sym, dims)
+	} else if arg.IsSlice() {
 		if !hasDerefOp(sym, constants.DEREF_ARRAY) {
 			// Then we're handling the slice itself, and we need to dereference it.
 			sym.DereferenceOperations = append([]int{constants.DEREF_POINTER}, sym.DereferenceOperations...)
@@ -3005,6 +3010,10 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 						}
 						if dims := field.ArraySliceDimensions(); dims > 0 {
 							arraySliceDerefs(nameField, dims)
+						}
+						if dims := field.SliceArrayDimensions(); dims > 0 && hasDerefOp(nameField, constants.DEREF_ARRAY) {
+							nameField.DereferenceOperations = nameField.DereferenceOperations[1:]
+							sliceArrayDerefs(nameField, dims)
 						}
 
 						nameField.PassBy = field.PassBy
@@ -3362,7 +3371,7 @@ func shortDeclarationStructValue(prgrm *ast.CXProgram, sig *ast.CXTypeSignature)
 	details := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta)
 	if len(details.Fields) > 0 {
 		field := prgrm.GetCXArg(details.Fields[len(details.Fields)-1]).GetAssignmentElement(prgrm)
-		if len(field.Lengths) > 0 {
+		if len(field.Lengths) > len(field.Indexes) {
 			panic("type is not known")
 		}
 		return field.Type, field.PointerTargetType, ast.GetArgSize(prgrm, field), field.StructType
@@ -3558,4 +3567,156 @@ func arraySliceDerefs(arg *ast.CXArgument, dims int) {
 		}
 		index++
 	}
+}
+
+// sliceArrayDerefs makes the first dims indexes of arg, those of the slice
+// dimensions of a slice of arrays, as i in a[i][j] on a [][N]T, index a slice.
+func sliceArrayDerefs(arg *ast.CXArgument, dims int) {
+	index := 0
+	for i, op := range arg.DereferenceOperations {
+		if op != constants.DEREF_ARRAY && op != constants.DEREF_SLICE {
+			continue
+		}
+		arg.DereferenceOperations[i] = constants.DEREF_ARRAY
+		if index < dims {
+			arg.DereferenceOperations[i] = constants.DEREF_SLICE
+		}
+		index++
+	}
+}
+
+// shortDeclarationType is the type of the value of x := v.
+type shortDeclarationType struct {
+	typ, pointerTargetType types.Code
+	size                   types.Pointer
+	specs                  []int
+	lengths                []types.Pointer
+	structType             *ast.CXStruct
+}
+
+// shortDeclarationCollectionType returns the type of the value sig names
+// when it is an array or a slice, as s, m[0], r[1] and p.xs are.
+// &a of such a value is a pointer to it.
+func shortDeclarationCollectionType(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) (shortDeclarationType, bool) {
+	reference := ast.CXTypeSignaturePassBy(prgrm, sig) == constants.PASSBY_REFERENCE
+	t, ok := shortDeclarationCollectionValue(prgrm, sig, reference)
+	if !ok || !reference {
+		return t, ok
+	}
+	t.specs = append(t.specs, constants.DECL_POINTER)
+	t.size = types.POINTER_SIZE
+	if t.typ == types.STR || (t.structType != nil && t.typ != types.POINTER) {
+		t.pointerTargetType, t.typ = t.typ, types.POINTER
+	}
+	return t, true
+}
+
+// shortDeclarationCollectionValue is shortDeclarationCollectionType for a
+// value read by value.
+func shortDeclarationCollectionValue(prgrm *ast.CXProgram, sig *ast.CXTypeSignature, reference bool) (shortDeclarationType, bool) {
+	switch sig.Type {
+	case ast.TYPE_ARRAY_ATOMIC, ast.TYPE_SLICE_ATOMIC, ast.TYPE_POINTER_ARRAY_ATOMIC, ast.TYPE_POINTER_SLICE_ATOMIC:
+		pointer := sig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || sig.Type == ast.TYPE_POINTER_SLICE_ATOMIC
+		if pointer && !sig.IsDeref {
+			return shortDeclarationType{}, false
+		}
+		details := prgrm.GetCXTypeSignatureArrayFromArray(sig.Meta)
+		if len(details.Indexes) >= len(details.Lengths) {
+			return shortDeclarationType{}, false
+		}
+		slice := sig.Type == ast.TYPE_SLICE_ATOMIC || sig.Type == ast.TYPE_POINTER_SLICE_ATOMIC
+		lengths := append([]types.Pointer{}, details.Lengths[len(details.Indexes):]...)
+		specs := []int{constants.DECL_BASIC}
+		for i := len(lengths) - 1; i >= 0; i-- {
+			if slice && lengths[i] == 0 {
+				specs = append(specs, constants.DECL_SLICE)
+			} else {
+				specs = append(specs, constants.DECL_ARRAY)
+			}
+		}
+		typ := types.Code(details.Meta)
+		return shortDeclarationType{typ: typ, size: typ.Size(), specs: specs, lengths: lengths}, true
+	case ast.TYPE_CXARGUMENT_DEPRECATE:
+		return shortDeclarationElementType(prgrm.GetCXArg(ast.CXArgumentIndex(sig.Meta)).GetAssignmentElement(prgrm), reference)
+	case ast.TYPE_STRUCT, ast.TYPE_POINTER_STRUCT:
+		fields := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).Fields
+		if len(fields) == 0 {
+			return shortDeclarationType{}, false
+		}
+		return shortDeclarationElementType(prgrm.GetCXArg(fields[len(fields)-1]).GetAssignmentElement(prgrm), reference)
+	}
+	return shortDeclarationType{}, false
+}
+
+// shortDeclarationElementType returns the type of the array or slice elt
+// reads, whose specifiers CopyArgFields has stripped of its indexes. The
+// caller adds the pointer of &a.
+func shortDeclarationElementType(elt *ast.CXArgument, reference bool) (shortDeclarationType, bool) {
+	specs := elt.DeclarationSpecifiers
+	if reference && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER {
+		specs = specs[:len(specs)-1]
+	}
+	if len(specs) < 2 {
+		return shortDeclarationType{}, false
+	}
+	if outer := specs[len(specs)-1]; outer != constants.DECL_ARRAY && outer != constants.DECL_SLICE {
+		return shortDeclarationType{}, false
+	}
+	dims := 0
+	for _, spec := range specs {
+		switch spec {
+		case constants.DECL_ARRAY, constants.DECL_SLICE:
+			dims++
+		case constants.DECL_INDEXING, constants.DECL_DEREF:
+			return shortDeclarationType{}, false
+		}
+	}
+	if len(elt.Lengths) < dims {
+		return shortDeclarationType{}, false
+	}
+	return shortDeclarationType{
+		typ:               elt.Type,
+		pointerTargetType: elt.PointerTargetType,
+		size:              elt.Size,
+		specs:             append([]int{}, specs...),
+		lengths:           append([]types.Pointer{}, elt.Lengths[len(elt.Lengths)-dims:]...),
+		structType:        elt.StructType,
+	}, true
+}
+
+// shortDeclarationCollectionSet gives the variable decl declares the array or
+// slice type t, and makes assign read it again. It reports whether it could.
+func shortDeclarationCollectionSet(prgrm *ast.CXProgram, decl, assign *ast.CXAtomicOperator, t shortDeclarationType, offset *types.Pointer) bool {
+	declSig := prgrm.GetCXTypeSignatureFromArray(decl.GetOutputs(prgrm)[0])
+	outSig := prgrm.GetCXTypeSignatureFromArray(assign.GetOutputs(prgrm)[0])
+	if declSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE || outSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return false
+	}
+	declArg := prgrm.GetCXArg(ast.CXArgumentIndex(declSig.Meta))
+	reserved := ast.GetArgSize(prgrm, declArg)
+	declArg.Type, declArg.PointerTargetType, declArg.Size = t.typ, t.pointerTargetType, t.size
+	declArg.DeclarationSpecifiers, declArg.Lengths, declArg.StructType = t.specs, t.lengths, t.structType
+	if size := ast.GetArgSize(prgrm, declArg); size > reserved {
+		declArg.Offset = *offset
+		updateSymbolsTableOffsetAdd(prgrm, declSig, offset, size)
+	}
+	ast.RetypeCXTypeSignatureOfCXArg(prgrm, declSig, declArg)
+
+	fn, err := prgrm.GetCurrentFunction()
+	if err != nil {
+		panic(err)
+	}
+	var sym *ast.CXArgument
+	if declSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		sym = declArg
+	}
+	gcRootsDeclare(prgrm, fn, declSig, sym)
+
+	outArg := prgrm.GetCXArg(ast.CXArgumentIndex(outSig.Meta))
+	outArg.DeclarationSpecifiers, outArg.Lengths, outArg.DereferenceOperations = nil, nil, nil
+	CopyArgFields(prgrm, outSig, declSig)
+	if outSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		ProcessSlice(prgrm, ast.CXArgumentIndex(outSig.Meta))
+	}
+	return true
 }

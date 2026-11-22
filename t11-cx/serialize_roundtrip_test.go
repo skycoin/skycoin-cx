@@ -58,6 +58,9 @@ func TestSerializeRoundTrip(t *testing.T) {
 		programs = append(programs, program)
 		reason := ""
 		for _, arg := range strings.Fields(program) {
+			if arg == "-ast" {
+				reason = "prints the AST while it compiles"
+			}
 			if !strings.HasSuffix(arg, ".cx") {
 				continue
 			}

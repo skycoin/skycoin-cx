@@ -1,0 +1,36 @@
+package main
+
+import "sys/string"
+
+func fill() {
+	var nums []i32
+	nums = append(nums, 11)
+	nums = append(nums, 21)
+	nums = append(nums, 31)
+	test(nums[2], 31, "the i32 slice lost an element")
+}
+
+func grow() {
+	var strs []str
+	strs = append(strs, string.Concatenation("2", "2"))
+	strs = append(strs, string.Concatenation("3", "33"))
+	strs = append(strs, string.Concatenation("44", "44"))
+	strs = append(strs, string.Concatenation("5", "5555"))
+	strs = append(strs, "666666")
+	test(strs[0], "22", "the str slice lost an element when append collected")
+	test(strs[4], "666666", "the str slice lost an element when append collected")
+}
+
+func main() {
+	var msg str
+	var local str
+	local = "local"
+	var keep []i32
+	keep = append(keep, 100)
+	keep = append(keep, 200)
+	for c := 0; c < 100; c++ {
+		fill()
+		grow()
+	}
+	printf("%s %d %d%s\n", local, keep[1], len(keep), msg)
+}

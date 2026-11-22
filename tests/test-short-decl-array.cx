@@ -1,0 +1,41 @@
+package main
+
+type P struct {
+	arr [3]i32
+	ps [2]Q
+}
+
+type Q struct {
+	y i32
+}
+
+func mka() (out [2]i32) {
+	out[0] = 4
+	out[1] = 5
+}
+
+func main() {
+	var r [2][3]i32
+	r[1][0] = 7
+	r[1][2] = 9
+	r[0][1] = 5
+	d := r[1]
+	printf("%d %d %d\n", d[0], d[1], d[2])
+	e := r
+	e[0][1] = 6
+	printf("%d %d %d\n", e[1][2], e[0][1], r[0][1])
+	var p P
+	p.arr[1] = 8
+	p.ps[1].y = 11
+	f := p.arr
+	g := p.ps
+	h := p.ps[1]
+	printf("%d %d %d\n", f[1], g[1].y, h.y)
+	k := mka()
+	printf("%d %d\n", k[0], k[1])
+	var a [3]i32
+	a[2] = 3
+	pa := &a
+	pa[0] = 2
+	printf("%d %d\n", a[0], pa[2])
+}

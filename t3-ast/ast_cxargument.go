@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"slices"
+
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
@@ -85,6 +87,10 @@ func (arg CXArgument) IsStruct() bool {
 }
 
 func (arg CXArgument) IsSlice() bool {
+	if dims := arg.SliceArrayDimensions(); dims > 0 {
+		// An element of [][N]T, as a[i] is, is an array.
+		return len(arg.Indexes) < dims
+	}
 	if dims := arg.ArraySliceDimensions(); dims > 0 {
 		// An element of [N][]T, as a[i] is, is a slice.
 		if len(arg.Indexes) < dims || len(arg.Indexes) >= len(arg.Lengths) {
@@ -318,7 +324,7 @@ func IsTypeArrayAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return !isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
+	return !isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
 }
 
 func IsTypePointerArrayAtomic(arg *CXArgument) bool {
@@ -329,7 +335,7 @@ func IsTypePointerArrayAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
+	return isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
 }
 
 func IsTypeSliceAtomic(arg *CXArgument) bool {
@@ -430,6 +436,31 @@ func (arg CXArgument) ArraySliceDimensions() int {
 		}
 	}
 	return 0
+}
+
+// SliceArrayDimensions returns the number of slice dimensions of a slice of
+// arrays, 1 for [][N]T, and 0 for any other type.
+func (arg CXArgument) SliceArrayDimensions() int {
+	for i, length := range arg.Lengths {
+		if length != 0 {
+			return i
+		}
+	}
+	return 0
+}
+
+// ValueSizeOfLengths returns the size of a value of the array and slice
+// lengths, outermost first, whose innermost elements take elem bytes.
+func ValueSizeOfLengths(lengths []types.Pointer, elem types.Pointer) types.Pointer {
+	size := elem
+	for i := len(lengths) - 1; i >= 0; i-- {
+		if lengths[i] == 0 {
+			size = types.POINTER_SIZE
+		} else {
+			size *= lengths[i]
+		}
+	}
+	return size
 }
 
 // ArraySize returns the size in bytes of the array arg, whose elements are

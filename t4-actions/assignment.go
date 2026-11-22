@@ -834,7 +834,9 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 	}
 }
 
-func checkIfFunctionCallNeedsAnOutput(prgrm *ast.CXProgram, fromExpressionOperator *ast.CXFunction, toExpression *ast.CXAtomicOperator) {
+// checkIfFunctionCallNeedsAnOutput records an error and returns true when the
+// value assigned is a call of a function without outputs.
+func checkIfFunctionCallNeedsAnOutput(prgrm *ast.CXProgram, fromExpressionOperator *ast.CXFunction, toExpression *ast.CXAtomicOperator) bool {
 	fromExpressionOperatorOutputs := fromExpressionOperator.GetOutputs(prgrm)
 
 	// Checking if we're trying to assign stuff from a function call
@@ -846,8 +848,9 @@ func checkIfFunctionCallNeedsAnOutput(prgrm *ast.CXProgram, fromExpressionOperat
 		toExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(toExpressionOutputs[0])
 
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeAssignOutputlessOperator, toExpressionOutputTypeSig.ArgDetails, ast.CompileErrorOperands{})
-		prgrm.CXProgramCompileErrorExit()
+		return true
 	}
+	return false
 }
 
 // Assignment handles assignment statements with different operators,
@@ -872,7 +875,10 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 	// Now an arena getter, site S0591.
 	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
-	checkIfFunctionCallNeedsAnOutput(prgrm, fromExpressionOperator, toExpression)
+	if checkIfFunctionCallNeedsAnOutput(prgrm, fromExpressionOperator, toExpression) {
+		// The call stays as a statement, so the errors after it are found too.
+		return fromExprs
+	}
 
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {

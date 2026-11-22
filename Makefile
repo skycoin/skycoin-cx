@@ -41,7 +41,7 @@ test-all: build-tests ## Run all non-GUI CX program tests, including known issue
 test-ptr64: ## Run the stable CX program tests with a ptr64 build
 	go build -tags="$(TAGS) ptr64" -o ./bin/cx64$(EXE) ./t11-cx
 	go build -o ./bin/cxtest ./t1-cxtest
-	./bin/cxtest --cxpath=$(CURDIR)/bin/cx64$(EXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue,ptr32
+	./bin/cxtest --cxpath=$(CURDIR)/bin/cx64$(EXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
 
 test-go: ## Run the Go unit tests
 	go test ./...

@@ -146,6 +146,8 @@ func sliceCapacityGrow(capacity types.Pointer, newLen types.Pointer, sizeofEleme
 func SliceResize(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *CXTypeSignature, count types.Pointer, sizeofElement types.Pointer) types.Pointer {
 	inputSliceOffset := GetSliceOffset(prgrm, fp, inp)
 	outputSliceOffset := SliceResizeEx(prgrm, inputSliceOffset, count, sizeofElement)
+	// SliceResizeEx may collect, which moves the input slice.
+	inputSliceOffset = GetSliceOffset(prgrm, fp, inp)
 
 	if outputSliceOffset != inputSliceOffset {
 		inputSliceLen := GetSliceLen(prgrm, inputSliceOffset)

@@ -1,0 +1,30 @@
+package main
+
+type B struct {
+	y i32
+}
+
+type A struct {
+	x i32
+}
+
+func (a A) m() {
+}
+
+func zeta() {
+}
+
+func alpha() {
+}
+
+func mid() {
+}
+
+func omega() {
+}
+
+func beta() {
+}
+
+func main() {
+}

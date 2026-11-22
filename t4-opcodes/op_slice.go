@@ -215,7 +215,8 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 			var obj [types.POINTER_SIZE]byte
 			types.Write_ptr(obj[:], 0, ast.PointerOfAddress(prgrm, input.Offset))
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))
-		} else if inpType == types.STR || inpType == types.AFF {
+		} else if (inpType == types.STR || inpType == types.AFF) && eltSize == types.POINTER_SIZE {
+			// An array of str, as [][2]str appends, is copied whole below.
 			var obj [types.POINTER_SIZE]byte
 			types.Write_ptr(obj[:], 0, types.Read_ptr(prgrm.Memory, input.Offset))
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))
