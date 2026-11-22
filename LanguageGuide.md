@@ -322,6 +322,54 @@ y: 20}`), array (`[5]i32{1, 2, 3, 4, 5}`), and slice (`[]i32{100, 200, 300}`)
 literals, in that order. These literals exist to simplify the creation
 of such data structures.
 
+A literal is a value, so it can be used wherever a value can: as the
+initializer of a `var`, as a function argument or result, as a field of
+a struct literal and as an element of an array or slice literal. Fields
+and elements can be any expressions, including calls, and literals can
+nest to any depth.
+
+```cx
+package main
+
+type Point struct {
+    x i32
+    y i32
+}
+
+type Line struct {
+    a Point
+    b Point
+    tags []i32
+}
+
+func length2 (l Line) (n i32) {
+    n = (l.b.x - l.a.x) * (l.b.x - l.a.x) + (l.b.y - l.a.y) * (l.b.y - l.a.y)
+}
+
+func main () {
+    var l Line = Line{a: Point{x: 1}, b: Point{x: 4, y: 4}, tags: []i32{7}}
+    i32.print(length2(l)) // prints 25
+    i32.print(length2(Line{b: Point{x: 3}})) // prints 9
+
+    var ps [2]Point = [2]Point{Point{x: 1}, Point{y: 2}}
+    i32.print(ps[1].y) // prints 2
+}
+```
+
+As in Go, a field or element that the literal does not name is zero, so
+`p = Point{}` sets every field of `p` to zero and `p = Point{x: 1}` also
+sets `p.y` to zero. Every field is computed before `p` is written, so
+`p = Point{x: p.y, y: p.x}` swaps the two fields. An array literal with
+more elements than its length and a struct literal that names a field
+twice are compile errors.
+
+Some forms of Go are not supported yet. The type of every element must
+be written out, so `[][]i32{{1, 2}}` is a syntax error and
+`[][]i32{[]i32{1, 2}}` is the way to write it. A struct literal names its
+fields, so `Point{1, 2}` is a syntax error. A field or a method of a
+literal, as in `Point{x: 1}.x`, is a syntax error too. `&Point{x: 1}` in
+a loop gives the same address on every pass.
+
 ### [Functions](#table-of-contents)
 
 Functions in CX are similar in syntax to functions in Go. The only
@@ -424,6 +472,8 @@ In the example above, we can see a custom type that defines a
 declaring the custom type, you can start declaring variables of that
 type anywhere in the package where it was declared in. The code in
 `foo` shows how you can create and use an instance of that structure.
+An instance can also be written as a struct literal, such as
+`Point{x: 10, y: 20}`, which the Literals section describes.
 
 ### [Methods](#table-of-contents)
 
@@ -1006,10 +1056,8 @@ array and slice variables and then we initialize them. In the case of
 arrays, we use the bracket notation, and for slices we have to use
 `append`, as `slc1` starts with a size and capacity of 0. In the cases
 of `arr2` and `slc2`, we use literals to initialize them more
-conveniently. A short variable declaration works with a struct
-literal, as `p2` shows above. Because of an open bug it does not work
-with an array or slice literal: `arr2 := [3]i32{10, 20, 30}` is a
-compile error that takes `arr2` to be an *i32*.
+conveniently. A short variable declaration works with a struct, array
+or slice literal, as `p2` shows above and as in `arr3 := [3]i32{10, 20, 30}`.
 
 Regarding numbers, you need to be aware that implicit casting does not
 exist in CX. This means that the number `34` cannot be assigned to a
@@ -1437,6 +1485,11 @@ final 8 bytes are going to represent `field3` of type *i64*. In the
 case of the next struct instance, the first eight bytes represent an
 *i64* field so, although both struct instances contain the same number
 of fields and of the same type, the byte layout changes.
+
+A struct literal, such as `struct1{field2: 5}`, also reserves the bytes of
+one instance. Its fields start at zero and the named ones are written,
+then the instance is copied to where the literal is used, such as a
+variable, an argument or a field of another struct.
 
 ### [Pointers](#table-of-contents)
 

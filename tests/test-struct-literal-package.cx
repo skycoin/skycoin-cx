@@ -1,0 +1,37 @@
+package pk
+
+type V struct {
+	x i32
+	y i32
+}
+
+package main
+
+import "pk"
+
+type U struct {
+	a i32
+	b i32
+}
+
+type T struct {
+	f U
+	v pk.V
+}
+
+var gu U = U{a: 3, b: 4}
+var gt T = T{f: U{b: 5}, v: pk.V{x: 6}}
+
+func main() {
+	test(gu.b, 4, "global initialized from a struct literal")
+	test(gt.f.b, 5, "global with a nested struct literal")
+	test(gt.v.x, 6, "global with a struct literal of another package")
+	var v pk.V
+	v = pk.V{x: 8, y: 9}
+	test(v.y, 9, "struct literal of another package")
+	var t T
+	t = T{v: pk.V{y: 10}}
+	test(t.v.y, 10, "nested struct literal of another package")
+	w := pk.V{x: 11}
+	test(w.x, 11, "short declaration of a struct literal of another package")
+}

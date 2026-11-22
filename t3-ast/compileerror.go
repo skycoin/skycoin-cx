@@ -61,6 +61,8 @@ const (
 	CompileErrorCodeCallResultCall
 	CompileErrorCodeMethodResultMissing
 	CompileErrorCodeAssignmentCount
+	CompileErrorCodeArrayLiteralLength
+	CompileErrorCodeStructLiteralFieldRepeated
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

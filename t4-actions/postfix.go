@@ -454,7 +454,7 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 //		prgrm - a CXProgram that contains all the data and arrays of the program.
 //		prevExprs - the previous expressions that compose the postfix expression.
 //	 args - input args list for the function call.
-func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, args []ast.CXExpression) []ast.CXExpression {
+func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, args [][]ast.CXExpression) []ast.CXExpression {
 	// An unresolved callee has already been reported as a compile error.
 	if len(prevExprs) == 0 {
 		return nil

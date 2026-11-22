@@ -70,6 +70,9 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeMethodResultMissing, ast.CompileErrorOperands{text("P"), text("show")}, header + " method 'P.show' returns no value\n"},
 		{ast.CompileErrorCodeAssignmentCount, ast.CompileErrorOperands{2, 3}, header + " assignment mismatch: 2 variables but 3 values\n"},
 		{ast.CompileErrorCodeAssignmentCount, ast.CompileErrorOperands{2, 1}, header + " assignment mismatch: 2 variables but 1 value\n"},
+		{ast.CompileErrorCodeArrayLiteralLength, ast.CompileErrorOperands{2, 3}, header + " array literal of length 2 has 3 elements\n"},
+		{ast.CompileErrorCodeArrayLiteralLength, ast.CompileErrorOperands{0, 1}, header + " array literal of length 0 has 1 element\n"},
+		{ast.CompileErrorCodeStructLiteralFieldRepeated, ast.CompileErrorOperands{text("x")}, header + " duplicate field name 'x' in struct literal\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

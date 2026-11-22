@@ -1,0 +1,21 @@
+package main
+
+import "sys/string"
+
+func add(p *[]str, v str) {
+	*p = append(*p, v)
+}
+
+func main() {
+	var s []str
+	s = append(s, "a")
+	var p *[]str
+	p = &s
+	*p = append(*p, "b")
+	add(p, "c")
+	test(len(s), 3, "appends through a *[]str reach the slice")
+	test(string.EqualityByByteValue(s[1], "b"), true, "second element")
+	test(string.EqualityByByteValue((*p)[2], "c"), true, "element read through the pointer")
+	add(&s, "d")
+	test(len(s), 4, "&s as an argument")
+}

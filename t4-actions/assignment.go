@@ -421,6 +421,11 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			// Now a constructor call, site S0556.
 			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
 			sym.SetType(fromExpressionOutputArg.Type)
+			if fromExpressionOutputArg.Type == types.STRUCT && fromExpressionOutputArg.StructType != nil {
+				// A struct literal value.
+				shortDeclarationStructTypeSet(sym, types.STRUCT, fromExpressionOutputArg.StructType)
+				sym.Size = fromExpressionOutputArg.Size
+			}
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
@@ -439,6 +444,10 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 	} else {
 		outTypeSig := getOutputTypeAt(prgrm, &fromExprs[lastFromExpressionIdx], outputIndex)
+		if fromExprs[lastFromExpressionIdx].IsArrayLiteral() {
+			// The value of an array or slice literal has its type.
+			outTypeSig = prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0])
+		}
 
 		if outTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -475,6 +484,14 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			} else if ast.IsTypeArrayAtomic(outTypeArg) {
 				sym.Lengths = outTypeArg.Lengths
 				sym.DeclarationSpecifiers = append([]int(nil), outTypeArg.DeclarationSpecifiers...)
+			} else if outTypeArg.StructType != nil && len(outTypeArg.Lengths) > 0 {
+				// An array of structs.
+				sym.Lengths = outTypeArg.Lengths
+				sym.DeclarationSpecifiers = append([]int(nil), outTypeArg.DeclarationSpecifiers...)
+			}
+			if outType == types.STRUCT && outTypeArg.StructType != nil {
+				sym.StructType = outTypeArg.StructType
+				sym.Size = outTypeArg.StructType.GetStructSize(prgrm)
 			}
 
 			sym.Package = ast.CXPackageIndex(pkg.Index)
@@ -482,7 +499,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			sym.Offset = outTypeArg.Offset
 
 			typeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, sym)
-		} else if outTypeSig.Type == ast.TYPE_ATOMIC {
+		} else if outTypeSig.Type == ast.TYPE_ATOMIC || outTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || outTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 			_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(outTypeSig)
 			newTypeSig.Name = toExpressionOutputTypeSig.Name
 			typeSigIdx = newTypeSig.Index

@@ -129,13 +129,16 @@ Three error records exist.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
   `CompileErrorRecordLine` and `CompileErrorRecordOperands`. The code is a
   `CompileErrorCode` from `CompileErrorCodeMessage` (7001) to
-  `CompileErrorCodeAssignmentCount` (7045). 7041 is
+  `CompileErrorCodeStructLiteralFieldRepeated` (7047). 7041 is
   `CompileErrorCodeGotoLabelMissing`, a goto to a label that does not exist,
   7042 a slice built-in argument or result of the wrong type, 7043
   `CompileErrorCodeCallResultCall`, a call of a call result such as
   `f() ()`, 7044 `CompileErrorCodeMethodResultMissing`, a method with no
-  output used as a value, and 7045 `CompileErrorCodeAssignmentCount`, a
-  multiple assignment whose targets and values differ in number. 7000 is
+  output used as a value, 7045 `CompileErrorCodeAssignmentCount`, a
+  multiple assignment whose targets and values differ in number, 7046
+  `CompileErrorCodeArrayLiteralLength`, an array literal with more elements
+  than its length, and 7047 `CompileErrorCodeStructLiteralFieldRepeated`, a
+  struct literal that names a field twice. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.
   The records are kept in a `CompileErrorList` in `CxIrState.CompileErrorList`.
 - `RuntimeErrorRecord` in `t3-ast/error.go` holds the runtime error of the

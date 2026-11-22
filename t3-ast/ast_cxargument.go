@@ -17,6 +17,12 @@ func (arg CXArgument) IsString() bool {
 	return arg.PointerTargetType == types.STR || arg.Type == types.STR
 }
 
+// CXArgumentStringSlicePointer reports whether arg is a *[]str, which takes
+// an address as a *[]i32 does instead of the string path of a *str.
+func CXArgumentStringSlicePointer(arg *CXArgument) bool {
+	return arg.IsPointer() && arg.PointerTargetType == types.STR && arg.IsSlice()
+}
+
 func (arg CXArgument) IsStruct() bool {
 	return arg.StructType != nil
 }

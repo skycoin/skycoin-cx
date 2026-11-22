@@ -787,9 +787,9 @@ prints a stack overflow or runtime error for both.
   `CXFunctions`.
 * Pointers to slices are only partly modelled. There is
   `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, which
-  stays a `TYPE_CXARGUMENT_DEPRECATE`. A `*[]str` takes the string pointer
-  path of `opIdentity`, so `p = &s` copies the slice instead of taking its
-  address.
+  stays a `TYPE_CXARGUMENT_DEPRECATE`. A `*[]str` is a
+  `TYPE_CXARGUMENT_DEPRECATE` too, and `opIdentity` and the vm lowering test
+  for it with `CXArgumentStringSlicePointer` so `p = &s` takes its address.
 * `GetFinalOffset` decides whether an offset is in the frame by comparing
   it with `Stack.Size`, not by a flag on the operand.
 * The line marker before the `jmp` of an `if` carries the line of the

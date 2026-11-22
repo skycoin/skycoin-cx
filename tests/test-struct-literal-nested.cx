@@ -1,0 +1,72 @@
+package main
+
+import "sys/string"
+
+type U struct {
+	a i32
+	b i32
+}
+
+type T struct {
+	f U
+	g i32
+	s []U
+	n str
+}
+
+type W struct {
+	t T
+	k [2]U
+	v []i32
+}
+
+func two() (out i32) {
+	out = 2
+}
+
+func id(u U) (out U) {
+	out = u
+}
+
+func main() {
+	var t T
+	t = T{f: U{a: 1, b: two()}, g: i32.add(two(), 1), s: []U{U{a: 5}, id(U{b: 6})}, n: "x"}
+	test(t.f.a, 1, "struct in struct")
+	test(t.f.b, 2, "call in a nested struct")
+	test(t.g, 3, "nested call in a field")
+	test(len(t.s), 2, "slice of structs in a struct")
+	test(t.s[0].a, 5, "struct in a slice in a struct")
+	test(t.s[1].b, 6, "struct argument in a slice in a struct")
+	test(string.EqualityByByteValue(t.n, "x"), true, "str field after nested values")
+
+	var w W = W{t: T{f: U{a: 9}, s: []U{U{b: 4}}}, k: [2]U{U{a: 3}, U{b: 7}}, v: []i32{1, 2, 3}}
+	test(w.t.f.a, 9, "three levels")
+	test(w.t.f.b, 0, "unset nested field is zero")
+	test(w.t.s[0].b, 4, "slice in a struct in a struct")
+	test(w.k[0].a, 3, "array of structs in a struct")
+	test(w.k[1].b, 7, "second array element in a struct")
+	test(len(w.v), 3, "slice of i32 in a struct")
+	test(w.v[2], 3, "slice element in a struct")
+
+	ts := []T{T{f: U{a: 1}}, T{g: 2, s: []U{U{a: 3}, U{a: 4}}}}
+	test(len(ts), 2, "structs with nested structs in a slice")
+	test(ts[0].f.a, 1, "nested struct in a slice element")
+	test(ts[1].s[1].a, 4, "slice in a struct in a slice")
+
+	var arr [2]T
+	arr = [2]T{T{g: 5}, T{f: U{b: 6}}}
+	test(arr[0].g, 5, "struct in an array")
+	test(arr[1].f.b, 6, "nested struct in an array")
+
+	var ss [][]U
+	ss = [][]U{[]U{U{a: 1}}, []U{U{a: 2}, U{b: 3}}}
+	test(len(ss[1]), 2, "slice of slices of structs")
+	test(ss[1][1].b, 3, "struct in a slice of slices")
+
+	var us []U = t.s
+	var c T
+	c = T{f: id(U{a: 8}), s: append(us, U{a: 10})}
+	test(c.f.a, 8, "call with a struct argument as a field")
+	test(len(c.s), 3, "append as a field")
+	test(c.s[2].a, 10, "struct literal appended in a field")
+}

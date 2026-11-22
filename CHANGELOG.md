@@ -56,6 +56,8 @@
 
 #### Fixed
 
+- Struct, array and slice literals are values. `f([]i32{1, 2})`, `f(P{x: 1})`, `T{f: U{a: 1}}`, `[2]P{P{x: 1}}`, `return P{x: 1}`, `x := [2]i32{1, 2}` and `var d Box = Box{v: 3}` failed to compile, `P{x: i32.add(f(), 1)}` named a temporary as a field, `T{s: []U{U{a: 1}}}` panicked the compiler, and `t = T{}` did nothing. A struct literal now fills a new zeroed variable, so an unnamed field is zero and every field is computed before the target is written. An array literal longer than its array is the compile error `array literal of length 2 has 3 elements`, `CompileErrorCodeArrayLiteralLength` (7046), and a field named twice is `duplicate field name 'a' in struct literal`, `CompileErrorCodeStructLiteralFieldRepeated` (7047) (#40, #51)
+- `p = &s` on a `*[]str` copied the slice instead of taking its address, so appends through `p` were lost
 - `-` and `!` on a call, a parenthesized expression or a struct field failed to compile, so `!f(x)`, `!(a && b)` and `-foo()` were `invalid indirection` and `-t.x` was `identifier 'x' does not exist`. They apply to any operand now (#28, #56, #58)
 - `i++` and `i--` on a type other than `i32` were `operands are not of the same type`, reported at the end of the function. The 1 takes the type of the operand, and an operand type mismatch is reported at its own line. `p.x++`, `s[i]++` and `p.x += 1` wrote to `p` or panicked, and work now (#45)
 - `i++` as an argument or an operand gave a wrong value, so `sprintf("%d", i++)` printed `%!d(MISSING)`, and `++i` did nothing. As in Go, `i++` and `i--` are statements and both are syntax errors (#18)

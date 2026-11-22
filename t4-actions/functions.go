@@ -514,8 +514,8 @@ func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, cur
 //
 //		prgrm - a CXProgram that contains all the data and arrays of the program.
 //		exprs - the array of expressions.
-//	 args - the input arg expressions to the function.
-func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXExpression) []ast.CXExpression {
+//	 arguments - the expressions of each input argument of the function.
+func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]ast.CXExpression) []ast.CXExpression {
 	expr := exprs[len(exprs)-1]
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -576,6 +576,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 		exprs[len(exprs)-1].ExpressionType = ast.CXEXPR_FUNCTION_CALL
 	}
 
+	args, argumentLast := functionCallArguments(arguments)
 	var nestedExprs []ast.CXExpression
 	for i, inpExpr := range args {
 		if inpExpr.Type == ast.CX_LINE {
@@ -593,6 +594,11 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 		inpExprAtomicOpOperator := prgrm.GetFunctionFromArray(inpExprAtomicOp.Operator)
 
 		inpExprCXLine, _ := prgrm.GetPreviousCXLine(args, i)
+		if inpExprAtomicOpOperator == nil && !argumentLast[i] && !inpExpr.IsMethodCall() {
+			// A declaration inside an argument, such as the variable of a literal.
+			nestedExprs = append(nestedExprs, inpExpr)
+			continue
+		}
 
 		if inpExprAtomicOpOperator != nil && inpExprAtomicOpOperator.AtomicOPCode == constants.OP_JMP {
 			// A short-circuit jmp of && or || inside an argument.
@@ -626,6 +632,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 			expression.AddInput(prgrm, typeSigIdx)
 		} else {
 			// then it's a function call
+			outputGiven := len(inpExprAtomicOp.GetOutputs(prgrm)) > 0
 			if len(inpExprAtomicOp.GetOutputs(prgrm)) < 1 {
 				var out *ast.CXArgument
 
@@ -767,7 +774,8 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, args []ast.CXE
 				}
 
 			}
-			if len(inpExprAtomicOp.GetOutputs(prgrm)) > 0 && inpExpr.IsArrayLiteral() {
+			if argumentLast[i] && outputGiven {
+				// The value of the argument is already in an output, as for a literal.
 				typeSig := inpExprAtomicOp.GetOutputs(prgrm)[0]
 				expression.AddInput(prgrm, typeSig)
 			}
@@ -2381,7 +2389,8 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				} else {
 					panic("type is not known")
 				}
-			} else {
+			} else if outputTypeSig.Type != ast.TYPE_SLICE_ATOMIC {
+				// The value of a slice literal is typed already.
 				panic("type is not known")
 			}
 		}
@@ -3326,4 +3335,22 @@ func shortDeclarationStructTypeSet(arg *ast.CXArgument, argType types.Code, stru
 	}
 	arg.StructType = structType
 	arg.DeclarationSpecifiers = []int{constants.DECL_STRUCT}
+}
+
+// functionCallArguments joins the expressions of every argument and marks the
+// last expression of each, which gives the value of the argument.
+func functionCallArguments(arguments [][]ast.CXExpression) ([]ast.CXExpression, []bool) {
+	var args []ast.CXExpression
+	var argumentLast []bool
+	for _, argument := range arguments {
+		last := len(argument) - 1
+		for last > 0 && argument[last].Type == ast.CX_LINE {
+			last--
+		}
+		for i := range argument {
+			args = append(args, argument[i])
+			argumentLast = append(argumentLast, i == last)
+		}
+	}
+	return args, argumentLast
 }

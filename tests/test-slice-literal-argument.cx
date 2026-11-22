@@ -1,0 +1,30 @@
+package main
+
+type P struct {
+	x i32
+	y i32
+}
+
+func total(s []i32) (out i32) {
+	for i := 0; i < len(s); i++ {
+		out = out + s[i]
+	}
+}
+
+func ys(s []P) (out i32) {
+	for i := 0; i < len(s); i++ {
+		out = out + s[i].y
+	}
+}
+
+func add(a i32, b i32) (out i32) {
+	out = a + b
+}
+
+func main() {
+	test(total([]i32{1, 2, 3}), 6, "slice literal as an argument")
+	test(ys([]P{P{y: 1}, P{x: 5, y: 2}}), 3, "struct slice literal as an argument")
+	test(add(total([]i32{4}), total([]i32{5, 6})), 15, "two slice literal arguments in nested calls")
+	test(len([]i32{7, 8}), 2, "len of a slice literal")
+	printf("%d %d\n", total([]i32{1, 1}), len([]P{P{x: 1}}))
+}

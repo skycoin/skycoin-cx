@@ -231,13 +231,12 @@ func runTestCases(t *runner.TestRunner) {
 		"len 1\nlen 1 hmmmm\n4 [{x: 3, y: 1.5}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 0, y: 0}]\nloop 1 2\nmany 7 28\ndecl 1 8\nglobal 2 [{x: 1, y: 0}, {x: 2, y: 2.5}]\nempty 0 0\n")
 	t.RunWant("test-slice-literal-struct-errors.cx", types.CX_COMPILATION_ERROR, "elements of the wrong type in a struct slice literal (skycoin-cx#47)",
 		"test-slice-literal-struct-errors.cx:20 cannot assign value of type 'U'",
-		"test-slice-literal-struct-errors.cx:20 field 'a' not found in struct 'T'",
 		"test-slice-literal-struct-errors.cx:21 trying to assign argument of type 'U'",
 		"test-slice-literal-struct-errors.cx:22 trying to assign argument of type 'i32'",
 		"test-slice-literal-struct-errors.cx:23 function 'makeU' expected receiving variable of type 'U'; 'T' was provided",
 		"test-slice-literal-struct-errors.cx:24 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
-		"test-slice-literal-struct-errors.cx:25 cannot assign value of type 'str'",
-		"test-slice-literal-struct-errors.cx:26 invalid expression")
+		"test-slice-literal-struct-errors.cx:25 field 'n' in struct literal of type 'T' expected argument of type 'i32'; 'str' was provided",
+		"test-slice-literal-struct-errors.cx:26 function 'append' expected argument of type 'i32'; 'T' was provided")
 	t.RunWant("test-call-index-operator.cx", types.CX_SUCCESS, "f()[i] of an array or slice result as an operator operand",
 		"7\n9\n42\n2\n6 14 2.5\ncond\n")
 	t.RunWant("test-import-global-array-number.cx test-import-global-array.cx", types.CX_SUCCESS, "pkg.A[i] reads and writes a global array or slice of another package",
@@ -443,6 +442,18 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-struct-literal-negative.cx", types.CX_SUCCESS, "negative and computed values in struct literal fields", "-1\n-2.5\n-4\n4\n1.5\n-3\n")
 	t.RunWant("test-short-declaration-copy.cx", types.CX_SUCCESS, "a short declaration copies an i64, an f64, a field or a struct",
 		"5000000000\n7\n0.125\n8\n6000000000\n9\n1\n2\n10\n6000000000\n")
+	t.RunWant("issue-35.cx", types.CX_SUCCESS, "slice literal as an argument (skycoin-cx#51)", "3\n3\n")
+	t.RunWant("issue-539.cx", types.CX_SUCCESS, "array literal of structs (skycoin-cx#40)", "1\n")
+	t.Run("test-struct-literal-value.cx", types.CX_SUCCESS, "a struct literal is a value: var initializer, T{} zeroes, argument, result and a swap of fields")
+	t.Run("test-struct-literal-nested.cx", types.CX_SUCCESS, "struct, slice and array literals nested in each other, with calls in the fields")
+	t.Run("test-struct-literal-package.cx", types.CX_SUCCESS, "struct literals in global initializers and of another package")
+	t.Run("test-array-literal-value.cx", types.CX_SUCCESS, "array literals of structs, as arguments, results and short declarations")
+	t.RunWant("test-slice-literal-argument.cx", types.CX_SUCCESS, "slice literals as call arguments (skycoin-cx#51)", "2 1\n")
+	t.Run("test-string-slice-pointer.cx", types.CX_SUCCESS, "p = &s on a *[]str takes the address of the slice")
+	t.RunWant("test-composite-literal-errors.cx", types.CX_COMPILATION_ERROR, "an array literal longer than its array and a field named twice",
+		"test-composite-literal-errors.cx:9 array literal of length 2 has 3 elements",
+		"test-composite-literal-errors.cx:11 array literal of length 1 has 2 elements",
+		"test-composite-literal-errors.cx:13 duplicate field name 'a' in struct literal")
 	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")

@@ -22,7 +22,13 @@ func opIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 			elt = out1
 		}
 
-		if elt.IsPointer() && elt.PointerTargetType != types.STR && elt.Type != types.AFF || elt.PassBy == constants.PASSBY_REFERENCE {
+		if ast.CXArgumentStringSlicePointer(elt) {
+			if ast.CXTypeSignaturePassBy(prgrm, inputs[0].TypeSignature) == constants.PASSBY_REFERENCE {
+				outputs[0].Set_ptr(prgrm, inputs[0].Offset)
+			} else {
+				outputs[0].Set_bytes(prgrm, inputs[0].Get_bytes(prgrm))
+			}
+		} else if elt.IsPointer() && elt.PointerTargetType != types.STR && elt.Type != types.AFF || elt.PassBy == constants.PASSBY_REFERENCE {
 			// outputs[0].Set_ptr(prgrm, types.AllocWrite_obj_data(prgrm, prgrm.Memory, inputs[0].Get_bytes(prgrm)))
 			outputs[0].Set_ptr(prgrm, inputs[0].Offset)
 		} else {

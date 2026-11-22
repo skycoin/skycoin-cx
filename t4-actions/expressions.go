@@ -1006,6 +1006,15 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		newCXTypeSig.Meta = fnOutputTypeSig.Meta
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
 		typeSigIdx = newCXTypeSig.Index
+	} else if fnOutputTypeSig.Type == ast.TYPE_STRUCT || fnOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
+		// A struct or array output, as in return T{x: 1}.
+		_, newCXTypeSig := prgrm.AllocCXTypeSignatureCopy(fnOutputTypeSig)
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
+		newCXTypeSig.ArgDetails = argDetailsGid
+		typeSigIdx = newCXTypeSig.Index
 	} else {
 		panic("type is not known")
 	}

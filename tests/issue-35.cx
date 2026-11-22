@@ -1,0 +1,19 @@
+// https://github.com/skycoin/cx/issues/35
+
+package main
+
+func fooi(slice []i32) {
+	i32.print(len(slice))
+	i32.print(slice[2])
+}
+
+func foos(slice []str) {
+	test(len(slice), 3, "")
+	test(slice[0], "foo", "")
+	test(slice[2], "str", "")
+}
+
+func main() {
+	fooi([]i32{1, 2, 3})
+	foos([]str{"foo", "slice", "str"})
+}

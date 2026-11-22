@@ -1,0 +1,48 @@
+package main
+
+type P struct {
+	x i32
+	y i32
+}
+
+func sum(a [3]i32) (out i32) {
+	out = a[0] + a[1] + a[2]
+}
+
+func second(a [2]P) (out i32) {
+	out = a[1].y
+}
+
+func pair() (out [2]i32) {
+	out = [2]i32{4, 5}
+}
+
+func main() {
+	test(sum([3]i32{1, 2, 3}), 6, "array literal as an argument")
+	test(second([2]P{P{x: 1, y: 2}, P{x: 3, y: 4}}), 4, "struct array literal as an argument")
+	test(pair()[1], 5, "array literal as a result")
+
+	var m [2][2]i32
+	m = [2][2]i32{[2]i32{1, 2}, [2]i32{3, 4}}
+	test(m[1][0], 3, "array of array literals")
+
+	var b [2]i32
+	b[0] = 9
+	b = [2]i32{}
+	test(b[0], 0, "[N]T{} zeroes the array")
+
+	var ps [3]P = [3]P{P{x: 7}, P{y: 8}}
+	test(ps[0].x, 7, "struct array literal in a declaration")
+	test(ps[1].y, 8, "second struct of the array")
+	test(ps[2].x, 0, "missing elements are zero")
+
+	c := [2]i32{7, 8}
+	test(c[1], 8, "short declaration of an array literal")
+	qs := [2]P{P{x: 1}, P{y: 2}}
+	test(qs[1].y, 2, "short declaration of a struct array literal")
+
+	s := []i32{1, 2}
+	test(len(s), 2, "short declaration of a slice literal")
+	us := []P{P{x: 5}}
+	test(us[0].x, 5, "short declaration of a struct slice literal")
+}

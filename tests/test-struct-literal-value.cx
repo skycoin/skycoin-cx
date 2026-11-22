@@ -1,0 +1,65 @@
+package main
+
+type Box struct {
+	v i32
+	w i32
+}
+
+type P struct {
+	x i32
+}
+
+func f() (out i32) {
+	out = 41
+}
+
+func area(b Box) (out i32) {
+	out = b.v * b.w
+}
+
+func make(v i32) (out Box) {
+	return Box{v: v, w: v}
+}
+
+func main() {
+	var d Box = Box{v: 3, w: 4}
+	test(d.v, 3, "var initialized from a struct literal")
+	test(d.w, 4, "second field of the var")
+
+	var e Box = Box{v: -1}
+	test(e.v, -1, "negative value in a var initializer")
+	test(e.w, 0, "unset field of the var is zero")
+
+	var t Box
+	t.v = 5
+	t.w = 6
+	t = Box{}
+	test(t.v, 0, "T{} zeroes the first field")
+	test(t.w, 0, "T{} zeroes the second field")
+	t.w = 6
+	t = Box{v: 2}
+	test(t.w, 0, "an unset field is zeroed")
+
+	t = Box{v: 1, w: 2}
+	t = Box{v: t.w, w: t.v}
+	test(t.v, 2, "every field is read before the target is written")
+	test(t.w, 1, "the second field reads the old value")
+
+	var p P
+	p = P{x: i32.add(f(), 1)}
+	test(p.x, 42, "nested call in a field")
+
+	test(area(Box{v: 6, w: 7}), 42, "struct literal as an argument")
+	test(area(make(3)), 9, "return of a struct literal")
+
+	for i := 0; i < 3; i++ {
+		var q Box
+		q = Box{v: i}
+		test(q.w, 0, "a literal in a loop starts from zero")
+		q.w = 9
+	}
+
+	b := Box{w: 8}
+	test(b.w, 8, "short declaration of a struct literal")
+	test(b.v, 0, "unset field of a short declaration")
+}

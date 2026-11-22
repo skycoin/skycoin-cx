@@ -65,6 +65,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeCallResultCall - ast.CompileErrorCodeNil:             {Format: "%H the result of a call is not a function\n"},
 	ast.CompileErrorCodeMethodResultMissing - ast.CompileErrorCodeNil:        {Format: "%H method '%s.%s' returns no value\n"},
 	ast.CompileErrorCodeAssignmentCount - ast.CompileErrorCodeNil:            {Format: "%H assignment mismatch: %d variable%+ but %d value%+\n"},
+	ast.CompileErrorCodeArrayLiteralLength - ast.CompileErrorCodeNil:         {Format: "%H array literal of length %d has %d element%+\n"},
+	ast.CompileErrorCodeStructLiteralFieldRepeated - ast.CompileErrorCodeNil: {Format: "%H duplicate field name '%s' in struct literal\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

@@ -8,4 +8,5 @@ type Color3 struct {
 
 func main() {
 	var colors [1]Color3 = [1]Color3{Color3{R: 1}}
+	i32.print(colors[0].R)
 }

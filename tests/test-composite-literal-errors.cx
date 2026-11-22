@@ -1,0 +1,14 @@
+package main
+
+type U struct {
+	a i32
+}
+
+func main() {
+	var a [2]i32
+	a = [2]i32{1, 2, 3}
+	var us [1]U
+	us = [1]U{U{}, U{}}
+	var u U
+	u = U{a: 1, a: 2}
+}

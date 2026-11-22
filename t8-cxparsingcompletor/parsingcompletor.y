@@ -163,7 +163,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   additive_expression
 %type   <expressions>   multiplicative_expression
 %type   <expressions>   unary_expression
-%type   <expressions>   argument_expression_list
+%type   <arrayArguments>   argument_expression_list
 %type   <expressions>   postfix_expression
 %type   <expressions>   primary_expression
 
@@ -528,41 +528,13 @@ type_specifier:
 struct_literal_fields:
                 // empty
                 { $$ = nil }
-        |       IDENTIFIER COLON constant_expression
+        |       IDENTIFIER COLON struct_literal_expression
                 {
-                        $3 = actions.ShortCircuitStrip(actions.AST, $3)
-                        for i:=0;i<len($3);i++{
-                                if $3[i].Type!=ast.CX_LINE{
-                                        if $3[i].IsStructLiteral() {
-                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
-                                                // Now a slice of objects, site S1482.
-                                                $$ = actions.StructLiteralAssignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$1)}, $3)
-                                        } else {
-                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
-                                                // Now a slice of objects, site S1483.
-                                                $$ = actions.Assignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$1)}, "=", $3)
-                                        }
-                                        break
-                                }
-                        }
+                        $$ = actions.StructLiteralField(actions.AST, $1, $3)
                 }
-        |       struct_literal_fields COMMA IDENTIFIER COLON constant_expression
+        |       struct_literal_fields COMMA IDENTIFIER COLON struct_literal_expression
                 {
-                        $5 = actions.ShortCircuitStrip(actions.AST, $5)
-                        for i:=0;i<len($5);i++{
-                                if $5[i].Type!=ast.CX_LINE{
-                                        if $5[i].IsStructLiteral() {
-                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
-                                                // Now a slice of objects, site S1484.
-                                                $$ = append($1, actions.StructLiteralAssignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$3)}, $5)...)
-                                        } else {
-                                                // OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
-                                                // Now a slice of objects, site S1485.
-                                                $$ = append($1, actions.Assignment(actions.AST,[]ast.CXExpression{actions.StructLiteralFields(actions.AST,$3)}, "=", $5)...)
-                                        }
-                                        break
-                                }
-                        }
+                        $$ = append($1, actions.StructLiteralField(actions.AST, $3, $5)...)
                 }
                 ;
 
@@ -605,11 +577,11 @@ indexing_slice_literal:
 array_literal_expression:
                 indexing_literal IDENTIFIER LBRACE array_literal_expression_list RBRACE
                 {
-			$$ = $4
+			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, $4)
                 }
         |       indexing_literal IDENTIFIER LBRACE RBRACE
                 {
-			$$ = nil
+			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, nil)
                 }
         |       indexing_literal type_specifier LBRACE array_literal_expression_list RBRACE
                 {
@@ -617,7 +589,7 @@ array_literal_expression:
                 }
         |       indexing_literal type_specifier LBRACE RBRACE
                 {
-			$$ = nil
+			$$ = actions.ArrayLiteralExpression(actions.AST, types.Cast_sint_to_sptr($1), types.Code($2), nil)
                 }
                 ;
 
@@ -899,9 +871,12 @@ postfix_expression:
 
 argument_expression_list:
                 assignment_expression
+                {
+			$$ = [][]ast.CXExpression{$1}
+                }
 	|       argument_expression_list COMMA assignment_expression
                 {
-			$$ = append($1, $3...)
+			$$ = append($1, $3)
                 }
                 ;
 
@@ -1048,7 +1023,7 @@ struct_literal_expression:
                 }
 	|       unary_operator IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
-			$$ = actions.UnaryExpression(actions.AST,$1, actions.PrimaryStructLiteral(actions.AST,$2, $4))
+			$$ = actions.PrimaryStructLiteralReference(actions.AST, $1, $2, $4)
                 }
         |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {

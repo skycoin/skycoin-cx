@@ -197,7 +197,8 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1002.
 	_, symOutput := ast.MakeArgument(prgrm, symNameOutput, CurrentFile, LineNo)
-	sliceLiteralSetType(prgrm, symOutput, typeCode, strct, false)
+	sliceLiteralSetType(prgrm, symOutput, typeCode, strct, true)
+	symOutput = DeclarationSpecifiers(symOutput, []types.Pointer{0}, constants.DECL_SLICE)
 	symOutput.Package = ast.CXPackageIndex(pkg.Index)
 	symOutput.PreviouslyDeclared = true
 
@@ -227,6 +228,7 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 	symExprAtomicOp.AddInput(prgrm, typeSigIdx)
 
 	// marking the output so multidimensional arrays identify the expressions
+	symExpr.ExpressionType = ast.CXEXPR_ARRAY_LITERAL
 	result = append(result, *symExprExprCXLine, *symExpr)
 
 	return result
@@ -249,22 +251,30 @@ func SliceLiteralStructExpression(prgrm *ast.CXProgram, structName string, exprs
 	if elt.StructType == nil {
 		return nil
 	}
+	return sliceLiteralExpressionOf(prgrm, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs))
+}
 
+// sliceLiteralStructElements gives each element of a literal of the struct strct
+// its own variable, as sliceLiteralStructElement does.
+func sliceLiteralStructElements(prgrm *ast.CXProgram, strct *ast.CXStruct, exprs []ast.CXExpression) []ast.CXExpression {
 	var elements []ast.CXExpression
 	start := 0
 	for i := range exprs {
 		if exprs[i].Type == ast.CX_LINE || !exprs[i].IsArrayLiteral() {
 			continue
 		}
-		elements = append(elements, sliceLiteralStructElement(prgrm, elt.StructType, exprs[start:i+1])...)
+		elements = append(elements, sliceLiteralStructElement(prgrm, strct, exprs[start:i+1])...)
 		start = i + 1
 	}
-	return sliceLiteralExpressionOf(prgrm, types.STRUCT, elt.StructType, elements)
+	return elements
 }
 
 // sliceLiteralStructElement assigns one element of a []strct literal to a new
 // variable and ends with that variable, so it is appended like a literal.
 func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression) []ast.CXExpression {
+	if sliceLiteralStructInner(prgrm, strct, element) {
+		return element
+	}
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
@@ -290,27 +300,9 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 		last--
 	}
 	element[last].ExpressionType = ast.CXEXPR_UNUSED
-	literalStruct := sliceLiteralStructLiteral(prgrm, element)
 	switch {
 	case len(prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)) == 0 && prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[element[last].Index].Operator) == nil:
 		// T{} leaves the declared variable zero.
-	case literalStruct != nil:
-		if literalStruct != strct {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignValueType, CurrentFile, LineNo, ast.CompileErrorOperands{int64(literalStruct.Name), int64(elementName), int64(strct.Name)})
-		}
-		// Each field assignment now writes elementName.field, as assignStructLiteralFields does.
-		for i := range element {
-			if element[i].Type == ast.CX_LINE {
-				continue
-			}
-			sig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[element[i].Index].GetOutputs(prgrm)[0])
-			out := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
-			out.Name = elementName
-			sig.Name = elementName
-			out.DereferenceOperations = append(out.DereferenceOperations, constants.DEREF_FIELD)
-			element[i].ExpressionType = ast.CXEXPR_STRUCT_LITERAL
-		}
-		result = append(result, element...)
 	case prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[element[last].Index].Operator) == nil:
 		// A value: elementName = value, which type checks it.
 		value := prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)
@@ -334,53 +326,42 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 	return append(result, *use)
 }
 
-// sliceLiteralStructLiteral returns the struct of element when it is a struct
-// literal, whose expressions all assign a field of an output named after it.
-func sliceLiteralStructLiteral(prgrm *ast.CXProgram, element []ast.CXExpression) *ast.CXStruct {
-	var strct *ast.CXStruct
-	for _, expr := range element {
-		if expr.Type == ast.CX_LINE {
-			continue
-		}
-		outputs := prgrm.CXAtomicOps[expr.Index].GetOutputs(prgrm)
-		if len(outputs) == 0 {
-			return nil
-		}
-		sig := prgrm.GetCXTypeSignatureFromArray(outputs[0])
-		if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
-			return nil
-		}
-		arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
-		if arg.StructType == nil || arg.Name != arg.StructType.Name || len(arg.Fields) == 0 || strct != nil && arg.StructType != strct {
-			return nil
-		}
-		strct = arg.StructType
-	}
-	return strct
+// PrimaryStructLiteral creates a struct literal value. Its fields are written
+// to a new zeroed variable, which the last expression gives as the value.
+func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+	writes, strct := primaryStructLiteralWrites(prgrm, structName, name, structFields)
+	return structLiteralValue(prgrm, strct, name, writes)
 }
 
-// PrimaryStructLiteral creates a struct literal expression.
-//
-// Input arguments description:
-//
-//		prgrm - a CXProgram that contains all the data and arrays of the program.
-//	 structName - name of the struct.
-//	 structFields - fields of the struct.
-func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+// PrimaryStructLiteralReference creates &T{...}, whose fields are written
+// where StructLiteralAssignment puts them.
+func PrimaryStructLiteralReference(prgrm *ast.CXProgram, operator string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+	writes, _ := primaryStructLiteralWrites(prgrm, structName, prgrm.CXProgramNameIntern(structName), structFields)
+	return UnaryExpression(prgrm, operator, writes)
+}
+
+// primaryStructLiteralWrites makes each field write of a struct literal of
+// structName write outputName.field, and returns the struct.
+func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
 	var result []ast.CXExpression
+	var structResult *ast.CXStruct
+	var fieldNames []stringpool.StringGid
 	structNameGid := prgrm.CXProgramNameIntern(structName)
 
 	if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 		if strct, err := prgrm.GetStruct(structNameGid, pkg.Name); err == nil {
+			structResult = strct
 			for _, expr := range structFields {
 				if expr.Type == ast.CX_LINE {
 					continue
 				}
-				// A method call computes the value of the field after it.
-				if expr.IsMethodCall() {
+				// A method call or a nested value is not a field write.
+				if expr.ExpressionType != ast.CXEXPR_STRUCT_LITERAL_FIELD {
 					result = append(result, expr)
 					continue
 				}
+				structLiteralFieldRepeatedCheck(prgrm, &fieldNames, expr)
 				// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 				// Now an arena getter, site S1009.
 				cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
@@ -426,8 +407,8 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 					prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Size = strct.GetStructSize(prgrm)
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1748.
-					prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name = structNameGid
-					cxAtomicOpOutputTypeSig.Name = structNameGid
+					prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name = outputName
+					cxAtomicOpOutputTypeSig.Name = outputName
 
 					fieldIdx := ast.CXArgumentIndex(field.Index)
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -448,7 +429,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 
 					newCXArg.StructType = strct
 					newCXArg.Size = strct.GetStructSize(prgrm)
-					newCXArg.Name = structNameGid
+					newCXArg.Name = outputName
 
 					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 					// Now a constructor call, site S1015.
@@ -460,7 +441,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 					newCXArg.Fields = append(newCXArg.Fields, fieldIdx)
 					newCXArgIdx := ast.CXArgumentIndex(newCXArg.Index)
 
-					cxAtomicOpOutputTypeSig.Name = structNameGid
+					cxAtomicOpOutputTypeSig.Name = outputName
 					cxAtomicOpOutputTypeSig.Type = ast.TYPE_CXARGUMENT_DEPRECATE
 					cxAtomicOpOutputTypeSig.Meta = int(newCXArgIdx)
 				} else if cxAtomicOpOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
@@ -479,7 +460,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 
 					newCXArg.StructType = strct
 					newCXArg.Size = strct.GetStructSize(prgrm)
-					newCXArg.Name = structNameGid
+					newCXArg.Name = outputName
 
 					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 					// Now a constructor call, site S1020.
@@ -491,7 +472,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 					newCXArg.Fields = append(newCXArg.Fields, fieldIdx)
 					newCXArgIdx := ast.CXArgumentIndex(newCXArg.Index)
 
-					cxAtomicOpOutputTypeSig.Name = structNameGid
+					cxAtomicOpOutputTypeSig.Name = outputName
 					cxAtomicOpOutputTypeSig.Type = ast.TYPE_CXARGUMENT_DEPRECATE
 					cxAtomicOpOutputTypeSig.Meta = int(newCXArgIdx)
 				} else {
@@ -508,32 +489,38 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 		panic(err)
 	}
 
-	return result
+	return result, structResult
 }
 
-// PrimaryStructLiteralExternal creates a struct literal expression after a postfix expression.
-//
-// Input arguments description:
-//
-//		prgrm - a CXProgram that contains all the data and arrays of the program.
-//	 importName - name of the import.
-//	 structName - name of the struct.
-//	 structFields - fields of the struct.
+// PrimaryStructLiteralExternal creates a value of the struct literal
+// importName.structName{...}, as PrimaryStructLiteral does.
 func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+	writes, strct := primaryStructLiteralExternalWrites(prgrm, importName, structName, name, structFields)
+	return structLiteralValue(prgrm, strct, name, writes)
+}
+
+// primaryStructLiteralExternalWrites is primaryStructLiteralWrites for a
+// struct of the package importName.
+func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string, structName string, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
 	var result []ast.CXExpression
+	var structResult *ast.CXStruct
+	var fieldNames []stringpool.StringGid
 	structNameGid := prgrm.CXProgramNameIntern(structName)
 	importNameGid := prgrm.CXProgramNameIntern(importName)
 	if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 		if _, err := pkg.GetImport(prgrm, importNameGid); err == nil {
 			if strct, err := prgrm.GetStruct(structNameGid, importNameGid); err == nil {
+				structResult = strct
 				for _, expr := range structFields {
 					if expr.Type == ast.CX_LINE {
 						continue
 					}
-					if expr.IsMethodCall() {
+					if expr.ExpressionType != ast.CXEXPR_STRUCT_LITERAL_FIELD {
 						result = append(result, expr)
 						continue
 					}
+					structLiteralFieldRepeatedCheck(prgrm, &fieldNames, expr)
 					// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 					// Now an arena getter, site S1023.
 					cxAtomicOp, err := prgrm.GetCXAtomicOp(expr.Index)
@@ -570,8 +557,8 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 						prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Size = strct.GetStructSize(prgrm)
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 						// Now an arena getter, site S1754.
-						prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name = structNameGid
-						cxAtomicOpOutputTypeSig.Name = structNameGid
+						prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name = outputName
+						cxAtomicOpOutputTypeSig.Name = outputName
 
 						fieldIdx := ast.CXArgumentIndex(field.Index)
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -595,7 +582,7 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 		panic(err)
 	}
 
-	return result
+	return result, structResult
 }
 
 // ArrayLiteralExpression creates an array literal expression.
@@ -608,6 +595,22 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 //	 typeCode - type code of the array.
 //	 exprs - the array of expressions composing the array literal expression.
 func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, exprs []ast.CXExpression) []ast.CXExpression {
+	return arrayLiteralExpressionOf(prgrm, arraySizes, typeCode, nil, exprs)
+}
+
+// ArrayLiteralStructExpression handles an array literal of the struct
+// structName, `[2]T{T{x: 1}, t}`, as ArrayLiteralExpression does for [2]i32.
+func ArrayLiteralStructExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, structName string, exprs []ast.CXExpression) []ast.CXExpression {
+	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo)
+	if elt.StructType == nil {
+		return nil
+	}
+	return arrayLiteralExpressionOf(prgrm, arraySizes, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs))
+}
+
+// arrayLiteralExpressionOf is ArrayLiteralExpression for elements of type
+// typeCode, or of the struct strct when it is set.
+func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, strct *ast.CXStruct, exprs []ast.CXExpression) []ast.CXExpression {
 	var result []ast.CXExpression
 
 	pkg, err := prgrm.GetCurrentPackage()
@@ -629,7 +632,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1029.
 	_, arrVar := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
-	arrVar.SetType(typeCode)
+	sliceLiteralSetType(prgrm, arrVar, typeCode, strct, true)
 	arrVar = DeclarationSpecifiers(arrVar, arraySizes, constants.DECL_ARRAY)
 	arrVar.Package = ast.CXPackageIndex(pkg.Index)
 	arrVar.PreviouslyDeclared = true
@@ -660,7 +663,7 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 			// Now a constructor call, site S1033.
 			_, sym := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
-			sym.SetType(typeCode)
+			sliceLiteralSetType(prgrm, sym, typeCode, strct, false)
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
 
@@ -725,22 +728,24 @@ func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, ty
 		}
 	}
 
+	if len(arraySizes) > 0 && types.Pointer(endPointsCounter) > arraySizes[0] {
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeArrayLiteralLength, CurrentFile, LineNo, ast.CompileErrorOperands{int64(arraySizes[0]), int64(endPointsCounter)})
+	}
+
 	symNameOutput := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1042.
 	_, symOutput := ast.MakeArgument(prgrm, symNameOutput, CurrentFile, LineNo)
-	symOutput.SetType(typeCode)
-	// symOutput.Lengths = append(symOutput.Lengths, arrSizes[len(arrSizes)-1])
-	symOutput.Lengths = arraySizes
+	sliceLiteralSetType(prgrm, symOutput, typeCode, strct, true)
+	symOutput = DeclarationSpecifiers(symOutput, arraySizes, constants.DECL_ARRAY)
 	symOutput.Package = ast.CXPackageIndex(pkg.Index)
 	symOutput.PreviouslyDeclared = true
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1043.
 	_, symInput := ast.MakeArgument(prgrm, symName, CurrentFile, LineNo)
-	symInput.SetType(typeCode)
-	// symInput.Lengths = append(symInput.Lengths, arrSizes[len(arrSizes)-1])
+	sliceLiteralSetType(prgrm, symInput, typeCode, strct, false)
 	symInput.Lengths = arraySizes
 	symInput.Package = ast.CXPackageIndex(pkg.Index)
 	symInput.PreviouslyDeclared = true
@@ -813,6 +818,119 @@ func structLiteralValueTypeSet(prgrm *ast.CXProgram, strct *ast.CXStruct, value 
 		return
 	}
 	if fieldSig, err := strct.GetField(prgrm, fieldName); err == nil {
-		value.Type = fieldSig.GetType(prgrm)
+		if fieldSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			value.Type = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fieldSig.Meta)).Type
+		} else {
+			value.Type = fieldSig.GetType(prgrm)
+		}
 	}
+}
+
+// StructLiteralField writes value to the field fieldName of a struct literal,
+// marked so PrimaryStructLiteral can tell the write from the value.
+func StructLiteralField(prgrm *ast.CXProgram, fieldName string, value []ast.CXExpression) []ast.CXExpression {
+	value = ShortCircuitStrip(prgrm, value)
+	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
+	// Now a slice of objects, sites S1482 S1483 S1484 S1485.
+	field := []ast.CXExpression{StructLiteralFields(prgrm, fieldName)}
+	var result []ast.CXExpression
+	if structLiteralReference(value) {
+		result = StructLiteralAssignment(prgrm, field, value)
+	} else {
+		result = Assignment(prgrm, field, "=", value)
+	}
+	for i := len(result) - 1; i >= 0; i-- {
+		if result[i].Type != ast.CX_LINE {
+			result[i].ExpressionType = ast.CXEXPR_STRUCT_LITERAL_FIELD
+			break
+		}
+	}
+	return result
+}
+
+// structLiteralReference reports whether value is &T{...}, the only struct
+// literal that is not a value.
+func structLiteralReference(value []ast.CXExpression) bool {
+	for i := range value {
+		if value[i].Type != ast.CX_LINE {
+			return value[i].IsStructLiteral()
+		}
+	}
+	return false
+}
+
+// structLiteralVariable is a signature of the struct variable name, the
+// declaration when declaration is set.
+func structLiteralVariable(prgrm *ast.CXProgram, strct *ast.CXStruct, name stringpool.StringGid, declaration bool) ast.CXTypeSignatureIndex {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	_, arg := ast.MakeArgument(prgrm, name, CurrentFile, LineNo)
+	sliceLiteralSetType(prgrm, arg, types.STRUCT, strct, declaration)
+	arg.Package = ast.CXPackageIndex(pkg.Index)
+	arg.PreviouslyDeclared = true
+	// A named signature lets the symbols table take the declaration as a temp.
+	return ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, arg)
+}
+
+// structLiteralValue declares the variable name, which zeroes it, then runs
+// writes and ends with an expression that gives the variable.
+func structLiteralValue(prgrm *ast.CXProgram, strct *ast.CXStruct, name stringpool.StringGid, writes []ast.CXExpression) []ast.CXExpression {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	declCXLine := MakeCXLineExpressionCurrent(prgrm)
+	decl := ast.MakeAtomicOperatorExpression(prgrm, nil)
+	prgrm.CXAtomicOps[decl.Index].Package = ast.CXPackageIndex(pkg.Index)
+	prgrm.CXAtomicOps[decl.Index].AddOutput(prgrm, structLiteralVariable(prgrm, strct, name, true))
+	result := []ast.CXExpression{*declCXLine, *decl}
+
+	for i := range writes {
+		if writes[i].Type != ast.CX_LINE && writes[i].IsStructLiteral() {
+			sig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[writes[i].Index].GetOutputs(prgrm)[0])
+			out := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+			if out.Name == name {
+				out.DereferenceOperations = append(out.DereferenceOperations, constants.DEREF_FIELD)
+			}
+		}
+		result = append(result, writes[i])
+	}
+
+	use := ast.MakeAtomicOperatorExpression(prgrm, nil)
+	prgrm.CXAtomicOps[use.Index].Package = ast.CXPackageIndex(pkg.Index)
+	prgrm.CXAtomicOps[use.Index].AddOutput(prgrm, structLiteralVariable(prgrm, strct, name, false))
+	return append(result, *use)
+}
+
+// structLiteralFieldRepeatedCheck reports the field write expr when an
+// earlier write of the same struct literal named its field.
+func structLiteralFieldRepeatedCheck(prgrm *ast.CXProgram, fieldNames *[]stringpool.StringGid, expr ast.CXExpression) {
+	name := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[expr.Index].GetOutputs(prgrm)[0]).Name
+	for _, seen := range *fieldNames {
+		if seen == name {
+			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeStructLiteralFieldRepeated, CurrentFile, LineNo, ast.CompileErrorOperands{int64(name)})
+			return
+		}
+	}
+	*fieldNames = append(*fieldNames, name)
+}
+
+// sliceLiteralStructInner reports whether element is a []strct literal, an
+// element of [][]strct{...} that the outer [] gives its extra dimension.
+func sliceLiteralStructInner(prgrm *ast.CXProgram, strct *ast.CXStruct, element []ast.CXExpression) bool {
+	last := len(element) - 1
+	for last > 0 && element[last].Type == ast.CX_LINE {
+		last--
+	}
+	if last < 0 || len(prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)) == 0 {
+		return false
+	}
+	sig := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[element[last].Index].GetOutputs(prgrm)[0])
+	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return false
+	}
+	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+	return arg.StructType == strct && hasDeclSpec(arg, constants.DECL_SLICE)
 }

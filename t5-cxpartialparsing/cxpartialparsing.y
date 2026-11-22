@@ -498,8 +498,8 @@ type_specifier:
 
 struct_literal_fields:
                 // empty
-        |       IDENTIFIER COLON constant_expression
-        |       struct_literal_fields COMMA IDENTIFIER COLON constant_expression
+        |       IDENTIFIER COLON struct_literal_expression
+        |       struct_literal_fields COMMA IDENTIFIER COLON struct_literal_expression
                 ;
 
 array_literal_expression_list:

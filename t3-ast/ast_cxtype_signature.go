@@ -764,3 +764,12 @@ func (typeSignature *CXTypeSignature) GetOffset(prgrm *CXProgram) types.Pointer 
 	}
 	return typeSignature.Offset
 }
+
+// CXTypeSignaturePassBy is the PassBy of sig, read from its argument when
+// sig is a TYPE_CXARGUMENT_DEPRECATE.
+func CXTypeSignaturePassBy(prgrm *CXProgram, sig *CXTypeSignature) int {
+	if sig.Type == TYPE_CXARGUMENT_DEPRECATE {
+		return prgrm.GetCXArgFromArray(CXArgumentIndex(sig.Meta)).PassBy
+	}
+	return sig.PassBy
+}
