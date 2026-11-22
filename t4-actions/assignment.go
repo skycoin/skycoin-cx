@@ -478,7 +478,11 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 				sym.Size = fromCXAtomicOpInputs.Size
 				sym.Lengths = fromCXAtomicOpInputs.Lengths
 			}
-			if outTypeIsSlice {
+			if outTypeIsSlice && len(outTypeArg.Lengths) > 1 {
+				// A nested slice literal, [][]i32{{1}}, keeps every dimension.
+				sym.Lengths = append([]types.Pointer(nil), outTypeArg.Lengths...)
+				sym.DeclarationSpecifiers = append([]int(nil), outTypeArg.DeclarationSpecifiers...)
+			} else if outTypeIsSlice {
 				sym.Lengths = append([]types.Pointer{0}, sym.Lengths...)
 				sym.DeclarationSpecifiers = append(sym.DeclarationSpecifiers, constants.DECL_SLICE)
 			} else if ast.IsTypeArrayAtomic(outTypeArg) {

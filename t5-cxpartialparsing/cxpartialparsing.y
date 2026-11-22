@@ -144,6 +144,8 @@
 %type   <tok>           unary_operator
 %type   <i>             type_specifier
 %type   <argument>      declaration_specifiers
+%type   <argument>      element_specifiers
+%type   <argument>      array_element
 %type   <argument>      declarator
 %type   <argument>      direct_declarator
 %type   <argument>      parameter_declaration
@@ -398,6 +400,14 @@ types_list:
 	;
 
 declaration_specifiers:
+                element_specifiers
+        |       indexing_literal array_element
+                {
+			$$ = actions.DeclarationSpecifiers($2, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
+                }
+                ;
+
+element_specifiers:
 		FUNC types_list types_list
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -416,10 +426,6 @@ declaration_specifiers:
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
                 }
-        // |       indexing_literal declaration_specifiers
-        //         {
-	// 		$$ = actions.DeclarationSpecifiers($2, $1, constants.DECL_ARRAY)
-        //         }
         |       LBRACK RBRACK declaration_specifiers
                 {
 			$$ = actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_SLICE)
@@ -432,16 +438,6 @@ declaration_specifiers:
                 {
 			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
                 }
-        |       indexing_literal type_specifier
-                {
-			basic := actions.DeclarationSpecifiersBasic(Program, types.Code($2))
-			$$ = actions.DeclarationSpecifiers(basic, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
-                }
-        |       indexing_literal IDENTIFIER
-                {
-			strct := actions.DeclarationSpecifiersStruct(Program,$2, "", false, CurrentFile, lineNo)
-			$$ = actions.DeclarationSpecifiers(strct, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
-                }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
 			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, lineNo)
@@ -450,10 +446,31 @@ declaration_specifiers:
 		{
 			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, lineNo)
 		}
-		/* type_specifier declaration_specifiers */
-	/* |       type_specifier */
-	/* |       type_qualifier declaration_specifiers */
-	/* |       type_qualifier */
+                ;
+
+// array_element is what an array may hold: a basic or struct type, a struct
+// of another package, or a pointer to one of them.
+array_element:
+                type_specifier
+                {
+			$$ = actions.DeclarationSpecifiersBasic(Program, types.Code($1))
+                }
+        |       IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(Program,$1, "", false, CurrentFile, lineNo)
+                }
+        |       IDENTIFIER PERIOD IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, $1, true, CurrentFile, lineNo)
+                }
+        |       type_specifier PERIOD IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, lineNo)
+                }
+        |       MUL_OP array_element
+                {
+			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
+                }
                 ;
 
 type_specifier:
@@ -502,10 +519,16 @@ struct_literal_fields:
         |       struct_literal_fields COMMA IDENTIFIER COLON struct_literal_expression
                 ;
 
-array_literal_expression_list:
+literal_element_list:
+		literal_element
+	|       literal_element_list COMMA literal_element
+                ;
+
+// An elided element, {1, 2} or {x: 1}, takes the element type of its literal.
+literal_element:
 		assignment_expression
-        |       LBRACE array_literal_expression_list RBRACE
-	|       array_literal_expression_list COMMA assignment_expression
+        |       LBRACE literal_element_list RBRACE
+        |       LBRACE struct_literal_fields RBRACE
                 ;
 
 indexing_literal:
@@ -532,18 +555,17 @@ indexing_slice_literal:
 
 // expressions
 array_literal_expression:
-                indexing_literal IDENTIFIER LBRACE array_literal_expression_list RBRACE
+                indexing_literal IDENTIFIER LBRACE literal_element_list RBRACE
         |       indexing_literal IDENTIFIER LBRACE RBRACE
-        |       indexing_literal type_specifier LBRACE array_literal_expression_list RBRACE
+        |       indexing_literal type_specifier LBRACE literal_element_list RBRACE
         |       indexing_literal type_specifier LBRACE RBRACE
         ;
 
 slice_literal_expression:
-                LBRACK RBRACK IDENTIFIER LBRACE argument_expression_list RBRACE
-        |       LBRACK RBRACK IDENTIFIER LBRACE RBRACE
-        |       LBRACK RBRACK type_specifier LBRACE argument_expression_list RBRACE
-        |       LBRACK RBRACK type_specifier LBRACE RBRACE
-        |       LBRACK RBRACK slice_literal_expression
+                indexing_slice_literal IDENTIFIER LBRACE literal_element_list RBRACE
+        |       indexing_slice_literal IDENTIFIER LBRACE RBRACE
+        |       indexing_slice_literal type_specifier LBRACE literal_element_list RBRACE
+        |       indexing_slice_literal type_specifier LBRACE RBRACE
                 ;
 
 

@@ -36,8 +36,9 @@ func DeclarationSpecifiers(declSpec *ast.CXArgument, arrayLengths []types.Pointe
 		for range arrayLengths {
 			declSpec.DeclarationSpecifiers = append(declSpec.DeclarationSpecifiers, constants.DECL_ARRAY)
 		}
+		// Lengths are outermost first, as written: [2][3]i32 is {2, 3}.
 		arg := declSpec
-		arg.Lengths = arrayLengths
+		arg.Lengths = append(append([]types.Pointer{}, arrayLengths...), arg.Lengths...)
 
 		return arg
 	case constants.DECL_SLICE:
@@ -136,8 +137,9 @@ const declarationSizeLimit = uint64(types.MAX_UINT32)
 // declarationArgSize returns the bytes a declaration of arg takes, and false
 // when they pass declarationSizeLimit. It follows ast.GetArgSize.
 func declarationArgSize(arg *ast.CXArgument) (types.Pointer, bool) {
-	for _, decl := range arg.DeclarationSpecifiers {
-		switch decl {
+	// The last specifier is the outermost, so [3]*i32 is an array of pointers.
+	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
+		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
 			total := uint64(arg.Size)
 			for _, length := range arg.Lengths {

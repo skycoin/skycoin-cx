@@ -1,0 +1,54 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Holder struct {
+	ns [3]*i32
+	ps [2]*Point
+}
+
+var gns [2]*i32
+
+func first(a [3]*i32) (r i32) {
+	r = *a[0]
+}
+
+func mk(p *i32) (a [3]*i32) {
+	a[0] = p
+	a[2] = p
+}
+
+func main() {
+	n := 4
+	m := 9
+	var a [3]*i32
+	a = mk(&n)
+	i32.print(first(a))
+	i32.print(*a[2])
+	*a[2] = 6
+	i32.print(n)
+
+	var q *i32
+	q = a[0]
+	i32.print(*q)
+
+	var h Holder
+	h.ns[1] = &m
+	i32.print(*h.ns[1])
+
+	gns[1] = &m
+	i32.print(*gns[1])
+
+	var g [2][2]*i32
+	g[1][0] = &n
+	i32.print(*g[1][0])
+
+	var pt Point
+	pt.x = 5
+	var pa [2]*Point
+	pa[1] = &pt
+	h.ps[0] = &pt
+}

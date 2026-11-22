@@ -41,8 +41,9 @@ func GetArgSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 		}
 	}
 
-	for _, decl := range arg.DeclarationSpecifiers {
-		switch decl {
+	// The last specifier is the outermost, so [3]*i32 is an array of pointers.
+	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
+		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
 			return arg.Size * types.TotalLength(arg.Lengths)
 		case constants.DECL_POINTER:
@@ -71,8 +72,9 @@ func GetNativeSize(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 		}
 	}
 
-	for _, decl := range arg.DeclarationSpecifiers {
-		switch decl {
+	// The last specifier is the outermost, so [3]*i32 is an array of pointers.
+	for i := len(arg.DeclarationSpecifiers) - 1; i >= 0; i-- {
+		switch arg.DeclarationSpecifiers[i] {
 		case constants.DECL_ARRAY:
 			return arg.Size * types.TotalLength(arg.Lengths)
 		case constants.DECL_POINTER:
@@ -94,7 +96,7 @@ func GetDerefSize(prgrm *CXProgram, arg *CXArgument, index int, derefPointer boo
 	if !derefArray && len(arg.Lengths) > 1 && ((index + 1) < len(arg.Lengths)) {
 		return types.POINTER_SIZE
 	}
-	if arg.StructType != nil {
+	if arg.StructType != nil && !cxArgumentElementPointer(arg) {
 		return arg.StructType.GetStructSize(prgrm)
 	}
 	if derefPointer {
@@ -536,8 +538,22 @@ func derefSizeSliceOfArg(prgrm *CXProgram, arg *CXArgument) types.Pointer {
 	if len(arg.Lengths) > 1 && (len(arg.Lengths)-len(arg.Indexes)) > 1 {
 		return types.POINTER_SIZE
 	}
-	if arg.StructType != nil {
+	if arg.StructType != nil && !cxArgumentElementPointer(arg) {
 		return arg.StructType.GetStructSize(prgrm)
 	}
 	return arg.Size
+}
+
+// cxArgumentElementPointer reports whether the elements of the array or slice arg are
+// pointers, as in [2]*T, where a pointer comes before the innermost dimension.
+func cxArgumentElementPointer(arg *CXArgument) bool {
+	for _, spec := range arg.DeclarationSpecifiers {
+		switch spec {
+		case constants.DECL_POINTER:
+			return true
+		case constants.DECL_ARRAY, constants.DECL_SLICE:
+			return false
+		}
+	}
+	return false
 }

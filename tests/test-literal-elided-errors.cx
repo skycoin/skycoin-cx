@@ -1,0 +1,14 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func main() {
+	var a []i32 = []i32{ {1} }
+	var b []Point = []Point{ {1, 2} }
+	var c [][]i32 = [][]i32{ {x: 1} }
+	var d [2]i32 = [2]i32{ {1}, 2 }
+	var e [2]Point = [2]Point{ {3, 4} }
+}

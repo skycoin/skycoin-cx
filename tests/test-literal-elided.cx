@@ -1,0 +1,61 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Grid struct {
+	rows [][]i32
+	pts []Point
+}
+
+func sum(m [][]i32) (r i32) {
+	for i := 0; i < len(m); i++ {
+		for j := 0; j < len(m[i]); j++ {
+			r = r + m[i][j]
+		}
+	}
+}
+
+func mk() (m [][]i32) {
+	m = [][]i32{ {1}, {2, 3} }
+}
+
+func main() {
+	var a [][]i32 = [][]i32{ {1, 2}, {3, 4, 5} }
+	i32.print(a[1][2])
+	i32.print(len(a[1]))
+	var p []Point = []Point{ {x: 1, y: 2}, {x: 3, y: 4}, {} }
+	i32.print(p[1].y)
+	i32.print(len(p))
+	var b [2][2]i32 = [2][2]i32{ {1, 2}, {3, 4} }
+	i32.print(b[1][0])
+	var c [][][]i32 = [][][]i32{ { {7, 8} }, { {9}, {} } }
+	i32.print(c[0][0][1])
+	i32.print(c[1][0][0])
+	i32.print(len(c[1][1]))
+	var d [2]Point = [2]Point{ {x: 1, y: 2}, {y: 6} }
+	i32.print(d[1].y)
+	var e [][]Point = [][]Point{ { {x: 5} }, {} }
+	i32.print(e[0][0].x)
+	var f [2][2][2]i32 = [2][2][2]i32{ { {1, 2}, {3, 4} }, { {5, 6}, {7, 8} } }
+	i32.print(f[1][0][1])
+	g := [][]i32{ []i32{10}, {11} }
+	i32.print(g[1][0])
+	i32.print(sum([][]i32{ {1, 2}, {3, 4} }))
+	i32.print(sum(mk()))
+	var gr Grid = Grid{rows: [][]i32{ {5, 6} }, pts: []Point{ {x: 7} }}
+	i32.print(gr.rows[0][1])
+	i32.print(gr.pts[0].x)
+	h := []Point{ {x: 1}, {y: 2} }
+	i32.print(h[1].y)
+	k := [2][2]i32{ {1, 2}, {3, 4} }
+	i32.print(k[1][1])
+	n := [][]Point{ { {x: 8} } }
+	i32.print(n[0][0].x)
+	b2 := [][]i32{
+		{1, 2},
+		{3, 4}}
+	i32.print(b2[1][1])
+}

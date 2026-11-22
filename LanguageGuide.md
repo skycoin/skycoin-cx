@@ -245,6 +245,17 @@ notation, e.g. `arr1[0] = 10`.
 Each index takes its own brackets, as in `arr3[1][0]`. A comma inside
 the brackets, `arr3[1, 0]`, is a syntax error.
 
+An array can hold pointers and structs of another package, as in Go,
+in variables, fields, parameters and results. `[3]*i32` is an array of
+three pointers, `[2][2]*Point` a matrix of pointers and `[4]pack.T` an
+array of the struct `T` of the imported package `pack`. Slices and
+pointers of such types, `[]pack.T` and `*pack.T`, work the same way.
+An array of slices, an array of pointers to arrays and an array of
+functions, such as `[2][]i32`, `[2]*[3]i32` and `[2]func(i32)()`, are
+not supported yet and are syntax errors. Copying a pointer to a struct
+from one place to another, as in `q = p` or `q = pa[0]`, does not work
+yet either.
+
 ### [Slices](#table-of-contents)
 
 Golang-like slices exist in CX (dynamic arrays). Slices are declared
@@ -363,10 +374,16 @@ sets `p.y` to zero. Every field is computed before `p` is written, so
 more elements than its length and a struct literal that names a field
 twice are compile errors.
 
-Some forms of Go are not supported yet. The type of every element must
-be written out, so `[][]i32{{1, 2}}` is a syntax error and
-`[][]i32{[]i32{1, 2}}` is the way to write it. A struct literal names its
-fields, so `Point{1, 2}` is a syntax error. A field or a method of a
+As in Go, an element of an array or slice literal can leave out its
+type when it is itself a literal. `[][]i32{{1, 2}, {3}}` is
+`[][]i32{[]i32{1, 2}, []i32{3}}`, `[2][2]i32{{1, 2}, {3, 4}}` is
+`[2][2]i32{[2]i32{1, 2}, [2]i32{3, 4}}` and `[]Point{{x: 1}}` is
+`[]Point{Point{x: 1}}`. Leaving out the type of an element that is not
+an array, a slice or a struct, as in `[]i32{{1}}`, is a compile error.
+
+Some forms of Go are not supported yet. A struct literal names its
+fields, so `Point{1, 2}` is a syntax error and `[]Point{{1, 2}}` is a
+compile error. A field or a method of a
 literal, as in `Point{x: 1}.x`, is a syntax error too. `&Point{x: 1}` in
 a loop gives the same address on every pass.
 

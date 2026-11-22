@@ -589,8 +589,9 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
 		if arrLen != 0 {
-			for _, len := range arrayData.Lengths[len(arrayData.Indexes):] {
-				typ = fmt.Sprintf("[%d]%s", len, typ)
+			dims := arrayData.Lengths[len(arrayData.Indexes):]
+			for i := len(dims) - 1; i >= 0; i-- {
+				typ = fmt.Sprintf("[%d]%s", dims[i], typ)
 			}
 		}
 
@@ -605,8 +606,9 @@ func GetFormattedType(prgrm *CXProgram, typeSig *CXTypeSignature) string {
 
 		arrLen := len(arrayData.Lengths) - len(arrayData.Indexes)
 		if arrLen != 0 {
-			for _, len := range arrayData.Lengths[len(arrayData.Indexes):] {
-				typ = fmt.Sprintf("[%d]%s", len, typ)
+			dims := arrayData.Lengths[len(arrayData.Indexes):]
+			for i := len(dims) - 1; i >= 0; i-- {
+				typ = fmt.Sprintf("[%d]%s", dims[i], typ)
 			}
 		}
 

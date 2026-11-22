@@ -68,6 +68,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeArrayLiteralLength - ast.CompileErrorCodeNil:         {Format: "%H array literal of length %d has %d element%+\n"},
 	ast.CompileErrorCodeStructLiteralFieldRepeated - ast.CompileErrorCodeNil: {Format: "%H duplicate field name '%s' in struct literal\n"},
 	ast.CompileErrorCodeImportGuiBuildMissing - ast.CompileErrorCodeNil:      {Format: "%H package \"%s\" needs a GUI build of cx, build it with make build-gui\n"},
+	ast.CompileErrorCodeLiteralElementType - ast.CompileErrorCodeNil:         {Format: "%H invalid composite literal type '%s'\n"},
+	ast.CompileErrorCodeStructLiteralFieldNames - ast.CompileErrorCodeNil:    {Format: "%H struct literal of type '%s' must name its fields\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

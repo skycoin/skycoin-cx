@@ -28,6 +28,7 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 		strctName                               string
 		pkgName                                 string
 		wantDeclarationSpecifierFormattedString string
+		wantLengths                             []int
 		wantErr                                 error
 	}{
 		{
@@ -98,6 +99,7 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 			fileName:                                "./testFile",
 			lineno:                                  6,
 			wantDeclarationSpecifierFormattedString: "[5]*ui8",
+			wantLengths:                             []int{5},
 			wantErr:                                 nil,
 		},
 		{
@@ -108,12 +110,15 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 			wantDeclarationSpecifierFormattedString: "*[12]str",
 			wantErr:                                 nil,
 		},
+		// Lengths are outermost first, as the grammar stores them. This test used to
+		// print the same string from lengths stored innermost first, {10, 5}.
 		{
 			scenario:                                "Has 2D Array",
 			testString:                              "[5][10]i64",
 			fileName:                                "./testFile",
 			lineno:                                  21,
 			wantDeclarationSpecifierFormattedString: "[5][10]i64",
+			wantLengths:                             []int{5, 10},
 			wantErr:                                 nil,
 		},
 		{
@@ -122,6 +127,7 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 			fileName:                                "./testFile",
 			lineno:                                  34,
 			wantDeclarationSpecifierFormattedString: "[5][1][23]bool",
+			wantLengths:                             []int{5, 1, 23},
 			wantErr:                                 nil,
 		},
 	}
@@ -160,6 +166,9 @@ func TestTypeChecker_ParseDeclarationSpecifier(t *testing.T) {
 
 			if gotDeclarationSpecifierFormattedString != tc.wantDeclarationSpecifierFormattedString {
 				t.Errorf("want %s, got %s", tc.wantDeclarationSpecifierFormattedString, gotDeclarationSpecifierFormattedString)
+			}
+			if tc.wantLengths != nil && fmt.Sprint(gotDeclarationSpecifier.Lengths) != fmt.Sprint(tc.wantLengths) {
+				t.Errorf("want lengths %v, got %v", tc.wantLengths, gotDeclarationSpecifier.Lengths)
 			}
 
 			if (gotErr != nil && tc.wantErr == nil) ||

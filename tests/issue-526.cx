@@ -74,6 +74,7 @@ func main () {
 	testPointerLevelsPnts(ppnts)
 
 	var slcPnts [][][]Point
+	slcPnts = append(slcPnts, returnSlicePnts())
 	testSlicePnts(slcPnts[0])
 
 	var apPnts [3]*Point

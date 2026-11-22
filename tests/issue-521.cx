@@ -1,16 +1,23 @@
+// https://github.com/skycoin/cx/issues/521, skycoin-cx#43
+
 package pack
 
 type Too struct {
-    i i32
+	i i32
 }
 
 package main
 
+import "pack"
+
 type Moo struct {
-    i i32
+	i i32
 }
 
-func main()() {
-    var moo [3]Moo
-    var too [3]pack.Too
+func main() {
+	var moo [3]Moo
+	var too [3]pack.Too
+	moo[0].i = 1
+	too[1].i = 4
+	i32.print(too[1].i + moo[0].i)
 }

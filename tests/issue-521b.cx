@@ -1,0 +1,13 @@
+// https://github.com/skycoin/cx/issues/521, skycoin-cx#43, without the import
+
+package pack
+
+type Too struct {
+	i i32
+}
+
+package main
+
+func main() {
+	var too [3]pack.Too
+}

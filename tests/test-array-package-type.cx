@@ -1,0 +1,54 @@
+package pack
+
+type Too struct {
+	i i32
+}
+
+package main
+
+import "pack"
+
+type Box struct {
+	ts [2]pack.Too
+	ps [2]*pack.Too
+	ss []pack.Too
+}
+
+var gts [2]pack.Too
+
+func sum(ts [2]pack.Too) (r i32) {
+	r = ts[0].i + ts[1].i
+}
+
+func mk(n i32) (ts [2]pack.Too) {
+	ts[1].i = n
+}
+
+func grid() (g [2][3]pack.Too) {
+	g[1][2].i = 8
+}
+
+func main() {
+	var ts [2]pack.Too
+	ts[0].i = 1
+	ts[1].i = 2
+	i32.print(sum(ts))
+	ts = mk(7)
+	i32.print(ts[1].i)
+
+	var b Box
+	b.ts[1].i = 3
+	i32.print(b.ts[1].i)
+	var t pack.Too
+	t.i = 5
+	b.ps[0] = &t
+	b.ss = append(b.ss, t)
+	i32.print(b.ss[0].i)
+
+	gts[0].i = 6
+	i32.print(gts[0].i)
+
+	var g [2][3]pack.Too
+	g = grid()
+	i32.print(g[1][2].i)
+}

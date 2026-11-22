@@ -1,0 +1,14 @@
+package main
+
+func mk() (out [3][2]i32) {
+	out[1][1] = 7
+}
+
+func take(m [2][3]i32) {
+}
+
+func main() {
+	var m [2][3]i32
+	m = mk()
+	take(mk())
+}

@@ -74,6 +74,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeArrayLiteralLength, ast.CompileErrorOperands{0, 1}, header + " array literal of length 0 has 1 element\n"},
 		{ast.CompileErrorCodeStructLiteralFieldRepeated, ast.CompileErrorOperands{text("x")}, header + " duplicate field name 'x' in struct literal\n"},
 		{ast.CompileErrorCodeImportGuiBuildMissing, ast.CompileErrorOperands{text("sys/gl")}, header + " package \"sys/gl\" needs a GUI build of cx, build it with make build-gui\n"},
+		{ast.CompileErrorCodeLiteralElementType, ast.CompileErrorOperands{text("i32")}, header + " invalid composite literal type 'i32'\n"},
+		{ast.CompileErrorCodeStructLiteralFieldNames, ast.CompileErrorOperands{text("Point")}, header + " struct literal of type 'Point' must name its fields\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

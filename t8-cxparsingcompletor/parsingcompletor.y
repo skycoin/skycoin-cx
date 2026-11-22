@@ -73,6 +73,9 @@ build-parser: ## Generate lexer and parser for CX grammar
 	// Now objects held by value, site S1472.
 	arrayArguments [][]ast.CXExpression
 
+	// The elements of an array or slice literal, elided ones not built yet.
+	literalElements []actions.LiteralElement
+
     // OBJMODEL: CXFunctionGid, the parser value stack lives across Allocs, phase 4 #351.
     // Now a pointer at rest, site S1473.
     function *ast.CXFunction
@@ -137,6 +140,8 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <tok>           assignment_operator
 %type   <i>             type_specifier
 %type   <argument>      declaration_specifiers
+%type   <argument>      element_specifiers
+%type   <argument>      array_element
 %type   <argument>      declarator
 %type   <argument>      direct_declarator
 %type   <argument>      parameter_declaration
@@ -169,10 +174,10 @@ build-parser: ## Generate lexer and parser for CX grammar
 
 %type   <expressions>   struct_literal_expression
                         
-%type   <expressions>   array_literal_expression_list
 %type   <expressions>   array_literal_expression
 
-%type   <expressions>   slice_literal_expression_list
+%type   <literalElements> literal_element_list
+%type   <literalElements> literal_element
 %type   <expressions>   slice_literal_expression
 
 %type	<ReturnExpressions>	return_expression
@@ -432,6 +437,14 @@ types_list:
 	;
 
 declaration_specifiers:
+                element_specifiers
+        |       indexing_literal array_element
+                {
+			$$ = actions.DeclarationSpecifiers($2, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
+                }
+                ;
+
+element_specifiers:
                 FUNC types_list types_list
 		{
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -451,10 +464,6 @@ declaration_specifiers:
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
                 }
-        // |       LBRACK INT_LITERAL RBRACK declaration_specifiers
-        //         {
-	// 		$$ = actions.DeclarationSpecifiers($4, types.Cast_sint_to_sptr($2), constants.DECL_ARRAY)
-        //         }
         |       LBRACK RBRACK declaration_specifiers
                 {
 			$$ = actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_SLICE)
@@ -467,16 +476,6 @@ declaration_specifiers:
                 {
 			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
                 }
-        |       indexing_literal type_specifier
-                {
-			basic := actions.DeclarationSpecifiersBasic(actions.AST, types.Code($2))
-			$$ = actions.DeclarationSpecifiers(basic, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
-                }
-        |       indexing_literal IDENTIFIER
-                {
-			strct := actions.DeclarationSpecifiersStruct(actions.AST,$2, "", false, actions.CurrentFile, actions.LineNo)
-			$$ = actions.DeclarationSpecifiers(strct, types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
-                }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
 			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, actions.LineNo)
@@ -485,14 +484,31 @@ declaration_specifiers:
                 {
 			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, actions.LineNo)
                 }
-        /* |       package_identifier */
-        /*         { */
-	/* 		$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1[1], $1[0], true) */
-        /*         } */
-		/* type_specifier declaration_specifiers */
-	/* |       type_specifier */
-	/* |       type_qualifier declaration_specifiers */
-	/* |       type_qualifier */
+                ;
+
+// array_element is what an array may hold: a basic or struct type, a struct
+// of another package, or a pointer to one of them.
+array_element:
+                type_specifier
+                {
+			$$ = actions.DeclarationSpecifiersBasic(actions.AST, types.Code($1))
+                }
+        |       IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$1, "", false, actions.CurrentFile, actions.LineNo)
+                }
+        |       IDENTIFIER PERIOD IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, $1, true, actions.CurrentFile, actions.LineNo)
+                }
+        |       type_specifier PERIOD IDENTIFIER
+                {
+			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, actions.LineNo)
+                }
+        |       MUL_OP array_element
+                {
+			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
+                }
                 ;
 
 type_specifier:
@@ -538,16 +554,27 @@ struct_literal_fields:
                 }
                 ;
 
-array_literal_expression_list:
+literal_element_list:
+                literal_element
+        |       literal_element_list COMMA literal_element
+                {
+			$$ = append($1, $3...)
+                }
+                ;
+
+// An elided element, {1, 2} or {x: 1}, takes the element type of its literal.
+literal_element:
                 assignment_expression
                 {
-			$1[len($1) - 1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-			$$ = $1
+			$$ = []actions.LiteralElement{{Expressions: $1}}
                 }
-	|       array_literal_expression_list COMMA assignment_expression
+        |       LBRACE literal_element_list RBRACE
                 {
-			$3[len($3) - 1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-			$$ = append($1, $3...)
+			$$ = []actions.LiteralElement{{Elements: $2, Elided: true, Line: actions.LineNo}}
+                }
+        |       LBRACE struct_literal_fields RBRACE
+                {
+			$$ = []actions.LiteralElement{{Fields: $2, Elided: true, Keyed: true, Line: actions.LineNo}}
                 }
                 ;
 
@@ -575,17 +602,21 @@ indexing_slice_literal:
 
 // expressions
 array_literal_expression:
-                indexing_literal IDENTIFIER LBRACE array_literal_expression_list RBRACE
+                indexing_literal IDENTIFIER LBRACE literal_element_list RBRACE
                 {
-			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, $4)
+			lengths := types.Cast_sint_to_sptr($1)
+			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: $2}, $4)
+			$$ = actions.ArrayLiteralStructExpression(actions.AST, lengths, $2, elements)
                 }
         |       indexing_literal IDENTIFIER LBRACE RBRACE
                 {
 			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, nil)
                 }
-        |       indexing_literal type_specifier LBRACE array_literal_expression_list RBRACE
+        |       indexing_literal type_specifier LBRACE literal_element_list RBRACE
                 {
-			$$ = actions.ArrayLiteralExpression(actions.AST,types.Cast_sint_to_sptr($1), types.Code($2), $4)
+			lengths := types.Cast_sint_to_sptr($1)
+			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, TypeCode: types.Code($2)}, $4)
+			$$ = actions.ArrayLiteralExpression(actions.AST, lengths, types.Code($2), elements)
                 }
         |       indexing_literal type_specifier LBRACE RBRACE
                 {
@@ -593,99 +624,26 @@ array_literal_expression:
                 }
                 ;
 
-
-
-
-
-
-
-slice_literal_expression_list:
-                assignment_expression
-                {
-			$$ = actions.SliceLiteralElement(actions.AST, $1)
-                }
-	|       slice_literal_expression_list COMMA assignment_expression
-                {
-			$$ = append($1, actions.SliceLiteralElement(actions.AST, $3)...)
-                }
-                ;
-
 slice_literal_expression:
-                LBRACK RBRACK IDENTIFIER LBRACE slice_literal_expression_list RBRACE
+                indexing_slice_literal IDENTIFIER LBRACE literal_element_list RBRACE
                 {
-			$$ = actions.SliceLiteralStructExpression(actions.AST, $3, $5)
+			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2}
+			$$ = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, $4))
                 }
-        |       LBRACK RBRACK IDENTIFIER LBRACE RBRACE
+        |       indexing_slice_literal IDENTIFIER LBRACE RBRACE
                 {
-			$$ = actions.SliceLiteralStructExpression(actions.AST, $3, nil)
+			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2}, nil)
                 }
-        |       LBRACK RBRACK type_specifier LBRACE slice_literal_expression_list RBRACE
+        |       indexing_slice_literal type_specifier LBRACE literal_element_list RBRACE
                 {
-			$$ = actions.SliceLiteralExpression(actions.AST,types.Code($3), $5)
+			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, TypeCode: types.Code($2)}
+			$$ = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, $4))
                 }
-        |       LBRACK RBRACK type_specifier LBRACE RBRACE
+        |       indexing_slice_literal type_specifier LBRACE RBRACE
                 {
-			$$ = actions.SliceLiteralExpression(actions.AST, types.Code($3), nil)
-                }
-        |       LBRACK RBRACK slice_literal_expression
-                {
-                        lastExpression, err := actions.AST.GetCXAtomicOpFromExpressions($3,len($3) - 1)
-                        if err != nil {
-                                panic(err)
-                        }
-
-			for _, expr := range $3 {
-                                if expr.Type==ast.CX_LINE{
-                                        continue
-                                }
-                                // OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-                                // Now an arena getter, site S1486.
-                                expression, err := actions.AST.GetCXAtomicOp(expr.Index)
-                                if err != nil {
-                                        panic(err)
-                                }
-
-                                // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                                // Now an arena getter, site S1487.
-                                expressionOutputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(expression.GetOutputs(actions.AST)[0])
-                                // OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-                                // Now an arena getter, site S1488.
-                                lastExpressionInputTypeSig:=actions.AST.GetCXTypeSignatureFromArray(lastExpression.GetInputs(actions.AST)[0])
-			        if expressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-				        // OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-				        // Now an arena getter, site S1489.
-				        expressionOutputArg := actions.AST.GetCXArgFromArray(ast.CXArgumentIndex(expressionOutputTypeSig.Meta))
-                                        
-                                        if expressionOutputArg.Name == lastExpressionInputTypeSig.Name {
-                                                expressionOutputArg.Lengths = append(expressionOutputArg.Lengths, 0)
-                                                expressionOutputArg.DeclarationSpecifiers = append(expressionOutputArg.DeclarationSpecifiers, constants.DECL_SLICE)
-                                        }
-			        } else if expressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
-                                        if expressionOutputTypeSig.Name == lastExpressionInputTypeSig.Name {
-                                                // OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
-                                                // Now an arena getter, site S1490.
-                                                sliceDetails:=actions.AST.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
-                                                sliceDetails.Lengths = append(sliceDetails.Lengths, 0)
-                                        }
-                                } else if expressionOutputTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
-                                        if expressionOutputTypeSig.Name == lastExpressionInputTypeSig.Name {
-                                                // OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
-                                                // Now an arena getter, site S1491.
-                                                sliceDetails:=actions.AST.GetCXTypeSignatureArrayFromArray(expressionOutputTypeSig.Meta)
-                                                sliceDetails.Lengths = append(sliceDetails.Lengths, 0)
-                                        }
-                                }  else {
-                                        continue
-			        }
-
-                               
-			}
-	
-			$3[len($3)-1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-			$$ = $3
+			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, TypeCode: types.Code($2)}, nil)
                 }
                 ;
-
 infer_action_arg:
                 IDENTIFIER
                 {

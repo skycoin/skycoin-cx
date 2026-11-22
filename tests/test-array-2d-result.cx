@@ -1,0 +1,29 @@
+package main
+
+func mk() (out [2][3]i32) {
+	out[1][2] = 7
+	out[0][1] = 2
+}
+
+func sum(m [2][3]i32) (r i32) {
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 3; j++ {
+			r = r + m[i][j]
+		}
+	}
+}
+
+func cube() (c [2][2][2]i32) {
+	c[1][0][1] = 5
+}
+
+func main() {
+	var m [2][3]i32
+	m = mk()
+	i32.print(m[1][2])
+	i32.print(sum(m))
+	i32.print(sum(mk()))
+	var c [2][2][2]i32
+	c = cube()
+	i32.print(c[1][0][1])
+}

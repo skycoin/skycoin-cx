@@ -112,8 +112,8 @@ func ParseDeclarationSpecifier(prgrm *ast.CXProgram, declarationSpecifierByte []
 				return declarationSpecifier, err
 			}
 
-			declarationSpecifier.Lengths = append(declarationSpecifier.Lengths, types.Pointer(byteToInt))
-			newDeclarationSpecifierArg := actions.DeclarationSpecifiers(declarationSpecifier, declarationSpecifier.Lengths, constants.DECL_ARRAY)
+			// Parsed right to left, so each length goes in front: outermost first.
+			newDeclarationSpecifierArg := actions.DeclarationSpecifiers(declarationSpecifier, []types.Pointer{types.Pointer(byteToInt)}, constants.DECL_ARRAY)
 			return ParseDeclarationSpecifier(prgrm, newDeclarationSpecifierByte, fileName, lineno, newDeclarationSpecifierArg)
 		}
 

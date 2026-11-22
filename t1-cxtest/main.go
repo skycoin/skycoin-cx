@@ -444,6 +444,28 @@ func runTestCases(t *runner.TestRunner) {
 		"5000000000\n7\n0.125\n8\n6000000000\n9\n1\n2\n10\n6000000000\n")
 	t.RunWant("issue-35.cx", types.CX_SUCCESS, "slice literal as an argument (skycoin-cx#51)", "3\n3\n")
 	t.RunWant("issue-539.cx", types.CX_SUCCESS, "array literal of structs (skycoin-cx#40)", "1\n")
+	t.RunWant("issue-526.cx", types.CX_SUCCESS, "[N]*T parameters and variables (skycoin-cx#42)", "1\n")
+	t.RunWant("issue-521.cx", types.CX_SUCCESS, "[N]pkg.T variables (skycoin-cx#43)", "5\n")
+	t.RunWant("issue-521b.cx", types.CX_COMPILATION_ERROR, "[N]pkg.T of a package that is not imported (skycoin-cx#43)",
+		"issue-521b.cx:12 package 'pack' not imported")
+	t.RunWant("issue-37.cx", types.CX_SUCCESS, "nested slice literal without inner types (skycoin-cx#50)", "3\n")
+	t.RunWant("issue-37b.cx", types.CX_SUCCESS, "nested slice literal with inner types (skycoin-cx#50)", "3\n")
+	t.RunWant("test-array-pointer-element.cx", types.CX_SUCCESS, "arrays of pointers as variables, fields, globals, arguments and results (skycoin-cx#42)",
+		"4\n4\n6\n6\n9\n9\n6\n")
+	t.RunWant("test-array-package-type.cx", types.CX_SUCCESS, "arrays of a struct of another package as variables, fields, globals, arguments and results (skycoin-cx#43)",
+		"3\n7\n3\n5\n6\n8\n")
+	t.RunWant("test-array-2d-result.cx", types.CX_SUCCESS, "2-D and 3-D array results and arguments", "7\n9\n9\n5\n")
+	t.RunWant("test-array-2d-errors.cx", types.CX_COMPILATION_ERROR, "2-D array type errors name the dimensions outermost first",
+		"test-array-2d-errors.cx:12 function 'mk' expected receiving variable of type '[3][2]i32'; '[2][3]i32' was provided",
+		"function 'take' expected input argument of type '[2][3]i32'; '[3][2]i32' was provided")
+	t.RunWant("test-literal-elided.cx", types.CX_SUCCESS, "array and slice literals with elided element types (skycoin-cx#50)",
+		"5\n3\n4\n3\n3\n8\n9\n0\n6\n5\n6\n11\n10\n6\n6\n7\n2\n4\n8\n4\n")
+	t.RunWant("test-literal-elided-errors.cx", types.CX_COMPILATION_ERROR, "elided literal elements of a type that cannot take one",
+		"test-literal-elided-errors.cx:9 invalid composite literal type 'i32'",
+		"test-literal-elided-errors.cx:10 struct literal of type 'Point' must name its fields",
+		"test-literal-elided-errors.cx:11 invalid composite literal type '[]i32'",
+		"test-literal-elided-errors.cx:12 invalid composite literal type 'i32'",
+		"test-literal-elided-errors.cx:13 struct literal of type 'Point' must name its fields")
 	t.Run("test-struct-literal-value.cx", types.CX_SUCCESS, "a struct literal is a value: var initializer, T{} zeroes, argument, result and a swap of fields")
 	t.Run("test-struct-literal-nested.cx", types.CX_SUCCESS, "struct, slice and array literals nested in each other, with calls in the fields")
 	t.Run("test-struct-literal-package.cx", types.CX_SUCCESS, "struct literals in global initializers and of another package")
@@ -496,7 +518,7 @@ func runTestCases(t *runner.TestRunner) {
 		`test-unknown-type-declarations.cx:14 struct 'Nope' not found in package 'main'`,
 		`test-unknown-type-declarations.cx:15 struct 'Nope' not found in package 'main'`)
 	t.RunWant("test-unknown-type-imported-array.cx", types.CX_COMPILATION_ERROR, "an array of a type from a package that is not imported",
-		`test-unknown-type-imported-array.cx:4: syntax error`)
+		`test-unknown-type-imported-array.cx:4 package 'other' not imported`)
 	t.RunWant("test-index-too-many.cx", types.CX_COMPILATION_ERROR, "more indexes than dimensions, and indexing a scalar",
 		`test-index-too-many.cx:5 invalid indexing`,
 		`test-index-too-many.cx:8 invalid indexing`,

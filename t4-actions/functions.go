@@ -745,7 +745,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 
 					inpExprAtomicOp.AddOutput(prgrm, typeSigIdx)
 					expression.AddInput(prgrm, typeSigIdx)
-				} else if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
+				} else if inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC || inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || inpExprAtomicOpOperatorOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
 					_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(inpExprAtomicOpOperatorOutputTypeSig)
 					newTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 					newTypeSig.Package = inpExprAtomicOp.Package
