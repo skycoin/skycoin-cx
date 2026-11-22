@@ -1,0 +1,8 @@
+// A runtime error prints the Go stack of cx only with --debug-go-stack.
+
+package main
+
+func main() {
+	var s []i32
+	i32.print(s[3])
+}

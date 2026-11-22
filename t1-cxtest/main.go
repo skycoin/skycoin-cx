@@ -488,6 +488,23 @@ func runTestCases(t *runner.TestRunner) {
 		"0\n2\n4\n6\n7\n321\n41\n42\n")
 	t.RunWant("--executor=vm test-escape-frame.cx", types.CX_SUCCESS, "a local whose address does not outlive the call stays in the frame",
 		"10\n12\n13\n4\n6\n14\n")
+	t.RunWant("test-address-literal.cx", types.CX_SUCCESS, "&T{} as a var initializer, :=, an array element, a field, a struct literal field, append, an argument and a return gives a new T each time",
+		"2\n7\n210\n5\n6\n321\n2\n15\n10\n21\n31\n30\n")
+	t.RunWant("--executor=old test-address-literal-frame.cx", types.CX_SUCCESS, "&T{} that stays in the frame, on the old loop", "2\n9\n6\n15\n9\n10\n")
+	t.RunWant("--executor=vm test-address-literal-frame.cx", types.CX_SUCCESS, "&T{} that stays in the frame, on vm", "2\n9\n6\n15\n9\n10\n")
+	t.RunWant("test-call-result-field.cx", types.CX_SUCCESS, "f().x and f().p.y on struct, *T and method call results",
+		"1\n4\n3\n8\n6\n6\n16\n109\n18\n110\n")
+	t.RunWant("--executor=old test-call-result-field-frame.cx", types.CX_SUCCESS, "f().x on a struct result, on the old loop", "3\n12\n5\n36\n15\n42\n")
+	t.RunWant("--executor=vm test-call-result-field-frame.cx", types.CX_SUCCESS, "f().x on a struct result, on vm", "3\n12\n5\n36\n15\n42\n")
+	t.RunWant("--executor=old test-pointer-to-pointer.cx", types.CX_SUCCESS, "&p of a *i32 is a **i32, on the old loop", "5\n8\n9\n")
+	t.RunWant("--executor=vm test-pointer-to-pointer.cx", types.CX_SUCCESS, "&p of a *i32 is a **i32, on vm", "5\n8\n9\n")
+	t.RunWant("test-array-struct-pointer-field.cx", types.CX_SUCCESS, "a[i].p on an array of structs with a pointer field, from a variable, a call and &x",
+		"2\n10\n4\n11\n6\n12\n14\n2\n21\n")
+	t.RunWant("--executor=old test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on the old loop", "5\n6\n5\n12\n")
+	t.RunWant("--executor=vm test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on vm", "5\n6\n5\n12\n")
+	t.RunWant("test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
+	t.RunMissing("test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error prints no Go stack by default", "goroutine")
+	t.RunWant("--debug-go-stack test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "--debug-go-stack prints the Go stack of a runtime error", "goroutine")
 	t.RunWant("test-pointer-array-2d.cx", types.CX_SUCCESS, "p[i][j] indexes a *[N][M]T and a *[N][M]*T",
 		"12\n101\n110\n77\n11\n212\n201\n211\n55\n211\n211\n9\n4\n")
 	t.RunWant("test-runtime-error-neg-argument.cx", types.CX_RUNTIME_INVALID_CAST, "the temporary of g(-1) has the line of the call in the call stack",

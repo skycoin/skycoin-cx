@@ -12,6 +12,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t1-profiling"
 	repl "github.com/skycoin/skycoin-cx/t10-cxrepl" // thin: only Repl, ReplTargetFn; only user of cxrepl, could merge it here, max tier 11 to 10
+	"github.com/skycoin/skycoin-cx/t2-globals"      // thin: only DBG_GOLANG_STACK_TRACE; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute" // thin: only RunCompiled; no depth gain
@@ -193,6 +194,7 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 		$cx --debug-file-access
 		$cx -Df
 	*/
+	globals.DBG_GOLANG_STACK_TRACE = options.debugGoStack
 	if options.debugFileAccess {
 		util.CXLogFile(true)
 	}

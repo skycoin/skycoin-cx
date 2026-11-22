@@ -975,7 +975,7 @@ func ProcessPointerStructs(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				doesArgHaveDerefPointer = true
 			}
 		}
-		if arg.IsStruct() && arg.IsPointer() && len(arg.Fields) > 0 && !doesArgHaveDerefPointer {
+		if arg.IsStruct() && arg.IsPointer() && len(arg.Fields) > 0 && !doesArgHaveDerefPointer && !pointerTypeOfLastField(prgrm, arg) {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1679.
 			prgrm.GetCXArg(ast.CXArgumentIndex(arg.Index)).DereferenceOperations = append(arg.DereferenceOperations, constants.DEREF_POINTER)
@@ -1424,7 +1424,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 				expressionOutputTypeSigName = expressionOutputArg.GetAssignmentElement(prgrm).Name
 			}
 
-			outType = ast.GetFormattedType(prgrm, expressionOutputTypeSig)
+			outType = assignmentTargetFormattedType(prgrm, expressionOutputTypeSig)
 
 			// We use `isInputs` to only print the error once.
 			// Otherwise we'd print the error twice: once for the input and again for the output
@@ -1761,6 +1761,9 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			}
 		}
 
+		// x := &v declares a pointer to the type of v.
+		reference := !expr.IsMethodCall() && shortDeclarationReference(prgrm, prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0]), argType)
+
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0852.
 		prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
@@ -1781,6 +1784,9 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// Now an arena getter, site S1684.
 			prgrm.GetCXArg(ast.CXArgumentIndex(prevExpressionOutputIdx)).Size = argSize
 			shortDeclarationStructTypeSet(prgrm.GetCXArg(prevExpressionOutputIdx), argType, argStructType)
+			if reference {
+				shortDeclarationPointerSet(prgrm.GetCXArg(prevExpressionOutputIdx))
+			}
 			// A value larger than the frame slot reserved for the declaration moves it.
 			if declSize := ast.GetArgSize(prgrm, prgrm.GetCXArg(prevExpressionOutputIdx)); declSize > reservedSize {
 				relocated, relocatedOffset = true, *offset
@@ -1824,6 +1830,9 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// Now an arena getter, site S1687.
 			prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Size = argSize
 			shortDeclarationStructTypeSet(prgrm.GetCXArg(expressionOutputIdx), argType, argStructType)
+			if reference {
+				shortDeclarationPointerSet(prgrm.GetCXArg(expressionOutputIdx))
+			}
 			if relocated {
 				prgrm.GetCXArg(expressionOutputIdx).Offset = relocatedOffset
 				expressionOutputTypeSig.Offset = relocatedOffset
@@ -1867,7 +1876,8 @@ func ProcessSlice(prgrm *ast.CXProgram, inpIdx ast.CXArgumentIndex) {
 		elt = inp
 	}
 
-	if elt.IsSlice() && len(elt.DereferenceOperations) > 0 && elt.DereferenceOperations[len(elt.DereferenceOperations)-1] == constants.DEREF_POINTER {
+	// *ps[i] on a []*T dereferences the element, which is not a slice.
+	if elt.IsSlice() && len(elt.Indexes) < len(elt.Lengths) && len(elt.DereferenceOperations) > 0 && elt.DereferenceOperations[len(elt.DereferenceOperations)-1] == constants.DEREF_POINTER {
 		elt.DereferenceOperations = elt.DereferenceOperations[:len(elt.DereferenceOperations)-1]
 		return
 	}
@@ -2479,7 +2489,11 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 				} else {
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeInvalidIndirection, sym.ArgDetails, ast.CompileErrorOperands{})
 				}
-
+			case constants.DECL_POINTER:
+				// &p on a *T p is a **T.
+				if sym.PassBy == constants.PASSBY_REFERENCE {
+					declSpec = append(declSpec, constants.DECL_POINTER)
+				}
 			}
 		}
 		sym.DeclarationSpecifiers = declSpec
@@ -2755,6 +2769,9 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 
 			sym.DeclarationSpecifiers = declSpec
 		}
+	} else if sym.PassBy == constants.PASSBY_REFERENCE && len(sym.Fields) == 0 && len(sym.DeclarationSpecifiers) == 1 && sym.DeclarationSpecifiers[0] == constants.DECL_POINTER {
+		// &T{...} takes the address of a temporary declared on its own line.
+		sym.DeclarationSpecifiers = append(append([]int{}, arg.DeclarationSpecifiers...), constants.DECL_POINTER)
 	} else {
 		sym.DeclarationSpecifiers = arg.DeclarationSpecifiers
 	}
@@ -3461,4 +3478,56 @@ func pointerArrayDerefSpecs(ops []int) []int {
 		}
 	}
 	return specs
+}
+
+// shortDeclarationReference reports whether the value sig of a short
+// declaration is &v of a struct or atomic v, so the variable is a pointer.
+func shortDeclarationReference(prgrm *ast.CXProgram, sig *ast.CXTypeSignature, argType types.Code) bool {
+	if ast.CXTypeSignaturePassBy(prgrm, sig) != constants.PASSBY_REFERENCE || argType == types.POINTER {
+		return false
+	}
+	if sig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta)).GetAssignmentElement(prgrm)
+		return len(arg.Lengths) == 0 && !arg.IsPointer()
+	}
+	return sig.Type == ast.TYPE_ATOMIC || sig.Type == ast.TYPE_STRUCT
+}
+
+// shortDeclarationPointerSet makes arg, typed as the value v of x := &v, a
+// pointer to it, as DeclarationSpecifiers does for *T.
+func shortDeclarationPointerSet(arg *ast.CXArgument) {
+	base := constants.DECL_BASIC
+	if arg.StructType != nil {
+		base = constants.DECL_STRUCT
+		arg.PointerTargetType = types.STRUCT
+		arg.Type = types.POINTER
+	} else if arg.Type == types.STR {
+		arg.PointerTargetType = types.STR
+		arg.Type = types.POINTER
+	}
+	arg.DeclarationSpecifiers = []int{base, constants.DECL_POINTER}
+	arg.Size = types.POINTER_SIZE
+}
+
+// assignmentTargetFormattedType is the type of the target of x = v. The
+// target takes the PassBy of &v, which says how to copy, not its type.
+func assignmentTargetFormattedType(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) string {
+	sigPassBy := sig.PassBy
+	sig.PassBy = constants.PASSBY_VALUE
+	defer func() { sig.PassBy = sigPassBy }()
+	if sig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+		argPassBy := arg.PassBy
+		arg.PassBy = constants.PASSBY_VALUE
+		defer func() { arg.PassBy = argPassBy }()
+	}
+	return ast.GetFormattedType(prgrm, sig)
+}
+
+// pointerTypeOfLastField reports whether arg, an access such as a[i].p or
+// t.p, has the pointer type of its last field p rather than being a pointer.
+// CopyArgFields gives a pointer base the field type as PointerTargetType.
+func pointerTypeOfLastField(prgrm *ast.CXProgram, arg *ast.CXArgument) bool {
+	field := prgrm.GetCXArgFromArray(arg.Fields[len(arg.Fields)-1])
+	return field.IsPointer() && arg.PointerTargetType != types.POINTER
 }

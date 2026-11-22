@@ -37,19 +37,24 @@ func (t *TestRunner) Run(args string, exitCode int, desc string) {
 
 // RunWant is Run that also requires each of want to appear in the output.
 func (t *TestRunner) RunWant(args string, exitCode int, desc string, want ...string) {
-	t.runEx(args, "", exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
+	t.runEx(args, "", exitCode, desc, TestStable, t.cfg.DefaultTimeout, want, nil)
 }
 
 // RunWantInput is RunWant with input piped to the program's stdin.
 func (t *TestRunner) RunWantInput(args string, input string, exitCode int, desc string, want ...string) {
-	t.runEx(args, input, exitCode, desc, TestStable, t.cfg.DefaultTimeout, want)
+	t.runEx(args, input, exitCode, desc, TestStable, t.cfg.DefaultTimeout, want, nil)
+}
+
+// RunMissing is Run that also requires none of missing to appear in the output.
+func (t *TestRunner) RunMissing(args string, exitCode int, desc string, missing ...string) {
+	t.runEx(args, "", exitCode, desc, TestStable, t.cfg.DefaultTimeout, nil, missing)
 }
 
 func (t *TestRunner) RunEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration) {
-	t.runEx(args, "", exitCode, desc, filter, timeout, nil)
+	t.runEx(args, "", exitCode, desc, filter, timeout, nil, nil)
 }
 
-func (t *TestRunner) runEx(args string, input string, exitCode int, desc string, filter Bits, timeout time.Duration, want []string) {
+func (t *TestRunner) runEx(args string, input string, exitCode int, desc string, filter Bits, timeout time.Duration, want []string, missing []string) {
 	if timeout == 0 {
 		timeout = t.cfg.DefaultTimeout
 	}
@@ -110,6 +115,16 @@ func (t *TestRunner) runEx(args string, input string, exitCode int, desc string,
 			if Has(t.cfg.LogMask, LogFail) {
 				fmt.Printf("#%s%d | FAILED  | %s | '%s' | output does not contain %q\n",
 					padding(t), t.TestCount, timing, args, w)
+			}
+			return
+		}
+	}
+
+	for _, absent := range missing {
+		if strings.Contains(string(out), absent) || strings.Contains(string(stderr), absent) {
+			if Has(t.cfg.LogMask, LogFail) {
+				fmt.Printf("#%s%d | FAILED  | %s | '%s' | output contains %q\n",
+					padding(t), t.TestCount, timing, args, absent)
 			}
 			return
 		}

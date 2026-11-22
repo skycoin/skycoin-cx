@@ -382,8 +382,8 @@ an array, a slice or a struct, as in `[]i32{{1}}`, is a compile error.
 Some forms of Go are not supported yet. A struct literal names its
 fields, so `Point{1, 2}` is a syntax error and `[]Point{{1, 2}}` is a
 compile error. A field or a method of a
-literal, as in `Point{x: 1}.x`, is a syntax error too. `&Point{x: 1}` in
-a loop gives the same address on every pass.
+literal, as in `Point{x: 1}.x`, is a syntax error too. A field of a call
+result, as in `mk().x`, works as in Go.
 
 ### [Functions](#table-of-contents)
 

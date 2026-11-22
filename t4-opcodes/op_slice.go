@@ -2,6 +2,7 @@ package opcodes
 
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -209,7 +210,12 @@ func opSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 		if inp0Type != inpType {
 			panic(types.CX_RUNTIME_INVALID_ARGUMENT)
 		}
-		if inpType == types.STR || inpType == types.AFF {
+		if ast.CXTypeSignaturePassBy(prgrm, input.TypeSignature) == constants.PASSBY_REFERENCE {
+			// append(ps, &x) appends the address of x.
+			var obj [types.POINTER_SIZE]byte
+			types.Write_ptr(obj[:], 0, ast.PointerOfAddress(prgrm, input.Offset))
+			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))
+		} else if inpType == types.STR || inpType == types.AFF {
 			var obj [types.POINTER_SIZE]byte
 			types.Write_ptr(obj[:], 0, types.Read_ptr(prgrm.Memory, input.Offset))
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))

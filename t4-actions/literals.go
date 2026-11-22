@@ -334,11 +334,10 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 	return structLiteralValue(prgrm, strct, name, writes)
 }
 
-// PrimaryStructLiteralReference creates &T{...}, whose fields are written
-// where StructLiteralAssignment puts them.
+// PrimaryStructLiteralReference creates &T{...}, the address of the value
+// PrimaryStructLiteral makes, which escape analysis may move to the heap.
 func PrimaryStructLiteralReference(prgrm *ast.CXProgram, operator string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
-	writes, _ := primaryStructLiteralWrites(prgrm, structName, prgrm.CXProgramNameIntern(structName), structFields)
-	return UnaryExpression(prgrm, operator, writes)
+	return UnaryExpression(prgrm, operator, PrimaryStructLiteral(prgrm, structName, structFields))
 }
 
 // primaryStructLiteralWrites makes each field write of a struct literal of

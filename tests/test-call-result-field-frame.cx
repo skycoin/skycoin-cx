@@ -1,0 +1,34 @@
+// f().x on a struct result with no pointers, which runs on vm as well.
+
+package main
+
+type P struct {
+	x i32
+	y i32
+}
+
+func mkv(v i32) (p P) {
+	p.x = v
+	p.y = v * 3
+}
+
+func (p P) twice() (r P) {
+	r.x = p.x * 2
+	r.y = p.y * 2
+}
+
+func main() {
+	i32.print(mkv(1).y)
+	c := mkv(4).y
+	i32.print(c)
+	var b i32
+	b = mkv(5).x
+	i32.print(b)
+	var q P
+	q = mkv(6)
+	d := q.twice().y
+	i32.print(d)
+	b = q.twice().x + mkv(1).y
+	i32.print(b)
+	i32.print(mkv(7).twice().y)
+}

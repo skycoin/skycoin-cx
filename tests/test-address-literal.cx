@@ -1,0 +1,82 @@
+// &T{...} gives a new T at each evaluation in every place an expression
+// can be: a var initializer, :=, an array element, a field, append, a call
+// argument and a return. A T whose address outlives the call is on the heap.
+
+package main
+
+type T struct {
+	x i32
+	y i32
+}
+
+type W struct {
+	k i32
+	p *T
+}
+
+func smash() {
+	var arr [16]i32
+	for i := 0; i < 16; i++ {
+		arr[i] = 99
+	}
+}
+
+func mk(v i32) (r *T) {
+	return &T{x: v, y: v + 1}
+}
+
+func sum(p *T) (r i32) {
+	r = p.x + p.y
+}
+
+func keep(p *T) (r *T) {
+	r = p
+}
+
+func main() {
+	var b *T = &T{x: 1, y: 2}
+	i32.print(b.y)
+
+	c := &T{x: 3}
+	c.y = 4
+	i32.print(c.x + c.y)
+
+	var arr [3]*T
+	for i := 0; i < 3; i++ {
+		arr[i] = &T{x: i}
+	}
+	smash()
+	i32.print(arr[0].x + arr[1].x*10 + arr[2].x*100)
+
+	var w W
+	w.p = &T{x: 5}
+	i32.print(w.p.x)
+
+	var lit W
+	lit = W{k: 1, p: &T{x: 6}}
+	i32.print(lit.p.x)
+
+	var ps []*T
+	for i := 0; i < 3; i++ {
+		ps = append(ps, &T{x: i + 1})
+	}
+	smash()
+	i32.print(ps[0].x + ps[1].x*10 + ps[2].x*100)
+	ps[0].x = 9
+	i32.print(ps[1].x)
+
+	i32.print(sum(&T{x: 7, y: 8}))
+	var kept *T
+	kept = keep(&T{x: 10})
+	smash()
+	i32.print(kept.x)
+
+	var m1 *T
+	m1 = mk(20)
+	m2 := mk(30)
+	smash()
+	i32.print(m1.y)
+	i32.print(m2.y)
+	m1.x = 0
+	i32.print(m2.x)
+}

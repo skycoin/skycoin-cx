@@ -1,0 +1,41 @@
+// a[i].p on an array of structs with a pointer field p reads and writes the
+// field of element i, from a variable, a call and &x.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Item struct {
+	p *Point
+	n i32
+}
+
+func mk(v i32) (r *Point) {
+	r = &Point{x: v, y: v * 2}
+}
+
+func main() {
+	var local [3]Item
+	for i := 0; i < 3; i++ {
+		var q *Point
+		q = mk(i + 1)
+		local[i].p = q
+		local[i].n = i + 10
+	}
+	for i := 0; i < 3; i++ {
+		var q *Point
+		q = local[i].p
+		i32.print(q.y)
+		i32.print(local[i].n)
+	}
+	local[1].p = mk(7)
+	i32.print(local[1].p.y)
+	i32.print(local[0].p.y)
+	var pt Point
+	pt.y = 21
+	local[2].p = &pt
+	i32.print(local[2].p.y)
+}

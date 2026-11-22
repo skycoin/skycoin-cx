@@ -1,0 +1,36 @@
+// A &T{...} whose address does not outlive the call stays in the frame, so
+// the program also runs on vm.
+
+package main
+
+type T struct {
+	x i32
+	y i32
+}
+
+type W struct {
+	k i32
+	p *T
+}
+
+func sum(p *T) (r i32) {
+	r = p.x + p.y
+}
+
+func main() {
+	var b *T = &T{x: 1, y: 2}
+	i32.print(b.y)
+	c := &T{x: 3, y: 4}
+	var d *T
+	d = c
+	d.x = 5
+	i32.print(c.x + c.y)
+	var w W
+	w.p = &T{x: 6}
+	i32.print(w.p.x)
+	i32.print(sum(&T{x: 7, y: 8}))
+	var lit W
+	lit = W{k: 9, p: &T{y: 10}}
+	i32.print(lit.k)
+	i32.print(lit.p.y)
+}

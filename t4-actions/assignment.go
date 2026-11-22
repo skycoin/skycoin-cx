@@ -419,10 +419,17 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 			// Now a constructor call, site S0556.
 			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
 			sym.SetType(fromExpressionOutputArg.Type)
-			if fromExpressionOutputArg.Type == types.STRUCT && fromExpressionOutputArg.StructType != nil {
+			if len(fromExpressionOutputArg.Fields) > 0 {
+				// x := f().y, which ProcessShortDeclaration types from the field.
+				sym.Type, sym.Size = types.IDENTIFIER, types.IDENTIFIER.Size()
+			} else if fromExpressionOutputArg.Type == types.STRUCT && fromExpressionOutputArg.StructType != nil {
 				// A struct literal value.
 				shortDeclarationStructTypeSet(sym, types.STRUCT, fromExpressionOutputArg.StructType)
 				sym.Size = fromExpressionOutputArg.Size
+				if fromExpressionOutputArg.PassBy == constants.PASSBY_REFERENCE {
+					// &T{...}
+					shortDeclarationPointerSet(sym)
+				}
 			}
 			sym.Package = ast.CXPackageIndex(pkg.Index)
 			sym.PreviouslyDeclared = true
@@ -934,8 +941,10 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 	}
 
 	declarationCount := len(toExprs) - 1
+	// x := f().y reads the result of f, so the declaration moves after the call.
+	valueRead := fromExpressionOperator == nil && expressionsCount(fromExprs) > 1
 	exprs := processAssignment(prgrm, toExprs, fromExprs, toExpression)
-	if assignOp == ":=" && methodCallFound(fromExprs) {
+	if assignOp == ":=" && (valueRead || methodCallFound(fromExprs)) {
 		exprs = shortDeclarationAfterMethodCalls(exprs, declarationCount)
 	}
 	return exprs
@@ -1055,4 +1064,16 @@ func assignmentPointerStructTarget(prgrm *ast.CXProgram, target *ast.CXArgument,
 	target.PointerTargetType = types.STRUCT
 	target.StructType = prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).StructType
 	target.Size = types.POINTER_SIZE
+}
+
+// expressionsCount returns the number of expressions in exprs that are not
+// lines.
+func expressionsCount(exprs []ast.CXExpression) int {
+	count := 0
+	for _, expr := range exprs {
+		if expr.Type != ast.CX_LINE {
+			count++
+		}
+	}
+	return count
 }

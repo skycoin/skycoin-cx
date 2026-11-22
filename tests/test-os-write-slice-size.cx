@@ -1,0 +1,40 @@
+// os.Write*Slice writes len(s) elements of the slice type, and os.Read*Slice
+// reads them back. The file it leaves is in .gitignore.
+
+package main
+
+import "sys/os"
+
+func main() {
+	var f i32
+	var ok bool
+	f = os.Create("test-os-write-slice-size.tmp")
+	var b []ui8
+	b = []ui8{1UB, 2UB, 3UB}
+	ok = os.WriteUI8Slice(f, b)
+	var h []i16
+	h = []i16{-4H, 5H}
+	ok = os.WriteI16Slice(f, h)
+	var w []ui64
+	w = []ui64{6UL, 7UL}
+	ok = os.WriteUI64Slice(f, w)
+	var g []f32
+	g = []f32{0.5, 1.5}
+	ok = os.WriteF32Slice(f, g)
+	var size i64
+	size = os.Seek(f, 0L, 2)
+	printf("size %d\n", size)
+	ok = os.Close(f)
+
+	f = os.Open("test-os-write-slice-size.tmp")
+	var rb []ui8
+	rb, ok = os.ReadUI8Slice(f, rb, 3UL)
+	var rh []i16
+	rh, ok = os.ReadI16Slice(f, rh, 2UL)
+	var rw []ui64
+	rw, ok = os.ReadUI64Slice(f, rw, 2UL)
+	var rg []f32
+	rg, ok = os.ReadF32Slice(f, rg, 2UL)
+	printf("%d %d %d %d %d %d %d %v %v\n", rb[0], rb[1], rb[2], rh[0], rh[1], rw[0], rw[1], rg[0], rg[1])
+	ok = os.Close(f)
+}

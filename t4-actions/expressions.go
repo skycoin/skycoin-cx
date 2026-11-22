@@ -1006,8 +1006,8 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		newCXTypeSig.Meta = fnOutputTypeSig.Meta
 		newCXTypeSig.Offset = fnOutputTypeSig.Offset
 		typeSigIdx = newCXTypeSig.Index
-	} else if fnOutputTypeSig.Type == ast.TYPE_STRUCT || fnOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC {
-		// A struct or array output, as in return T{x: 1}.
+	} else if fnOutputTypeSig.Type == ast.TYPE_STRUCT || fnOutputTypeSig.Type == ast.TYPE_ARRAY_ATOMIC || fnOutputTypeSig.Type == ast.TYPE_POINTER_STRUCT || fnOutputTypeSig.Type == ast.TYPE_POINTER_ARRAY_ATOMIC || fnOutputTypeSig.Type == ast.TYPE_POINTER_SLICE_ATOMIC {
+		// A struct, array or pointer output, as in return T{x: 1} or return &T{}.
 		_, newCXTypeSig := prgrm.AllocCXTypeSignatureCopy(fnOutputTypeSig)
 		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
 		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)

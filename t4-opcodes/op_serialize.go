@@ -25,9 +25,7 @@ func opSerialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 // opDeserialize checks that a []ui8 holds a program this cx can load. Bytes
 // that do not are a runtime error. The program itself is not kept.
 func opDeserialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	// CXValue.GetSlice_ui8 reads elements of value.Size bytes, the size of the
-	// slice pointer, so the bytes are read with an element size of 1.
-	byts := ast.GetSliceData(prgrm, types.Read_ptr(prgrm.Memory, inputs[0].Offset), 1)
+	byts := inputs[0].GetSlice_ui8(prgrm)
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a constructor call, site S1309.
 	if _, err := ast.Deserialize(byts, nil); err != nil {

@@ -31,6 +31,7 @@ type cxCmdFlags struct {
 	// Debug flags for the CX developers
 	debugFileAccess bool
 	debugProfile    int
+	debugGoStack    bool
 }
 
 func defaultCmdFlags() cxCmdFlags {
@@ -96,6 +97,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.BoolVar(&options.debugFileAccess, "Df", options.debugFileAccess, "alias for -debug-file-access")
 	commandLine.IntVar(&options.debugProfile, "debug-profile", options.debugProfile, "Print the time of each compile and run phase, and write CPU and heap profiles of parsing to <cx binary>_parse_cpu.pprof and _parse_mem.pprof at this many CPU samples per second. View them with go tool pprof.")
 	commandLine.IntVar(&options.debugProfile, "Dp", options.debugProfile, "alias for -debug-profile")
+	commandLine.BoolVar(&options.debugGoStack, "debug-go-stack", options.debugGoStack, "Print the Go stack of a CX runtime error, to debug cx itself")
 
 	commandLine.Parse(args)
 

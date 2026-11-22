@@ -1,0 +1,28 @@
+// &p of a *i32 p is a **i32, as an argument and in an assignment.
+
+package main
+
+func deref(pp **i32) (r i32) {
+	r = **pp
+}
+
+func set(pp **i32, q *i32) {
+	*pp = q
+}
+
+var gm i32
+
+func main() {
+	var n i32
+	n = 5
+	var p *i32
+	p = &n
+	i32.print(deref(&p))
+	gm = 8
+	set(&p, &gm)
+	i32.print(*p)
+	var pp **i32
+	pp = &p
+	gm = 9
+	i32.print(**pp)
+}

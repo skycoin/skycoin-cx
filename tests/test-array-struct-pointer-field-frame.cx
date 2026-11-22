@@ -1,0 +1,32 @@
+// a[i].p = &x keeps the pointer of each element apart, on both loops.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+type Item struct {
+	p *Point
+	n i32
+}
+
+func main() {
+	var pa Point
+	pa.y = 5
+	var pb Point
+	pb.y = 6
+	var local [3]Item
+	local[0].n = 11
+	local[1].n = 12
+	local[0].p = &pa
+	local[1].p = &pb
+	var r *Point
+	r = local[0].p
+	i32.print(r.y)
+	r = local[1].p
+	i32.print(r.y)
+	i32.print(local[0].p.y)
+	i32.print(local[1].n)
+}

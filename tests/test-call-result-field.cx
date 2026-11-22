@@ -1,0 +1,51 @@
+// f().x reads a field of a call result, as an argument, in = and := and in
+// an operator, also through a pointer field, a *T result and a method call.
+
+package main
+
+type P struct {
+	x i32
+	y i32
+}
+
+type T struct {
+	x i32
+	p *P
+}
+
+func mk(v i32) (t T) {
+	t.x = v
+	var q P
+	q.y = v * 2
+	t.p = &q
+}
+
+func mkp(v i32) (p *P) {
+	p = &P{x: v, y: v + 1}
+}
+
+func (t T) bump() (r T) {
+	r = t
+	r.x = t.x + 100
+}
+
+func main() {
+	i32.print(mk(1).x)
+	i32.print(mk(2).p.y)
+	a := mk(3).x
+	i32.print(a)
+	var b i32
+	b = mk(4).p.y
+	i32.print(b)
+	i32.print(mkp(5).y)
+	c := mkp(6).x
+	i32.print(c)
+	b = mkp(7).y + mk(8).x
+	i32.print(b)
+	var t T
+	t = mk(9)
+	i32.print(t.bump().x)
+	d := t.bump().p.y
+	i32.print(d)
+	i32.print(mk(10).bump().x)
+}

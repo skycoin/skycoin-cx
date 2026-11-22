@@ -593,12 +593,8 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 		lastExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastExpressionOperatorOutputs[0])
 
 		symName := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-		if lastExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now an arena getter, site S1167.
-			lastExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastExpressionOperatorOutputTypeSig.Meta))
-
-			opOut := lastExpressionOperatorOutputArg
+		if sigType := lastExpressionOperatorOutputTypeSig.Type; sigType == ast.TYPE_CXARGUMENT_DEPRECATE || sigType == ast.TYPE_STRUCT || sigType == ast.TYPE_POINTER_STRUCT {
+			opOut := postfixCallResultArgument(prgrm, lastExpressionOperatorOutputTypeSig)
 
 			// we associate the result of the function call to the aux variable
 			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
@@ -643,57 +639,9 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 			}
 
 			expression.Package = prgrm.CXAtomicOps[lastExpressionIdx].Package
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, inp)
+			// A named signature keeps the fields and method calls of f().x on inp.
+			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, inp)
 			expression.AddOutput(prgrm, typeSigIdx)
-			prevExprs = append(prevExprs, *exprCXLine, *expr)
-
-			lastExpr = prevExprs[len(prevExprs)-1]
-
-			lastExpressionIdx = lastExpr.Index
-		} else if lastExpressionOperatorOutputTypeSig.Type == ast.TYPE_STRUCT {
-			// OBJMODEL: state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid), phase 5 #322.
-			// Now an arena getter, site S1176.
-			structDetails := prgrm.GetCXTypeSignatureStructFromArray(lastExpressionOperatorOutputTypeSig.Meta)
-
-			outStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
-			outStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(outStructGid)
-			outStructDetails.Fields = structDetails.Fields
-			outStructDetails.StructType = structDetails.StructType
-			outStructDetailsIdx := int(objmodel.GidIndex(int64(outStructGid)))
-
-			_, outTypeSig := prgrm.AllocCXTypeSignatureCopy(lastExpressionOperatorOutputTypeSig)
-			outTypeSig.Name = symName
-			outTypeSig.Meta = outStructDetailsIdx
-			outTypeSigIdx := outTypeSig.Index
-			prgrm.CXAtomicOps[lastExpressionIdx].AddOutput(prgrm, outTypeSigIdx)
-
-			// we need to create an expression to hold all the modifications
-			// that will take place after this if statement
-			_, inpTypeSig := prgrm.AllocCXTypeSignatureCopy(lastExpressionOperatorOutputTypeSig)
-			inpTypeSig.Name = symName
-			inpStructGid := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructAlloc()
-			inpStructDetails := prgrm.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructGet(inpStructGid)
-			inpStructDetails.Fields = structDetails.Fields
-			inpStructDetails.StructType = structDetails.StructType
-			inpTypeSig.Meta = int(objmodel.GidIndex(int64(inpStructGid)))
-			inpTypeSigIdx := inpTypeSig.Index
-
-			// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
-			// Now a constructor call, site S1184.
-			exprCXLine := ast.MakeCXLineExpression(prgrm, lastExprCXLine.FileName, lastExprCXLine.LineNumber, lastExprCXLine.LineStr)
-			// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
-			// Now a constructor call, site S1185.
-			expr := ast.MakeAtomicOperatorExpression(prgrm, nil)
-
-			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
-			// Now an arena getter, site S1186.
-			expression, err := prgrm.GetCXAtomicOp(expr.Index)
-			if err != nil {
-				panic(err)
-			}
-
-			expression.Package = prgrm.CXAtomicOps[lastExpressionIdx].Package
-			expression.AddOutput(prgrm, inpTypeSigIdx)
 			prevExprs = append(prevExprs, *exprCXLine, *expr)
 
 			lastExpr = prevExprs[len(prevExprs)-1]
@@ -1082,4 +1030,19 @@ func argumentCopy(prgrm *ast.CXProgram, arg *ast.CXArgument) *ast.CXArgument {
 		argCopy.Fields[i] = ast.CXArgumentIndex(argumentCopy(prgrm, prgrm.GetCXArg(fieldIdx)).Index)
 	}
 	return argCopy
+}
+
+// postfixCallResultArgument returns the argument of the result sig of a call
+// that f().x reads, made for a struct or *T result that has none.
+func postfixCallResultArgument(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) *ast.CXArgument {
+	if sig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		return prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+	}
+	strct := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta).StructType
+	arg := &ast.CXArgument{Type: types.STRUCT, StructType: strct, Size: strct.GetStructSize(prgrm), DeclarationSpecifiers: []int{constants.DECL_STRUCT}}
+	if sig.Type == ast.TYPE_POINTER_STRUCT {
+		arg.Type, arg.PointerTargetType, arg.Size = types.POINTER, types.STRUCT, types.POINTER_SIZE
+		arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_POINTER)
+	}
+	return arg
 }

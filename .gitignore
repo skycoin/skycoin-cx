@@ -104,3 +104,6 @@ gen
 
 # packageloader test databases
 program_list.db
+
+## Files the CX tests write
+tests/*.tmp
