@@ -471,125 +471,16 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S0647.
 	lastLeftExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].Operator)
-	lastLeftExpressionOperatorOutputs := lastLeftExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)) < 1 {
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-		// Now an arena getter, site S0648.
-		lastLeftExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastLeftExpressionOperatorOutputs[0])
-
-		var typeSigIdx ast.CXTypeSignatureIndex
-		if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now an arena getter, site S0649.
-			lastLeftExpressionOperatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastLeftExpressionOperatorOutputTypeSig.Meta))
-
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0650.
-			_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
-			out.SetType(resolveTypeForUnd(prgrm, &leftExprs[len(leftExprs)-1]))
-			out.Size = lastLeftExpressionOperatorOutputArg.Size
-			out.Type = lastLeftExpressionOperatorOutputArg.Type
-			out.PointerTargetType = lastLeftExpressionOperatorOutputArg.PointerTargetType
-			out.Package = ast.CXPackageIndex(pkg.Index)
-			out.PreviouslyDeclared = true
-
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
-		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
-			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
-			argDetails.FileName = CurrentFile
-			argDetails.FileLine = LineNo
-			_, typeSig := prgrm.AllocCXTypeSignature()
-			typeSig.ArgDetails = argDetailsGid
-			typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
-			typeSig.Type = ast.TYPE_ATOMIC
-			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
-			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
-
-			typeSigIdx = typeSig.Index
-		} else if lastLeftExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
-			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
-			argDetails.FileName = CurrentFile
-			argDetails.FileLine = LineNo
-			_, typeSig := prgrm.AllocCXTypeSignature()
-			typeSig.ArgDetails = argDetailsGid
-			typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-			typeSig.Package = lastLeftExpressionOperatorOutputTypeSig.Package
-			typeSig.Type = ast.TYPE_POINTER_ATOMIC
-			typeSig.Meta = lastLeftExpressionOperatorOutputTypeSig.Meta
-			typeSig.Offset = lastLeftExpressionOperatorOutputTypeSig.Offset
-
-			typeSigIdx = typeSig.Index
-		} else {
-			panic("type is not known")
-		}
-
-		prgrm.CXAtomicOps[lastLeftExpressionIdx].AddOutput(prgrm, typeSigIdx)
+		operandResultOutputAdd(prgrm, pkg, leftExprs, lastLeftExpressionOperator)
 	}
 
 	lastRightExpressionIdx := rightExprs[len(rightExprs)-1].Index
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S0658.
 	lastRightExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].Operator)
-	lastRightExpressionOperatorOutputs := lastRightExpressionOperator.GetOutputs(prgrm)
 	if len(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)) < 1 {
-		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
-		// Now an arena getter, site S0659.
-		lastRightExpressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(lastRightExpressionOperatorOutputs[0])
-		var lastRightExpressionOperatorOutputArg *ast.CXArgument
-
-		var typeSigIdx ast.CXTypeSignatureIndex
-		if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
-			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
-			// Now an arena getter, site S0661.
-			lastRightExpressionOperatorOutputArg = prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastRightExpressionOperatorOutputTypeSig.Meta))
-
-			// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
-			// Now a constructor call, site S0662.
-			_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
-			out.SetType(resolveTypeForUnd(prgrm, &rightExprs[len(rightExprs)-1]))
-			out.Size = lastRightExpressionOperatorOutputArg.Size
-			out.Type = lastRightExpressionOperatorOutputArg.Type
-			out.PointerTargetType = lastRightExpressionOperatorOutputArg.PointerTargetType
-			out.Package = ast.CXPackageIndex(pkg.Index)
-			out.PreviouslyDeclared = true
-
-			typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
-		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_ATOMIC {
-			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
-			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
-			argDetails.FileName = CurrentFile
-			argDetails.FileLine = LineNo
-			_, typeSig := prgrm.AllocCXTypeSignature()
-			typeSig.ArgDetails = argDetailsGid
-			typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
-			typeSig.Type = ast.TYPE_ATOMIC
-			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
-			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
-
-			typeSigIdx = typeSig.Index
-		} else if lastRightExpressionOperatorOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
-			argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
-			argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
-			argDetails.FileName = CurrentFile
-			argDetails.FileLine = LineNo
-			_, typeSig := prgrm.AllocCXTypeSignature()
-			typeSig.ArgDetails = argDetailsGid
-			typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-			typeSig.Package = lastRightExpressionOperatorOutputTypeSig.Package
-			typeSig.Type = ast.TYPE_POINTER_ATOMIC
-			typeSig.Meta = lastRightExpressionOperatorOutputTypeSig.Meta
-			typeSig.Offset = lastRightExpressionOperatorOutputTypeSig.Offset
-
-			typeSigIdx = typeSig.Index
-		} else {
-			panic("type is not known")
-		}
-
-		prgrm.CXAtomicOps[lastRightExpressionIdx].AddOutput(prgrm, typeSigIdx)
+		operandResultOutputAdd(prgrm, pkg, rightExprs, lastRightExpressionOperator)
 	}
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
@@ -673,6 +564,66 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	out = append(out, *exprCXLine, *expr)
 
 	return
+}
+
+// operandResultOutputAdd gives the last expression of exprs, a call or an
+// operator with no output yet, a temporary output of the type it returns.
+func operandResultOutputAdd(prgrm *ast.CXProgram, pkg *ast.CXPackage, exprs []ast.CXExpression, operator *ast.CXFunction) {
+	exprIdx := exprs[len(exprs)-1].Index
+	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
+	// Now an arena getter, site S0648.
+	resultTypeSig := prgrm.GetCXTypeSignatureFromArray(operator.GetOutputs(prgrm)[0])
+
+	var typeSigIdx ast.CXTypeSignatureIndex
+	if resultTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
+		// Now an arena getter, site S0649.
+		resultArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(resultTypeSig.Meta))
+
+		// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
+		// Now a constructor call, site S0650.
+		_, out := ast.MakeArgument(prgrm, generateTempVarName(prgrm, constants.LOCAL_PREFIX), CurrentFile, LineNo)
+		out.SetType(resolveTypeForUnd(prgrm, &exprs[len(exprs)-1]))
+		out.Size = resultArg.Size
+		out.Type = resultArg.Type
+		out.PointerTargetType = resultArg.PointerTargetType
+		out.Package = ast.CXPackageIndex(pkg.Index)
+		out.PreviouslyDeclared = true
+
+		typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, out)
+	} else if resultTypeSig.Type == ast.TYPE_ATOMIC {
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
+		_, typeSig := prgrm.AllocCXTypeSignature()
+		typeSig.ArgDetails = argDetailsGid
+		typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+		typeSig.Package = resultTypeSig.Package
+		typeSig.Type = ast.TYPE_ATOMIC
+		typeSig.Meta = resultTypeSig.Meta
+		typeSig.Offset = resultTypeSig.Offset
+
+		typeSigIdx = typeSig.Index
+	} else if resultTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
+		argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+		argDetails.FileName = CurrentFile
+		argDetails.FileLine = LineNo
+		_, typeSig := prgrm.AllocCXTypeSignature()
+		typeSig.ArgDetails = argDetailsGid
+		typeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+		typeSig.Package = resultTypeSig.Package
+		typeSig.Type = ast.TYPE_POINTER_ATOMIC
+		typeSig.Meta = resultTypeSig.Meta
+		typeSig.Offset = resultTypeSig.Offset
+
+		typeSigIdx = typeSig.Index
+	} else {
+		panic("type is not known")
+	}
+
+	prgrm.CXAtomicOps[exprIdx].AddOutput(prgrm, typeSigIdx)
 }
 
 // operandIndexed reports whether the operand sig reads an element, as a[i]
@@ -817,9 +768,18 @@ func ProcessShortCircuitJumps(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 //	 op - the unary operator, '*', '&', '!', and '-'.
 //	 prevExprs - the array of expressions the unary expression belongs.
 func UnaryExpression(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpression) []ast.CXExpression {
+	if len(prevExprs) == 0 {
+		return nil
+	}
 	lastPrevExpression, err := prgrm.GetCXAtomicOpFromExpressions(prevExprs, len(prevExprs)-1)
 	if err != nil {
 		panic(err)
+	}
+
+	if op == "-" || op == "!" {
+		if exprs, ok := unaryOperatorOnValue(prgrm, op, prevExprs); ok {
+			return exprs
+		}
 	}
 
 	if len(lastPrevExpression.GetOutputs(prgrm)) == 0 {
@@ -1189,4 +1149,48 @@ func ShortCircuitStrip(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXE
 		}
 	}
 	return out
+}
+
+// unaryOperatorOnValue applies - or ! to a call, an operator result or a
+// struct field read. It reports false for the operands UnaryExpression handles.
+func unaryOperatorOnValue(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpression) ([]ast.CXExpression, bool) {
+	lastIdx := prevExprs[len(prevExprs)-1].Index
+	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastIdx].Operator)
+	operand := prevExprs
+	if operator != nil {
+		if len(prgrm.CXAtomicOps[lastIdx].GetOutputs(prgrm)) == 0 {
+			if len(operator.GetOutputs(prgrm)) == 0 {
+				return nil, false
+			}
+			pkg, err := prgrm.GetCurrentPackage()
+			if err != nil {
+				panic(err)
+			}
+			operandResultOutputAdd(prgrm, pkg, prevExprs, operator)
+		}
+	} else {
+		outputs := prgrm.CXAtomicOps[lastIdx].GetOutputs(prgrm)
+		if len(outputs) == 0 {
+			return nil, false
+		}
+		sig := prgrm.GetCXTypeSignatureFromArray(outputs[0])
+		if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE || len(prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta)).Fields) == 0 {
+			return nil, false
+		}
+		// The read is replaced, and the expressions before it still run.
+		operand = prevExprs[:len(prevExprs)-1]
+	}
+
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	opcode := constants.OP_NEG
+	if op == "!" {
+		opcode = constants.OP_BOOL_NOT
+	}
+	expr := ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[opcode])
+	prgrm.CXAtomicOps[expr.Index].Package = ast.CXPackageIndex(pkg.Index)
+	prgrm.CXAtomicOps[expr.Index].AddInput(prgrm, prgrm.CXAtomicOps[lastIdx].GetOutputs(prgrm)[0])
+	return append(operand, *expr), true
 }

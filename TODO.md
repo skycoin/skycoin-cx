@@ -238,22 +238,6 @@ func main()() {
 This should only give a runtime error and continue, but should not panic.
 Ideally this should be done at compile time when the format string is a literal.
 
-## Compilation error when using multiple return values in short hand expression
-
-```
-package main
-func foo()(i i32, f f32) {
-	i = 5
-	f = 1.0
-}
-
-func main(){	
-	i, f := foo()
-}
-```
-
-Expected behavior: No compilation error
-
 ##Compilation error when initializing multidimensiona arrays/slices with values
 
 ```
@@ -325,21 +309,6 @@ func main() {
 }
 ```
 Expected behavior: Should give compilation error
-
-## Compilation error when using unary negative operator on a function call
-
-```
-package main
-
-func foo()(out i32) {
-    out = 4
-}
-
-func main()() {
-    var a i32 = -foo()
-}
-```
-Expected behavior: No compilation error
 
 ## No Compilation Error when function is called without parentheses
 

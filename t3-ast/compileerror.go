@@ -60,6 +60,7 @@ const (
 	CompileErrorCodeSliceElementType
 	CompileErrorCodeCallResultCall
 	CompileErrorCodeMethodResultMissing
+	CompileErrorCodeAssignmentCount
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

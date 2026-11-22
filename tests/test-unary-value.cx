@@ -1,0 +1,60 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func (p Point) sum() (r i32) {
+	r = p.x + p.y
+}
+
+func truth() (out bool) {
+	out = true
+}
+
+func four() (out i32) {
+	out = 4
+}
+
+func half(f f32) (out f32) {
+	out = f / 2.0
+}
+
+func same(b bool) (out bool) {
+	out = b
+}
+
+func side(n i32) (out bool) {
+	printf("side %d\n", n)
+	out = false
+}
+
+func main() {
+	var a bool = true
+	var b bool = false
+	var n i32 = 3
+	var p Point
+	p.x = 1
+	p.y = 2
+
+	bool.print(!truth())
+	bool.print(!same(b))
+	bool.print(!(a && b))
+	bool.print(!(b || side(1)))
+	bool.print(!!a)
+	i32.print(-four())
+	i32.print(-four() * 2)
+	i32.print(-(n + 4))
+	i32.print(- -n)
+	f32.print(-half(3.0))
+	i32.print(-p.sum())
+	bool.print(!(p.sum() == 3))
+	if !truth() {
+		i32.print(0)
+	} else {
+		i32.print(1)
+	}
+	var m i32 = -four() + n
+	i32.print(m)
+}

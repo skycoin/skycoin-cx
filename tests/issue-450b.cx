@@ -1,0 +1,20 @@
+// https://github.com/skycoin/cx/issues/450
+
+package main
+func main() {
+	var b i8 = 1B
+	b++
+	i8.print(b)
+	var f f32 = 1.0
+	f--
+	f32.print(f)
+	var d f64 = 1.0D
+	d++
+	f64.print(d)
+	var l i64 = 1L
+	l++
+	i64.print(l)
+	var u ui32 = 1U
+	u++
+	ui32.print(u)
+}

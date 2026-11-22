@@ -68,6 +68,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeSliceElementType, ast.CompileErrorOperands{text("append"), text("fooA"), text("fooB")}, header + " function 'append' expected argument of type 'fooA'; 'fooB' was provided\n"},
 		{ast.CompileErrorCodeCallResultCall, ast.CompileErrorOperands{}, header + " the result of a call is not a function\n"},
 		{ast.CompileErrorCodeMethodResultMissing, ast.CompileErrorOperands{text("P"), text("show")}, header + " method 'P.show' returns no value\n"},
+		{ast.CompileErrorCodeAssignmentCount, ast.CompileErrorOperands{2, 3}, header + " assignment mismatch: 2 variables but 3 values\n"},
+		{ast.CompileErrorCodeAssignmentCount, ast.CompileErrorOperands{2, 1}, header + " assignment mismatch: 2 variables but 1 value\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

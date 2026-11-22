@@ -1,0 +1,8 @@
+package main
+
+func main() {
+	var a i32
+	var b i32
+	a, b += 1, 2
+	i32.print(a + b)
+}

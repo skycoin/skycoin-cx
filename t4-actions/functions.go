@@ -271,15 +271,20 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 
 		ProcessMethodCall(prgrm, &expr, symbolsData)
 
+		incDec := incDecOperandMissing(prgrm, exprAtomicOp)
 		ProcessExpressionArguments(prgrm, symbolsData, &offset, fnIdx, exprAtomicOp.GetInputs(prgrm), &expr, true)
+		if incDec {
+			incDecOperandAdd(prgrm, exprAtomicOp)
+		}
 		ProcessExpressionArguments(prgrm, symbolsData, &offset, fnIdx, exprAtomicOp.GetOutputs(prgrm), &expr, false)
+		checkOperatorSameType(prgrm, fn.Expressions, i)
 
 		ProcessPointerStructs(prgrm, &expr)
 		ProcessTempVariable(prgrm, &expr)
 		ProcessSliceAssignment(prgrm, &expr)
 		ProcessStringAssignment(prgrm, &expr)
 		// ProcessReferenceAssignment(prgrm, &expr)
-		ProcessShortDeclaration(prgrm, &expr, fn.Expressions, i)
+		ProcessShortDeclaration(prgrm, &expr, fn.Expressions, i, &offset)
 		processTestExpression(prgrm, fn.Expressions, i)
 
 		CheckTypes(prgrm, fn.Expressions, i)
@@ -833,13 +838,8 @@ func checkSameNativeType(prgrm *ast.CXProgram, expr *ast.CXExpression) error {
 	return nil
 }
 
-// ProcessOperatorExpression checks if the inputs of an expression
-// has the same type to prevent implicit castings in arithmetic operations.
-//
-// Input arguments description:
-//
-//	prgrm - a CXProgram that contains all the data and arrays of the program.
-//	expr - the operator expression.
+// ProcessOperatorExpression sizes the untyped outputs of an operator from its
+// inputs. checkOperatorSameType checks that the inputs have one type.
 func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S0781.
@@ -851,11 +851,6 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	// Now an arena getter, site S0782.
 	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
 
-	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) {
-		if err := checkSameNativeType(prgrm, expr); err != nil {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
-		}
-	}
 	if expr.IsUndType(prgrm) {
 		for _, outputIdx := range expression.GetOutputs(prgrm) {
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -1660,7 +1655,7 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 // }
 
 // ProcessShortDeclaration sets proper values if the expr is a short declaration.
-func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expressions []ast.CXExpression, idx int) {
+func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expressions []ast.CXExpression, idx int, offset *types.Pointer) {
 	if len(expressions) <= 1 {
 		return
 	}
@@ -1696,6 +1691,7 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 
 		var argType, argPointerTargetType types.Code
 		var argSize types.Pointer
+		var argStructType *ast.CXStruct
 		if expr.IsMethodCall() {
 
 			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
@@ -1733,6 +1729,10 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 				argType = expressionInputArg.Type
 				argPointerTargetType = expressionInputArg.PointerTargetType
 				argSize = expressionInputArg.Size
+				// A variable declared from a struct literal has the type of a field.
+				if expressionInputArg.StructType != nil && len(expressionInputArg.Fields) == 0 && len(expressionInputArg.Lengths) == 0 && expressionInputArg.Type != types.POINTER {
+					argType, argSize, argStructType = types.STRUCT, expressionInputArg.StructType.GetStructSize(prgrm), expressionInputArg.StructType
+				}
 			} else if expressionInputTypeSig.Type == ast.TYPE_ATOMIC {
 				argType = types.Code(expressionInputTypeSig.Meta)
 				argSize = types.Code(expressionInputTypeSig.Meta).Size()
@@ -1751,6 +1751,8 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 				sliceDetails := prgrm.GetCXTypeSignatureArrayFromArray(expressionInputTypeSig.Meta)
 				argType = types.Code(sliceDetails.Meta)
 				argSize = types.Code(sliceDetails.Meta).Size()
+			} else if expressionInputTypeSig.Type == ast.TYPE_STRUCT || expressionInputTypeSig.Type == ast.TYPE_POINTER_STRUCT {
+				argType, argPointerTargetType, argSize, argStructType = shortDeclarationStructValue(prgrm, expressionInputTypeSig)
 			} else {
 				panic("type is not known")
 			}
@@ -1759,9 +1761,12 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0852.
 		prevExpressionOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0])
+		var relocatedOffset types.Pointer
+		relocated := false
 		var prevExpressionOutputIdx ast.CXArgumentIndex
 		if prevExpressionOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			prevExpressionOutputIdx = ast.CXArgumentIndex(prevExpressionOutputTypeSig.Meta)
+			reservedSize := ast.GetArgSize(prgrm, prgrm.GetCXArg(prevExpressionOutputIdx))
 
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1682.
@@ -1772,6 +1777,14 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1684.
 			prgrm.GetCXArg(ast.CXArgumentIndex(prevExpressionOutputIdx)).Size = argSize
+			shortDeclarationStructTypeSet(prgrm.GetCXArg(prevExpressionOutputIdx), argType, argStructType)
+			// A value larger than the frame slot reserved for the declaration moves it.
+			if declSize := ast.GetArgSize(prgrm, prgrm.GetCXArg(prevExpressionOutputIdx)); declSize > reservedSize {
+				relocated, relocatedOffset = true, *offset
+				prgrm.GetCXArg(prevExpressionOutputIdx).Offset = relocatedOffset
+				prevExpressionOutputTypeSig.Offset = relocatedOffset
+				updateSymbolsTableOffsetAdd(prgrm, prevExpressionOutputTypeSig, offset, declSize)
+			}
 		} else if prevExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			prevExpressionOutputTypeSig.Meta = int(argType)
 		} else if prevExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
@@ -1807,6 +1820,11 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S1687.
 			prgrm.GetCXArg(ast.CXArgumentIndex(expressionOutputIdx)).Size = argSize
+			shortDeclarationStructTypeSet(prgrm.GetCXArg(expressionOutputIdx), argType, argStructType)
+			if relocated {
+				prgrm.GetCXArg(expressionOutputIdx).Offset = relocatedOffset
+				expressionOutputTypeSig.Offset = relocatedOffset
+			}
 		} else if expressionOutputTypeSig.Type == ast.TYPE_ATOMIC {
 			expressionOutputTypeSig.Meta = int(argType)
 		} else if expressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
@@ -3222,4 +3240,90 @@ func declarationSpecifiersSlice(dimensions int) []int {
 		specs = append(specs, constants.DECL_SLICE)
 	}
 	return specs
+}
+
+// incDecOperandMissing reports whether exprAtomicOp is an i++ or i-- that has
+// no 1 yet, which PostfixExpressionIncDec leaves out.
+func incDecOperandMissing(prgrm *ast.CXProgram, exprAtomicOp *ast.CXAtomicOperator) bool {
+	operator := prgrm.GetFunctionFromArray(exprAtomicOp.Operator)
+	if operator == nil || (operator.AtomicOPCode != constants.OP_ADD && operator.AtomicOPCode != constants.OP_SUB) {
+		return false
+	}
+	inputs, outputs := exprAtomicOp.GetInputs(prgrm), exprAtomicOp.GetOutputs(prgrm)
+	if len(inputs) != 1 || len(outputs) != 1 || prgrm.GetCXTypeSignatureFromArray(inputs[0]).Name != prgrm.GetCXTypeSignatureFromArray(outputs[0]).Name {
+		return false
+	}
+	return true
+}
+
+// incDecOperandAdd gives i++ and i-- the literal 1 of the type of i, which is
+// known once the inputs are processed (skycoin/cx#450).
+func incDecOperandAdd(prgrm *ast.CXProgram, exprAtomicOp *ast.CXAtomicOperator) {
+	var one [8]byte
+	typeCode := operatorOperandType(prgrm, exprAtomicOp.GetInputs(prgrm)[0])
+	switch typeCode {
+	case types.I8:
+		types.Write_i8(one[:], 0, 1)
+	case types.I16:
+		types.Write_i16(one[:], 0, 1)
+	case types.I64:
+		types.Write_i64(one[:], 0, 1)
+	case types.UI8:
+		types.Write_ui8(one[:], 0, 1)
+	case types.UI16:
+		types.Write_ui16(one[:], 0, 1)
+	case types.UI32:
+		types.Write_ui32(one[:], 0, 1)
+	case types.UI64:
+		types.Write_ui64(one[:], 0, 1)
+	case types.F32:
+		types.Write_f32(one[:], 0, 1)
+	case types.F64:
+		types.Write_f64(one[:], 0, 1)
+	default:
+		typeCode = types.I32
+		types.Write_i32(one[:], 0, 1)
+	}
+	literal := WritePrimary(prgrm, typeCode, one[:typeCode.Size()], false)
+	exprAtomicOp.AddInput(prgrm, ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, literal))
+}
+
+// checkOperatorSameType reports an operator whose operands differ in type at
+// the line of the operator, not at the end of the function (skycoin/cx#450).
+func checkOperatorSameType(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
+	expression := &prgrm.CXAtomicOps[exprs[currIndex].Index]
+	operator := prgrm.GetFunctionFromArray(expression.Operator)
+	if operator == nil || !ast.IsOperator(operator.AtomicOPCode) || len(expression.GetOutputs(prgrm)) == 0 {
+		return
+	}
+	if err := checkSameNativeType(prgrm, &exprs[currIndex]); err != nil {
+		file, line := exprLine(prgrm, exprs, currIndex)
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+	}
+}
+
+// shortDeclarationStructValue returns the type of the struct or of the field
+// that a struct value read gives a short declaration, as in x := s.f.
+func shortDeclarationStructValue(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) (types.Code, types.Code, types.Pointer, *ast.CXStruct) {
+	details := prgrm.GetCXTypeSignatureStructFromArray(sig.Meta)
+	if len(details.Fields) > 0 {
+		field := prgrm.GetCXArg(details.Fields[len(details.Fields)-1]).GetAssignmentElement(prgrm)
+		if len(field.Lengths) > 0 {
+			panic("type is not known")
+		}
+		return field.Type, field.PointerTargetType, ast.GetArgSize(prgrm, field), field.StructType
+	}
+	if sig.Type == ast.TYPE_POINTER_STRUCT && !sig.IsDeref {
+		panic("type is not known")
+	}
+	return types.STRUCT, 0, details.StructType.GetStructSize(prgrm), details.StructType
+}
+
+// shortDeclarationStructTypeSet gives arg the struct type of a struct value.
+func shortDeclarationStructTypeSet(arg *ast.CXArgument, argType types.Code, structType *ast.CXStruct) {
+	if structType == nil || argType != types.STRUCT {
+		return
+	}
+	arg.StructType = structType
+	arg.DeclarationSpecifiers = []int{constants.DECL_STRUCT}
 }

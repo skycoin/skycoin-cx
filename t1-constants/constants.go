@@ -32,6 +32,10 @@ const ELEMENT_PREFIX = "*elt"
 // call used as a value. It is not a temp, so a read of it is looked up.
 const METHOD_RESULT_PREFIX = "*mrs"
 
+// MULTIPLE_VALUE_PREFIX names the variable that holds one value of a, b = x, y
+// until every value is computed.
+const MULTIPLE_VALUE_PREFIX = "*mva"
+
 // Used in `PrintProgram` to represent literals (`CXArgument`s with no name).
 const LITERAL_PLACEHOLDER = "*lit"
 const ID_FN = "identity"

@@ -1,0 +1,16 @@
+// https://github.com/skycoin/cx/issues/25
+
+package main
+type too struct {
+	x i32
+	y i32
+}
+func main() {
+	var t too
+	t.x = 12
+	t.y = -15
+	t.x = -t.x
+	t.y = -t.y
+	i32.print(t.x)
+	i32.print(t.y)
+}

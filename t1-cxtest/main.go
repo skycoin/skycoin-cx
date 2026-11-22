@@ -408,6 +408,41 @@ func runTestCases(t *runner.TestRunner) {
 		"issue-136.cx:7 invalid expression")
 	t.RunWant("test-function-shadows-builtin.cx", types.CX_SUCCESS, "a function shadows a built-in of the same name in its package (skycoin-cx#294)",
 		"-1\n99\n7\n20\n7\n20\n")
+	t.RunWant("issue-23.cx", types.CX_SUCCESS, "logical not on a call result (skycoin-cx#58)", "false\n")
+	t.Run("issue-121.cx", types.CX_SUCCESS, "unary minus on a call result (skycoin-cx#28)")
+	t.RunWant("issue-25.cx", types.CX_SUCCESS, "unary minus on struct fields (skycoin-cx#56)", "-12\n15\n")
+	t.RunWant("test-unary-value.cx", types.CX_SUCCESS, "! and - on calls, method calls and parenthesized expressions (skycoin-cx#58)",
+		"false\ntrue\ntrue\nside 1\ntrue\ntrue\n-4\n-8\n-7\n3\n-1.5\n-3\nfalse\n1\n-1\n")
+	t.RunWant("test-unary-field.cx", types.CX_SUCCESS, "! and - on nested, pointer and indexed struct fields (skycoin-cx#56)",
+		"-5\n-1.5\nfalse\n-9\n-5\n-5\n5\n")
+	t.RunWant("issue-450.cx", types.CX_SUCCESS, "++ and -- on every numeric type (skycoin-cx#45)", "2\n0\n2\n2\n0\n2\n")
+	t.RunWant("issue-450b.cx", types.CX_SUCCESS, "++ and -- on every numeric type (skycoin-cx#45)", "2\n0\n2\n2\n2\n")
+	t.RunWant("test-incdec-operand.cx", types.CX_SUCCESS, "++, -- and compound assignment on unsigned types, fields, indexes and pointers (skycoin-cx#45)",
+		"0\n65535\n42\n0\n5\n9\n15\n4\n6\n3.5\n2\n14\n8\n3\n3\n2\n1\n")
+	t.RunWant("test-operator-operand-line.cx", types.CX_COMPILATION_ERROR, "an operand type mismatch is reported at its line (skycoin-cx#45)",
+		"test-operator-operand-line.cx:8 operands are not of the same type")
+	t.RunWant("issue-68.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an argument (skycoin-cx#18)", "issue-68.cx:7 syntax error")
+	t.RunWant("test-incdec-value.cx", types.CX_COMPILATION_ERROR, "i++ is a statement, not an operand (skycoin-cx#18)", "test-incdec-value.cx:5 syntax error")
+	t.RunWant("test-incdec-prefix.cx", types.CX_COMPILATION_ERROR, "there is no prefix ++", "test-incdec-prefix.cx:5 syntax error")
+	t.RunWant("issue-62.cx", types.CX_COMPILATION_ERROR, "a comma list is not a statement (skycoin-cx#23)", "issue-62.cx:16 syntax error")
+	t.Run("issue-34.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)")
+	t.RunWant("issue-512.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)", "2\n1\n")
+	t.RunWant("issue-512b.cx", types.CX_SUCCESS, "several values in := (skycoin-cx#44)", "20\n10\n")
+	t.RunWant("cassignfunc.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)", "20\n10\n")
+	t.RunWant("cassigntwovarialbe.cx", types.CX_SUCCESS, "several values in := (skycoin-cx#44)", "20\n10\n")
+	t.RunWant("multi-return-from-function.cx", types.CX_SUCCESS, "multiple results of a call in =", "20\n10\n")
+	t.Run("multi-return-from-function-new-varaible.cx", types.CX_SUCCESS, "multiple results of a call in := (skycoin-cx#44)")
+	t.RunWant("test-multi-assign.cx", types.CX_SUCCESS, "multiple assignment from values, calls and method calls, with swaps and short-circuit values (skycoin-cx#44)",
+		"2 1\n7 seven\n7 seven\nside 1\nside 2\ntrue true\n9 2.5\n0 9\n2 1\n1 two 3.5\n5000000000\n0.25\ntrue\n3\n-1 2 -2\n2 5000000000\ni 0 j 5\ni 1 j 4\ni 2 j 3\n")
+	t.RunWant("test-multi-assign-count.cx", types.CX_COMPILATION_ERROR, "a multiple assignment with the wrong number of values",
+		"test-multi-assign-count.cx:16 assignment mismatch: 2 variables but 3 values",
+		"test-multi-assign-count.cx:17 assignment mismatch: 2 variables but 1 value",
+		"test-multi-assign-count.cx:18 assignment mismatch: 3 variables but 2 values",
+		"test-multi-assign-count.cx:19 assignment mismatch: 2 variables but 1 value")
+	t.RunWant("test-multi-assign-operator.cx", types.CX_COMPILATION_ERROR, "a multiple assignment takes only = and :=", "test-multi-assign-operator.cx:6 syntax error")
+	t.RunWant("test-struct-literal-negative.cx", types.CX_SUCCESS, "negative and computed values in struct literal fields", "-1\n-2.5\n-4\n4\n1.5\n-3\n")
+	t.RunWant("test-short-declaration-copy.cx", types.CX_SUCCESS, "a short declaration copies an i64, an f64, a field or a struct",
+		"5000000000\n7\n0.125\n8\n6000000000\n9\n1\n2\n10\n6000000000\n")
 	t.Run("issue-540a.cx", types.CX_SUCCESS, "continue inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-540b.cx", types.CX_SUCCESS, "break inside three nested loops (skycoin-cx#39)")
 	t.Run("issue-537.cx", types.CX_SUCCESS, "Crash when a block starts with a for loop and declares a variable")
@@ -582,7 +617,6 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-301-a.cx", types.CX_COMPILATION_ERROR, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-301-b.cx", types.CX_COMPILATION_ERROR, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-302.cx", types.CX_SUCCESS, "Trying to determine the length of a slice of struct instances throws an error.")
-	t.RunEx("issue-68.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when passing increment expression as argument", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#18
 	t.RunEx("issue-67.cx", types.CX_COMPILATION_ERROR, "Panic when using void return value of a function in a for loop expression", runner.TestIssue, 0)
 	t.Run("issue-66.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when printing boolean values with %v")
 	t.Run("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed")
@@ -594,7 +628,6 @@ func runTestCases(t *runner.TestRunner) {
 		"issue-63.cx:10 the result of a call is not a function")
 	t.Run("issue-306.cx", types.CX_COMPILATION_ERROR, "No compilation error when using float value in place of boolean expression")
 	t.Run("issue-308.cx", types.CX_COMPILATION_ERROR, "Panic when package contains duplicate function signature")
-	t.RunEx("issue-62.cx", types.CX_COMPILATION_ERROR, "Left hand side of , is not compiled", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#23
 	t.Run("issue-61-a.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
 	t.Run("issue-61-b.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
 	t.Run("issue-309.cx", types.CX_SUCCESS, "Compilation error when left hand side of an assignment expression is a struct field")
@@ -617,7 +650,6 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-120-a.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
 	t.Run("issue-120-b.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
 	t.Run("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
-	t.RunEx("issue-121.cx", types.CX_SUCCESS, "Compilation error when using unary negative operator on a function call", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#28
 	t.RunEx("issue-131.cx", types.CX_SUCCESS, "Panic when using arithmetic operations.", runner.TestIssue, 0)
 	t.RunEx("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.", runner.TestIssue, 0)
 	t.RunEx("issue-157.cx", types.CX_SUCCESS, "expected either 'i32' or 'i64', got 'ident'", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#29

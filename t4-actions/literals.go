@@ -396,6 +396,7 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1741.
 					name := prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name
+					structLiteralValueTypeSet(prgrm, strct, prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)), name)
 
 					// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 					// Now a constructor call, site S1011.
@@ -552,6 +553,7 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 						// Now an arena getter, site S1750.
 						field.Name = prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Name
+						structLiteralValueTypeSet(prgrm, strct, prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)), field.Name)
 
 						expr.ExpressionType = ast.CXEXPR_STRUCT_LITERAL
 
@@ -802,4 +804,15 @@ func StructLiteralFields(prgrm *ast.CXProgram, structName string) ast.CXExpressi
 
 	expression.Package = ast.CXPackageIndex(pkg.Index)
 	return *expr
+}
+
+// structLiteralValueTypeSet types a struct literal field value that an
+// operator such as -1 leaves untyped with the declared type of the field.
+func structLiteralValueTypeSet(prgrm *ast.CXProgram, strct *ast.CXStruct, value *ast.CXArgument, fieldName stringpool.StringGid) {
+	if value.Type != types.UNDEFINED {
+		return
+	}
+	if fieldSig, err := strct.GetField(prgrm, fieldName); err == nil {
+		value.Type = fieldSig.GetType(prgrm)
+	}
 }

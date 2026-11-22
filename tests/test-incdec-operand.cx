@@ -1,0 +1,64 @@
+package main
+
+type Point struct {
+	x i32
+	y i64
+}
+
+func main() {
+	var u8 ui8 = 255UB
+	u8++
+	ui8.print(u8)
+	var u16 ui16 = 0UH
+	u16--
+	ui16.print(u16)
+	var u64 ui64 = 41UL
+	u64++
+	ui64.print(u64)
+	var h i16 = -1H
+	h++
+	i16.print(h)
+
+	var p Point
+	p.x = 4
+	p.y = 10L
+	p.x++
+	p.y--
+	i32.print(p.x)
+	i64.print(p.y)
+	p.x += 10
+	p.y -= 5L
+	i32.print(p.x)
+	i64.print(p.y)
+
+	var s []f32
+	s = append(s, 1.5)
+	s = append(s, 2.5)
+	s[1]++
+	s[0] *= 4.0
+	f32.print(s[0])
+	f32.print(s[1])
+
+	var arr [2]i32
+	var k i32 = 1
+	arr[k]++
+	arr[k]++
+	i32.print(arr[1])
+
+	var q *Point = &p
+	q.x--
+	i32.print(p.x)
+	var c i32 = 7
+	var r *i32 = &c
+	*r++
+	i32.print(c)
+
+	var total i64
+	for i := 0L; i < 3L; i++ {
+		total += i
+	}
+	i64.print(total)
+	for d := 3.0D; d > 0.0D; d-- {
+		f64.print(d)
+	}
+}

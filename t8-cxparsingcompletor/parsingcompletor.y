@@ -197,7 +197,10 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   labeled_statement
 %type   <expressions>   expression_statement
 %type   <expressions>   for_clause_assignment
-%type   <expressions>   for_clause_expression
+%type   <expressions>   for_post_expression
+%type   <arrayArguments>   assignment_target_list
+%type   <arrayArguments>   assignment_value_list
+%type   <arrayArguments>   for_assignment_value_list
 %type   <expressions>   for_clause_statement
 %type   <expressions>   for_init_assignment
 %type   <expressions>   for_init_expression
@@ -888,14 +891,6 @@ postfix_expression:
                 {
 			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
                 }
-	|       postfix_expression INC_OP
-                {
-			$$ = actions.PostfixExpressionIncDec(actions.AST,$1, true)
-                }
-        |       postfix_expression DEC_OP
-                {
-			$$ = actions.PostfixExpressionIncDec(actions.AST,$1, false)
-                }
         |       postfix_expression PERIOD IDENTIFIER
                 {
 			$$ = actions.PostfixExpressionField(actions.AST,$1, $3)
@@ -914,16 +909,6 @@ unary_expression:
                 postfix_expression
                 {
 			$$ = actions.MethodCallValue(actions.AST, $1)
-                }
-	|       INC_OP unary_expression
-                {
-			// TODO
-			$$ = $2
-                }
-	|       DEC_OP unary_expression
-                {
-			// TODO
-			$$ = $2
                 }
 	|       unary_operator unary_expression
                 {
@@ -1102,9 +1087,47 @@ assignment_operator:
                 ;
 
 expression:     assignment_expression
-	|       expression COMMA assignment_expression
-                {               
-			$$ = ParserActionExpressionList($1, $3)
+	|       assignment_target_list ASSIGN assignment_value_list
+                {
+			$$ = ParserActionMultipleAssignment($1, $2, $3)
+                }
+	|       assignment_target_list CASSIGN assignment_value_list
+                {
+			$$ = ParserActionMultipleAssignment($1, $2, $3)
+                }
+                ;
+
+// a, b = x, y evaluates every value before it assigns any, as in Go.
+assignment_target_list:
+                conditional_expression COMMA conditional_expression
+                {
+			$$ = [][]ast.CXExpression{$1, $3}
+                }
+	|       assignment_target_list COMMA conditional_expression
+                {
+			$$ = append($1, $3)
+                }
+                ;
+
+assignment_value_list:
+                struct_literal_expression
+                {
+			$$ = [][]ast.CXExpression{$1}
+                }
+	|       assignment_value_list COMMA struct_literal_expression
+                {
+			$$ = append($1, $3)
+                }
+                ;
+
+for_assignment_value_list:
+                conditional_expression
+                {
+			$$ = [][]ast.CXExpression{$1}
+                }
+	|       for_assignment_value_list COMMA conditional_expression
+                {
+			$$ = append($1, $3)
                 }
                 ;
 
@@ -1180,6 +1203,14 @@ expression_statement:
 	|       expression SEMICOLON
                 {          
 			$$ = ParserActionExpressionStatement($1)
+                }
+	|       unary_expression INC_OP SEMICOLON
+                {
+			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, true))
+                }
+	|       unary_expression DEC_OP SEMICOLON
+                {
+			$$ = ParserActionExpressionStatement(actions.PostfixExpressionIncDec(actions.AST, $1, false))
                 }
                 ;
 
@@ -1264,7 +1295,7 @@ iteration_statement:
                 {			
 			$$ = actions.IterationExpressions(actions.AST,$2, $3, nil, $4)
                 }
-        |       FOR for_clause_statement for_condition_statement for_clause_expression compound_statement
+        |       FOR for_clause_statement for_condition_statement for_post_expression compound_statement
                 {
 			$$ = actions.IterationExpressions(actions.AST,$2, $3, $4, $5)
                 }
@@ -1280,11 +1311,20 @@ for_clause_assignment:
                 }
                 ;
 
-for_clause_expression:
+// i++ and i-- are statements, as in Go, so only a post statement holds them.
+for_post_expression:
                 for_clause_assignment
-	|       for_clause_expression COMMA for_clause_assignment
+	|       unary_expression INC_OP
                 {
-			$$ = ParserActionExpressionList($1, $3)
+			$$ = actions.PostfixExpressionIncDec(actions.AST, $1, true)
+                }
+	|       unary_expression DEC_OP
+                {
+			$$ = actions.PostfixExpressionIncDec(actions.AST, $1, false)
+                }
+	|       assignment_target_list ASSIGN for_assignment_value_list
+                {
+			$$ = ParserActionMultipleAssignment($1, $2, $3)
                 }
                 ;
 
@@ -1298,9 +1338,13 @@ for_init_assignment:
 
 for_init_expression:
                 for_init_assignment
-	|       for_init_expression COMMA assignment_expression
+	|       assignment_target_list ASSIGN for_assignment_value_list
                 {
-			$$ = ParserActionExpressionList($1, $3)
+			$$ = ParserActionMultipleAssignment($1, $2, $3)
+                }
+	|       assignment_target_list CASSIGN for_assignment_value_list
+                {
+			$$ = ParserActionMultipleAssignment($1, $2, $3)
                 }
                 ;
 
@@ -1319,7 +1363,7 @@ for_condition_statement:
                 {
 			$$ = actions.WritePrimaryExprs(actions.AST, types.BOOL, encoder.Serialize(true), false)
                 }
-	|       for_clause_expression SEMICOLON
+	|       for_clause_assignment SEMICOLON
                 {
 			$$ = ParserActionLoopCondition($1)
                 }

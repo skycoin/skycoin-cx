@@ -64,6 +64,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeSliceElementType - ast.CompileErrorCodeNil:           {Format: "%H function '%s' expected argument of type '%s'; '%s' was provided\n"},
 	ast.CompileErrorCodeCallResultCall - ast.CompileErrorCodeNil:             {Format: "%H the result of a call is not a function\n"},
 	ast.CompileErrorCodeMethodResultMissing - ast.CompileErrorCodeNil:        {Format: "%H method '%s.%s' returns no value\n"},
+	ast.CompileErrorCodeAssignmentCount - ast.CompileErrorCodeNil:            {Format: "%H assignment mismatch: %d variable%+ but %d value%+\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

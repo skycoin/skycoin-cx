@@ -56,6 +56,11 @@
 
 #### Fixed
 
+- `-` and `!` on a call, a parenthesized expression or a struct field failed to compile, so `!f(x)`, `!(a && b)` and `-foo()` were `invalid indirection` and `-t.x` was `identifier 'x' does not exist`. They apply to any operand now (#28, #56, #58)
+- `i++` and `i--` on a type other than `i32` were `operands are not of the same type`, reported at the end of the function. The 1 takes the type of the operand, and an operand type mismatch is reported at its own line. `p.x++`, `s[i]++` and `p.x += 1` wrote to `p` or panicked, and work now (#45)
+- `i++` as an argument or an operand gave a wrong value, so `sprintf("%d", i++)` printed `%!d(MISSING)`, and `++i` did nothing. As in Go, `i++` and `i--` are statements and both are syntax errors (#18)
+- `a, b := f()` and `a, b := 1, 2` failed to compile, `a, b = x || y, x && y` panicked the compiler, and `f(), g()` as a statement panicked it too. `=` and `:=` take several targets with as many values or one call with as many results, every value is computed before any target is assigned, and a different count is the compile error `assignment mismatch: 2 variables but 3 values`, `CompileErrorCodeAssignmentCount` (7045). A comma list without an assignment is a syntax error (#23, #44)
+- `b := Box{v: -1}` and other struct literals with a computed field value did not declare `b`. `x := y` with an `i64`, `f64` or struct `y` and `v := p.y` overwrote the next variable or panicked
 - A method call used as an operand, an argument, an index, a condition, a struct literal field, the right side of `+=` or a receiver compiled to a read of a field named like the method, so `i32.print(p.sum())` printed garbage, and `p.show(s)` or `p.hit(&q)` with a first argument that is not a literal was `illegal method call or field access`. A method call now works anywhere an expression can appear, with any arguments, and `for c.next() {` runs its condition every time (#24)
 - A pointer receiver method called on a value, `p.move(1)` with `func (p *Point) move(n i32)`, got the value as the pointer and wrote to the wrong address, and the same call on a `*Point` variable was a type error. The value is passed by reference and the pointer as it is
 - A method with no output used as a value is the compile error `method 'Point.show' returns no value`, `CompileErrorCodeMethodResultMissing` (7044)

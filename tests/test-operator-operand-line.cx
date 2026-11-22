@@ -1,0 +1,10 @@
+package main
+
+func main() {
+	var b i8 = 1B
+	var c i32 = 2
+	b++
+
+	b = b + c
+	i8.print(b)
+}

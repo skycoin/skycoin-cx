@@ -7,6 +7,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -542,10 +543,6 @@ func PostfixExpressionIncDec(prgrm *ast.CXProgram, prevExprs []ast.CXExpression,
 		expr = ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_SUB])
 	}
 
-	var valB [4]byte
-	types.Write_i32(valB[:], 0, 1)
-	valArg := WritePrimary(prgrm, types.I32, valB[:], false)
-
 	lastPrevExpression, err := prgrm.GetCXAtomicOpFromExpressions(prevExprs, len(prevExprs)-1)
 	if err != nil {
 		panic(err)
@@ -555,18 +552,15 @@ func PostfixExpressionIncDec(prgrm *ast.CXProgram, prevExprs []ast.CXExpression,
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	typeSigIdx := lastPrevExpression.GetOutputs(prgrm)[0]
-	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
+	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, ArgumentReadCopy(prgrm, typeSigIdx))
 
-	typeSigIdx = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, valArg)
-	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSigIdx)
-
-	typeSigIdx = lastPrevExpression.GetOutputs(prgrm)[0]
+	// incDecOperandAdd adds the 1 once the type of the operand is known.
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, typeSigIdx)
 
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 	// Now a slice of objects, site S1164.
-	exprs := append([]ast.CXExpression{}, *exprCXLine, *expr)
-	return exprs
+	exprs := append([]ast.CXExpression{}, prevExprs[:len(prevExprs)-1]...)
+	return append(exprs, *exprCXLine, *expr)
 }
 
 // PostfixExpressionField handles the dot notation that can be followed by an identifier.
@@ -966,6 +960,12 @@ func MethodCallValue(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXExp
 	if len(callOp.GetOutputs(prgrm)) > 0 {
 		return exprs
 	}
+	return append(exprs, primaryIdentifierExpressions(prgrm, methodCallResultAdd(prgrm, callOp))...)
+}
+
+// methodCallResultAdd adds a result variable to the outputs of a method call
+// and returns its name.
+func methodCallResultAdd(prgrm *ast.CXProgram, callOp *ast.CXAtomicOperator) stringpool.StringGid {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
@@ -985,7 +985,7 @@ func MethodCallValue(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXExp
 	result.Package = ast.CXPackageIndex(pkg.Index)
 	result.PreviouslyDeclared = true
 	callOp.AddOutput(prgrm, ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, result))
-	return append(exprs, primaryIdentifierExpressions(prgrm, resultName)...)
+	return resultName
 }
 
 // MethodCallStatement undoes MethodCallValue for a method call whose result
@@ -1043,4 +1043,43 @@ func functionDeclared(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) bool {
 	}
 	_, found := pkg.Functions[sig.Name]
 	return found
+}
+
+// ArgumentReadCopy returns a copy of a field, index or dereference read with
+// its own arguments, so one expression can read and write it as in p.x++.
+func ArgumentReadCopy(prgrm *ast.CXProgram, sigIdx ast.CXTypeSignatureIndex) ast.CXTypeSignatureIndex {
+	sig := prgrm.GetCXTypeSignatureFromArray(sigIdx)
+	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return sigIdx
+	}
+	arg := prgrm.GetCXArg(ast.CXArgumentIndex(sig.Meta))
+	if len(arg.Fields) == 0 && len(arg.Indexes) == 0 && len(arg.DereferenceOperations) == 0 {
+		return sigIdx
+	}
+	return ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, argumentCopy(prgrm, arg))
+}
+
+// argumentCopy copies arg with its fields and indexes into new arguments.
+func argumentCopy(prgrm *ast.CXProgram, arg *ast.CXArgument) *ast.CXArgument {
+	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails)
+	_, argCopy := ast.MakeArgument(prgrm, arg.Name, details.FileName, details.FileLine)
+	index, argDetails := argCopy.Index, argCopy.ArgDetails
+	*argCopy = *arg
+	argCopy.Index, argCopy.ArgDetails = index, argDetails
+	argCopy.Lengths = append([]types.Pointer(nil), arg.Lengths...)
+	argCopy.DereferenceOperations = append([]int(nil), arg.DereferenceOperations...)
+	argCopy.DeclarationSpecifiers = append([]int(nil), arg.DeclarationSpecifiers...)
+	argCopy.Indexes = make([]ast.CXTypeSignatureIndex, len(arg.Indexes))
+	for i, indexSigIdx := range arg.Indexes {
+		indexSig := prgrm.GetCXTypeSignatureFromArray(indexSigIdx)
+		argCopy.Indexes[i] = indexSigIdx
+		if indexSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+			argCopy.Indexes[i] = ast.AllocCXTypeSignatureOfCXArgDeprecate(prgrm, argumentCopy(prgrm, prgrm.GetCXArg(ast.CXArgumentIndex(indexSig.Meta))))
+		}
+	}
+	argCopy.Fields = make([]ast.CXArgumentIndex, len(arg.Fields))
+	for i, fieldIdx := range arg.Fields {
+		argCopy.Fields[i] = ast.CXArgumentIndex(argumentCopy(prgrm, prgrm.GetCXArg(fieldIdx)).Index)
+	}
+	return argCopy
 }

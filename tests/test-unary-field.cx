@@ -1,0 +1,31 @@
+package main
+
+type Inner struct {
+	v i32
+	f f32
+	ok bool
+}
+
+type Outer struct {
+	in Inner
+	n  i64
+}
+
+func main() {
+	var o Outer
+	o.in.v = 5
+	o.in.f = 1.5
+	o.in.ok = true
+	o.n = 9L
+	i32.print(-o.in.v)
+	f32.print(-o.in.f)
+	bool.print(!o.in.ok)
+	i64.print(-o.n)
+	var p *Outer = &o
+	i32.print(-p.in.v)
+	o.in.v = -o.in.v
+	i32.print(o.in.v)
+	var s []Inner
+	s = append(s, o.in)
+	i32.print(-s[0].v)
+}

@@ -1,0 +1,7 @@
+package main
+
+func main() {
+	var i i32 = 4
+	++i
+	i32.print(i)
+}

@@ -82,23 +82,6 @@ func ParserActionAssignmentExpression(left []ast.CXExpression, operator string, 
 	return result
 }
 
-// ParserActionExpressionList joins the outputs of a comma separated
-// expression list into its last expression.
-func ParserActionExpressionList(left []ast.CXExpression, right []ast.CXExpression) []ast.CXExpression {
-	lastOfThirdAtomicOp, err := actions.AST.GetCXAtomicOpFromExpressions(right, len(right)-1)
-	if err != nil {
-		panic(err)
-	}
-
-	lastOfFirstAtomicOp, err := actions.AST.GetCXAtomicOpFromExpressions(left, len(left)-1)
-	if err != nil {
-		panic(err)
-	}
-
-	lastOfThirdAtomicOp.Outputs.Fields = append(lastOfFirstAtomicOp.Outputs.Fields, lastOfThirdAtomicOp.Outputs.Fields...)
-	return right
-}
-
 // ParserActionExpressionStatement is the action of an expression statement,
 // shared by expression_statement and the for clauses.
 func ParserActionExpressionStatement(exprs []ast.CXExpression) []ast.CXExpression {
@@ -179,4 +162,32 @@ func ParserActionLabeledStatement(label string, exprs []ast.CXExpression) []ast.
 		actions.AST.CXAtomicOps[exprs[first].Index].Label = labelGid
 	}
 	return exprs
+}
+
+// ParserActionMultipleAssignment is the action of a, b = x, y and a, b := x, y.
+// Every value is held in a variable before any target is assigned, as in Go.
+func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator string, values [][]ast.CXExpression) []ast.CXExpression {
+	for _, exprs := range append(append([][]ast.CXExpression(nil), targets...), values...) {
+		if len(exprs) == 0 {
+			return nil
+		}
+	}
+	if len(values) == 1 {
+		return actions.MultipleAssignmentCall(actions.AST, targets, operator, values[0])
+	}
+	if len(values) != len(targets) {
+		actions.AST.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignmentCount, actions.CurrentFile, actions.LineNo, ast.CompileErrorOperands{int64(len(targets)), int64(len(values))})
+		return nil
+	}
+
+	var result []ast.CXExpression
+	names := make([]stringpool.StringGid, len(values))
+	for i, value := range values {
+		names[i] = actions.MultipleValueName(actions.AST)
+		result = append(result, ParserActionAssignmentExpression(actions.MultipleValueRead(actions.AST, names[i]), ":=", value)...)
+	}
+	for i, target := range targets {
+		result = append(result, ParserActionAssignmentExpression(target, operator, actions.MultipleValueRead(actions.AST, names[i]))...)
+	}
+	return result
 }

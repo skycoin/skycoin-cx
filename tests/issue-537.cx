@@ -11,7 +11,7 @@ func cat(t i32) (ret i32) {
 func main() {
 
     if i32.eq(0,0){  
-        for i:=0;i<2;i++ (){
+        for i:=0;i<2;i++ {
             string.PrintLine("Works fine")
         }
         var v1 i32

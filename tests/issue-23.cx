@@ -1,0 +1,10 @@
+// https://github.com/skycoin/cx/issues/23
+
+package main
+func foo() (out bool) {
+	out = true
+}
+func main() {
+	var b bool = !foo()
+	bool.print(b)
+}

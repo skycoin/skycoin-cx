@@ -825,6 +825,10 @@ the left one does not decide the result, so `i < len(s) && s[i] > 0`
 never reads past the end of `s`. The functions `bool.and` and `bool.or`
 are ordinary calls and evaluate both arguments.
 
+The unary operators `-` and `!` apply to any operand, such as a call
+`-f(x)`, a method call `!p.done()`, a struct field `-p.x` or a
+parenthesized expression `!(a && b)`.
+
 ## [Assignments and Initializations](#table-of-contents)
 
 As in many other C-like languages, assignments are done using the
@@ -857,6 +861,39 @@ As in other programming languages, *short variable declarations* exist
 in CX. The `:=` token can be used to tell CX to infer a variable's
 type. This way, CX declares and initializes at the same time, as seen
 in the example above.
+
+`i++` and `i--` add or subtract 1 of the type of `i`, which can be any
+integer or floating point type, a struct field, an element or `*p`. As
+in Go they are statements, so `f(i++)` and `x = i++` are syntax errors,
+and there is no prefix `++i`.
+
+`=` and `:=` take several targets and as many values, or several
+targets and one call with as many results. As in Go, every value is
+computed before any target is assigned, so `a, b = b, a` swaps.
+
+```cx
+package main
+
+func pair () (n i32, s str) {
+	n = 7
+	s = "seven"
+}
+
+func main () {
+	a, b := 1, 2
+	a, b = b, a
+	i32.print(a) // prints 2
+	n, s := pair()
+	printf("%d %s\n", n, s) // prints 7 seven
+}
+```
+
+A different number of targets and values is the compile error
+`assignment mismatch`. Two differences from Go remain. Every name on
+the left of `:=` must be new, so `a, b := 2, 3` after `a := 1` is the
+compile error `'a' redeclared`. An index of a target is read when the
+target is assigned, not before the values are computed, so after
+`i, s[i] = 1, 7` it is `s[1]` that holds 7.
 
 ## [Affordances](#table-of-contents)
 

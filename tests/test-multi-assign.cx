@@ -1,0 +1,76 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func (p Point) split() (a i32, b f32) {
+	a = p.x
+	b = 2.5
+}
+
+func pair() (a i32, b str) {
+	a = 7
+	b = "seven"
+}
+
+func wide() (a i64, b f64, c bool) {
+	a = 5000000000L
+	b = 0.25D
+	c = true
+}
+
+func side(n i32) (out bool) {
+	printf("side %d\n", n)
+	out = true
+}
+
+func main() {
+	var a i32 = 1
+	var b i32 = 2
+	a, b = b, a
+	printf("%d %d\n", a, b)
+
+	x, s := pair()
+	printf("%d %s\n", x, s)
+	x, s = pair()
+	printf("%d %s\n", x, s)
+
+	var t bool
+	var u bool
+	t, u = false || side(1), true && side(2)
+	printf("%v %v\n", t, u)
+
+	var p Point
+	p.x = 9
+	m, n := p.split()
+	printf("%d %v\n", m, n)
+	p.x, p.y = p.y, p.x
+	printf("%d %d\n", p.x, p.y)
+
+	var sl []i32
+	sl = append(sl, 1)
+	sl = append(sl, 2)
+	sl[0], sl[1] = sl[1], sl[0]
+	printf("%d %d\n", sl[0], sl[1])
+
+	c, d, e := 1, "two", 3.5
+	printf("%d %s %v\n", c, d, e)
+
+	big, frac, ok := wide()
+	i64.print(big)
+	f64.print(frac)
+	bool.print(ok)
+	k := 3
+	i32.print(k)
+
+	g, h := Point{x: -1, y: 2}, -a
+	printf("%d %d %d\n", g.x, g.y, h)
+	q, r := g, big
+	printf("%d %d\n", q.y, r)
+
+	for i, j := 0, 5; i < j; i, j = i+1, j-1 {
+		printf("i %d j %d\n", i, j)
+	}
+}

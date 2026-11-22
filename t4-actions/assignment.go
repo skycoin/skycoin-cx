@@ -266,7 +266,7 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 
 	typeSig := toExpression.GetOutputs(prgrm)[0]
 
-	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, typeSig)
+	prgrm.CXAtomicOps[expressionIdx].AddInput(prgrm, ArgumentReadCopy(prgrm, typeSig))
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, typeSig)
 
 	prgrm.CXAtomicOps[expressionIdx].Package = ast.CXPackageIndex(pkg.Index)
@@ -322,6 +322,12 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 // arguments. In these cases, the output type depends on its input arguments' type. In the rest of
 // the cases, we can simply use the function's return type.
 func getOutputType(prgrm *ast.CXProgram, expr *ast.CXExpression) *ast.CXTypeSignature {
+	return getOutputTypeAt(prgrm, expr, 0)
+}
+
+// getOutputTypeAt is getOutputType for the output at index of a call with
+// several outputs.
+func getOutputTypeAt(prgrm *ast.CXProgram, expr *ast.CXExpression, index int) *ast.CXTypeSignature {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S0544.
 	expression, err := prgrm.GetCXAtomicOp(expr.Index)
@@ -334,7 +340,7 @@ func getOutputType(prgrm *ast.CXProgram, expr *ast.CXExpression) *ast.CXTypeSign
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0546.
-	expressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorOutputs[0])
+	expressionOperatorOutputTypeSig := prgrm.GetCXTypeSignatureFromArray(expressionOperatorOutputs[index])
 	if expressionOperatorOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 		// Now an arena getter, site S0547.
@@ -364,7 +370,7 @@ func getOutputType(prgrm *ast.CXProgram, expr *ast.CXExpression) *ast.CXTypeSign
 //	pkg - the package the expression belongs.
 //	toExprs - Contains the output cx arg to be added to the expression.
 //	fromExprs - Contains the output cx arg to be added to the expression.
-func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExprs []ast.CXExpression, fromExprs []ast.CXExpression) []ast.CXExpression {
+func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExprs []ast.CXExpression, fromExprs []ast.CXExpression, outputIndex int) []ast.CXExpression {
 	toExpression, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, 0)
 	if err != nil {
 		panic(err)
@@ -432,7 +438,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 		}
 
 	} else {
-		outTypeSig := getOutputType(prgrm, &fromExprs[lastFromExpressionIdx])
+		outTypeSig := getOutputTypeAt(prgrm, &fromExprs[lastFromExpressionIdx], outputIndex)
 
 		if outTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -850,7 +856,7 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 	exprCXLine := MakeCXLineExpressionCurrent(prgrm)
 	switch assignOp {
 	case ":=":
-		shortDeclExprs := shortDeclarationAssignment(prgrm, pkg, toExprs, fromExprs)
+		shortDeclExprs := shortDeclarationAssignment(prgrm, pkg, toExprs, fromExprs, 0)
 		// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 		// Now a slice of objects, site S0593.
 		toExprs = append([]ast.CXExpression{*exprCXLine}, shortDeclExprs...)
@@ -951,4 +957,72 @@ func AssignmentStatement(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assig
 		}
 	}
 	return Assignment(prgrm, toExprs, assignOp, fromExprs)
+}
+
+// MultipleValueName returns a new name for the variable that holds one value
+// of a multiple assignment.
+func MultipleValueName(prgrm *ast.CXProgram) stringpool.StringGid {
+	return generateTempVarName(prgrm, constants.MULTIPLE_VALUE_PREFIX)
+}
+
+// MultipleValueRead returns the expressions that read the variable name.
+func MultipleValueRead(prgrm *ast.CXProgram, name stringpool.StringGid) []ast.CXExpression {
+	return primaryIdentifierExpressions(prgrm, name)
+}
+
+// MultipleAssignmentCall assigns the outputs of the call that ends value to
+// targets, as in a, b = f() and a, b := f().
+func MultipleAssignmentCall(prgrm *ast.CXProgram, targets [][]ast.CXExpression, assignOp string, value []ast.CXExpression) []ast.CXExpression {
+	if value[len(value)-1].Type != ast.CX_LINE && len(value) >= 2 && value[len(value)-2].IsMethodCall() {
+		return multipleAssignmentMethodCall(prgrm, targets, assignOp, value)
+	}
+	callIdx := value[len(value)-1].Index
+	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[callIdx].Operator)
+	valueCount := 1
+	if operator != nil && len(prgrm.CXAtomicOps[callIdx].GetOutputs(prgrm)) == 0 {
+		valueCount = len(operator.GetOutputs(prgrm))
+	}
+	if valueCount != len(targets) {
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignmentCount, CurrentFile, LineNo, ast.CompileErrorOperands{int64(len(targets)), int64(valueCount)})
+		return nil
+	}
+
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		panic(err)
+	}
+	var result []ast.CXExpression
+	if assignOp == ":=" {
+		result = append(result, *MakeCXLineExpressionCurrent(prgrm))
+	}
+	for i, target := range targets {
+		if assignOp == ":=" {
+			declExprs := shortDeclarationAssignment(prgrm, pkg, target, value, i)
+			result = append(result, declExprs[0])
+		} else {
+			result = append(result, target[:len(target)-1]...)
+		}
+		targetOp, err := prgrm.GetCXAtomicOpFromExpressions(target, len(target)-1)
+		if err != nil {
+			panic(err)
+		}
+		prgrm.CXAtomicOps[callIdx].AddOutput(prgrm, targetOp.GetOutputs(prgrm)[0])
+	}
+	return append(result, value...)
+}
+
+// multipleAssignmentMethodCall gives a method call one result variable per
+// target, which ProcessMethodCall types, and assigns each to its target.
+func multipleAssignmentMethodCall(prgrm *ast.CXProgram, targets [][]ast.CXExpression, assignOp string, value []ast.CXExpression) []ast.CXExpression {
+	callOp := &prgrm.CXAtomicOps[value[len(value)-2].Index]
+	readOp := &prgrm.CXAtomicOps[value[len(value)-1].Index]
+	names := []stringpool.StringGid{prgrm.GetCXTypeSignatureFromArray(readOp.GetOutputs(prgrm)[0]).Name}
+	for len(names) < len(targets) {
+		names = append(names, methodCallResultAdd(prgrm, callOp))
+	}
+	result := append([]ast.CXExpression(nil), value[:len(value)-1]...)
+	for i, target := range targets {
+		result = append(result, AssignmentStatement(prgrm, target, assignOp, primaryIdentifierExpressions(prgrm, names[i]))...)
+	}
+	return result
 }
