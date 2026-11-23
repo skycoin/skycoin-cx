@@ -68,7 +68,7 @@ The OpenGL programs in `tests/examples/opengl` need this build.
 
 The language has versions. The current one is
 `constants.LanguageVersionCurrent` in `t1-constants/constants.go`,
-2611230002, an integer of the form `yymmddnnnn`. It is stored in every
+2611230003, an integer of the form `yymmddnnnn`. It is stored in every
 serialized program, and a program serialized under another version must be
 compiled again. Each version is described in
 [Language versions](LanguageGuide.md#language-versions). The main changes
@@ -87,6 +87,13 @@ since skycoin/cx are these.
   reported.
 - A package is imported by its path and its members are used as
   `package.name`. See [Packages](LanguageGuide.md#packages).
+- `import "pkg"` gives qualified names only. `import . "pkg"` and
+  `import (A, B) "pkg"` also bring all or the listed names into the scope
+  of the package, and `import file . "pkg"` and `import file (A, B) "pkg"`
+  into the scope of the file. A name brought in that masks another name is
+  a compile error, and `//cx:masking warning` before a function makes it a
+  warning in that function. See
+  [Imports into scope](LanguageGuide.md#imports-into-scope).
 - Every independent compile error is reported once, as `file:line:column`,
   sorted by position. The compiler does not stop at the first error.
 
@@ -101,7 +108,8 @@ ask at run time what it can do with one of its own objects. They do not work
 in this version. The `aff` package is not a built-in package, so the
 programs in `tests/examples/affordances` fail to load. See
 [Affordances](LanguageGuide.md#affordances) and
-[#208](https://github.com/skycoin/skycoin-cx/issues/208).
+[#500](https://github.com/skycoin/skycoin-cx/issues/500), which tracks
+whether to implement or remove them.
 
 ## System libraries
 
@@ -207,8 +215,9 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
   - `check-gcreach`, the vm and the IR base stay free of the garbage
     collector.
 - `make test` runs the stable CX program tests and compiles every complete
-  `cx` code block in `LanguageGuide.md`, 768 tests in all.
-- `make test-all` also runs the tests marked as known issues, 776 tests.
+  `cx` code block in `LanguageGuide.md`, 786 tests in all.
+- `make test-all` also runs the tests marked as known issues. None is
+  marked now, so it runs the same 786 tests.
 - `make vet-gui` vets the cxfx build. CI runs it.
 - `make build-wasm` compiles `cx` for js/wasm as the playground does, and
   `make test-wasm` runs the hello world example under Node. CI runs both.
@@ -226,7 +235,8 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
   [#32](https://github.com/skycoin/skycoin-cx/issues/32)).
 - `t7-cxmobile` does not compile and no target builds it
   ([#35](https://github.com/skycoin/skycoin-cx/issues/35)).
-- Affordances do not work, see above.
+- Affordances do not work, see above and
+  [#500](https://github.com/skycoin/skycoin-cx/issues/500).
 
 See the [open issues](https://github.com/skycoin/skycoin-cx/issues) for the
 rest, much of it the move to the object model, string pool and error types
@@ -313,9 +323,9 @@ gocloc --not-match-d='(vendor|node_modules|\.git)' .
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Go                             388           7699          10388          58617
-Markdown                        39           2003              0           8415
-Yacc                             2            276            188           2309
+Go                             389           7739          10492          59191
+Markdown                        39           2025              0           8541
+Yacc                             2            278            191           2346
 BASH                             7             28             19            325
 JSON                             4              2              0            323
 Python                           6             81              0            284
@@ -327,6 +337,6 @@ Makefile                         3             33              5             88
 Plain Text                       3              0              0             19
 C Header                         1              3              0              9
 -------------------------------------------------------------------------------
-TOTAL                          470          10278          10809          71173
+TOTAL                          471          10342          10916          71910
 -------------------------------------------------------------------------------
 ```

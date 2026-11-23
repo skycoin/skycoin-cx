@@ -23,8 +23,7 @@ Running `cx hello-world.cx` prints out `Hello, World!`. More basic CX patterns a
 
 Frequently used options are:
 
-* `--repl` loads program and runs it in REPL mode useful for debugging
-* `--web` exposes endpoint for code evaluation at: http://127.0.0.1:5336/eval)
+* `--repl` compiles the program and starts a REPL instead of running `main`, useful for debugging
 
 
 ## REPL tutorial

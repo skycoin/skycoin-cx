@@ -1328,7 +1328,8 @@ a package, and filter the answers with predicate functions. A block
 written `#{ ... }` holds the target and the filters, and functions of
 the `aff` package, such as `aff.query`, run the query.
 
-Affordances cannot be used right now, which is an open bug. Their
+Affordances cannot be used right now, an open bug tracked in
+[#500](https://github.com/skycoin/skycoin-cx/issues/500). Their
 opcodes are still in the compiler, but `aff` is not in the list of
 built-in packages, so `import "aff"` fails and `import "sys/aff"` is an
 unknown built-in package. The programs in `tests/examples/affordances`
