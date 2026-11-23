@@ -22,12 +22,14 @@ func expOffset(value ast.CXValue) types.Pointer {
 // regexpCompile is a helper function for `opRegexpMustCompile` and
 // `opRegexpCompile`. `regexpCompile` compiles a `regexp.Regexp` structure
 // and adds it to global `regexps`. It also writes CX structure `regexp.Regexp`.
+// GCREACH: allocates the expression str, which adds to the GC pressure,
+// see docs/GarbageCollector.md.
 func regexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) error {
 	exp := inputs[0].Get_str(prgrm)
 
 	// The CX Regexp only holds the expression. The same expression in two
 	// parts of a program shares one compiled instance.
-	types.Write_str(prgrm, prgrm.Memory, expOffset(outputs[0]), exp)
+	ast.AllocateStrAt(prgrm, expOffset(outputs[0]), exp)
 
 	r, err := regexp.Compile(exp)
 	if err != nil {

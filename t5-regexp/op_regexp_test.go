@@ -27,13 +27,12 @@ func newTestProgram() *ast.CXProgram {
 		CxIrState: &ast.CxIrState{},
 	}
 	prgrm.CxIrState.CxIrStateInit()
-	types.Allocator = ast.AllocateSeq
 	RegisterPackage(prgrm)
 	return prgrm
 }
 
 func strValue(prgrm *ast.CXProgram, offset types.Pointer, s string) ast.CXValue {
-	types.Write_str(prgrm, prgrm.Memory, offset, s)
+	ast.AllocateStrAt(prgrm, offset, s)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 	// Now a heap literal, site S1420.
 	return ast.CXValue{Offset: offset, TypeSignature: &ast.CXTypeSignature{Offset: offset}}

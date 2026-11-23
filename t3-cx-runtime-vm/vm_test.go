@@ -15,7 +15,7 @@ func vmTestImage(funcs ...ir.Func) *ir.Image {
 	for i, v := range []int32{0, 1, 7, 100} {
 		wI32(data, uint32(4*i), v)
 	}
-	// A str literal points at itself, see AllocWrite_obj_data.
+	// A str literal points at itself, as a heap str object does.
 	str := make([]byte, types.OBJECT_HEADER_SIZE+3)
 	types.Write_ptr(str, 0, types.Pointer(80))
 	types.Write_obj_size(str, 0, types.OBJECT_HEADER_SIZE+3)

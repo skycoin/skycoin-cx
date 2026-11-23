@@ -13,7 +13,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t1-profiling"
 	repl "github.com/skycoin/skycoin-cx/t10-cxrepl" // thin: only Repl, ReplTargetFn; only user of cxrepl, could merge it here, max tier 11 to 10
 	"github.com/skycoin/skycoin-cx/t2-globals"      // thin: only DBG_GOLANG_STACK_TRACE; no depth gain
-	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t5-cxos"                 // thin: only InitConstants; no depth gain
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
@@ -89,9 +88,6 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 // runStart reads the flags and sets up the program state for args, the part
 // of Run before parsing. It returns false when there is nothing to run.
 func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []*os.File, fileNames []string, start bool) {
-	// GCREACH: installs AllocateSeq as the t0-types allocator hook,
-	// see docs/GarbageCollector.md.
-	types.Allocator = ast.AllocateSeq
 	runtime.LockOSThread()
 
 	runtime.GOMAXPROCS(2)

@@ -2,7 +2,7 @@ package opcodes
 
 import (
 	"github.com/skycoin/skycoin-cx/t1-constants"
-	// GCREACH: t3-ast owns the heap and the GC. This file reads and writes values
+	// GCREACH: t3-ast owns the heap and the GC roots. This file reads and writes values
 	// and allocates nothing, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )

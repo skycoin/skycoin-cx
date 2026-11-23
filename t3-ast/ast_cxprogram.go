@@ -9,6 +9,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
+	gc "github.com/skycoin/skycoin-cx/t2-cx-runtime-gc"
 )
 
 type StackSegmentStruct struct {
@@ -22,29 +23,21 @@ type DataSegmentStruct struct {
 	StartsAt types.Pointer // Offset at which the data segment starts in a CX program's memory
 }
 
-// HeapVisit is a pointer or slice the mark followed, and its GCType.
-type HeapVisit struct {
-	HeapVisitAddress types.Pointer
-	HeapVisitType    *GCType
-}
-
 type HeapSegmentStruct struct {
 	Size     types.Pointer // This field stores the size of a CX program's heap
 	StartsAt types.Pointer // Offset at which the heap starts in a CX program's memory (normally the stack size)
 	Pointer  types.Pointer // At what offset a CX program can insert a new object to the heap
-	// ObjectStarts lists the address of each object, for the collection running.
-	ObjectStarts []types.Pointer
-	// Slots lists the address of each reference the mark read.
-	Slots []types.Pointer
-	// Visited holds the pointers and slices the mark followed.
-	Visited map[HeapVisit]bool
-	// Work holds the pointers and slices the mark has yet to follow.
-	Work []HeapVisit
-	// Pinned is an address inside an object that Go code holds across an
-	// allocation, or 0. The collection keeps its object and moves it.
-	Pinned types.Pointer
+	// Pressure is the bytes allocated since the last collection.
+	Pressure types.Pointer
+	// PressureLimit is the free heap after the last collection. The next
+	// GarbageCollectorCheck past it asks for a collection.
+	PressureLimit types.Pointer
 	// Types holds the GCTypes of the roots, built by the first collection.
 	Types *GCTypeCache
+	// Roots is the root table of the collection running, kept for reuse.
+	Roots gc.GCRootTable
+	// Collector is the scratch memory of the collector.
+	Collector gc.GCState
 }
 
 // ----------------------------------------------------------------

@@ -17,6 +17,7 @@ var coreImportsAllowed = map[string]bool{
 	"t1-constants":          true,
 	"t1-cx-core-objmodel":   true,
 	"t2-cx-core-stringpool": true,
+	"t2-cx-runtime-gc":      true,
 	"t2-cx-runtime-ir":      true,
 	"t2-globals":            true,
 	"t3-ast":                true,

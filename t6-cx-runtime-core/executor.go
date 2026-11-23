@@ -7,7 +7,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
-	// GCREACH: t3-ast owns the heap and the GC. ExecutorRun runs vm, which has no
+	// GCREACH: t3-ast owns the heap and the GC roots. ExecutorRun runs vm, which has no
 	// heap, or the old loop, which collects, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"

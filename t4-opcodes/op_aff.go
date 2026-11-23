@@ -6,8 +6,8 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
-	// GCREACH: t3-ast owns the heap and the GC. This file allocates query strs and
-	// objects, which may run MarkAndCompact, see docs/GarbageCollector.md.
+	// GCREACH: t3-ast owns the heap and the GC roots. This file allocates query strs and
+	// objects, which adds to the GC pressure, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	// "github.com/skycoin/skycoin/src/cipher/encoder"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
@@ -113,7 +113,7 @@ func CallAffPredicate(prgrm *ast.CXProgram, fn *ast.CXFunction, predValue []byte
 }
 
 // Used by QueryArgument to query inputs and then outputs from expressions.
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func queryParam(prgrm *ast.CXProgram, fn *ast.CXFunction, argsIdx []ast.CXArgumentIndex, exprLbl string, argOffsetB []byte, affOffset *types.Pointer) {
 	for i, argIdx := range argsIdx {
@@ -226,7 +226,7 @@ func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 }
 
 // QueryExpressions ...
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, exprOffsetB []byte, affOffset *types.Pointer) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -288,7 +288,7 @@ func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpr
 }
 
 // TODO: remove params arg
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, paramsTypeSig []ast.CXTypeSignatureIndex) types.Pointer {
 	var sliceOffset types.Pointer
@@ -342,7 +342,7 @@ func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, param
 }
 
 // Helper function for QueryStructure. Used to query all the structs in a particular package
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func queryStructsInPackage(prgrm *ast.CXProgram, fn *ast.CXFunction, strctOffsetB []byte, affOffset *types.Pointer, pkg *ast.CXPackage) {
 	for _, fIdx := range pkg.Structs {
@@ -397,7 +397,7 @@ func QueryStructure(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpres
 }
 
 // QueryFunction ...
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, fnOffsetB []byte, affOffset *types.Pointer) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -458,7 +458,7 @@ func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 }
 
 // QueryCaller ...
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, callerOffsetB []byte, affOffset *types.Pointer) {
 	if prgrm.CallCounter == 0 {
@@ -503,7 +503,7 @@ func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressio
 }
 
 // QueryProgram ...
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func QueryProgram(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, prgrmOffsetB []byte, affOffset *types.Pointer) {
 	prgrmOffset := ast.AllocateSeq(prgrm, types.OBJECT_HEADER_SIZE+types.I32_SIZE+types.I64_SIZE+types.STR_SIZE+types.I32_SIZE)
@@ -1265,7 +1265,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 // 	prevFn.CurrentExpression = prevExpr
 // }
 
-// GCREACH: allocates query strs and objects, which may run MarkAndCompact,
+// GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func opAffQuery(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	call := prgrm.GetCurrentCall()

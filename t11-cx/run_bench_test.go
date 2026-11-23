@@ -163,7 +163,6 @@ func compileRunProgram(tb testing.TB, p runBenchProgram) {
 // compileRunSources compiles the files of one program into a fresh
 // actions.AST, ready to run.
 func compileRunSources(tb testing.TB, names []string, sources []string) {
-	types.Allocator = ast.AllocateSeq
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1780 S1781.
 	actions.AST = cxinit.MakeProgram()

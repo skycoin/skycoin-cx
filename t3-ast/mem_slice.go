@@ -85,7 +85,7 @@ func GetSliceData(prgrm *CXProgram, offset types.Pointer, sizeofElement types.Po
 }
 
 // SliceResizeEx does the logic required by `SliceResize`. It is separated because some other functions might have access to the offsets of the slices, but not the `CXArgument`s.
-// GCREACH: allocates a larger slice object, which may run MarkAndCompact,
+// GCREACH: allocates a larger slice object, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func SliceResizeEx(prgrm *CXProgram, outputSliceOffset types.Pointer, count types.Pointer, sizeofElement types.Pointer) types.Pointer {
 	var outputSliceHeader []byte
@@ -145,7 +145,7 @@ func sliceCapacityGrow(capacity types.Pointer, newLen types.Pointer, sizeofEleme
 }
 
 // SliceResize ...
-// GCREACH: allocates a larger slice object, which may run MarkAndCompact,
+// GCREACH: allocates a larger slice object, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func SliceResize(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *CXTypeSignature, count types.Pointer, sizeofElement types.Pointer) types.Pointer {
 	inputSliceOffset := GetSliceOffset(prgrm, fp, inp)
@@ -255,7 +255,7 @@ func SliceRemove(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 // WriteToSlice is used to create slices in the backend, i.e. not by calling `append`
 // in a CX program, but rather by the CX code itself. This function is used by
 // affordances, serialization and to store OS input arguments.
-// GCREACH: allocates a larger slice object, which may run MarkAndCompact,
+// GCREACH: allocates a larger slice object, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func WriteToSlice(prgrm *CXProgram, off types.Pointer, inp []byte) types.Pointer {
 	// TODO: Check all these parses from/to int32/int.

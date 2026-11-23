@@ -250,11 +250,6 @@ S0319,CXTypeSignature,alloc-literal-value,t3-ast/ast_cxtype_signature.go,688,Get
 S0332,CXArgument,arena-add,t3-ast/ast_cxprogram.go,472,CXProgram.cxArgumentSlot,cxprogram.AddCXArgInArray(cxArg),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S0333,CXTypeSignature,ptr-field,t3-ast/ast_cxvalue.go,10,type CXValue,CXValue.TypeSignature *CXTypeSignature,CXTypeSignatureGid,5-gid,332,CXTypeSignature phase 4-alloc
 S0334,CXExpression,ptr-field,t3-ast/ast_cxvalue.go,13,type CXValue,CXValue.Expr *CXExpression,CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
-S0347,CXPackage,get-call,t3-ast/garbage_collector.go,261,DisplaceReferences,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0348,CXTypeSignature,get-call,t3-ast/garbage_collector.go,276,DisplaceReferences,prgrm.GetCXTypeSignatureFromArray(glblFldIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S0350,CXArgument,get-call,t3-ast/garbage_collector.go,282,DisplaceReferences,prgrm.GetCXArg(CXArgumentIndex(glblFld.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S0351,CXTypeSignature,get-call,t3-ast/garbage_collector.go,296,DisplaceReferences,prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S0353,CXArgument,get-call,t3-ast/garbage_collector.go,303,DisplaceReferences,prgrm.GetCXArg(CXArgumentIndex(fldIdx)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S0366,CXArgument,ptr-field,t3-ast/mem_offset.go,17,type DereferenceStruct,DereferenceStruct.arg *CXArgument,"none, the struct lives on the stack of one call",-,,
 S0367,CXArgument,get-call,t3-ast/mem_offset.go,27,GetArgSize,prgrm.GetCXArgFromArray(arg.Fields[len(arg.Fields)-1]),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S0368,CXArgument,get-call,t3-ast/mem_offset.go,109,GetDerefSizeSlice,prgrm.GetCXArgFromArray(CXArgumentIndex(typeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc

@@ -590,8 +590,8 @@ after one, so a program only loads in a build with its pointer size
 
 * The run time fields `RuntimeError`, `CompileErrorPrint`,
   `ProgramSandboxRoot`, `ProgramStdin` and `ProgramError`, and the
-  collector scratch `Heap.ObjectStarts`, `Heap.UpdatedSlots` and
-  `Heap.Visited`.
+  collector state `Heap.Pressure`, `Heap.PressureLimit`, `Heap.Types`,
+  `Heap.Roots` and `Heap.Collector`, see [GarbageCollector.md](GarbageCollector.md).
 * `CxIrState.CompileErrorList`. A program with compile errors does not
   run.
 * `CxIrState.CxIrStateGlobalsDeferred` and

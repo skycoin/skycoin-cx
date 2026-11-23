@@ -10,7 +10,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
-	// GCREACH: t3-ast owns the heap and the GC. core builds the program and its
+	// GCREACH: t3-ast owns the heap and the GC roots. core builds the program and its
 	// opcode table and allocates nothing, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-opcodes"

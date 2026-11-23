@@ -7,8 +7,8 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
-	// GCREACH: t3-ast owns the heap and the GC. This file allocates strs, which
-	// may run MarkAndCompact, see docs/GarbageCollector.md.
+	// GCREACH: t3-ast owns the heap and the GC roots. This file allocates strs, which
+	// adds to the GC pressure, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -144,7 +144,7 @@ func opStrByteLength(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.C
 
 // opStrBytesOfString returns a new []ui8 holding the bytes of a str, as
 // []byte(s) in Go.
-// GCREACH: allocates the output byte slice, which may run MarkAndCompact,
+// GCREACH: allocates the output byte slice, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func opStrBytesOfString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	str := inputs[0].Get_str(prgrm)
