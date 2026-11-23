@@ -95,7 +95,7 @@ the check stays two loads so `TestRunVmAllocs` stays 0.
 | t2-cx-runtime-gc, the collector | no | it is the collector |
 | t4-cx-compiler-lower | yes | no. It reads the program and rejects heap operands |
 | t4-execute, the old loop | yes | the tick, and allocation through its opcodes |
-| t4-opcodes | yes | allocation, in 17 of its 21 files |
+| t4-opcodes | yes | allocation, in 17 of its 22 files |
 | t6-cx-runtime-core, the executor | yes | through the old loop |
 
 `make check-gcreach` fails when t2-cx-runtime-ir or t3-cx-runtime-vm imports
@@ -118,20 +118,21 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 - t4-cx-compiler-lower/lower.go:20, lower_printf.go:12. Reads only
 - t4-execute/execute.go:11, callback.go:9
 - t6-cx-runtime-core/core.go:15, executor.go:12
-- t4-opcodes, allocating: op_aff.go:11, op_f32.go:11, op_f64.go:11,
-  op_fmt.go:10, op_i8.go:10, op_i16.go:10, op_i32.go:10, op_i64.go:10,
+- t4-opcodes, allocating: op_aff.go:11, op_f32.go:10, op_f64.go:10,
+  op_fmt.go:11, op_i8.go:9, op_i16.go:9, op_i32.go:9, op_i64.go:9,
   op_serialize.go:8, op_slice.go:8, op_stdin.go:10, op_str.go:12,
-  op_testing.go:10, op_ui8.go:11, op_ui16.go:11, op_ui32.go:10, op_ui64.go:10
-- t4-opcodes, not allocating: op_bool.go:8, op_misc.go:7, opcodes.go:11,
-  opcodes_init.go:8
+  op_testing.go:10, op_ui8.go:10, op_ui16.go:10, op_ui32.go:9, op_ui64.go:9
+- t4-opcodes, not allocating: op_bool.go:8, op_format.go:8, op_misc.go:7,
+  opcodes.go:11, opcodes_init.go:8
 
 ### Allocation, which adds to the pressure
 
 - t3-ast/ast_memory.go:36 to :37 `EnsureMinimumHeapSize` starts the pressure,
-  :84 to :87 `AllocateSeq` grows the heap and adds to it, :97 `AllocateStr`,
-  :107 `AllocateStrAt`
-- t3-ast/ast_cxvalue.go:210 `CXValue.Set_str`, the path of every opcode that
-  writes a str
+  :84 to :87 `AllocateSeq` grows the heap and adds to it, :98 `AllocateStr`,
+  :110 `AllocateStrAt`, :120 `AllocateStrBytesAt`
+- t3-ast/ast_cxvalue.go:219 `CXValue.Set_str`, used by the system library
+  opcodes, :227 `Set_str_bytes` and :235 `Set_str_concat`, the path of every
+  other opcode that writes a str
 - t3-ast/mem_escape.go:57 `EscapedAllocate`, and its caller
   t3-ast/ast_cxcall.go:96 in `wipeDeclarationMemory`
 - t3-ast/mem_slice.go:104 `SliceResizeEx`, :152 `SliceResize`, :271
@@ -338,7 +339,7 @@ references and keep the tick to collect cycles. The lead decides.
 A reach is an import of t3-ast in t4-execute, t6-cx-runtime-core,
 t4-cx-compiler-lower or t4-opcodes, a call of `GarbageCollectorCheck`,
 `GarbageCollectorTrigger`, `GarbageCollectorCollect`, `AllocateSeq`,
-`AllocateStr`, `AllocateStrAt`, `EscapedAllocate`, `SliceResizeEx`,
+`AllocateStr`, `AllocateStrAt`, `AllocateStrBytesAt`, `EscapedAllocate`, `SliceResizeEx`,
 `ResizeMemory`, `gcFrameRoots` or `gcGlobalRoots`, or a use of `ListOfSlots`,
 `ListOfPointers` or `Heap.Pressure`, `PressureLimit`, `Types`, `Roots` and
 `Collector`. The collector package and t3-ast/gc_type.go are not scanned.

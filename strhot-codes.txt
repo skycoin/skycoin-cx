@@ -20,7 +20,7 @@ STRHOT-007 E open t3-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng
 STRHOT-008 O removed t0-types/types_string.go AllocWrite_str_data not on the run path at dfcc46ab
 STRHOT-009 B open t0-types/types_string.go Read_str_data
 STRHOT-010 O removed t0-types/types_string.go Write_str not on the run path at dfcc46ab
-STRHOT-011 O open t0-types/types_string.go Read_str
+STRHOT-011 B open t0-types/types_string.go Read_str O fixed, boundary opcodes only
 STRHOT-012 O removed t0-util/file.go CXOpenFile not on the run path at dfcc46ab
 STRHOT-013 O removed t0-util/file.go CXCreateFile not on the run path at dfcc46ab
 STRHOT-014 O removed t0-util/file.go CXReadFile not on the run path at dfcc46ab
@@ -38,8 +38,8 @@ STRHOT-025 O removed t3-ast/ast_cxprogram.go *CXProgram.GetFunction not on the r
 STRHOT-026 O removed t3-ast/ast_cxstruct.go *CXStruct.GetField not on the run path at dfcc46ab
 STRHOT-027 O removed t3-ast/ast_cxstruct.go *CXStruct.AddField_TypeSignature not on the run path at dfcc46ab
 STRHOT-028 O removed t3-ast/ast_cxstruct.go *CXStruct.AddField_Globals_CXAtomicOps not on the run path at dfcc46ab
-STRHOT-029 O open t3-ast/ast_cxvalue.go *CXValue.Get_str
-STRHOT-030 O open t3-ast/ast_cxvalue.go *CXValue.Set_str
+STRHOT-029 B open t3-ast/ast_cxvalue.go *CXValue.Get_str O fixed, boundary opcodes only
+STRHOT-030 B open t3-ast/ast_cxvalue.go *CXValue.Set_str O fixed, boundary opcodes only
 STRHOT-031 O removed t3-ast/error.go CompilationError not on the run path at dfcc46ab
 STRHOT-032 O removed t3-ast/serialized_cx_program_skyencoder.go EncodeSerializedCXProgramToBuffer not on the run path at dfcc46ab
 STRHOT-033 O removed t3-ast/serialized_cx_program_skyencoder.go DecodeSerializedCXProgram not on the run path at dfcc46ab
@@ -90,54 +90,54 @@ STRHOT-077 B open t4-opcodes/op_aff.go QueryFunction
 STRHOT-078 B open t4-opcodes/op_aff.go QueryCaller
 STRHOT-079 B open t4-opcodes/op_aff.go QueryProgram
 STRHOT-080 B open t4-opcodes/op_aff.go opAffQuery
-STRHOT-081 O open t4-opcodes/op_bool.go opBoolPrint
-STRHOT-082 O open t4-opcodes/op_f32.go opF32ToStr
-STRHOT-083 O open t4-opcodes/op_f32.go opF32Print
-STRHOT-084 O open t4-opcodes/op_f64.go opF64ToStr
-STRHOT-085 O open t4-opcodes/op_f64.go opF64Print
-STRHOT-086 O open t4-opcodes/op_fmt.go buildString
-STRHOT-087 O open t4-opcodes/op_fmt.go opSprintf
-STRHOT-088 O open t4-opcodes/op_fmt.go opPrintf
+STRHOT-081 O removed t4-opcodes/op_bool.go opBoolPrint fixed, byte views of CX memory and the format buffer
+STRHOT-082 O removed t4-opcodes/op_f32.go opF32ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-083 O removed t4-opcodes/op_f32.go opF32Print fixed, byte views of CX memory and the format buffer
+STRHOT-084 O removed t4-opcodes/op_f64.go opF64ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-085 O removed t4-opcodes/op_f64.go opF64Print fixed, byte views of CX memory and the format buffer
+STRHOT-086 P open t4-opcodes/op_fmt.go buildString O fixed, %v and extra arguments remain
+STRHOT-087 O removed t4-opcodes/op_fmt.go opSprintf fixed, byte views of CX memory and the format buffer
+STRHOT-088 O removed t4-opcodes/op_fmt.go opPrintf fixed, byte views of CX memory and the format buffer
 STRHOT-089 O removed t4-opcodes/op_fmt.go CheckForEscapedChars not on the run path at dfcc46ab
-STRHOT-090 O open t4-opcodes/op_i16.go opI16ToStr
-STRHOT-091 O open t4-opcodes/op_i16.go opI16Print
-STRHOT-092 O open t4-opcodes/op_i32.go opI32ToStr
-STRHOT-093 O open t4-opcodes/op_i32.go opI32Print
-STRHOT-094 O open t4-opcodes/op_i64.go opI64ToStr
-STRHOT-095 O open t4-opcodes/op_i64.go opI64Print
-STRHOT-096 O open t4-opcodes/op_i8.go opI8ToStr
-STRHOT-097 O open t4-opcodes/op_i8.go opI8Print
+STRHOT-090 O removed t4-opcodes/op_i16.go opI16ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-091 O removed t4-opcodes/op_i16.go opI16Print fixed, byte views of CX memory and the format buffer
+STRHOT-092 O removed t4-opcodes/op_i32.go opI32ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-093 O removed t4-opcodes/op_i32.go opI32Print fixed, byte views of CX memory and the format buffer
+STRHOT-094 O removed t4-opcodes/op_i64.go opI64ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-095 O removed t4-opcodes/op_i64.go opI64Print fixed, byte views of CX memory and the format buffer
+STRHOT-096 O removed t4-opcodes/op_i8.go opI8ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-097 O removed t4-opcodes/op_i8.go opI8Print fixed, byte views of CX memory and the format buffer
 STRHOT-098 B open t4-opcodes/op_stdin.go OpReadStdin
-STRHOT-099 O open t4-opcodes/op_str.go opStrToI8
-STRHOT-100 O open t4-opcodes/op_str.go opStrToI16
-STRHOT-101 O open t4-opcodes/op_str.go opStrToI32
-STRHOT-102 O open t4-opcodes/op_str.go opStrToI64
-STRHOT-103 O open t4-opcodes/op_str.go opStrToUI8
-STRHOT-104 O open t4-opcodes/op_str.go opStrToUI16
-STRHOT-105 O open t4-opcodes/op_str.go opStrToUI32
-STRHOT-106 O open t4-opcodes/op_str.go opStrToUI64
+STRHOT-099 O removed t4-opcodes/op_str.go opStrToI8 fixed, byte views of CX memory and the format buffer
+STRHOT-100 O removed t4-opcodes/op_str.go opStrToI16 fixed, byte views of CX memory and the format buffer
+STRHOT-101 O removed t4-opcodes/op_str.go opStrToI32 fixed, byte views of CX memory and the format buffer
+STRHOT-102 O removed t4-opcodes/op_str.go opStrToI64 fixed, byte views of CX memory and the format buffer
+STRHOT-103 O removed t4-opcodes/op_str.go opStrToUI8 fixed, byte views of CX memory and the format buffer
+STRHOT-104 O removed t4-opcodes/op_str.go opStrToUI16 fixed, byte views of CX memory and the format buffer
+STRHOT-105 O removed t4-opcodes/op_str.go opStrToUI32 fixed, byte views of CX memory and the format buffer
+STRHOT-106 O removed t4-opcodes/op_str.go opStrToUI64 fixed, byte views of CX memory and the format buffer
 STRHOT-107 O open t4-opcodes/op_str.go opStrToF32
 STRHOT-108 O open t4-opcodes/op_str.go opStrToF64
-STRHOT-109 O open t4-opcodes/op_str.go opStrPrint
-STRHOT-110 O open t4-opcodes/op_str.go opStrConcat
-STRHOT-111 O open t4-opcodes/op_str.go opStrSubstr
-STRHOT-112 O open t4-opcodes/op_str.go opStrIndex
-STRHOT-113 O open t4-opcodes/op_str.go opStrLastIndex
-STRHOT-114 O open t4-opcodes/op_str.go opStrTrimSpace
-STRHOT-115 O open t4-opcodes/op_str.go opStrEqualByValue
-STRHOT-116 O open t4-opcodes/op_str.go opStrCompareByValue
-STRHOT-117 O open t4-opcodes/op_str.go opStrByteLength
-STRHOT-118 O open t4-opcodes/op_testing.go assert
+STRHOT-109 O removed t4-opcodes/op_str.go opStrPrint fixed, byte views of CX memory and the format buffer
+STRHOT-110 O removed t4-opcodes/op_str.go opStrConcat fixed, byte views of CX memory and the format buffer
+STRHOT-111 O removed t4-opcodes/op_str.go opStrSubstr fixed, byte views of CX memory and the format buffer
+STRHOT-112 O removed t4-opcodes/op_str.go opStrIndex fixed, byte views of CX memory and the format buffer
+STRHOT-113 O removed t4-opcodes/op_str.go opStrLastIndex fixed, byte views of CX memory and the format buffer
+STRHOT-114 O removed t4-opcodes/op_str.go opStrTrimSpace fixed, byte views of CX memory and the format buffer
+STRHOT-115 O removed t4-opcodes/op_str.go opStrEqualByValue fixed, byte views of CX memory and the format buffer
+STRHOT-116 O removed t4-opcodes/op_str.go opStrCompareByValue fixed, byte views of CX memory and the format buffer
+STRHOT-117 O removed t4-opcodes/op_str.go opStrByteLength fixed, byte views of CX memory and the format buffer
+STRHOT-118 E open t4-opcodes/op_testing.go assert O fixed, the failure text remains
 STRHOT-119 O removed t4-opcodes/op_testing.go panicIf not on the run path at dfcc46ab
 STRHOT-120 B open t4-opcodes/op_testing.go opStrError
-STRHOT-121 O open t4-opcodes/op_ui16.go opUI16ToStr
-STRHOT-122 O open t4-opcodes/op_ui16.go opUI16Print
-STRHOT-123 O open t4-opcodes/op_ui32.go opUI32ToStr
-STRHOT-124 O open t4-opcodes/op_ui32.go opUI32Print
-STRHOT-125 O open t4-opcodes/op_ui64.go opUI64ToStr
-STRHOT-126 O open t4-opcodes/op_ui64.go opUI64Print
-STRHOT-127 O open t4-opcodes/op_ui8.go opUI8ToStr
-STRHOT-128 O open t4-opcodes/op_ui8.go opUI8Print
+STRHOT-121 O removed t4-opcodes/op_ui16.go opUI16ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-122 O removed t4-opcodes/op_ui16.go opUI16Print fixed, byte views of CX memory and the format buffer
+STRHOT-123 O removed t4-opcodes/op_ui32.go opUI32ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-124 O removed t4-opcodes/op_ui32.go opUI32Print fixed, byte views of CX memory and the format buffer
+STRHOT-125 O removed t4-opcodes/op_ui64.go opUI64ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-126 O removed t4-opcodes/op_ui64.go opUI64Print fixed, byte views of CX memory and the format buffer
+STRHOT-127 O removed t4-opcodes/op_ui8.go opUI8ToStr fixed, byte views of CX memory and the format buffer
+STRHOT-128 O removed t4-opcodes/op_ui8.go opUI8Print fixed, byte views of CX memory and the format buffer
 STRHOT-129 O removed t5-cxos/op_json.go opJsonOpen not on the run path at dfcc46ab
 STRHOT-130 B open t5-cxos/op_json.go opJsonTokenStr
 STRHOT-131 B open t5-cxos/op_os.go opOsReadAllText
@@ -290,8 +290,8 @@ STRHOT-277 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolInte
 STRHOT-278 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolText
 STRHOT-279 P open t3-ast/ast_cxtype_signature.go *CXTypeSignature.GetTypeString
 STRHOT-280 P open t3-ast/ast_cxtype_signature.go *CXTypeSignature.GetValueTypeName
-STRHOT-281 O open t3-ast/ast_memory.go AllocateStr
-STRHOT-282 O open t3-ast/ast_memory.go AllocateStrAt
+STRHOT-281 B open t3-ast/ast_memory.go AllocateStr O fixed, boundary opcodes only
+STRHOT-282 B open t3-ast/ast_memory.go AllocateStrAt O fixed, boundary opcodes only
 STRHOT-283 B open t3-ast/ast_names.go *CXProgram.CXProgramNameFind
 STRHOT-284 B open t3-ast/ast_names.go *CXProgram.CXProgramNameText
 STRHOT-285 E open t3-ast/ast_names.go *CXProgram.CXProgramSourceFileText
@@ -327,7 +327,8 @@ STRHOT-314 P open t3-ast/tostring.go printPointer
 STRHOT-315 P open t3-ast/tostring.go printStructPointer
 STRHOT-316 E open t4-opcodes/libraries.go opLibraryCall
 STRHOT-317 B open t4-opcodes/op_aff.go affFunction
-STRHOT-318 O open t4-opcodes/op_str.go opStrBytesOfString
-STRHOT-319 O open t4-opcodes/op_str.go opStrStringOfBytes
+STRHOT-318 O removed t4-opcodes/op_str.go opStrBytesOfString fixed, byte views of CX memory and the format buffer
+STRHOT-319 O removed t4-opcodes/op_str.go opStrStringOfBytes fixed, byte views of CX memory and the format buffer
 STRHOT-320 P open t5-cx-runtime-printer/stack.go printerStackValuePrintable
 STRHOT-321 E open t5-regexp/op_regexp.go opRegexpMustCompile
+STRHOT-322 O open t0-util/program_text.go ProgramTextStringView

@@ -14,10 +14,16 @@ func Read_str_data(memory []byte, offset Pointer) string {
 	return string(str)
 }
 
-// VIOLATION STRHOT-011: O, the opcode works on Go string copies of CX strs, #412.
+// VIOLATION STRHOT-011: B, only the boundary opcodes use Go strings, #412.
 func Read_str(memory []byte, offset Pointer) string {
 	str := string(Read_obj(memory, offset))
 	return str
+}
+
+// Read_str_bytes returns the bytes of the str whose pointer is at offset, a
+// view into memory without a copy. The empty str is nil.
+func Read_str_bytes(memory []byte, offset Pointer) []byte {
+	return Read_obj(memory, offset)
 }
 
 func Read_str_size(memory []byte, offset Pointer) Pointer {

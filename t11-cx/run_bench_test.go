@@ -137,14 +137,14 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 		{"struct", runStructSource, 7},
 	}
 	ceilings := map[string]float64{
-		"examples/hello-world.cx":                           9,
-		"examples/bubble-sort.cx":                           21,
-		"examples/fibonacci-recursive.cx":                   9,
-		"test-array.cx":                                     13,
-		"test-slices.cx":                                    8,
-		"examples/testing-pointers-to-arrays-of-structs.cx": 6,
-		// Nearly all are Go strings made by CXValue.Get_str.
-		"test-gc.cx": 202756,
+		"examples/hello-world.cx":         6,
+		"examples/bubble-sort.cx":         9,
+		"examples/fibonacci-recursive.cx": 8,
+		"test-array.cx":                   7,
+		"test-slices.cx":                  7,
+		// One more than before, the first growth of the format buffer.
+		"examples/testing-pointers-to-arrays-of-structs.cx": 7,
+		"test-gc.cx": 98,
 	}
 	for _, programPath := range compileBenchmarkPrograms {
 		source, err := os.ReadFile(filepath.Join("..", "tests", programPath))
