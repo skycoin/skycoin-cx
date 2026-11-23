@@ -338,6 +338,10 @@ function_results:
                 {
 			$$ = actions.FunctionResultsUnnamed(Program, $2)
                 }
+        |       LPAREN result_type_list COMMA RPAREN
+                {
+			$$ = actions.FunctionResultsUnnamed(Program, $2)
+                }
         ;
 
 result_type_list:
@@ -369,6 +373,7 @@ function_declaration:
 parameter_type_list:
                 //parameter_list COMMA ELLIPSIS
 		parameter_list
+	|	parameter_list COMMA
                 ;
 
 parameter_list:
@@ -521,7 +526,7 @@ array_element:
                 {
 			$$ = actions.DeclarationSpecifiersStruct(Program,$3, types.Code($1).Name(), true, CurrentFile, $<line>1, $<column>1)
                 }
-        |       MUL_OP array_element
+        |       MUL_OP declaration_specifiers
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
                 }
@@ -582,11 +587,18 @@ literal_element_list:
 	|       literal_element_list COMMA literal_element
                 ;
 
+// A list of elements or fields may end in a comma, which Go requires when the
+// closing brace is on the next line (https://go.dev/ref/spec#Semicolons).
+list_end:
+                RBRACE
+        |       COMMA RBRACE
+                ;
+
 // An elided element, {1, 2} or {x: 1}, takes the element type of its literal.
 literal_element:
 		assignment_expression
-        |       LBRACE literal_element_list RBRACE
-        |       LBRACE struct_literal_fields RBRACE
+        |       LBRACE literal_element_list list_end
+        |       LBRACE struct_literal_fields list_end
                 ;
 
 indexing_literal:
@@ -613,16 +625,16 @@ indexing_slice_literal:
 
 // expressions
 array_literal_expression:
-                indexing_literal IDENTIFIER LBRACE literal_element_list RBRACE
+                indexing_literal IDENTIFIER LBRACE literal_element_list list_end
         |       indexing_literal IDENTIFIER LBRACE RBRACE
-        |       indexing_literal type_specifier LBRACE literal_element_list RBRACE
+        |       indexing_literal type_specifier LBRACE literal_element_list list_end
         |       indexing_literal type_specifier LBRACE RBRACE
         ;
 
 slice_literal_expression:
-                indexing_slice_literal IDENTIFIER LBRACE literal_element_list RBRACE
+                indexing_slice_literal IDENTIFIER LBRACE literal_element_list list_end
         |       indexing_slice_literal IDENTIFIER LBRACE RBRACE
-        |       indexing_slice_literal type_specifier LBRACE literal_element_list RBRACE
+        |       indexing_slice_literal type_specifier LBRACE literal_element_list list_end
         |       indexing_slice_literal type_specifier LBRACE RBRACE
                 ;
 
@@ -699,14 +711,15 @@ postfix_expression:
         |       type_specifier PERIOD after_period
 	|       postfix_expression LPAREN RPAREN
 	|       postfix_expression LPAREN argument_expression_list RPAREN
+	|       postfix_expression LPAREN argument_expression_list COMMA RPAREN
 	|       postfix_expression INC_OP
         |       postfix_expression DEC_OP
         |       postfix_expression PERIOD IDENTIFIER
                 ;
 
 struct_literal_value:
-		IDENTIFIER LBRACE struct_literal_fields RBRACE
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+		IDENTIFIER LBRACE struct_literal_fields list_end
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields list_end
         ;
 
 argument_expression_list:
@@ -782,6 +795,7 @@ postfix_nc:
         |       type_specifier PERIOD after_period
 	|       postfix_nc LPAREN RPAREN
 	|       postfix_nc LPAREN argument_expression_list RPAREN
+	|       postfix_nc LPAREN argument_expression_list COMMA RPAREN
 	|       postfix_nc INC_OP
         |       postfix_nc DEC_OP
         |       postfix_nc PERIOD IDENTIFIER

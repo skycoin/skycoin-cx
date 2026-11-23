@@ -1,0 +1,42 @@
+package main
+
+import "sys/string"
+
+type Point struct {
+	x i32
+	s str
+}
+
+type Holder struct {
+	p *Point
+	n []i32
+}
+
+var gi i32 = 3
+
+func prefix(text str) (out str) {
+	out = string.SubstringByByteRange(text, 0, 2)
+}
+
+func main() {
+	var p *i32 = &gi
+	printf("%s\n", prefix(sprintf("%v", p)))
+	var np *i32
+	var nq *Point
+	printf("%v %v\n", np, nq)
+	var r Point = Point{x: 1, s: "a"}
+	printf("%v %+v\n", r, r)
+	var rp *Point = &r
+	printf("%v\n", rp)
+	var s []i32
+	printf("%v\n", s)
+	s = append(s, 1, 2)
+	printf("%v %+v\n", s, s)
+	var h Holder
+	printf("%v %+v\n", h, h)
+	h.p = rp
+	printf("%v\n", h.p)
+	var ps []*i32
+	ps = append(ps, p)
+	printf("%s\n", prefix(sprintf("%v", ps[0])))
+}

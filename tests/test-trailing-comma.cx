@@ -1,0 +1,65 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+var gs []i32 = []i32{
+	4,
+	5,
+}
+
+var gp = Point{
+	x: 6,
+	y: 7,
+}
+
+func add(a i32,
+	b i32,
+) (r i32) {
+	return a + b
+}
+
+func pair(a i32, b i32,
+) (
+	i32,
+	i32,
+) {
+	return b, a
+}
+
+func main() {
+	p := Point{
+		x: 1,
+		y: 2,
+	}
+	s := []i32{
+		1,
+		2,
+	}
+	a := [2]i32{
+		3,
+		4,
+	}
+	n := [][]i32{
+		{1, 2},
+		[]i32{3},
+	}
+	m := [2][2]i32{
+		{1, 2},
+		{3, 4},
+	}
+	ps := []Point{
+		Point{x: 5, y: 6},
+		{x: 7, y: 8},
+	}
+	q := Point{x: 1, y: 2}
+	t := add(
+		1,
+		2,
+	)
+	f, g := pair(1, 2)
+	printf("%d %d %d %d %d %d %d %d\n", p.y, s[1], a[1], n[0][1], m[1][0], ps[1].y, q.y, t)
+	printf("%d %d %d %d\n", f, g, gs[1], gp.y)
+}

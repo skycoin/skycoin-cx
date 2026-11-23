@@ -45,6 +45,11 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 			}
 
 			inp := &inputs[specifiersCounter+1]
+			if nextCh == '+' && c+2 < lenStr && fmtStr[c+2] == 'v' {
+				// %+v prints as %v, whose structs name their fields.
+				c++
+				nextCh = 'v'
+			}
 			switch nextCh {
 			case 's':
 				res = append(res, []byte(CheckForEscapedChars(inp.Get_str(prgrm)))...)

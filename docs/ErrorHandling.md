@@ -163,7 +163,9 @@ Three error records exist.
   `T{}.p()`, 7058 `CompileErrorCodeArrayLiteralElementType` an array
   literal element of the wrong type, at the element, and 7059
   `CompileErrorCodeReturnValueType` a value of the wrong type returned as
-  the unnamed result of `func f() T`. A package that loads but has compile errors
+  the unnamed result of `func f() T`. 7062
+  `CompileErrorCodeFunctionResultMissing` is a call of a function with no
+  results used as a value. A package that loads but has compile errors
   prints them with the errors of the program and fails like an import
   that cannot be loaded, without an error at the import. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.

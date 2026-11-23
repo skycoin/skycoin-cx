@@ -1,0 +1,26 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+var gp Point = Point{x: 3, y: 4}
+var gi i32 = 5
+
+func main() {
+	var p *Point = &gp
+	var c = p
+	d := c
+	var i *i32 = &gi
+	var j = i
+	k := &i
+	var s []*i32
+	s = append(s, j)
+	var t = s
+	u := &s
+	var arr [2][]i32
+	arr[1] = append(arr[1], 6)
+	var v = arr
+	printf("%d %d %d %d %d %d %d\n", c.x, d.y, *j, **k, *t[0], *(*u)[0], v[1][0])
+}

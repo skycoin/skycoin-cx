@@ -1,0 +1,17 @@
+package main
+
+type T struct {
+	n i32
+}
+
+func (t T) get() (r i32) {
+	r = loop + 1
+	return r
+}
+
+var obj T
+var loop i32 = obj.get()
+
+func main() {
+	printf("%d\n", loop)
+}

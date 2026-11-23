@@ -102,6 +102,37 @@ multi-line comment that holds a newline acts like a newline. The
 semicolon before a closing `}` may be left out, so short declarations
 fit on one line.
 
+A list of elements, fields, arguments, parameters or results may end in a
+comma. Go requires the comma when the closing brace or parenthesis is on
+the next line, since the line would otherwise end with a semicolon.
+
+```cx
+package main
+
+type Point struct { x i32; y i32 }
+
+func add(a i32,
+	b i32,
+) i32 {
+	return a + b
+}
+
+func main () {
+	p := Point{
+		x: 1,
+		y: 2,
+	}
+	s := []i32{
+		3,
+		4,
+	}
+	i32.print(add(
+		p.y,
+		s[1],
+	)) // prints 6
+}
+```
+
 ```cx
 package main
 
@@ -213,9 +244,12 @@ type of its value, which may be any expression, as in Go: `var count = 3`,
 A value with no type, such as the call of a function without results, is
 a compile error that asks for the type.
 
+`var a, b = f()` and `var a, b T = f()` give each global one result of
+`f`, as in Go.
+
 Globals are initialized in the order they are declared, except that a
 global comes after the globals its value refers to, directly or through
-the functions it calls, as in Go. A global whose value refers back to
+the functions and methods it calls, as in Go. A global whose value refers back to
 itself is the compile error `initialization cycle`.
 
 ```cx
@@ -274,7 +308,15 @@ Local variables take the same forms as globals, `var a, b i32`,
 `var a, b i32 = 1, 2` and `var ( ... )`. A local without a type,
 `var a, b = x, y`, is the short declaration `a, b := x, y`, so its
 values may be any expressions, and `var a, b = f()` takes the two
-results of `f`.
+results of `f`. A variable declared without a type, by `var c = v` or
+`c := v`, takes the whole type of `v`, so `var c = p` of a `*Point` is a
+`*Point` and `x := f()` of an `f` returning `[]*i32` or `*[]i32` has that
+type.
+
+A `:=` whose names and values differ in number is the compile error
+`assignment mismatch`. Its new names are declared without a type, so
+their uses report nothing more, and a name that the function declared
+already is not redeclared, as `:=` assigns it in Go.
 
 ### [Arrays](#table-of-contents)
 
@@ -2482,6 +2524,11 @@ argument, followed by any number of arguments of type *str*, *i32*,
 *i64*, *f32* or *f64*. The format string recognizes the following
 directives: `%s` for strings, `%d` for integers and `%f` for floating
 point numbers.
+
+`%v` prints any value. A pointer prints as Go prints it, in hexadecimal
+with `0x`, a nil pointer as `<nil>` and a pointer to a struct as
+`&{x: 1, y: 2}`. Structs print their field names, so `%+v` prints as
+`%v`. Slices and arrays print as `[1, 2]`, and a nil slice as `[]`.
 
 #### Example
 

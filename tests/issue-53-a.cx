@@ -13,8 +13,12 @@ type Too struct {
 
 var TOO_SIZE i32 = 4 + cx.POINTER_SIZE + 4
 
+// getAddr reads the address %v prints in hexadecimal, as 0x2a.
 func getAddr(addr *i32) (out i32) {
-	out = string.ParseDecimalI32(sprintf("%v", addr))
+	text := sprintf("%v", addr)
+	for i := 2; i < string.ByteLength(text); i++ {
+		out = out*16 + string.ByteIndexOfFirstSubstring("0123456789abcdef", string.SubstringByByteRange(text, i, i+1))
+	}
 }
 
 func testAddr(addr *i32, taddr i32, message str) () {

@@ -4,6 +4,16 @@
 
 #### Language
 
+- Pointers, slices, arrays and structs combine in any order as parameters, results, locals, globals, fields and elements. `x := f()` of a `*str`, `[]*T`, `[2]*i32` or `[N][]T` result reported a wrong receiving variable, a `*[]i32` result panicked with `type is not known`, and globals of such types could not be inferred. `[2]*[3]i32` parses, and an array whose elements point to arrays is sized and indexed as an array of pointers. `[]*[]i32` and `[][2][]i32` keep their whole type, where they took the type of a pointer to a slice and a slice of slices
+- `var c = p` and `c := p` in a function take the whole type of `p`, such as `*Point` or `**i32`. They reported `cannot assign *Point to c of type struct`
+- A call of a function without results used as a slice, array or struct literal element, an argument or an operand is the compile error `function 'f' returns no value`. A slice literal element panicked with `index out of range` and an array element was dropped without an error
+- A local of a struct that does not exist, such as `var a [][]Missing`, is declared invalid, so only the missing struct is an error and its uses report nothing more
+- `x, y := 1, 2, 3` and `x, y, z := two()` declare their new names invalid after the count error, so their uses report nothing more, and a name the function declared already is not reported `redeclared`
+- A trailing comma ends a composite literal, a call argument list, a parameter list or a result list, as Go requires before a newline
+- `%v` prints a pointer as Go does, `0x100000`, a nil pointer as `<nil>` and a pointer to a struct as `&{x: 1}`, where it printed the address as a decimal number. `%+v` prints as `%v`, where it printed `v`
+- A global read only in a method orders the initializer that calls the method, `var first = obj.get()`, as in Go
+- `var a, b = f()` and `var a, b T = f()` declare globals from the results of `f`. They were `assignment mismatch: 2 variables but 1 value`
+
 - Function outputs in parentheses may give only their types, `func f() (i32)` and `func f() (i32, str)`, filled by `return 1, "a"` and read by `x, s := f()`, as in Go
 - An output may be an array, an array of structs, a slice of arrays or a pointer to an array, named or not. `return [2]i32{1, 2}`, `return &a` of a local array and `r[1] = 2` on the line of the function header work, where they reported a wrong type, read a dead frame or panicked
 - `var a, b i32`, `var a, b i32 = 1, 2`, `var a, b = 1, 2` and `var ( ... )` groups declare globals and locals, as in Go. A local without a type is a short declaration, and a wrong number of values is `assignment mismatch`

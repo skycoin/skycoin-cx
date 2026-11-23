@@ -471,6 +471,8 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 		panic(err)
 	}
 
+	outputlessValueCheck(prgrm, leftExprs)
+	outputlessValueCheck(prgrm, rightExprs)
 	lastLeftExpressionIdx := leftExprs[len(leftExprs)-1].Index
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S0647.

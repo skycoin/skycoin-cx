@@ -1,0 +1,38 @@
+package main
+
+type T struct {
+	n i32
+}
+
+func (t T) get() (r i32) {
+	r = base + t.n
+	return r
+}
+
+func (t *T) twice() (r i32) {
+	r = base2 * 2
+	return r
+}
+
+type H struct {
+	t T
+}
+
+var obj T
+var holder H
+var first i32 = obj.get()
+var second i32 = obj.twice()
+var nested i32 = holder.t.get()
+var viaFunc i32 = helper()
+var base i32 = 40
+var base2 i32 = 21
+
+func helper() (r i32) {
+	var t T
+	r = t.get() + 1
+	return r
+}
+
+func main() {
+	printf("%d %d %d %d\n", first, second, nested, viaFunc)
+}

@@ -1,0 +1,13 @@
+package main
+
+func main() {
+	var a [][]Missing
+	var b Missing
+	var c *Missing
+	var d [2]Missing
+	printf("%d\n", len(a))
+	b.x = 1
+	c.y = 2
+	d[0].z = 3
+	var late i32 = "x"
+}

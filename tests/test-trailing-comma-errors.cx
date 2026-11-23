@@ -1,0 +1,10 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func main() {
+	p := P{,}
+	i32.print(p.x)
+}

@@ -869,7 +869,9 @@ func (s *state) placeDereferences(code []ir.Instr, p *place, arg *ast.CXArgument
 			}
 			elementSize := ast.GetDerefSize(s.statePrgrm, arg, indexCount, derefPointer, true)
 			lengths := arg.Lengths[indexCount+1:]
-			if dims := arg.ArraySliceDimensions(); dims > indexCount {
+			if direct, behind := arg.DirectDimensions(); behind && indexCount < direct {
+				lengths = arg.Lengths[indexCount+1 : direct]
+			} else if dims := arg.ArraySliceDimensions(); dims > indexCount {
 				// The elements of [N][]T are slice headers.
 				elementSize, lengths = types.POINTER_SIZE, arg.Lengths[indexCount+1:dims]
 			}

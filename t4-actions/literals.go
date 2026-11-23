@@ -135,6 +135,9 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 				// We need to create a temporary variable to hold the result of the
 				// nested expressions. Then use that variable as part of the slice literal.
 
+				if len(exprAtomicOp.GetOutputs(prgrm)) == 0 && len(exprAtomicOpOperator.GetOutputs(prgrm)) == 0 {
+					outputlessCallInvalidate(prgrm, exprAtomicOp, exprAtomicOpOperator, exprCXLine.FileName, exprCXLine.LineNumber)
+				}
 				outTypeSig := getOutputType(prgrm, &expr)
 				if outputs := exprAtomicOp.GetOutputs(prgrm); len(outputs) > 0 {
 					// A nested slice literal, whose output has its full type.
@@ -684,6 +687,11 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 
 	result = append(result, *arrVarExprCXLine, *arrVarExpr)
 
+	for i := range exprs {
+		if exprs[i].Type != ast.CX_LINE && exprs[i].IsArrayLiteral() {
+			outputlessValueCheck(prgrm, exprs[:i+1])
+		}
+	}
 	var endPointsCounter int
 	for _, expr := range exprs {
 		if expr.Type == ast.CX_LINE {
@@ -873,6 +881,7 @@ func structLiteralValueTypeSet(prgrm *ast.CXProgram, strct *ast.CXStruct, value 
 // is at line and column.
 func StructLiteralField(prgrm *ast.CXProgram, fieldName string, line int, column int, value []ast.CXExpression) []ast.CXExpression {
 	value = ShortCircuitStrip(prgrm, value)
+	outputlessValueCheck(prgrm, value)
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 	// Now a slice of objects, sites S1482 S1483 S1484 S1485.
 	field := []ast.CXExpression{StructLiteralFields(prgrm, fieldName, line, column)}

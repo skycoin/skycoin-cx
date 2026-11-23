@@ -1,0 +1,18 @@
+package main
+
+func two() (a i32, b i32) {
+	a = 1
+	b = 2
+	return a, b
+}
+
+func main() {
+	x, y := 1, 2, 3
+	printf("%d %d\n", x, y)
+	p, q, r := two()
+	printf("%d %d %d\n", p, q, r)
+	var old i32
+	old, n := 5, 6, 7
+	printf("%d %d\n", old, n)
+	var late i32 = "x"
+}

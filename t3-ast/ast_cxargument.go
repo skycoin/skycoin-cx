@@ -31,6 +31,10 @@ func CXArgumentTakesAddress(prgrm *CXProgram, out *CXArgument, input *CXTypeSign
 	if out.PassBy == constants.PASSBY_REFERENCE {
 		return true
 	}
+	// A pointer that keeps the type of its target, as a *[]*i32 does, takes &v.
+	if specs := out.DeclarationSpecifiers; len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER && len(out.DereferenceOperations) == 0 && CXTypeSignaturePassBy(prgrm, input) == constants.PASSBY_REFERENCE {
+		return true
+	}
 	return out.IsPointer() && out.PointerTargetType != types.STR && out.Type != types.AFF && !CXTypeSignaturePointerValue(prgrm, input)
 }
 
@@ -77,7 +81,10 @@ func CXTypeSignaturePointerValue(prgrm *CXProgram, sig *CXTypeSignature) bool {
 		// A *i32 keeps the type i32 and ends its specifiers with the pointer. A
 		// &T{} literal ends them so too but is a struct.
 		specs := elt.DeclarationSpecifiers
-		return elt.StructType == nil && len(elt.DereferenceOperations) == 0 && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER
+		// An element such as (*v)[0] of a *[]*i32 reads the pointer too.
+		ops := elt.DereferenceOperations
+		element := len(ops) > 0 && (ops[len(ops)-1] == constants.DEREF_ARRAY || ops[len(ops)-1] == constants.DEREF_SLICE)
+		return elt.StructType == nil && (len(ops) == 0 || element) && len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER
 	}
 	return false
 }
@@ -312,6 +319,27 @@ func IsTypeAtomic(arg *CXArgument) bool {
 	return arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) == 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) == 0 || (len(arg.DeclarationSpecifiers) == 1 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC))
 }
 
+// declarationSpecifiersForm reports whether specs are base followed by one or
+// more dims, or by none when dims is 0, and then by a pointer when pointer
+// is set.
+func declarationSpecifiersForm(specs []int, base int, dims int, pointer bool) bool {
+	if pointer {
+		if len(specs) == 0 || specs[len(specs)-1] != constants.DECL_POINTER {
+			return false
+		}
+		specs = specs[:len(specs)-1]
+	}
+	if len(specs) == 0 || specs[0] != base || (dims != 0) != (len(specs) > 1) {
+		return false
+	}
+	for _, spec := range specs[1:] {
+		if spec != dims {
+			return false
+		}
+	}
+	return true
+}
+
 func IsTypePointerAtomic(arg *CXArgument) bool {
 	return arg.Type.IsPrimitive() && arg.PointerTargetType == 0 && arg.StructType == nil && !arg.IsSlice() && len(arg.Lengths) == 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) == 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_POINTER)
 }
@@ -324,7 +352,7 @@ func IsTypeArrayAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return !isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
+	return !isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && declarationSpecifiersForm(arg.DeclarationSpecifiers, constants.DECL_BASIC, constants.DECL_ARRAY, false)
 }
 
 func IsTypePointerArrayAtomic(arg *CXArgument) bool {
@@ -335,7 +363,7 @@ func IsTypePointerArrayAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_ARRAY)
+	return isThereDeclPointer && arg.Type.IsPrimitive() && !arg.IsSlice() && len(arg.Lengths) > 0 && !slices.Contains(arg.Lengths, 0) && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && declarationSpecifiersForm(arg.DeclarationSpecifiers, constants.DECL_BASIC, constants.DECL_ARRAY, true)
 }
 
 func IsTypeSliceAtomic(arg *CXArgument) bool {
@@ -346,7 +374,7 @@ func IsTypeSliceAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return !isThereDeclPointer && arg.Type.IsPrimitive() && arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_SLICE)
+	return !isThereDeclPointer && arg.Type.IsPrimitive() && arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && declarationSpecifiersForm(arg.DeclarationSpecifiers, constants.DECL_BASIC, constants.DECL_SLICE, false)
 }
 
 func IsTypePointerSliceAtomic(arg *CXArgument) bool {
@@ -357,7 +385,7 @@ func IsTypePointerSliceAtomic(arg *CXArgument) bool {
 		}
 	}
 
-	return isThereDeclPointer && arg.Type.IsPrimitive() && arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && (len(arg.DeclarationSpecifiers) >= 2 && arg.DeclarationSpecifiers[0] == constants.DECL_BASIC && arg.DeclarationSpecifiers[1] == constants.DECL_SLICE)
+	return isThereDeclPointer && arg.Type.IsPrimitive() && arg.IsSlice() && len(arg.Lengths) > 0 && len(arg.Fields) == 0 && len(arg.DereferenceOperations) == 0 && declarationSpecifiersForm(arg.DeclarationSpecifiers, constants.DECL_BASIC, constants.DECL_SLICE, true)
 }
 
 func IsTypeStruct(arg *CXArgument) bool {
@@ -389,7 +417,7 @@ func IsTypePointerStruct(arg *CXArgument) bool {
 		}
 	}
 
-	return isThereDeclPointer && !IsThereDeclSlice && !arg.IsSlice() && len(arg.Lengths) == 0 && arg.StructType != nil && len(arg.DeclarationSpecifiers) >= 1 && arg.DeclarationSpecifiers[0] == constants.DECL_STRUCT
+	return isThereDeclPointer && !IsThereDeclSlice && !arg.IsSlice() && len(arg.Lengths) == 0 && arg.StructType != nil && declarationSpecifiersForm(arg.DeclarationSpecifiers, constants.DECL_STRUCT, 0, true)
 }
 
 // argumentDebugAlloc allocates the debug record of an argument in prgrm's
@@ -467,8 +495,49 @@ func ValueSizeOfLengths(lengths []types.Pointer, elem types.Pointer) types.Point
 // ArraySize returns the size in bytes of the array arg, whose elements are
 // slice headers when it is an array of slices.
 func (arg CXArgument) ArraySize() types.Pointer {
+	if direct, behind := arg.DirectDimensions(); behind {
+		return types.POINTER_SIZE * types.TotalLength(arg.Lengths[:direct])
+	}
 	if dims := arg.ArraySliceDimensions(); dims > 0 {
 		return types.POINTER_SIZE * types.TotalLength(arg.Lengths[:dims])
 	}
 	return arg.Size * types.TotalLength(arg.Lengths)
+}
+
+// DirectDimensions returns how many dimensions of Lengths, outermost first,
+// arg holds itself, and true when the rest are behind a pointer, as the
+// second of [2]*[3]T is. An index strips its dimension from the specifiers.
+func (arg CXArgument) DirectDimensions() (int, bool) {
+	// (*a[i])[j] on a [N]*[M]T dereferences the pointer between its indexes.
+	indexes := 0
+	for i, op := range arg.DereferenceOperations {
+		if op == constants.DEREF_ARRAY || op == constants.DEREF_SLICE {
+			indexes++
+			continue
+		}
+		if op == constants.DEREF_POINTER && indexes > 0 && indexes < len(arg.Lengths) && slices.ContainsFunc(arg.DereferenceOperations[i+1:], func(next int) bool { return next == constants.DEREF_ARRAY || next == constants.DEREF_SLICE }) {
+			return indexes, true
+		}
+		break
+	}
+	specs := arg.DeclarationSpecifiers
+	dims := 0
+	for _, spec := range specs {
+		if spec == constants.DECL_ARRAY || spec == constants.DECL_SLICE {
+			dims++
+		}
+	}
+	stripped := 0
+	if len(arg.Indexes) > 0 && dims+len(arg.Indexes) == len(arg.Lengths) {
+		stripped = len(arg.Indexes)
+	}
+	outer := 0
+	i := len(specs) - 1
+	for ; i >= 0 && (specs[i] == constants.DECL_ARRAY || specs[i] == constants.DECL_SLICE); i-- {
+		outer++
+	}
+	if stripped == 0 && outer == 0 || i < 0 || specs[i] != constants.DECL_POINTER || stripped+outer >= len(arg.Lengths) {
+		return len(arg.Lengths), false
+	}
+	return stripped + outer, true
 }

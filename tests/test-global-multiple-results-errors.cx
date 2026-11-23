@@ -1,0 +1,17 @@
+package main
+
+func one() (a i32) {
+	return a
+}
+
+func two() (a i32, b i32) {
+	return a, b
+}
+
+var x, y = one()
+var p, q, r = two()
+var s, t i32 = one()
+
+func main() {
+	printf("%d %d %d %d %d %d %d\n", x, y, p, q, r, s, t)
+}

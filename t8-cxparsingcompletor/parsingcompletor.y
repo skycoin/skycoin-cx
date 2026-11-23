@@ -180,6 +180,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   array_literal_expression
 
 %type   <literalElements> literal_element_list
+%type   <bool>          list_end
 %type   <literalElements> literal_element
 %type   <expressions>   slice_literal_expression
 
@@ -375,6 +376,10 @@ function_results:
                 {
 			$$ = actions.FunctionResultsUnnamed(actions.AST, $2)
                 }
+        |       LPAREN result_type_list COMMA RPAREN
+                {
+			$$ = actions.FunctionResultsUnnamed(actions.AST, $2)
+                }
         ;
 
 result_type_list:
@@ -403,8 +408,10 @@ function_declaration:
                 }
         ;
 
+// Parameters, arguments and results may end in a comma too.
 parameter_type_list:
 		parameter_list
+	|	parameter_list COMMA
                 ;
 
 parameter_list:
@@ -561,7 +568,7 @@ array_element:
                 {
 			$$ = actions.DeclarationSpecifiersStruct(actions.AST,$3, types.Code($1).Name(), true, actions.CurrentFile, $<line>1, $<column>1)
                 }
-        |       MUL_OP array_element
+        |       MUL_OP declaration_specifiers
                 {
 			$$ = actions.DeclarationSpecifiers($2, []types.Pointer{0}, constants.DECL_POINTER)
                 }
@@ -622,18 +629,28 @@ literal_element_list:
                 }
                 ;
 
+// A list of elements or fields may end in a comma, which Go requires when the
+// closing brace is on the next line (https://go.dev/ref/spec#Semicolons).
+list_end:
+                RBRACE
+                { $$ = false }
+        |       COMMA RBRACE
+                { $$ = true }
+                ;
+
 // An elided element, {1, 2} or {x: 1}, takes the element type of its literal.
 literal_element:
                 assignment_expression
                 {
 			$$ = []actions.LiteralElement{{Expressions: $1, Line: $<line>1, Column: $<column>1}}
                 }
-        |       LBRACE literal_element_list RBRACE
+        |       LBRACE literal_element_list list_end
                 {
 			$$ = []actions.LiteralElement{{Elements: $2, Elided: true, Line: actions.LineNo}}
                 }
-        |       LBRACE struct_literal_fields RBRACE
+        |       LBRACE struct_literal_fields list_end
                 {
+			ParserActionStructLiteralComma($2, $3)
 			$$ = []actions.LiteralElement{{Fields: $2, Elided: true, Keyed: true, Line: actions.LineNo}}
                 }
                 ;
@@ -662,7 +679,7 @@ indexing_slice_literal:
 
 // expressions
 array_literal_expression:
-                indexing_literal IDENTIFIER LBRACE literal_element_list RBRACE
+                indexing_literal IDENTIFIER LBRACE literal_element_list list_end
                 {
 			lengths := types.Cast_sint_to_sptr($1)
 			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: $2, Line: $<line>1, Column: $<column>1}, $4)
@@ -672,7 +689,7 @@ array_literal_expression:
                 {
 			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, $<line>1, $<column>1, nil)
                 }
-        |       indexing_literal type_specifier LBRACE literal_element_list RBRACE
+        |       indexing_literal type_specifier LBRACE literal_element_list list_end
                 {
 			lengths := types.Cast_sint_to_sptr($1)
 			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, TypeCode: types.Code($2)}, $4)
@@ -685,7 +702,7 @@ array_literal_expression:
                 ;
 
 slice_literal_expression:
-                indexing_slice_literal IDENTIFIER LBRACE literal_element_list RBRACE
+                indexing_slice_literal IDENTIFIER LBRACE literal_element_list list_end
                 {
 			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2, Line: $<line>1, Column: $<column>1}
 			$$ = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, $4))
@@ -694,7 +711,7 @@ slice_literal_expression:
                 {
 			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2, Line: $<line>1, Column: $<column>1}, nil)
                 }
-        |       indexing_slice_literal type_specifier LBRACE literal_element_list RBRACE
+        |       indexing_slice_literal type_specifier LBRACE literal_element_list list_end
                 {
 			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, TypeCode: types.Code($2)}
 			$$ = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, $4))
@@ -919,6 +936,12 @@ postfix_expression:
 			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
 			actions.TokenPositionPop(position)
                 }
+	|       postfix_expression LPAREN argument_expression_list COMMA RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
         |       postfix_expression PERIOD IDENTIFIER
                 {
 			position := actions.TokenPositionPush($<line>3, $<column>3)
@@ -928,12 +951,14 @@ postfix_expression:
                 ;
 
 struct_literal_value:
-		IDENTIFIER LBRACE struct_literal_fields RBRACE
+		IDENTIFIER LBRACE struct_literal_fields list_end
                 {
+			ParserActionStructLiteralComma($3, $4)
 			$$ = actions.PrimaryStructLiteral(actions.AST, $1, $<line>1, $<column>1, $3)
                 }
-        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
+        |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields list_end
                 {
+			ParserActionStructLiteralComma($5, $6)
 			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $<line>3, $<column>3, $5)
                 }
                 ;
@@ -1095,6 +1120,12 @@ postfix_nc:
 			actions.TokenPositionPop(position)
                 }
 	|       postfix_nc LPAREN argument_expression_list RPAREN
+                {
+			position := actions.TokenPositionPush($<line>1, $<column>1)
+			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)
+			actions.TokenPositionPop(position)
+                }
+	|       postfix_nc LPAREN argument_expression_list COMMA RPAREN
                 {
 			position := actions.TokenPositionPush($<line>1, $<column>1)
 			$$ = actions.PostfixExpressionFunCall(actions.AST,$1, $3)

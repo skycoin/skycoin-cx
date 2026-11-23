@@ -103,7 +103,7 @@ func ParserActionExpressionStatement(exprs []ast.CXExpression) []ast.CXExpressio
 	// Now an arena getter, site S1498.
 	lastFirstAtomicOpOperator := actions.AST.GetFunctionFromArray(lastFirstAtomicOp.Operator)
 
-	if len(exprs) > 0 && lastFirstAtomicOpOperator == nil && !exprs[len(exprs)-1].IsMethodCall() {
+	if len(exprs) > 0 && lastFirstAtomicOpOperator == nil && !exprs[len(exprs)-1].IsMethodCall() && !actions.ExpressionsDeclareInvalid(actions.AST, exprs) {
 		outs := lastFirstAtomicOp.GetOutputs(actions.AST)
 
 		if len(outs) > 0 {
@@ -178,6 +178,9 @@ func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator strin
 	}
 	if len(values) != len(targets) {
 		actions.AST.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignmentCount, actions.CurrentFile, actions.LineNo, ast.CompileErrorOperands{int64(len(targets)), int64(len(values))})
+		if operator == ":=" {
+			return actions.ShortDeclarationTargetsInvalid(actions.AST, targets)
+		}
 		return nil
 	}
 
@@ -251,4 +254,12 @@ func ParserActionDeclareLocals(names []*ast.CXArgument, spec *ast.CXArgument, va
 		result = append(result, actions.DeclareLocal(actions.AST, name, actions.DeclarationSpecifiersBasic(actions.AST, types.INVALID), nil, false)...)
 	}
 	return result
+}
+
+// ParserActionStructLiteralComma reports T{,}, a struct literal with no
+// fields that ends in a comma, which Go does not allow.
+func ParserActionStructLiteralComma(fields []ast.CXExpression, comma bool) {
+	if comma && len(fields) == 0 {
+		actions.AST.CXProgramCompileErrorAddLine(ast.CompileErrorCodeSyntax, actions.CurrentFile, actions.LineNo, ast.CompileErrorOperands{actions.AST.CXProgramCompileErrorText("unexpected comma, expected name")})
+	}
 }

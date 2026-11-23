@@ -1,0 +1,38 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func two() (a i32, b str) {
+	a = 4
+	b = "x"
+	return a, b
+}
+
+func pair() (p *P, s []i32) {
+	p = &P{x: 9}
+	s = append(s, base)
+	return p, s
+}
+
+func ints() (a i32, b i32) {
+	a = base
+	b = base + 1
+	return a, b
+}
+
+var ga, gb = two()
+var pp, ps = pair()
+var ia, ib i32 = ints()
+var base i32 = 3
+
+var (
+	va, vb = two()
+)
+
+func main() {
+	var a, b = two()
+	printf("%d %s %d %s\n", a, b, ga, gb)
+	printf("%d %d %d %d %d %s\n", pp.x, ps[0], ia, ib, va, vb)
+}

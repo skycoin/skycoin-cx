@@ -1,0 +1,21 @@
+package main
+
+type P struct {
+	x i32
+}
+
+func none() {
+}
+
+func take(n i32) {
+}
+
+func main() {
+	s := []i32{none()}
+	a := [2]i32{1, none()}
+	p := P{x: none()}
+	take(none())
+	n := 1 + none()
+	printf("%d %d %d %d\n", len(s), a[0], p.x, n)
+	var late i32 = "x"
+}

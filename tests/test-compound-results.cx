@@ -1,0 +1,70 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+var gs str = "s"
+var gi i32 = 7
+var gsl []i32
+
+func ptrStr() (r *str) {
+	r = &gs
+	return r
+}
+
+func ptrSlice() (r *[]i32) {
+	if len(gsl) == 0 {
+		gsl = append(gsl, 3)
+	}
+	r = &gsl
+	return r
+}
+
+func slicePtrs() (r []*i32) {
+	r = append(r, &gi)
+	return r
+}
+
+func arrayPtrs() (r [2]*i32) {
+	r[1] = &gi
+	return r
+}
+
+func arraySlices() (r [2][]i32) {
+	r[1] = append(r[1], 5)
+	return r
+}
+
+func pointPtr() (r *Point) {
+	r = &Point{x: 1, y: 2}
+	return r
+}
+
+var inferredStr = ptrStr()
+var inferredSlice = ptrSlice()
+var typedSlice *[]i32 = ptrSlice()
+var inferredPtrs = slicePtrs()
+var inferredArray = arrayPtrs()
+var inferredSlices = arraySlices()
+
+func main() {
+	a := ptrStr()
+	b := ptrSlice()
+	c := slicePtrs()
+	d := arrayPtrs()
+	e := arraySlices()
+	var g *[]i32 = ptrSlice()
+	p := pointPtr()
+	printf("%s %d %d %d %d %d %d\n", *a, (*b)[0], *c[0], *d[1], e[1][0], len(*g), p.y)
+	printf("%s %d %d %d %d %d\n", *inferredStr, (*inferredSlice)[0], len(*typedSlice), *inferredPtrs[0], *inferredArray[1], inferredSlices[1][0])
+	var q = p
+	r := q
+	var pa [2]*[2]i32
+	var arr [2]i32 = [2]i32{8, 9}
+	pa[1] = &arr
+	pp := &p
+	var back *Point = *pp
+	printf("%d %d %d %d\n", q.x, r.y, (*pa[1])[1], back.y)
+}

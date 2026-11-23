@@ -101,6 +101,9 @@ const (
 	// to itself through other globals or functions. Its operands are the
 	// global and the chain of references.
 	CompileErrorCodeInitializationCycle
+	// CompileErrorCodeFunctionResultMissing is a call of a function with no
+	// results used as a value. Its operand is the function.
+	CompileErrorCodeFunctionResultMissing
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

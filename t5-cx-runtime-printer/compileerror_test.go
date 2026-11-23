@@ -88,6 +88,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeReturnValueType, ast.CompileErrorOperands{text("bool"), text("i32")}, header + " cannot use value of type 'bool' as type 'i32' in return statement\n"},
 		{ast.CompileErrorCodeGlobalTypeUnknown, ast.CompileErrorOperands{text("g")}, header + " cannot infer the type of global 'g' from its value, declare it with a type\n"},
 		{ast.CompileErrorCodeInitializationCycle, ast.CompileErrorOperands{text("a"), text("a refers to b, b refers to a")}, header + " initialization cycle for 'a': a refers to b, b refers to a\n"},
+		{ast.CompileErrorCodeFunctionResultMissing, ast.CompileErrorOperands{text("none")}, header + " function 'none' returns no value\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

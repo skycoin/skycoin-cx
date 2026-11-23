@@ -117,6 +117,7 @@ func Execute(c *cli.Command) error {
 	fmt.Printf("Running CX tests in dir: '%s'\n", workingDir)
 	runTestCases(tester)
 	runGuideSnippetTests(tester, workingDir)
+	runCompoundTypeTests(tester, workingDir)
 	end := time.Now().Unix()
 
 	if runner.Has(logMask, runner.LogTime) {
@@ -860,6 +861,43 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("-ast --cxpath test-workspace test-struct-literal-external-ref.cx", types.CX_SUCCESS, "-ast prints an imported package before the program",
 		"0.- Package: geometry\n", "1.- Package: main\n")
 	t.Run("test-imported-global-assign.cx", types.CX_SUCCESS, "assignment to a global of an imported package")
+	t.RunWant("--executor=old test-compound-results.cx", types.CX_SUCCESS, "x := f() and globals of *str, *[]i32, []*i32, [2]*i32 and [2][]i32 results, on the old loop", "s 3 7 7 5 1 2\ns 3 1 7 7 5\n1 2 9 2\n")
+	t.RunWant("test-compound-results.cx", types.CX_SUCCESS, "x := f() and globals of *str, *[]i32, []*i32, [2]*i32 and [2][]i32 results", "s 3 7 7 5 1 2\ns 3 1 7 7 5\n1 2 9 2\n")
+	t.RunWant("--executor=old test-local-infer-pointer.cx", types.CX_SUCCESS, "var c = p and c := p of pointer and compound locals, on the old loop", "3 4 5 5 5 5 6\n")
+	t.RunWant("test-local-infer-pointer.cx", types.CX_SUCCESS, "var c = p and c := p of pointer and compound locals", "3 4 5 5 5 5 6\n")
+	t.RunWant("test-error-outputless-value.cx", types.CX_COMPILATION_ERROR, "a call with no results used as a slice, array or struct element, an argument or an operand",
+		"test-error-outputless-value.cx:14 function 'none' returns no value",
+		"test-error-outputless-value.cx:15 function 'none' returns no value",
+		"test-error-outputless-value.cx:16 function 'none' returns no value",
+		"test-error-outputless-value.cx:17 function 'none' returns no value",
+		"test-error-outputless-value.cx:18 function 'none' returns no value",
+		"test-error-outputless-value.cx:20:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-outputless-value.cx", types.CX_COMPILATION_ERROR, "a call with no results used as a value reports nothing more", "panic", ":19 ")
+	t.RunWant("test-error-missing-type-local.cx", types.CX_COMPILATION_ERROR, "locals of a struct that does not exist",
+		"test-error-missing-type-local.cx:4:12 struct 'Missing' not found in package 'main'",
+		"test-error-missing-type-local.cx:7:11 struct 'Missing' not found in package 'main'",
+		"test-error-missing-type-local.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-missing-type-local.cx", types.CX_COMPILATION_ERROR, "the locals of a struct that does not exist report nothing more", ":8 ", ":9 ", ":10 ", ":11 ", "does not exist")
+	t.RunWant("test-error-short-decl-count.cx", types.CX_COMPILATION_ERROR, "a := with the wrong number of values",
+		"test-error-short-decl-count.cx:10:2 assignment mismatch: 2 variables but 3 values",
+		"test-error-short-decl-count.cx:12:2 assignment mismatch: 3 variables but 2 values",
+		"test-error-short-decl-count.cx:15:2 assignment mismatch: 2 variables but 3 values",
+		"test-error-short-decl-count.cx:17:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-short-decl-count.cx", types.CX_COMPILATION_ERROR, "the names of a := with the wrong number of values report nothing more, and an existing name is not redeclared", ":11 ", ":13 ", ":16 ", "redeclared")
+	t.RunWant("test-trailing-comma.cx", types.CX_SUCCESS, "a trailing comma in composite literals, call arguments, parameters and results", "2 2 4 2 3 8 2 3\n2 1 5 7\n")
+	t.RunWant("test-trailing-comma-errors.cx", types.CX_COMPILATION_ERROR, "a struct literal of no fields may not end in a comma", "test-trailing-comma-errors.cx:8 syntax error: unexpected comma, expected name")
+	t.RunWant("test-printf-pointer.cx", types.CX_SUCCESS, "%v prints a pointer in hexadecimal, nil as <nil> and a pointer to a struct as &{...}, and %+v as %v",
+		"0x\n<nil> <nil>\n{x: 1, s: a} {x: 1, s: a}\n&{x: 1, s: a}\n[]\n[1, 2] [1, 2]\n{p: <nil>, n: []} {p: <nil>, n: []}\n&{x: 1, s: a}\n0x\n")
+	t.RunWant("test-global-init-method.cx", types.CX_SUCCESS, "a global read only in a method initializes before the global whose initializer calls the method", "40 42 40 41\n")
+	t.RunWant("test-global-init-method-cycle.cx", types.CX_COMPILATION_ERROR, "an initialization cycle through a method",
+		"test-global-init-method-cycle.cx:13:5 initialization cycle for 'loop': loop refers to T.get, T.get refers to loop")
+	t.RunWant("--executor=old test-global-multiple-results.cx", types.CX_SUCCESS, "var a, b = f() and var a, b T = f() as globals and locals, on the old loop", "4 x 4 x\n9 3 3 4 4 x\n")
+	t.RunWant("test-global-multiple-results.cx", types.CX_SUCCESS, "var a, b = f() and var a, b T = f() as globals and locals", "4 x 4 x\n9 3 3 4 4 x\n")
+	t.RunWant("test-global-multiple-results-errors.cx", types.CX_COMPILATION_ERROR, "var a, b = f() with the wrong number of results",
+		"test-global-multiple-results-errors.cx:11:5 assignment mismatch: 2 variables but 1 value",
+		"test-global-multiple-results-errors.cx:12:5 assignment mismatch: 3 variables but 2 values",
+		"test-global-multiple-results-errors.cx:13:5 assignment mismatch: 2 variables but 1 value")
+	t.RunMissing("test-global-multiple-results-errors.cx", types.CX_COMPILATION_ERROR, "the globals of var a, b = f() with the wrong number of results report nothing more", ":16 ")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 
 	// issues
