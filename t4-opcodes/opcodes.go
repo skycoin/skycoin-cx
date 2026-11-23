@@ -35,8 +35,7 @@ func RegisterOpCode(prgrm *ast.CXProgram, code int, name string, handler ast.Opc
 	}
 	ast.OpcodeHandlers[code] = handler
 
-	ast.OpNames[code] = name
-	ast.OpCodes[name] = code
+	ast.NativeNames.NativeNameIndexAdd(code, name)
 
 	if inputs == nil {
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.

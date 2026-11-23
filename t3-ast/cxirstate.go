@@ -45,6 +45,9 @@ type CxIrState struct {
 	CxIrStateGlobalsDeferred []GlobalDeferred
 	// CxIrStateGlobalInitializers holds the run of SysInitExprs of each global.
 	CxIrStateGlobalInitializers []GlobalInitializer
+	// CxIrStateNativeNames caches the built-ins CXProgramNativeFind found by
+	// name Gids. It is a compile cache and is not serialized.
+	CxIrStateNativeNames map[NativeNameKey]NativeNameFound
 }
 
 // CxIrStateManagerLen is one manager's name and Len, for the teardown test.

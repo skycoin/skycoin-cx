@@ -13,8 +13,8 @@ var LibraryFunctionHandlers [constants.LibraryCount][]OpcodeHandler
 // libraryFunctionKeyShift leaves room for 65535 functions per library.
 const libraryFunctionKeyShift = 16
 
-// LibraryFunctionKey returns the key of a library function in OpCodes,
-// OpNames and Natives. It is negative, so it never meets an opcode number.
+// LibraryFunctionKey returns the key of a library function in NativeNames
+// and Natives. It is negative, so it never meets an opcode number.
 func LibraryFunctionKey(library int, function int) int {
 	return -(library<<libraryFunctionKeyShift | function)
 }
@@ -29,11 +29,11 @@ func LibraryLinked(library int) bool {
 func (fn *CXFunction) BuiltInName() string {
 	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		// A binary that does not link the library, such as a cx build core,
-		// has no OpNames entry for it.
+		// has no NativeNames entry for it.
 		row, _ := constants.LibraryFunctionLiveByNumber(fn.LibraryNumber, fn.LibraryFunctionNumber)
 		return row.Name
 	}
-	return OpNames[fn.AtomicOPCode]
+	return NativeNames.NativeNameIndexCodeText(fn.AtomicOPCode)
 }
 
 // RuntimeLibraryDisabled is the panic value of a call into a system library

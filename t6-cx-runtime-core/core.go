@@ -52,7 +52,7 @@ func CoreProgramMake() *ast.CXProgram {
 // registers them into the empty global tables and empties them again, so it
 // runs before anything else registers an opcode.
 func CoreOpcodeSet() map[int]bool {
-	assert.AssertPreconditionTrue(len(ast.OpcodeHandlers) == 0 && len(ast.OpNames) == 0, "CoreOpcodeSet after opcodes were registered")
+	assert.AssertPreconditionTrue(len(ast.OpcodeHandlers) == 0 && ast.NativeNames.NativeNameIndexLen() == 0, "CoreOpcodeSet after opcodes were registered")
 	CoreRegister(CoreProgramMake())
 	set := map[int]bool{}
 	for code, handler := range ast.OpcodeHandlers {
@@ -61,8 +61,7 @@ func CoreOpcodeSet() map[int]bool {
 		}
 	}
 	ast.OpcodeHandlers = nil
-	ast.OpNames = map[int]string{}
-	ast.OpCodes = map[string]int{}
+	ast.NativeNames.NativeNameIndexReset()
 	ast.Natives = map[int]*ast.CXNativeFunction{}
 	ast.Operators = nil
 	return set

@@ -37,8 +37,12 @@ The `cx` command (`t11-cx/main.go`) builds the program in this order.
 3. `cxinit.RegisterPackages` registers the native packages `cipher`,
    `cxfx`, `cxos`, `regexp` and `tcp`, then `opcodes.RegisterOpcodes`
    (`t4-opcodes/opcodes_init.go`) registers the built-in opcodes. Both
-   fill the global tables `ast.Natives`, `ast.OpNames`, `ast.OpCodes` and
-   `ast.OpcodeHandlers`.
+   fill the global tables `ast.Natives`, `ast.NativeNames` and
+   `ast.OpcodeHandlers`. The compiler finds a built-in by the name Gids of
+   its parts with `CXProgram.CXProgramNativeFind`, which compares the bytes
+   of a name with the sorted names of `ast.NativeNames` once and caches the
+   result by Gids in `CxIrState.CxIrStateNativeNames`. Constants such as
+   `cx.SUCCESS` are found the same way in `actions.ConstNames`.
 4. `cxparsing.ParseSourceCode` (`t9-cxparsing/cxparsing.go`) reads the
    files and calls `cxparsing.ParseSourceStrings`, which runs the two
    passes below.
@@ -166,7 +170,7 @@ calls a native operator gets its own copy of the native, made by
 `ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
 `Expressions`. A system library function is the native in
 `ast.Natives[ast.LibraryFunctionKey(library, function)]`, a negative key that
-also indexes `ast.OpCodes` and `ast.OpNames`. Its copy has `AtomicOPCode`
+is also its code in `ast.NativeNames`. Its copy has `AtomicOPCode`
 `OP_LIBRARY_CALL` and the two library numbers, and adding it marks the
 library in `CXProgram.ProgramLibrariesUsed`.
 
@@ -610,6 +614,8 @@ after one, so a program only loads in a build with its pointer size
 * `CxIrState.CxIrStateGlobalsDeferred` and
   `CxIrState.CxIrStateGlobalInitializers`, which only the compiler reads
   while it types globals and orders their initializers.
+* `CxIrState.CxIrStateNativeNames`, the cache of built-ins found by name
+  Gids, which a program rebuilds when it looks a built-in up again.
 * `CXProgram.ImportPositions`, where each package imports each other
   package, which only the shadowing errors of #486 read.
 * `CXProgram.ImportScoped`, the imports into scope of #487, which only
@@ -681,8 +687,7 @@ This document does not list the opcodes. The list is
   `t5-regexp`, `t5-tcp` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
   `constants.OpcodeLifecycleLiveByName`.
 * `opcodes.RegisterOpCode` asserts that the number is a live row with that
-  name, then fills `ast.OpcodeHandlers`, `ast.OpNames`, `ast.OpCodes` and
-  `ast.Natives`. A deprecated row gets no handler and leaves a gap.
+  name, then fills `ast.OpcodeHandlers`, `ast.NativeNames` and `ast.Natives`. A deprecated row gets no handler and leaves a gap.
 * `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has a handler slot but
   no name, so no program calls it by name. The system library functions are
   registered through `opcodes.RegisterLibraryFunction`, with their own

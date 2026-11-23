@@ -82,16 +82,16 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1353.
-	RegisterFunction(prgrm, "resize", opSliceResize, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
+	RegisterOpCode(prgrm, constants.OP_RESIZE, "resize", opSliceResize, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1354.
-	RegisterFunction(prgrm, "insert", opSliceInsertElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32, ast.ConstCxArg_UND_TYPE), Out(ast.Slice(types.UNDEFINED)))
+	RegisterOpCode(prgrm, constants.OP_INSERT, "insert", opSliceInsertElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32, ast.ConstCxArg_UND_TYPE), Out(ast.Slice(types.UNDEFINED)))
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1355.
-	RegisterFunction(prgrm, "remove", opSliceRemoveElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
+	RegisterOpCode(prgrm, constants.OP_REMOVE, "remove", opSliceRemoveElement, In(ast.Slice(types.UNDEFINED), ast.ConstCxArg_I32), Out(ast.Slice(types.UNDEFINED)))
 	// OBJMODEL: state.CXArgumentMng.CXArgumentAlloc(), phase 4 #326.
 	// Now a constructor call, site S1356.
-	RegisterFunction(prgrm, "copy", opSliceCopy, In(ast.Slice(types.UNDEFINED), ast.Slice(types.UNDEFINED)), Out(ast.ConstCxArg_I32))
+	RegisterOpCode(prgrm, constants.OP_COPY, "copy", opSliceCopy, In(ast.Slice(types.UNDEFINED), ast.Slice(types.UNDEFINED)), Out(ast.ConstCxArg_I32))
 
 	RegisterFunction(prgrm, "len", opSliceLen, In(ast.ConstCxArg_UND_TYPE), Out(ast.ConstCxArg_I32))
 

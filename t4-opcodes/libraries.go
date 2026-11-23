@@ -32,8 +32,7 @@ func RegisterLibraryFunction(prgrm *ast.CXProgram, library int, name string, han
 	(*handlers)[function] = handler
 
 	key := ast.LibraryFunctionKey(library, function)
-	ast.OpNames[key] = name
-	ast.OpCodes[name] = key
+	ast.NativeNames.NativeNameIndexAdd(key, name)
 	if inputs == nil {
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
 		// Now a slice of objects, as RegisterOpCode makes it.

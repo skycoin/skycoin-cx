@@ -154,15 +154,13 @@ func importScopedMember(prgrm *ast.CXProgram, source *ast.CXPackage, name string
 	if importScopedGlobal(prgrm, source, name) {
 		return true
 	}
-	sourceText := prgrm.CXProgramNameText(source.Name)
-	if !cxpackages.IsDefaultPackage(sourceText) {
+	if !cxpackages.IsDefaultPackage(prgrm.CXProgramNameText(source.Name)) {
 		return false
 	}
-	qualified := sourceText + "." + prgrm.CXProgramNameText(name)
-	if _, found := ast.OpCodes[qualified]; found {
+	if _, found := prgrm.CXProgramNativeFind(&ast.NativeNames, source.Name, stringpool.StringGidNil, name); found {
 		return true
 	}
-	_, found := ConstCodes[qualified]
+	_, found := prgrm.CXProgramNativeFind(&ConstNames, source.Name, stringpool.StringGidNil, name)
 	return found
 }
 
@@ -181,15 +179,9 @@ func importScopedMembers(prgrm *ast.CXProgram, source *ast.CXPackage) []stringpo
 	}
 	sourceText := prgrm.CXProgramNameText(source.Name)
 	if cxpackages.IsDefaultPackage(sourceText) {
-		prefix := sourceText + "."
-		for qualified := range ast.OpCodes {
-			if rest, found := strings.CutPrefix(qualified, prefix); found {
-				names = append(names, prgrm.CXProgramNameIntern(rest))
-			}
-		}
-		for qualified := range ConstCodes {
-			if rest, found := strings.CutPrefix(qualified, prefix); found {
-				names = append(names, prgrm.CXProgramNameIntern(rest))
+		for _, index := range []*ast.NativeNameIndex{&ast.NativeNames, &ConstNames} {
+			for _, entry := range index.NativeNameIndexPackage(sourceText) {
+				names = append(names, prgrm.CXProgramNameIntern(entry.NativeNameEntryText[len(sourceText)+1:]))
 			}
 		}
 	}

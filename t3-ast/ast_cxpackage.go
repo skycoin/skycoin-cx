@@ -52,12 +52,11 @@ func (pkg *CXPackage) GetMethod(prgrm *CXProgram, receiverName stringpool.String
 	}
 
 	// Trying to find it in `Natives`.
-	// Most likely a method from a core package. OpCodes stays keyed by text
-	// until CXNativeFunction names are Gids, see #413.
-	if opCode, found := OpCodes[prgrm.CXProgramNameText(pkg.Name)+"."+prgrm.CXProgramNameText(receiverName)+"."+prgrm.CXProgramNameText(methodName)]; found {
+	// Most likely a method from a core package.
+	if native, found := prgrm.CXProgramNativeFind(&NativeNames, pkg.Name, receiverName, methodName); found {
 		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 		// Now an arena insert, site S0167.
-		opFnIdx := prgrm.AddNativeFunctionInArray(Natives[opCode])
+		opFnIdx := prgrm.AddNativeFunctionInArray(Natives[native.NativeNameEntryCode])
 		return opFnIdx, nil
 	}
 

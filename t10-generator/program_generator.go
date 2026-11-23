@@ -245,7 +245,7 @@ func getRandInp(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, opCode int,
 	// if no options available or if operator is jump, add new i32_LT expression.
 	if len(options) == 0 || opCode == cxconstants.OP_JMP {
 		// TODO: improve process when there's OP_JMP
-		return addNewExpression(prgrm, fnIdx, cxast.OpCodes["i32.lt"])
+		return addNewExpression(prgrm, fnIdx, nativeCode("i32.lt"))
 	}
 
 	return copySig(prgrm, options[rand.Intn(len(options))])
@@ -302,7 +302,7 @@ func getRandOut(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, outType typ
 
 func GetFunctionSet(fnNames []string) (fns []*cxast.CXNativeFunction) {
 	for _, fnName := range fnNames {
-		fn := cxast.Natives[cxast.OpCodes[fnName]]
+		fn := cxast.Natives[nativeCode(fnName)]
 		if fn == nil {
 			panic("standard library function not found.")
 		}
@@ -368,4 +368,11 @@ func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 
 	cxProgram.PrintProgram()
 	return cxProgram
+}
+
+// nativeCode returns the code of the built-in name, or 0 when none is
+// registered.
+func nativeCode(name string) int {
+	entry, _ := cxast.NativeNames.NativeNameIndexText(name)
+	return entry.NativeNameEntryCode
 }

@@ -9,7 +9,8 @@ import (
 func TestConstantsHaveTheirOwnCodes(t *testing.T) {
 	InitConstants()
 	names := map[int]string{}
-	for name, code := range ConstCodes {
+	for _, entry := range ConstNames.NativeNameIndexAll() {
+		name, code := entry.NativeNameEntryText, entry.NativeNameEntryCode
 		if other, ok := names[code]; ok {
 			t.Errorf("%s and %s share code %d", name, other, code)
 		}
@@ -23,7 +24,8 @@ func TestConstantsHaveTheirOwnCodes(t *testing.T) {
 		"cx.POINTER_SIZE":             types.Cast_ptr_to_i32(types.POINTER_SIZE),
 	}
 	for name, value := range want {
-		code, ok := ConstCodes[name]
+		entry, ok := ConstNames.NativeNameIndexText(name)
+		code := entry.NativeNameEntryCode
 		if !ok {
 			t.Errorf("%s is not registered", name)
 			continue

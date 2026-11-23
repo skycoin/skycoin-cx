@@ -904,6 +904,12 @@ const (
 	// OP_LIBRARY_CALL calls function CXFunction.LibraryFunctionNumber of system
 	// library CXFunction.LibraryNumber, see libraries.go.
 	OP_LIBRARY_CALL = 795
+
+	// The slice built-ins after append, which the compiler checks by number.
+	OP_RESIZE = 210
+	OP_INSERT = 211
+	OP_REMOVE = 212
+	OP_COPY   = 213
 )
 
 var (

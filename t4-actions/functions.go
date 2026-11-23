@@ -225,7 +225,7 @@ func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currInde
 	expressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[expressionIdx].Operator)
 	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, &exprs[currIndex]) {
 		file, line := exprLine(prgrm, exprs, currIndex)
-		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
+		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.NativeNames.NativeNameIndexCodeText(expressionOperator.AtomicOPCode))})
 	}
 }
 
@@ -432,7 +432,7 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIn
 		if typedOp == nil {
 			if ast.OpcodeHandlers[expressionOperator.AtomicOPCode] == nil {
 				file, line := exprLine(prgrm, exprs, currIndex)
-				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
+				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.NativeNames.NativeNameIndexCodeText(expressionOperator.AtomicOPCode))})
 			}
 			return
 		}
@@ -1124,7 +1124,7 @@ func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 			inp2Type = ast.GetFormattedType(prgrm, expressionInputSecondTypeSig)
 			if inp1Type != inp2Type {
 				file, line := exprLine(prgrm, exprs, currIndex)
-				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeInputTypesNotEqual, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode]), prgrm.CXProgramCompileErrorText(inp1Type), prgrm.CXProgramCompileErrorText(inp2Type)})
+				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeInputTypesNotEqual, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.NativeNames.NativeNameIndexCodeText(expressionOperator.AtomicOPCode)), prgrm.CXProgramCompileErrorText(inp1Type), prgrm.CXProgramCompileErrorText(inp2Type)})
 			}
 		}
 	}
@@ -1591,7 +1591,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 
 // checkMatchExprNumOfInputs records a call with a wrong number of inputs and
 // returns false.
-func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine, builtIn bool) bool {
+func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorInputs []ast.CXTypeSignatureIndex, exprCXLine *ast.CXLine, builtIn bool) bool {
 	// checking if number of inputs is not the same as the required number of inputs
 	if len(expression.GetInputs(prgrm)) == len(expressionOperatorInputs) {
 		return true
@@ -1622,16 +1622,16 @@ func checkMatchExprNumOfInputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOpe
 	}
 
 	// then we need to be strict in the number of inputs
-	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorInputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorInputs)), int64(len(expression.GetInputs(prgrm)))})
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorInputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expression.GetOperatorName(prgrm)), int64(len(expressionOperatorInputs)), int64(len(expression.GetInputs(prgrm)))})
 	return false
 }
 
 // checkMatchExprNumOfOutputs records a call with a wrong number of receivers
 // and returns false.
-func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, opName string, exprCXLine *ast.CXLine) bool {
+func checkMatchExprNumOfOutputs(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, expressionOperatorOutputs []ast.CXTypeSignatureIndex, exprCXLine *ast.CXLine) bool {
 	// checking if number of outputs is not the same as the required number of outputs
 	if len(expression.GetOutputs(prgrm)) != len(expressionOperatorOutputs) {
-		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorOutputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), int64(len(expressionOperatorOutputs)), int64(len(expression.GetOutputs(prgrm)))})
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeOperatorOutputCount, exprCXLine.FileName, exprCXLine.LineNumber, exprCXLine.LineColumn, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expression.GetOperatorName(prgrm)), int64(len(expressionOperatorOutputs)), int64(len(expression.GetOutputs(prgrm)))})
 		return false
 	}
 	return true
@@ -1651,12 +1651,11 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) b
 	exprCXLine, _ := prgrm.GetPreviousCXLine(exprs, currIndex)
 
 	if expressionOperator != nil {
-		opName := expression.GetOperatorName(prgrm)
 		expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
 		// A call with the wrong inputs reports that alone, not its receivers too.
-		if !checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, opName, exprCXLine, expressionOperator.IsBuiltIn()) || !checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, opName, exprCXLine) {
+		if !checkMatchExprNumOfInputs(prgrm, expression, expressionOperatorInputs, exprCXLine, expressionOperator.IsBuiltIn()) || !checkMatchExprNumOfOutputs(prgrm, expression, expressionOperatorOutputs, exprCXLine) {
 			return false
 		}
 	}
@@ -3452,14 +3451,14 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 	if expressionOperator == nil || !expressionOperator.IsBuiltIn() {
 		return
 	}
-	opName := ast.OpNames[expressionOperator.AtomicOPCode]
+	opcode := expressionOperator.AtomicOPCode
 	var elementInput int
-	switch opName {
-	case "append":
+	switch opcode {
+	case constants.OP_APPEND:
 		elementInput = 1
-	case "insert":
+	case constants.OP_INSERT:
 		elementInput = 2
-	case "resize", "remove", "copy":
+	case constants.OP_RESIZE, constants.OP_REMOVE, constants.OP_COPY:
 		elementInput = -1
 	default:
 		return
@@ -3473,7 +3472,7 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 	if !strings.HasPrefix(sliceType, "[]") {
 		return
 	}
-	literal := opName == "append" && strings.HasPrefix(prgrm.CXProgramNameText(sliceTypeSig.Name), constants.SLICE_LITERAL_PREFIX)
+	literal := opcode == constants.OP_APPEND && strings.HasPrefix(prgrm.CXProgramNameText(sliceTypeSig.Name), constants.SLICE_LITERAL_PREFIX)
 	operandTypeCheck := func(typeSigIdx ast.CXTypeSignatureIndex, expectedType string) {
 		typeSig := prgrm.GetCXTypeSignatureFromArray(typeSigIdx)
 		if typeSignatureUndefined(prgrm, typeSig) {
@@ -3497,12 +3496,12 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 		if sigFile, sigLine, sigColumn := ast.CXArgumentDebugPosition(prgrm, typeSig.ArgDetails); sigLine > 0 && !temporary {
 			file, line, column = sigFile, sigLine, sigColumn
 		}
-		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSliceElementType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(opName), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
+		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeSliceElementType, file, line, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.NativeNames.NativeNameIndexCodeText(opcode)), prgrm.CXProgramCompileErrorText(expectedType), prgrm.CXProgramCompileErrorText(receivedType)})
 	}
 	if elementInput > 0 && elementInput < len(inputs) {
 		operandTypeCheck(inputs[elementInput], sliceType[len("[]"):])
 	}
-	if opName == "copy" && len(inputs) > 1 {
+	if opcode == constants.OP_COPY && len(inputs) > 1 {
 		operandTypeCheck(inputs[1], sliceType)
 		return
 	}

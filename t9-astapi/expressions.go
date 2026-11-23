@@ -45,7 +45,7 @@ func AddNativeExpressionToFunction(cxprogram *cxast.CXProgram, functionName stri
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S1593.
 	cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
-	cxAtomicOpOperator.Name = cxprogram.CXProgramNameIntern(cxast.OpNames[expressionType])
+	cxAtomicOpOperator.Name = cxprogram.CXProgramNameIntern(cxast.NativeNames.NativeNameIndexCodeText(expressionType))
 
 	fn, err := FindFunction(cxprogram, functionName)
 	if err != nil {
@@ -137,7 +137,7 @@ func AddNativeExpressionToFunctionByLineNumber(cxprogram *cxast.CXProgram, funct
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S1597.
 	cxAtomicOpOperator := cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
-	cxAtomicOpOperator.Name = cxprogram.CXProgramNameIntern(cxast.OpNames[expressionType])
+	cxAtomicOpOperator.Name = cxprogram.CXProgramNameIntern(cxast.NativeNames.NativeNameIndexCodeText(expressionType))
 	fn, err := FindFunction(cxprogram, functionName)
 	if err != nil {
 		return err
