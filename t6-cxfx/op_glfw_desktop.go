@@ -229,6 +229,8 @@ func opGlfwSetShouldClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []
 	windows[inputs[0].Get_str(prgrm)].SetShouldClose(shouldClose)
 }
 
+// GCREACH: allocates on the heap, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func getWindowName(prgrm *ast.CXProgram, w *glfw.Window) []byte {
 	for key, win := range windows {
 		if w == win {

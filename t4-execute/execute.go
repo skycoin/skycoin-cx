@@ -6,6 +6,8 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	// GCREACH: t3-ast owns the heap and the GC. The old loop runs opcodes that
+	// allocate, which may run MarkAndCompact, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -72,6 +74,8 @@ func runSysInitFunc(cxprogram *ast.CXProgram, mod *ast.CXPackage) error {
 	return nil
 }
 
+// GCREACH: allocates the os.Args strs and slice, which may run
+// MarkAndCompact, see docs/GarbageCollector.md.
 func feedOSArgs(cxprogram *ast.CXProgram, args []string) error {
 	if osPkg, err := cxprogram.SelectPackage(cxprogram.CxIrState.CxIrStateNameOs); err == nil {
 		argsOffset := types.Pointer(0)

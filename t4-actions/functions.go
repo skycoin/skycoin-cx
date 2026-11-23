@@ -1214,6 +1214,8 @@ func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, 
 }
 
 // isPointerAdded checks if `sym` has already been added to `fn.ListOfPointers`.
+// GCREACH: reads the GC root table ListOfPointers,
+// see docs/GarbageCollector.md.
 func isPointerAdded(prgrm *ast.CXProgram, fn *ast.CXFunction, sym *ast.CXArgument) (found bool) {
 	for _, ptr := range fn.ListOfPointers {
 		if sym.Name == ptr.Name {
@@ -1249,6 +1251,9 @@ func isPointerAdded(prgrm *ast.CXProgram, fn *ast.CXFunction, sym *ast.CXArgumen
 //		prgrm - a CXProgram that contains all the data and arrays of the program.
 //		fn - the function the sym belongs.
 //	 typeSigIdx - the index of the type signature from the main CXTypeSignature array.
+//
+// GCREACH: adds GC roots to ListOfPointers,
+// see docs/GarbageCollector.md.
 func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeSignatureIndex) {
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0804.

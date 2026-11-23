@@ -3,6 +3,8 @@ package opcodes
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	// GCREACH: t3-ast owns the heap and the GC. This file registers opcodes
+	// and allocates nothing, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 

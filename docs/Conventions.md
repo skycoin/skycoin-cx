@@ -74,3 +74,9 @@ document or check script.
     names, for example `string.OrderingByByteValue`, and are never exposed
     as operators. `packages.DefaultPackages` in t0-packages lists them. See
     #380 and #379.
+15. **GC reach.** The vm executor (`t3-cx-runtime-vm`) and the IR base
+    (`t2-cx-runtime-ir`) never import the garbage collector. Every other
+    place that allocates on the heap, collects or touches a GC root table
+    has a two line `GCREACH:` comment above it or above its function. `make
+    check-gcreach` runs [check-gcreach.sh](../check-gcreach.sh). See
+    [GarbageCollector.md](GarbageCollector.md).

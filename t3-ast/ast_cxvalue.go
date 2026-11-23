@@ -204,6 +204,8 @@ func (value *CXValue) Set_bytes(prgrm *CXProgram, data []byte) {
 	types.WriteSlice_byte(prgrm.Memory, value.Offset, data)
 }
 
+// GCREACH: allocates a str object, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func (value *CXValue) Set_str(prgrm *CXProgram, data string) {
 	AllocateStrAt(prgrm, value.Offset, data)
 }

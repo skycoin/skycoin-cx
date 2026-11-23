@@ -11,6 +11,8 @@ import (
 	//"golang.org/x/mobile/exp/audio/al"
 )
 
+// GCREACH: allocates on the heap, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func opAlLoadWav(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	file, fileError := ast.ProgramSandboxFileOpen(prgrm, &inputs[0])
 	if fileError != nil {

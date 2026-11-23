@@ -70,10 +70,13 @@ check-recovers: ## Check that no non-vendor code calls recover(, see recover-all
 check-objmodel: ## Check the object model rules of docs/ObjectModel.md and that the generated managers are up to date
 	./check-objmodel.sh
 
+check-gcreach: ## Check that the vm and IR base stay GC free and every other GC reach has a GCREACH comment, see docs/GarbageCollector.md
+	./check-gcreach.sh
+
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
-check: check-tiers check-inits check-ifaces check-recovers check-objmodel vet test-go test test-ptr64 ## tier, init, interface, recover and object model checks, vet, Go tests and CX program tests (default and ptr64)
+check: check-tiers check-inits check-ifaces check-recovers check-objmodel check-gcreach vet test-go test test-ptr64 ## tier, init, interface, recover, object model and GC reach checks, vet, Go tests and CX program tests (default and ptr64)
 
 bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx

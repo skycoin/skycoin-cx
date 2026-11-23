@@ -144,6 +144,8 @@ var definitions []Type = []Type{
 type AllocatorHandler func(interface{}, Pointer) Pointer
 
 // VIOLATION: state outside State. Owner: t0-types; moves to CXProgramMng in phase 2.
+// GCREACH: the heap allocator hook. main sets it to ast.AllocateSeq, which
+// may run MarkAndCompact, see docs/GarbageCollector.md.
 var Allocator AllocatorHandler
 
 func debugPanicIf(condition bool, error int) {

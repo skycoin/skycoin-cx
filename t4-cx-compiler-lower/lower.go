@@ -15,6 +15,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
+	// GCREACH: t3-ast owns the heap and the GC. Lowering rejects heap operands,
+	// so vm code never reaches the GC, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 

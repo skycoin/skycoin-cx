@@ -2,6 +2,8 @@ package types
 
 //"fmt"
 
+// GCREACH: allocates through Allocator, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func AllocWrite_str_data(prgrm interface{}, memory []byte, str string) Pointer {
 	return AllocWrite_obj_data(prgrm, memory, []byte(str))
 }

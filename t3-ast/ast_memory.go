@@ -60,6 +60,8 @@ func ResizeMemory(prgrm *CXProgram, newMemSize types.Pointer, isExpand bool) {
 }
 
 // AllocateSeq allocates memory in the heap
+// GCREACH: runs MarkAndCompact inline when the heap is full, then grows or
+// shrinks the heap, see docs/GarbageCollector.md.
 func AllocateSeq(program interface{}, size types.Pointer) (offset types.Pointer) {
 	prgrm, ok := program.(*CXProgram)
 	if !ok {
@@ -123,6 +125,8 @@ func AllocateSeq(program interface{}, size types.Pointer) (offset types.Pointer)
 
 // AllocateStr returns a new str object holding data. It writes the object
 // after the allocation, which may give prgrm a new Memory.
+// GCREACH: allocates through AllocateSeq, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func AllocateStr(prgrm *CXProgram, data string) types.Pointer {
 	size := types.OBJECT_HEADER_SIZE + types.Cast_int_to_ptr(len(data))
 	object := AllocateSeq(prgrm, size)
@@ -132,6 +136,8 @@ func AllocateStr(prgrm *CXProgram, data string) types.Pointer {
 
 // AllocateStrAt writes a new str object holding data at address. An address
 // inside a heap object stays pinned, so it moves with the object.
+// GCREACH: pins address in Heap.Pinned across an allocation, which may run
+// MarkAndCompact, see docs/GarbageCollector.md.
 func AllocateStrAt(prgrm *CXProgram, address types.Pointer, data string) {
 	prgrm.Heap.Pinned = address
 	object := AllocateStr(prgrm, data)

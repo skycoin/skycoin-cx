@@ -91,6 +91,8 @@ func wipeDeclarationMemory(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator) error
 	}
 
 	if OffsetEscaped(offset) {
+		// GCREACH: allocates the object of an escaped local, which may run
+		// MarkAndCompact, see docs/GarbageCollector.md.
 		EscapedAllocate(prgrm, newFP, offset, escapedSize(prgrm, cxAtomicOutputTypeSig))
 		return nil
 	}

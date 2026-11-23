@@ -711,6 +711,8 @@ func serializeFunctions(prgrm *CXProgram, encoder *serializeEncoder) error {
 	return nil
 }
 
+// GCREACH: writes the GC root tables ListOfPointers and ListOfSlots,
+// see docs/GarbageCollector.md.
 func serializeFunction(prgrm *CXProgram, encoder *serializeEncoder, fn *CXFunction) error {
 	encoder.serializeEncoderInt(int64(fn.Index))
 	encoder.serializeEncoderInt(int64(fn.Name))
@@ -773,6 +775,8 @@ func deserializeFunctions(prgrm *CXProgram, decoder *serializeDecoder) {
 	}
 }
 
+// GCREACH: reads the GC root tables ListOfPointers and ListOfSlots,
+// see docs/GarbageCollector.md.
 func deserializeFunction(prgrm *CXProgram, decoder *serializeDecoder, fn *CXFunction) {
 	fn.Index = decoder.serializeDecoderIntValue()
 	fn.Name = stringpool.StringGid(decoder.serializeDecoderInt())

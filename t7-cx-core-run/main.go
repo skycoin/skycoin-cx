@@ -22,6 +22,8 @@ func main() {
 // coreRun loads the appended program and runs it with args as os.Args. It
 // returns the exit code.
 func coreRun(args []string) int32 {
+	// GCREACH: installs AllocateSeq as the t0-types allocator hook,
+	// see docs/GarbageCollector.md.
 	types.Allocator = ast.AllocateSeq
 	runtime.LockOSThread()
 	runtime.GOMAXPROCS(2)

@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strconv"
 
+	// GCREACH: t3-ast owns the heap and the GC. This file allocates strs, which
+	// may run MarkAndCompact, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 

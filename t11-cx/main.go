@@ -89,6 +89,8 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 // runStart reads the flags and sets up the program state for args, the part
 // of Run before parsing. It returns false when there is nothing to run.
 func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []*os.File, fileNames []string, start bool) {
+	// GCREACH: installs AllocateSeq as the t0-types allocator hook,
+	// see docs/GarbageCollector.md.
 	types.Allocator = ast.AllocateSeq
 	runtime.LockOSThread()
 

@@ -43,6 +43,8 @@ type CXFunction struct {
 	// Used by the GC
 	// OBJMODEL: CXArgumentGid, phase 5 #327.
 	// Now a pointer at rest, site S0130.
+	// GCREACH: the GC root table of pointer locals, read by gcFrameRoots,
+	// see docs/GarbageCollector.md.
 	ListOfPointers []*CXArgument // Root pointers for the GC algorithm
 
 	// EscapeInputs says for each input where the address it holds may go.
@@ -50,5 +52,7 @@ type CXFunction struct {
 	EscapeInputs []CXFunctionEscape
 
 	// ListOfSlots are the roots for the GC inside the locals.
+	// GCREACH: the GC root table of typed frame slots, read by gcFrameRoots,
+	// see docs/GarbageCollector.md.
 	ListOfSlots []CXFunctionSlot
 }

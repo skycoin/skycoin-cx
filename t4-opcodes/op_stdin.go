@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	// GCREACH: t3-ast owns the heap and the GC. This file allocates strs, which
+	// may run MarkAndCompact, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 

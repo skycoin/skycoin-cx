@@ -53,6 +53,8 @@ func Make_obj(data []byte) []byte {
 	return obj
 }
 
+// GCREACH: allocates through Allocator, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func AllocWrite_obj_data(prgrm interface{}, memory []byte, obj []byte) Pointer {
 	size := Compute_obj_size(obj)
 	heapOffset := Allocator(prgrm, size)
@@ -73,6 +75,8 @@ func Read_obj_data(memory []byte, offset Pointer) []byte {
 	return obj
 }
 
+// GCREACH: allocates through Allocator, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
 func Write_obj(prgrm interface{}, memory []byte, offset Pointer, obj []byte) {
 	heapOffset := AllocWrite_obj_data(prgrm, memory, obj)
 	Write_ptr(memory, offset, heapOffset)
