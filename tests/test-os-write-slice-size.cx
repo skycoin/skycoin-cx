@@ -1,5 +1,5 @@
 // os.Write*Slice writes len(s) elements of the slice type, and os.Read*Slice
-// reads them back. The file it leaves is in .gitignore.
+// reads them back.
 
 package main
 

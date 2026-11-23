@@ -49,7 +49,7 @@ build-tests: build ## Build the cx program test runner
 test: build-tests ## Run the stable CX program tests
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
 
-test-all: build-tests ## Run all non-GUI CX program tests, including known issues
+test-all: build-tests ## Run all non-GUI CX program tests, including any marked as known issues (none now)
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui
 
 test-ptr64: ## Run the stable CX program tests with a ptr64 build

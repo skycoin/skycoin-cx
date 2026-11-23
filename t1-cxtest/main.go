@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -116,6 +117,7 @@ func Execute(c *cli.Command) error {
 
 	fmt.Printf("Running CX tests in dir: '%s'\n", workingDir)
 	runTestCases(tester)
+	runFileWriteTests(tester, workingDir)
 	runGuideSnippetTests(tester, workingDir)
 	runCompoundTypeTests(tester, workingDir)
 	end := time.Now().Unix()
@@ -548,7 +550,6 @@ func runTestCases(t *runner.TestRunner) {
 		"2\n10\n4\n11\n6\n12\n14\n2\n21\n")
 	t.RunWant("--executor=old test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on the old loop", "5\n6\n5\n12\n")
 	t.RunWant("--executor=vm test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on vm", "5\n6\n5\n12\n")
-	t.RunWant("--enable=file test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
 	t.RunMissing("test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error prints no Go stack by default", "goroutine")
 	t.RunWant("--debug-go-stack test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "--debug-go-stack prints the Go stack of a runtime error", "goroutine")
 	t.RunWant("test-pointer-array-2d.cx", types.CX_SUCCESS, "p[i][j] indexes a *[N][M]T and a *[N][M]*T",
@@ -1103,14 +1104,14 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-295.cx", types.CX_COMPILATION_ERROR, "No compilation error when assigning a i32 value to a []i32 variable")
 	t.Run("issue-296.cx", types.CX_COMPILATION_ERROR, "No compilation error when comparing value of different types")
 	t.Run("-stack-size 30 issue-297a.cx", types.CX_RUNTIME_STACK_OVERFLOW_ERROR, "No stack overflow error")
-	t.RunEx("-heap-initial 100 -heap-max 110 issue-297b.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "No heap exhausted error", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#17
+	t.Run("-heap-initial 100 -heap-max 110 issue-297b.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "No heap exhausted error")
 	t.Run("issue-298.cx", types.CX_SUCCESS, "Argument type deduction failed when passing address of an i32 struct field to a function accepting *i32 argument.")
 	t.Run("issue-299.cx", types.CX_COMPILATION_ERROR, "Type checking is not working with receiving variables of unexpected types")
 	t.Run("issue-300.cx", types.CX_SUCCESS, "Crash when using a constant expression in a slice literal expression")
 	t.Run("issue-301-a.cx", types.CX_COMPILATION_ERROR, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-301-b.cx", types.CX_COMPILATION_ERROR, "Can redeclare variables if they are inline initialized")
 	t.Run("issue-302.cx", types.CX_SUCCESS, "Trying to determine the length of a slice of struct instances throws an error.")
-	t.RunEx("issue-67.cx", types.CX_COMPILATION_ERROR, "Panic when using void return value of a function in a for loop expression", runner.TestIssue, 0)
+	t.Run("issue-67.cx", types.CX_COMPILATION_ERROR, "Panic when using void return value of a function in a for loop expression")
 	t.Run("issue-66.cx", types.CX_SUCCESS, "Wrong sprintf behaviour when printing boolean values with %v")
 	t.Run("issue-65.cx", types.CX_SUCCESS, "for true {} loop scope is not executed")
 	t.Run("issue-64.cx", types.CX_SUCCESS, "for loop using boolean value is not compiling")
@@ -1124,13 +1125,13 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-61-a.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
 	t.Run("issue-61-b.cx", types.CX_SUCCESS, "Compilation error when using return value of a member method in a expression (skycoin-cx#24)")
 	t.Run("issue-309.cx", types.CX_SUCCESS, "Compilation error when left hand side of an assignment expression is a struct field")
-	t.RunEx("--heap-initial=1M issue-60.cx", types.CX_SUCCESS, "Crash when INIT_HEAP_SIZE limit is reached ", runner.TestIssue, 0)
-	t.RunEx("--heap-initial=1M issue-59-a.cx", types.CX_SUCCESS, "Crash in garbage collector when heap is resized", runner.TestIssue, 0)
-	t.RunEx("--heap-initial=1M issue-59-b.cx", types.CX_SUCCESS, "Crash in garbage collector when heap is resized", runner.TestIssue, 0)
+	t.Run("--heap-initial=1M issue-60.cx", types.CX_SUCCESS, "Crash when INIT_HEAP_SIZE limit is reached ")
+	t.Run("--heap-initial=1M issue-59-a.cx", types.CX_SUCCESS, "Crash in garbage collector when heap is resized")
+	t.Run("--heap-initial=1M issue-59-b.cx", types.CX_SUCCESS, "Crash in garbage collector when heap is resized")
 	t.RunEx("issue-53-a.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-b.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-c.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
-	t.RunEx("issue-49.cx", types.CX_COMPILATION_ERROR, "No compilation error when assigning an literal which overflow the receiving type", runner.TestIssue, 0)
+	t.Run("issue-49.cx", types.CX_COMPILATION_ERROR, "No compilation error when assigning an literal which overflow the receiving type")
 	t.Run("issue-48.cx", types.CX_SUCCESS, "Cx is not supporting short-circuit evaluation")
 	t.Run("issue-39.cx", types.CX_COMPILATION_ERROR, "func defined with no arguments, called WITH arguments causes PANIC")
 	t.Run("issue-2.cx", types.CX_SUCCESS, "multi-dimensional arrays are not working")
@@ -1142,8 +1143,8 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-120-a.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
 	t.Run("issue-120-b.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
 	t.Run("issue-120-c.cx", types.CX_COMPILATION_ERROR, "Invalid implicit cast when assigning the result of a math operator to a variable. (skycoin-cx#27)")
-	t.RunEx("issue-131.cx", types.CX_SUCCESS, "Panic when using arithmetic operations.", runner.TestIssue, 0)
-	t.RunEx("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.", runner.TestIssue, 0)
+	t.Run("issue-131.cx", types.CX_SUCCESS, "Panic when using arithmetic operations.")
+	t.Run("test-ar-1.cx", types.CX_SUCCESS, "Panic when using string to pointer array.")
 	t.Run("issue-650.cx", types.CX_SUCCESS, "test should not fail")
 
 	t.RunWant("test-serialize.cx", types.CX_SUCCESS, "serialize returns a []ui8 that deserialize accepts", "true\n7")
@@ -1198,4 +1199,19 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("./examples/testing-packages.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunWant("./examples/testing-pointers-to-arrays-of-structs.cx", types.CX_SUCCESS, "a pointer to a local array stays valid after a later call",
 		"10\n20\n30\n40\n50\n60\n10\n20\n30\n40\n50\n60\n")
+}
+
+// runFileWriteTests runs the tests that write files in a sandbox directory it
+// removes afterwards, so they leave nothing in workingDir.
+func runFileWriteTests(t *runner.TestRunner, workingDir string) {
+	sandboxDir, err := os.MkdirTemp(workingDir, "file-write-")
+	if err != nil {
+		fmt.Printf("file write tests: %v\n", err)
+		t.TestCount++
+		return
+	}
+	defer os.RemoveAll(sandboxDir)
+
+	sandbox := "--enable=file --sandbox=" + filepath.Base(sandboxDir) + " "
+	t.RunWant(sandbox+"test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
 }

@@ -202,7 +202,7 @@ directory of the repository:
 
 ```
 make test       # the stable tests
-make test-all   # also the known issue tests, which are expected to fail
+make test-all   # also the tests marked as known issues, none at present
 make check      # every check CI runs, including the tests
 ```
 
