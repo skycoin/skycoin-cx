@@ -3,12 +3,12 @@
 package main
 
 var count i32
-func True(i i32) (out bool) {
+func True(i i32) (out bool) { global count
 	out = true
 	count = i
 }
 
-func False(i i32) (out bool) {
+func False(i i32) (out bool) { global count
 	out = false
 	count = i
 }
@@ -16,7 +16,7 @@ func False(i i32) (out bool) {
 func foo(b0 bool, b1 bool, b2 bool) {
 }
 
-func main()() {
+func main()() { global count
 	var b bool
 
 	b = True(4) || True(5)

@@ -56,7 +56,7 @@ func mouseCursor (window str, xpos f64, ypos f64) () {
 	string.PrintLine(string.Concatenation("y: ", f64.str(y)))
 }
 
-func main () () {
+func main () () { global width, height
 	glfw.Init()
 
 	glfw.CreateWindow("window", width, height, "Mouse Interaction")

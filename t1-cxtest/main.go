@@ -945,6 +945,27 @@ func runTestCases(t *runner.TestRunner) {
 		"test-error-short-declaration-no-new.cx:5:2 no new variables on left side of :=",
 		"test-error-short-declaration-no-new.cx:7:2 cannot assign value of type 'str' to identifier 'x' of type 'i32'")
 	t.RunMissing("test-error-short-declaration-no-new.cx", types.CX_COMPILATION_ERROR, "a := of several names reports no name redeclared", "redeclared")
+	t.RunWant("issue-51.cx", types.CX_COMPILATION_ERROR, "a local named like a global is a compile error (skycoin-cx#25, #486)",
+		"issue-51.cx:8:6 'i' shadows global declared at issue-51.cx:5:5")
+	t.RunWant("test-global-declaration.cx", types.CX_SUCCESS, "global statements of the package and of an imported package (#486)",
+		"2 1 9 7 14\n")
+	t.RunWant("test-global-declaration-errors.cx", types.CX_COMPILATION_ERROR, "errors of the global statement (#486)",
+		"test-global-declaration-errors.cx:13:2 function 'undeclared' uses global 'counter' without declaring it, add global counter at the top of its body",
+		"test-global-declaration-errors.cx:14:12 function 'undeclared' uses global 'config.Limit' without declaring it",
+		"test-global-declaration-errors.cx:18:18 global 'spare' declared and not used in function 'unused'",
+		"test-global-declaration-errors.cx:24:2 global declarations must be the first statements of a function body",
+		"test-global-declaration-errors.cx:29:3 global declarations must be the first statements of a function body",
+		"test-global-declaration-errors.cx:34:9 'missing' is not a global of package 'main'",
+		"test-global-declaration-errors.cx:34:18 'config.Missing' is not a global of package 'config'",
+		"test-global-declaration-errors.cx:34:34 package 'other' of global 'other.Limit' is not imported",
+		"test-global-declaration-errors.cx:34:56 global 'counter' declared twice")
+	t.RunWant("test-shadow-errors.cx", types.CX_COMPILATION_ERROR, "a name that shadows another is a compile error (#486)",
+		"test-shadow-errors.cx:11:16 'counter' shadows global declared at test-shadow-errors.cx:5:5",
+		"test-shadow-errors.cx:14:16 'helper' shadows function declared at test-shadow-errors.cx:9:6",
+		"test-shadow-errors.cx:19:6 'os' shadows package imported at test-shadow-errors.cx:3:8",
+		"test-shadow-errors.cx:20:2 'Point' shadows type declared at test-shadow-errors.cx:7:6",
+		"test-shadow-errors.cx:23:3 'x' shadows variable declared at test-shadow-errors.cx:21:2",
+		"test-shadow-errors.cx:26:6 'counter' shadows global declared at test-shadow-errors.cx:5:5")
 	t.RunWant("test-error-single-value.cx", types.CX_COMPILATION_ERROR, "a call of several results or of none used as one value",
 		"test-error-single-value.cx:12 multiple-value two() (value of type (a i32, b i32)) in single-value context",
 		"test-error-single-value.cx:13 function 'none' returns no value",
@@ -1082,7 +1103,6 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunEx("issue-53-a.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-b.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
 	t.RunEx("issue-53-c.cx", types.CX_SUCCESS, "Issues with slice of type T where sizeof T is different than 4 ", runner.TestStable, 0)
-	t.RunEx("issue-51.cx", types.CX_COMPILATION_ERROR, "No compilation error when global variable is redeclared at local scope", runner.TestIssue, 0) // known failing, skycoin/skycoin-cx#25
 	t.RunEx("issue-49.cx", types.CX_COMPILATION_ERROR, "No compilation error when assigning an literal which overflow the receiving type", runner.TestIssue, 0)
 	t.Run("issue-48.cx", types.CX_SUCCESS, "Cx is not supporting short-circuit evaluation")
 	t.Run("issue-39.cx", types.CX_COMPILATION_ERROR, "func defined with no arguments, called WITH arguments causes PANIC")

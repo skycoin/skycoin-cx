@@ -46,7 +46,7 @@ func prettyOsCode(code i32) (out str) {
 	}
 }
 
-func runTestEx(cmd str, exitCode i32, desc str, filter i32, timeoutMs i32) () {
+func runTestEx(cmd str, exitCode i32, desc str, filter i32, timeoutMs i32) () { global g_enabledTests, g_cxPath, g_testCount, g_workingDir, g_log, LOG_TIME, LOG_FAIL, LOG_STDERR, LOG_SUCCESS, g_testSuccess, LOG_SKIP, g_testSkipped
 	if (g_enabledTests & filter) == filter {
 		cmd = sprintf("%s %s", g_cxPath, cmd)
 		var runError i32 = 0
@@ -101,7 +101,7 @@ func runTestEx(cmd str, exitCode i32, desc str, filter i32, timeoutMs i32) () {
 	}
 }
 
-func runTest(cmd str, exitCode i32, desc str) {
+func runTest(cmd str, exitCode i32, desc str) { global TEST_STABLE
 	runTestEx(cmd, exitCode, desc, TEST_STABLE, 0)
 }
 
@@ -116,7 +116,7 @@ func help (message str, exitCode i32) {
 	os.Exit(exitCode)
 }
 
-func main ()() {
+func main ()() { global TEST_ALL, TEST_STABLE, TEST_ISSUE, TEST_GUI, LOG_ALL, LOG_SUCCESS, LOG_STDERR, LOG_FAIL, LOG_SKIP, LOG_TIME, os.Args, g_workingDir, g_cxPath, g_enabledTests, LOG_NONE, g_log, g_testCount, g_testSuccess, g_testSkipped
 	var testNames []str
 	var testValues []i32
 	testNames = []str { "all", "stable", "issue", "gui" }
@@ -139,7 +139,7 @@ func main ()() {
 	var enabledTests i32 = 0
 	var disabledTests i32 = 0
 	var log i32 = 0
-	var help bool
+	var helpValue bool
 
 	for a := 0; a < argCount; a++ {
 		var arg str = os.Args[a]
@@ -164,8 +164,8 @@ func main ()() {
 			continue
 		}
 
-		if args.Bool(arg, "help", &help, &helpMatch) {
-			if help {
+		if args.Bool(arg, "help", &helpValue, &helpMatch) {
+			if helpValue {
 				help("", 0)
 			}
 		}

@@ -5,7 +5,7 @@ package main
 import "issue236a"
 
 var test i32 = 44
-func main()() {
+func main()() { global test, issue236a.test
 
 	test(issue236a.test, 666, "internal error")
 	test(test, 44, "internal error")

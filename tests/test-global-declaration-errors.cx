@@ -1,0 +1,39 @@
+package config
+
+var Limit i32 = 7
+
+package main
+
+import "config"
+
+var counter i32
+var spare i32
+
+func undeclared() {
+	counter = 1
+	i32.print(config.Limit)
+}
+
+func unused() {
+	global counter, spare
+	counter = 2
+}
+
+func late() {
+	counter = 3
+	global counter
+}
+
+func nested() {
+	if true {
+		global counter
+	}
+}
+
+func unknown() {
+	global missing, config.Missing, other.Limit, counter, counter
+	counter = 4
+}
+
+func main() {
+}

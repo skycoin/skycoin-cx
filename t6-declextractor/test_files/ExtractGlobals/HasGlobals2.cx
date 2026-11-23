@@ -23,7 +23,7 @@ func sum (num i32) (res i32) {
 
 // main function 
 //
-func main () {
+func main () { global fooV
 	
 	// local variables
 	//

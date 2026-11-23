@@ -4,19 +4,19 @@ var calls i32
 
 var early bool = T(0) || T(99)
 
-func T(i i32) (out bool) {
+func T(i i32) (out bool) { global calls
 	printf("T%d ", i)
 	calls = calls + 1
 	out = true
 }
 
-func F(i i32) (out bool) {
+func F(i i32) (out bool) { global calls
 	printf("F%d ", i)
 	calls = calls + 1
 	out = false
 }
 
-func main() {
+func main() { global early, calls
 	var b bool
 	b = T(1) || T(2)
 	printf("= %v\n", b)

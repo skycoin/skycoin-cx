@@ -24,7 +24,7 @@ func sum(s []i32) (out i32) {
 	}
 }
 
-func main() {
+func main() { global g
 	var a [2][]i32
 	var i i32
 	for i = 0; i < 5; i++ {

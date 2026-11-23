@@ -10,13 +10,13 @@ func two() (a i32, b str) {
 	return a, b
 }
 
-func pair() (p *P, s []i32) {
+func pair() (p *P, s []i32) { global base
 	p = &P{x: 9}
 	s = append(s, base)
 	return p, s
 }
 
-func ints() (a i32, b i32) {
+func ints() (a i32, b i32) { global base
 	a = base
 	b = base + 1
 	return a, b
@@ -31,7 +31,7 @@ var (
 	va, vb = two()
 )
 
-func main() {
+func main() { global ga, gb, pp, ps, ia, ib, va, vb
 	var a, b = two()
 	printf("%d %s %d %s\n", a, b, ga, gb)
 	printf("%d %d %d %d %d %s\n", pp.x, ps[0], ia, ib, va, vb)

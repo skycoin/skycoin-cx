@@ -28,7 +28,7 @@ func (t T) m() {
 	var bad2 i32 = "in second m"
 }
 
-func main() {
+func main() { global g
 	var t T
 	t.a = 3
 	var r i32 = f(1)

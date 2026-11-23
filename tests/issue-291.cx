@@ -5,10 +5,10 @@ package main
 import "sys/string"
 
 func main()() {
-	var string str
-	string = "boo:foo"
-	string = string.SubstringByByteRange(string, 4, len(string))
+	var stringValue str
+	stringValue = "boo:foo"
+	stringValue = string.SubstringByByteRange(stringValue, 4, len(stringValue))
 	var s []str
-	s = append(s, string)
+	s = append(s, stringValue)
 	test(s[0], "foo", "")
 }

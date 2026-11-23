@@ -24,7 +24,7 @@ func grid() [2][2]i32 {
 
 func sameLine() (r [2]i32) { r[1] = 9 }
 
-func global() *[2]i32 {
+func globalArray() *[2]i32 { global g
 	return &g
 }
 
@@ -32,7 +32,7 @@ func through(p *[2]i32) (r *[2]i32) {
 	return p
 }
 
-func main() {
+func main() { global g
 	a := named()
 	var b [2]i32
 	b = unnamed()
@@ -42,7 +42,7 @@ func main() {
 	printf("%d %d %d %d %d\n", a[1], b[0], c[1].x, d[1][0], e[1])
 
 	g[1] = 21
-	q := global()
+	q := globalArray()
 	var w *[2]i32
 	w = through(q)
 	w[0] = 5

@@ -4,7 +4,7 @@ type T struct {
 	n i32
 }
 
-func (t T) get() (r i32) {
+func (t T) get() (r i32) { global loop
 	r = loop + 1
 	return r
 }
@@ -12,6 +12,6 @@ func (t T) get() (r i32) {
 var obj T
 var loop i32 = obj.get()
 
-func main() {
+func main() { global loop
 	printf("%d\n", loop)
 }

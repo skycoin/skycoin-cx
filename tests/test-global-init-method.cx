@@ -4,12 +4,12 @@ type T struct {
 	n i32
 }
 
-func (t T) get() (r i32) {
+func (t T) get() (r i32) { global base
 	r = base + t.n
 	return r
 }
 
-func (t *T) twice() (r i32) {
+func (t *T) twice() (r i32) { global base2
 	r = base2 * 2
 	return r
 }
@@ -33,6 +33,6 @@ func helper() (r i32) {
 	return r
 }
 
-func main() {
+func main() { global first, second, nested, viaFunc
 	printf("%d %d %d %d\n", first, second, nested, viaFunc)
 }

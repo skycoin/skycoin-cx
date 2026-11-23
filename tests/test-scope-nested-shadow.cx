@@ -4,19 +4,19 @@ func main() {
 	x := 1
 	if true {
 		if true {
-			x := 3
-			i32.print(x)
+			xNested := 3
+			i32.print(xNested)
 		}
-		x := 2
+		xBlock := 2
 		for i := 0; i < 1; i++ {
-			x := 4
-			i32.print(x)
+			xLoop := 4
+			i32.print(xLoop)
 		}
-		i32.print(x)
+		i32.print(xBlock)
 		if false {
 		} else {
-			x := 5
-			i32.print(x)
+			xElse := 5
+			i32.print(xElse)
 		}
 	}
 	i32.print(x)

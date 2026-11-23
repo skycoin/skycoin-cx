@@ -4,8 +4,8 @@ func main() {
 	if true {
 		for i:=0;i<1;i++ {
 		}
-		x := 2
-		i32.print(x)
+		xBlock := 2
+		i32.print(xBlock)
 	}
 	i32.print(x)
 }

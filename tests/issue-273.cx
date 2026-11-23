@@ -13,7 +13,7 @@ type mesh_s struct {
 var g_meshes [32]mesh_s
 
 
-func main()() {
+func main()() { global g_meshes
 	var mesh mesh_id
 	mesh.id = 0
 	g_meshes[mesh.id].stride = 38

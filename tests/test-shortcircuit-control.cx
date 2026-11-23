@@ -2,19 +2,19 @@ package main
 
 var calls i32
 
-func T(i i32) (out bool) {
+func T(i i32) (out bool) { global calls
 	printf("T%d ", i)
 	calls = calls + 1
 	out = true
 }
 
-func F(i i32) (out bool) {
+func F(i i32) (out bool) { global calls
 	printf("F%d ", i)
 	calls = calls + 1
 	out = false
 }
 
-func main() {
+func main() { global calls
 	if T(1) || T(2) {
 		printf("then\n")
 	}

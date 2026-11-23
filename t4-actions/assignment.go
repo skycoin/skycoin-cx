@@ -532,6 +532,15 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 	}
 
+	// The declaration is at the name, where its errors point (#486), not at
+	// the value or a result it copied its type from.
+	if file, line, column := ast.CXArgumentDebugPosition(prgrm, toExpressionOutputTypeSig.ArgDetails); line > 0 {
+		detailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+		details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(detailsGid)
+		details.FileName, details.FileLine, details.FileColumn = file, line, column
+		prgrm.GetCXTypeSignatureFromArray(typeSigIdx).ArgDetails = detailsGid
+	}
+
 	prgrm.CXAtomicOps[expressionIdx].AddOutput(prgrm, typeSigIdx)
 
 	// The type an atomic output gives its receivers is zero.

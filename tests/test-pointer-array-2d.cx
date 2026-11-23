@@ -9,7 +9,7 @@ type Point struct {
 var g [2][3]Point
 var gp [2][3]*Point
 var pts [6]Point
-func main() {
+func main() { global g, pts, gp
 	for i := 0; i < 2; i++ {
 		for j := 0; j < 3; j++ {
 			g[i][j].x = i * 10 + j

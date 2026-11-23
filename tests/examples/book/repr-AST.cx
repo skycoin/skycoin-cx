@@ -2,13 +2,13 @@ package main
 
 import "sys/string"
 
-var global i32
+var globalValue i32
 
-func main () {
+func main () { global globalValue
 	var foo i32
 	foo = 5
 	
  	string.PrintLine("Hello World!")
 	i32.print(55)
-	i32.print(i32.add(global, 10))
+	i32.print(i32.add(globalValue, 10))
 }

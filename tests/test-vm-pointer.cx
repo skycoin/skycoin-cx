@@ -8,7 +8,7 @@ type pair struct {
 	b i32
 }
 
-var global i32
+var globalCount i32
 
 func increment(p *i32) {
 	*p = *p + 1
@@ -18,7 +18,7 @@ func setPair(p *pair, value i32) {
 	p.b = value
 }
 
-func main() {
+func main() { global globalCount
 	var x i32
 	var p *i32
 	x = 41
@@ -28,10 +28,10 @@ func main() {
 	increment(&x)
 	i32.print(*p)
 
-	p = &global
+	p = &globalCount
 	increment(p)
-	increment(&global)
-	i32.print(global)
+	increment(&globalCount)
+	i32.print(globalCount)
 
 	var values [4]i32
 	values[2] = 30

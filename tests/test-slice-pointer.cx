@@ -10,7 +10,7 @@ func set(ps *[]i32, v []i32) {
 
 var gs []i32
 
-func main() {
+func main() { global gs
 	var s []i32
 	s = append(s, 4)
 	var ps *[]i32

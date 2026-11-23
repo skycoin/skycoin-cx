@@ -24,14 +24,14 @@ var gArr *[3]*Box
 var gPair Pair
 var bad i32
 
-func wantI(got i32, want i32) {
+func wantI(got i32, want i32) { global bad
 	if got != want {
 		bad = bad + 1
 		i32.print(got)
 	}
 }
 
-func wantS(got str, want str) {
+func wantS(got str, want str) { global bad
 	if !string.EqualityByByteValue(got, want) {
 		bad = bad + 1
 		string.PrintLine(got)
@@ -71,7 +71,7 @@ func churn(n i32) (sum i32) {
 	}
 }
 
-func check(p *[3]*Box, items *[2]Item) {
+func check(p *[3]*Box, items *[2]Item) { global gArr, gPair
 	for i := 0; i < 3; i++ {
 		wantI((*p)[i].v, 10 + i)
 		wantI((*gArr)[i].v, 20 + i)
@@ -86,7 +86,7 @@ func check(p *[3]*Box, items *[2]Item) {
 	}
 }
 
-func main() {
+func main() { global gArr, gPair, bad
 	var p *[3]*Box
 	p = mkArr(10)
 	gArr = mkArr(20)

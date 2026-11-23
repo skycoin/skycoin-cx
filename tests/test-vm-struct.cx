@@ -25,7 +25,7 @@ func shifted(p point, by i32) (out point) {
 	out.y = out.y + by
 }
 
-func main() {
+func main() { global origin
 	var b box
 	b.low.x = 1
 	b.low.y = 2

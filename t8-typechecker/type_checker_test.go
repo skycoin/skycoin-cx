@@ -1111,7 +1111,7 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 						},
 						{
 							Name:   "CustomType.setFieldA",
-							Inputs: "main.customType *CustomType, string str",
+							Inputs: "main.customType *CustomType, stringParam str",
 						},
 					},
 				},

@@ -12,7 +12,7 @@ func foo(e *event) {
 	test((*e).index, 33, "")
 }
 
-func main()(){
+func main()(){ global events
 	var e event
 	e.index = 33
 	events = append(events, e)

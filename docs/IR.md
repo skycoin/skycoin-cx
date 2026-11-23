@@ -610,6 +610,8 @@ after one, so a program only loads in a build with its pointer size
 * `CxIrState.CxIrStateGlobalsDeferred` and
   `CxIrState.CxIrStateGlobalInitializers`, which only the compiler reads
   while it types globals and orders their initializers.
+* `CXProgram.ImportPositions`, where each package imports each other
+  package, which only the shadowing errors of #486 read.
 * The build tags. A program that calls an opcode from a package the
   reading build leaves out, such as `sys/os` under `nocxos`, finds no
   handler for it.

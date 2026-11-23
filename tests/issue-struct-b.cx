@@ -8,7 +8,7 @@ type test_test struct {
   t test
 }
 var tt test_test
-func main() {
+func main() { global tt
   //tt.t.i = 44 // uncomment here to move/remove the issue
   printf("i %d\n", tt.t.i)
   if tt.t.i!=0{

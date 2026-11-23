@@ -8,9 +8,9 @@ type test struct {
 
 func main()() {
 	var ts []test
-	var test test
-	ts = append(ts, test)
-	ts = append(ts, test)
+	var item test
+	ts = append(ts, item)
+	ts = append(ts, item)
 
 	i32.print(len(ts))
 }

@@ -15,7 +15,7 @@ func half(p Point) (r Point) {
 }
 
 // early is compiled before the globals it reads are declared.
-func early() (r i32) {
+func early() (r i32) { global total
 	return total + 1
 }
 
@@ -23,7 +23,7 @@ func (p Point) sum() (r i32) {
 	r = p.x + p.y
 }
 
-func base2() (r i32) {
+func base2() (r i32) { global base
 	return base * 2
 }
 
@@ -49,7 +49,7 @@ var doubled = base2()
 var base = 21
 var summed = small.sum()
 
-func main() {
+func main() { global total, first, second, small, values, count, grid, pointer, depth, less, twice, label, doubled, summed, origin
 	printf("%d %d %d %d\n", total, first, second, early())
 	printf("%d %d %d %d\n", small.x, small.y, values[2], count)
 	printf("%f %d %d %v\n", grid[1], pointer.y, depth, less)

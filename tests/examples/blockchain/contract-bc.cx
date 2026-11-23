@@ -14,7 +14,7 @@ package main
 import "bc"
 import "sys/string"
 
-func main() {
+func main() { global bc.addresses
 	string.PrintLine(bc.addresses[0])
 	string.PrintLine(bc.addresses[1])
 }

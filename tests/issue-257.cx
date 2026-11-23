@@ -15,7 +15,7 @@ var velocity f32 = 0.5
 
 var ball Ball
 
-func main()() {
+func main()() { global ball, velocity
 	// Mixed types. Must throw "operands are not of the same type".
 	ball.vx = 0 - velocity
 }

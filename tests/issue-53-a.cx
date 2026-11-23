@@ -27,7 +27,7 @@ func testAddr(addr *i32, taddr i32, message str) () {
 	test(iaddr, taddr, message)
 }
 
-func fooA(a i32, t Too, b i32) {
+func fooA(a i32, t Too, b i32) { global TOO_SIZE
 	var xa i32 = getAddr(&a)
 	var xta i32 = getAddr(&t.a)
 	var xtb i32 = getAddr(&t.b)
@@ -39,7 +39,7 @@ func fooA(a i32, t Too, b i32) {
 	test(xb - xa, 4 + TOO_SIZE, "fooA : xb - xa")
 }
 
-func fooB(a i32, at [2]Too, b i32) {
+func fooB(a i32, at [2]Too, b i32) { global TOO_SIZE
 	var xa i32 = getAddr(&a)
 	var xat0a i32 = getAddr(&at[0].a)
 	var xat1a i32 = getAddr(&at[1].a)
@@ -51,7 +51,7 @@ func fooB(a i32, at [2]Too, b i32) {
 	test(xb - xa, 4 + 2 * TOO_SIZE, "fooB : xb - xa")
 }
 
-func fooC(a i32, st []Too, b i32) {
+func fooC(a i32, st []Too, b i32) { global TOO_SIZE
 	var xa i32 = getAddr(&a)
 	var xst0a i32 = getAddr(&(st[0].a))
 	var xst1a i32 = getAddr(&(st[1].a))
@@ -62,7 +62,7 @@ func fooC(a i32, st []Too, b i32) {
 	test(xb - xa, 4 + cx.POINTER_SIZE, "fooC : xb - xa")
 }
 
-func main()() {
+func main()() { global TOO_SIZE
 	var t Too // 16|20
     testAddr(&t.a, 4, "main : &t.a") // 16|20
 	testAddr(&t.b, 8 + cx.POINTER_SIZE, "main : &t.b") // 20|24

@@ -102,7 +102,7 @@
 %token  <f32>           FLOAT_LITERAL
 %token  <f64>           DOUBLE_LITERAL
 %token  <tok>           FUNC OP LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK IDENTIFIER
-                        VAR COMMA PERIOD COMMENT STRING_LITERAL PACKAGE IF ELSE FOR TYPSTRUCT STRUCT
+                        VAR GLOBAL COMMA PERIOD COMMENT STRING_LITERAL PACKAGE IF ELSE FOR TYPSTRUCT STRUCT
                         SEMICOLON NEWLINE
                         ASSIGN CASSIGN IMPORT RETURN GOTO GT_OP LT_OP GTEQ_OP LTEQ_OP EQUAL COLON NEW
                         EQUALWORD GTHANWORD LTHANWORD
@@ -276,7 +276,7 @@ package_declaration:
 import_declaration:
                 IMPORT STRING_LITERAL SEMICOLON
                 {
-			actions.DeclareImport(Program,$2, CurrentFile, lineNo)
+			actions.DeclareImportAt(Program,$2, CurrentFile, lineNo, $<column>2)
                 }
                 ;
 
@@ -953,6 +953,17 @@ block_item_list:
 block_item:
         |       declaration
         |       statement
+        |       GLOBAL global_names
+                ;
+
+global_names:
+                global_name
+        |       global_names COMMA global_name
+                ;
+
+global_name:
+                IDENTIFIER
+        |       IDENTIFIER PERIOD IDENTIFIER
                 ;
 
 expression_statement:

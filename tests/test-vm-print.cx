@@ -11,7 +11,7 @@ type named struct {
 
 var greeting str
 
-func main() {
+func main() { global greeting
 	string.PrintLine("hello")
 	greeting = "from a global"
 	string.PrintLine(greeting)

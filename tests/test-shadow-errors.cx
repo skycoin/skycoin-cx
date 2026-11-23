@@ -1,0 +1,34 @@
+package main
+
+import "sys/os"
+
+var counter i32
+
+type Point struct { x i32 }
+
+func helper() i32 { return 1 }
+
+func parameter(counter i32) {
+}
+
+func result() (helper i32) {
+	return 1
+}
+
+func locals() {
+	var os i32
+	Point := 2
+	x := 1
+	if x > 0 {
+		x := 2
+		i32.print(x)
+	}
+	for counter := 0; counter < 1; counter++ {
+	}
+	i32.print(os + Point)
+}
+
+func main() {
+	global counter
+	i32.print(counter)
+}

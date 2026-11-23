@@ -24,6 +24,9 @@ type Lexer struct {
 	eof       bool //eof
 	colbefore bool //used for colon keywords
 
+	// braceDepth counts the braces open, which a global statement needs to be 1.
+	braceDepth int
+
 	// VIOLATION: pointer at rest; becomes yySymTypeGid in phase 3.
 	tok *yySymType //symbol read. soon to be depracated for fully new cxgo
 }
@@ -223,9 +226,11 @@ redonext:
 		s.tok.yys = RBRACK
 	case '{':
 		s.nextch()
+		s.braceDepth++
 		s.tok.yys = LBRACE
 	case '}':
 		s.nextch()
+		s.braceDepth--
 		s.nlsemi = true
 		s.tok.yys = RBRACE
 	case ',':
@@ -474,6 +479,9 @@ func (s *Lexer) ident() {
 				RETURN, BREAK, CONTINUE, BOOLEAN_LITERAL:
 				s.nlsemi = true
 				s.tok.tok = getTypeName(tok)
+			}
+			if tok == GLOBAL {
+				s.tok.i = s.braceDepth
 			}
 			s.tok.yys = tok
 			if tok == BOOLEAN_LITERAL {

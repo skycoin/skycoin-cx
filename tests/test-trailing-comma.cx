@@ -29,7 +29,7 @@ func pair(a i32, b i32,
 	return b, a
 }
 
-func main() {
+func main() { global gs, gp
 	p := Point{
 		x: 1,
 		y: 2,

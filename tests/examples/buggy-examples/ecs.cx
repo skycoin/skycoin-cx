@@ -34,11 +34,11 @@ type World struct {
 	appearance []Appearance
 }
 
-func createEntity (world World) (entity i32) {
-	entityCount := len(world.mask)
+func createEntity (world World) (entity i32) { global COMPONENT_NONE
+	entityCountLocal := len(world.mask)
 
 	var entity i32
-	for entity = 0; i32.lt(entity, entityCount); entity = i32.add(entity, 1) {
+	for entity = 0; i32.lt(entity, entityCountLocal); entity = i32.add(entity, 1) {
 		var mask i32
 		mask = world.mask[entity]
 		if i32.eq(mask, COMPONENT_NONE) {
@@ -48,13 +48,13 @@ func createEntity (world World) (entity i32) {
 	//halt("No more entities left")
 }
 
-func destroyEntity (world World, entity i32) () {
+func destroyEntity (world World, entity i32) () { global COMPONENT_NONE
 	world[entity] = COMPONENT_NONE
 }
 
 // Entities
 
-func createTree (world World, x i32, y i32) (entity i32, newWorld World) {
+func createTree (world World, x i32, y i32) (entity i32, newWorld World) { global COMPONENT_DISPLACEMENT, COMPONENT_APPEARANCE
 	entity := createEntity(world)
 
 	var disp Displacement
@@ -73,7 +73,7 @@ func createTree (world World, x i32, y i32) (entity i32, newWorld World) {
 	newWorld = world
 }
 
-func createBox (world World, x i32, y i32, vx i32, vy i32) (entity i32, newWorld World) {
+func createBox (world World, x i32, y i32, vx i32, vy i32) (entity i32, newWorld World) { global COMPONENT_DISPLACEMENT, COMPONENT_APPEARANCE, COMPONENT_VELOCITY
 	entity := createEntity(world)
 
 	var disp Displacement
@@ -94,7 +94,7 @@ func createBox (world World, x i32, y i32, vx i32, vy i32) (entity i32, newWorld
 	newWorld = world
 }
 
-func createGhost (world World, x i32, y i32, vx i32, vy i32) (entity i32, newWorld World) {
+func createGhost (world World, x i32, y i32, vx i32, vy i32) (entity i32, newWorld World) { global COMPONENT_DISPLACEMENT, COMPONENT_VELOCITY
 	entity := createEntity(world)
 
 	world.mask[entity] = i32.bitor(COMPONENT_DISPLACEMENT, COMPONENT_VELOCITY)

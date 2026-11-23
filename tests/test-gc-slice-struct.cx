@@ -20,14 +20,14 @@ type Item struct {
 var gItems []Item
 var bad i32
 
-func wantI(got i32, want i32) {
+func wantI(got i32, want i32) { global bad
 	if got != want {
 		bad = bad + 1
 		i32.print(got)
 	}
 }
 
-func wantS(got str, want str) {
+func wantS(got str, want str) { global bad
 	if !string.EqualityByByteValue(got, want) {
 		bad = bad + 1
 		string.PrintLine(got)
@@ -75,7 +75,7 @@ func checkItem(it Item, v i32) {
 	wantI(it.vals[1], v * 2)
 }
 
-func check(items []Item, p *Item) {
+func check(items []Item, p *Item) { global gItems
 	for i := 0; i < 4; i++ {
 		checkItem(items[i], 10 + i)
 		checkItem(gItems[i], 20 + i)
@@ -84,7 +84,7 @@ func check(items []Item, p *Item) {
 	wantI(p.box.v, 31)
 }
 
-func main() {
+func main() { global gItems, bad
 	var items []Item
 	items = mkItems(10, 4)
 	gItems = mkItems(20, 4)

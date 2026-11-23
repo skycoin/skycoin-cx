@@ -461,12 +461,12 @@ func testLen() {
 	test(len(nums), 3, "")
 	
 	var ts []test
-	var test test
+	var item test
 
 	test(len(ts), 0, "")
 	
-	ts = append(ts, test)
-	ts = append(ts, test)
+	ts = append(ts, item)
+	ts = append(ts, item)
 
 	test(len(ts), 2, "")
 }

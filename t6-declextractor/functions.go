@@ -27,6 +27,7 @@ func ExtractFuncs(source []byte, fileName string) ([]FuncDeclaration, error) {
 	rePkgName := regexp.MustCompile(`package\s+([_a-zA-Z][_a-zA-Z0-9]*)`)
 	reFunc := regexp.MustCompile(`^(?:.+\s+|\s*)func(?:\s+[\S\s]+|\([\S\s]+|\s*)$`)
 	reNotSpace := regexp.MustCompile(`\S+`)
+	reFuncGlobal := regexp.MustCompile(`\{\s*global\s[^{}]*$`)
 
 	// Func Declaration regex for name extraction and syntax checking
 	// Components:
@@ -69,6 +70,12 @@ func ExtractFuncs(source []byte, fileName string) ([]FuncDeclaration, error) {
 		}
 
 		if match := reFunc.FindIndex(line); match != nil {
+
+			// A global statement may follow the brace of the body, see #486.
+			line := line
+			if loc := reFuncGlobal.FindIndex(line); loc != nil {
+				line = line[:loc[0]+1]
+			}
 
 			funcBytes := reFuncDec.FindSubmatch(line)
 			funcIdx := reFuncDec.FindSubmatchIndex(line)

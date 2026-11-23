@@ -9,6 +9,7 @@
     * [Primitive Types](#primitive-types)
     * [Global variables](#global-variables)
     * [Local variables](#local-variables)
+    * [Scopes and shadowing](#scopes-and-shadowing)
     * [Arrays](#arrays)
     * [Slices](#slices)
     * [Literals](#literals)
@@ -206,8 +207,10 @@ There is no *byte* type any more. Use *ui8* or *i8*.
 Global variables are different from local variables regarding
 scope. Global variables are available to any function defined in a
 package, and to any package that is importing the package that
-contains that global declaration. An example of some global variables
-is shown below.
+contains that global declaration. A function names every global it
+uses in a `global` statement at the top of its body, so a reader sees
+which globals the function reaches. An example of some global
+variables is shown below.
 
 ```cx
 package main
@@ -216,11 +219,13 @@ var global1 i32
 var global2 i64
 
 func foo () {
+    global global1, global2
     i32.print(global1)
     i64.print(global2)
 }
 
 func main () {
+    global global1, global2
     global1 = 5
     global2 = 5L
 
@@ -233,6 +238,25 @@ In the example above we can see that both the `main` and `foo`
 functions are printing the values of the two global variables
 defined. They are going to print the same values, as they are
 referring to the same variables.
+
+The `global` statement lists names separated by commas. A global of the
+function's own package is named alone, `global counter`, and a global of
+an imported package as `package.name`, `global config.Limit`, which is
+also how the body reaches it. The statements come first in the body,
+before any other statement, and there may be several. The compiler
+reports each of these as an error:
+
+* a global the function uses without declaring it, `function 'f' uses
+  global 'counter' without declaring it`, at the first use,
+* a declared global the function does not use, `global 'counter'
+  declared and not used in function 'f'`, as Go reports an unused
+  import,
+* a `global` statement after another statement or in an inner block,
+* a name that is not a global of its package, a package that is not
+  imported, and a global declared twice in one function.
+
+The values of globals, `var total = count * 2`, are not functions and
+declare nothing.
 
 A package declares each global once. Declaring the same name twice is
 the compile error `'name' redeclared`, also when the declarations are
@@ -272,6 +296,7 @@ func count() (r i32) {
 }
 
 func main () {
+	global width, height, name, area, scale
 	var perimeter, corners = 2 * (width + height), 4
 	printf("%s %d %d %d %v\n", name, area, perimeter, corners, scale)
 }
@@ -319,6 +344,43 @@ A `:=` whose names and values differ in number is the compile error
 `assignment mismatch`. Its new names are declared without a type, so
 their uses report nothing more, and a name that the function declared
 already is not redeclared, as `:=` assigns it in Go.
+
+### [Scopes and shadowing](#table-of-contents)
+
+A block, the body of an `if`, `else` or `for` and a `{ ... }` inside a
+function, opens a scope. A variable declared in it is gone at the end
+of the block, and a `for` declares its loop variable for the loop only.
+Two blocks that do not nest may declare the same name.
+
+A name may not hide another name, which is called shadowing and is a
+compile error in CX. A local, a parameter, a result, a loop variable or
+a name a `:=` declares may not have the name of
+
+* a global of its package,
+* a package the file imports,
+* a function or a type of its package,
+* a variable of a block around it.
+
+The error names the declaration it would hide, for example `'x' shadows
+variable declared at main.cx:4:2` or `'counter' shadows global declared
+at main.cx:3:5`. A `:=` that assigns a name its own block declares hides
+nothing.
+
+```cx compile-error
+package main
+
+var counter i32
+
+func main () {
+	global counter
+	counter = 1
+	x := 1
+	if x > 0 {
+		x := 2 // 'x' shadows variable declared at line 8
+		i32.print(x)
+	}
+}
+```
 
 ### [Arrays](#table-of-contents)
 
@@ -769,6 +831,11 @@ single output parameter.
 
 We can then see how the `main` package `import`s both the `foo` and
 `bar` packages, to later call each of these functions.
+
+A global of an imported package is reached the same way, as
+`foo.Count`, never by its name alone, and a function that uses it
+declares it as `global foo.Count`, see
+[Global variables](#global-variables).
 
 Built-in packages are implemented inside the compiler and runtime. Each
 lives under `sys/` and is marked as built in where it is documented. A
@@ -3798,3 +3865,23 @@ to `json.Str` (191 to 200), `StartCPUProfile` and `StopCPUProfile` (201,
 reassignable from version `2711230001`. `os.Exit` keeps opcode 190.
 Serialized programs from before this version must be recompiled. See
 [skycoin-cx#492](https://github.com/skycoin/skycoin-cx/issues/492).
+
+## Version 2611230002, 2026-11-23
+
+A function declares the globals it uses with a `global` statement at the
+top of its body, `global counter, config.Limit`, including the globals of
+its own package. A global of another package is always reached as
+`package.name`. A use of a global the function does not declare, a
+declared global it does not use and a `global` statement after another
+statement are compile errors, see [Global variables](#global-variables).
+
+Shadowing is a compile error. A local, a parameter, a result, a loop
+variable or a `:=` name may not have the name of a global, an imported
+package, a function or a type of its package, or a variable of an
+enclosing block, see [Scopes and shadowing](#scopes-and-shadowing).
+`global` is a keyword.
+
+Programs from before this version add the `global` statements and rename
+the variables that shadow another name. No opcode changes. Serialized
+programs from before this version must be recompiled. See
+[skycoin-cx#486](https://github.com/skycoin/skycoin-cx/issues/486).

@@ -93,3 +93,17 @@ document or check script.
     assigned. `constants.LibraryPolicyEnabledWhenImported` is the default
     for a library `--enable` does not name. See the System libraries section
     of [LanguageGuide.md](../LanguageGuide.md#system-libraries) and #492.
+17. **Variable scoping.** A name in a function body is a local, a
+    parameter or result, or a global the function declares, and nothing
+    else. Every function lists the globals it uses in a `global`
+    statement at the top of its body, its own package's included, and
+    reaches a global of another package only as `package.name`. No name
+    may shadow another: a local, parameter, result, loop variable or `:=`
+    name never has the name of a global, an imported package, a function
+    or a type of its package, or a variable of an enclosing block. The
+    compiler keeps the statements in `t4-actions/scope_globals.go`, checks
+    each use where a body resolves a global (`GetGlobalSymbol`) and each
+    declaration where it enters the symbol table (`UpdateSymbolsTable`).
+    The rules of imports themselves, a package name hidden by another
+    import, follow in #487. See the Global variables and Scopes and
+    shadowing sections of [LanguageGuide.md](../LanguageGuide.md) and #486.

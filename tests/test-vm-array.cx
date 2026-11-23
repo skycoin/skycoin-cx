@@ -12,7 +12,7 @@ func sum(values [5]i32) (total i32) {
 	}
 }
 
-func main() {
+func main() { global grid, order
 	var values [5]i32
 	var i i32
 	for i = 0; i < 5; i++ {

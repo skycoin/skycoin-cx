@@ -1,18 +1,18 @@
 package main
 
-var global i32
+var globalValue i32
 
-func foo () {
-    i32.print(global)
+func foo () { global globalValue
+    i32.print(globalValue)
     // i32.print(local) // this will raise an error if uncommented
 }
 
-func main () {
+func main () { global globalValue
     var local i32
     
     local = 10
-    global = 15
+    globalValue = 15
     
-    i32.print(global)
+    i32.print(globalValue)
     i32.print(local)
 }

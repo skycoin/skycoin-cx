@@ -6,6 +6,6 @@ package main
 var zero i32 = 0
 var g i32 = 10 / zero
 
-func main() {
+func main() { global g
 	i32.print(g)
 }

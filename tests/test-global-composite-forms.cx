@@ -19,7 +19,7 @@ var (
 )
 var a, b = []i32{11}, Point{x: 12, y: 13}
 
-func main() {
+func main() { global p, typed, q, r, s, a, b
 	printf("%d %d %d %d\n", p.x, p.y, typed.x, typed.y)
 	printf("%d %d %d %d\n", q[1], r.y, s.x, s.y)
 	printf("%d %d %d\n", a[0], b.x, b.y)

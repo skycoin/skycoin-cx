@@ -10,7 +10,7 @@ type test_test struct {
   t test
 }
 var tt test_test
-func run(s str, i i32) {
+func run(s str, i i32) { global tt
   tt.t.i = 33
   printf("i %d\n", tt.t.i)
 }

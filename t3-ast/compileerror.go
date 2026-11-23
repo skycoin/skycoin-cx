@@ -111,6 +111,31 @@ const (
 	// CompileErrorCodeShortDeclarationNoNew is a := that declares no new
 	// variable.
 	CompileErrorCodeShortDeclarationNoNew
+	// CompileErrorCodeGlobalUndeclared is a use of a global the function does
+	// not declare (#486). Its operands are the function and the global twice.
+	CompileErrorCodeGlobalUndeclared
+	// CompileErrorCodeGlobalDeclaredUnused is a declared global the function
+	// does not use. Its operands are the global and the function.
+	CompileErrorCodeGlobalDeclaredUnused
+	// CompileErrorCodeGlobalDeclarationPlacement is a global statement that
+	// is not one of the first statements of a function body.
+	CompileErrorCodeGlobalDeclarationPlacement
+	// CompileErrorCodeGlobalDeclarationMissing is a name of a global statement
+	// that is no global. Its operands are the name and the package.
+	CompileErrorCodeGlobalDeclarationMissing
+	// CompileErrorCodeGlobalDeclarationPackageMissing is a declared pkg.name
+	// of a package not imported. Its operands are the package and the name.
+	CompileErrorCodeGlobalDeclarationPackageMissing
+	// CompileErrorCodeGlobalDeclarationRepeated is a global a function
+	// declares twice. Its operand is the global.
+	CompileErrorCodeGlobalDeclarationRepeated
+	// CompileErrorCodeShadowGlobal to CompileErrorCodeShadowVariable are a name
+	// that shadows another, with the position of the other as operands 2 to 4.
+	CompileErrorCodeShadowGlobal
+	CompileErrorCodeShadowImport
+	CompileErrorCodeShadowFunction
+	CompileErrorCodeShadowType
+	CompileErrorCodeShadowVariable
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

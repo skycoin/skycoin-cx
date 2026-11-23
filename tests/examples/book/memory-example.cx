@@ -6,7 +6,7 @@ func bar () (w i32) {
     w = 5
 }
 
-func foo (num1 i32, num2 i32) (res i32) {
+func foo (num1 i32, num2 i32) (res i32) { global epsilon
     var weight i32
 
     weight = bar()
@@ -14,7 +14,7 @@ func foo (num1 i32, num2 i32) (res i32) {
     res = (num1 + num2) * weight * epsilon
 }
 
-func main () {
+func main () { global epsilon
     epsilon = 5
     epsilon = foo(10, 10)
 }

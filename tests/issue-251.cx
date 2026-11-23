@@ -6,8 +6,8 @@ func main() () {
 	var string str
 
 	{
-		var string str
-		string = "test"
-		printf("%s\n", string)
+		var stringBlock str
+		stringBlock = "test"
+		printf("%s\n", stringBlock)
 	}
 }

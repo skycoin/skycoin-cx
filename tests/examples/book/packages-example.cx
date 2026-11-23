@@ -24,7 +24,7 @@ package main
 import "foo"
 import "bar"
 
-func main () {
+func main () { global foo.num
     var aPoint foo.Point
     aPoint.x = 30
     aPoint.y = 70

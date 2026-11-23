@@ -22,7 +22,7 @@ func churn(n i32) {
 	}
 }
 
-func main() {
+func main() { global gt, g
 	var a [2][]i32
 	var w [2][]str
 	gt = &T{n: 1}

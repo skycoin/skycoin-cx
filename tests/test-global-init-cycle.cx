@@ -1,6 +1,6 @@
 package main
 
-func back() (r i32) {
+func back() (r i32) { global loop
 	return loop
 }
 
@@ -8,6 +8,6 @@ var loop = back()
 var typed i32 = typedToo
 var typedToo i32 = typed + 1
 
-func main() {
+func main() { global loop, typed
 	i32.print(loop + typed)
 }

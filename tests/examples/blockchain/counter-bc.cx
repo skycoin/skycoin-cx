@@ -2,7 +2,7 @@ package bc
 
 var counter i32
 
-func incCounter() {
+func incCounter() { global counter
 	counter++
 	printf("Blockchain counter: %d\n", counter)
 }

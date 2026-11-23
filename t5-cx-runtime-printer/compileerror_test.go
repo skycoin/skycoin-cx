@@ -91,6 +91,17 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeFunctionResultMissing, ast.CompileErrorOperands{text("none")}, header + " function 'none' returns no value\n"},
 		{ast.CompileErrorCodeMultipleValueSingle, ast.CompileErrorOperands{text("two"), text("a i32, b i32")}, header + " multiple-value two() (value of type (a i32, b i32)) in single-value context\n"},
 		{ast.CompileErrorCodeShortDeclarationNoNew, ast.CompileErrorOperands{}, header + " no new variables on left side of :=\n"},
+		{ast.CompileErrorCodeGlobalUndeclared, ast.CompileErrorOperands{text("f"), text("cfg.Limit"), text("cfg.Limit")}, header + " function 'f' uses global 'cfg.Limit' without declaring it, add global cfg.Limit at the top of its body\n"},
+		{ast.CompileErrorCodeGlobalDeclaredUnused, ast.CompileErrorOperands{text("counter"), text("f")}, header + " global 'counter' declared and not used in function 'f'\n"},
+		{ast.CompileErrorCodeGlobalDeclarationPlacement, ast.CompileErrorOperands{}, header + " global declarations must be the first statements of a function body\n"},
+		{ast.CompileErrorCodeGlobalDeclarationMissing, ast.CompileErrorOperands{text("missing"), text("main")}, header + " 'missing' is not a global of package 'main'\n"},
+		{ast.CompileErrorCodeGlobalDeclarationPackageMissing, ast.CompileErrorOperands{text("other"), text("other.Limit")}, header + " package 'other' of global 'other.Limit' is not imported\n"},
+		{ast.CompileErrorCodeGlobalDeclarationRepeated, ast.CompileErrorOperands{text("counter")}, header + " global 'counter' declared twice\n"},
+		{ast.CompileErrorCodeShadowGlobal, ast.CompileErrorOperands{text("x"), int64(file), 3, 5}, header + " 'x' shadows global declared at a.cx:3:5\n"},
+		{ast.CompileErrorCodeShadowImport, ast.CompileErrorOperands{text("os"), int64(file), 3, 8}, header + " 'os' shadows package imported at a.cx:3:8\n"},
+		{ast.CompileErrorCodeShadowFunction, ast.CompileErrorOperands{text("f"), int64(file), 9, 6}, header + " 'f' shadows function declared at a.cx:9:6\n"},
+		{ast.CompileErrorCodeShadowType, ast.CompileErrorOperands{text("T"), int64(file), 5, 6}, header + " 'T' shadows type declared at a.cx:5:6\n"},
+		{ast.CompileErrorCodeShadowVariable, ast.CompileErrorOperands{text("x"), int64(file), 4, 2}, header + " 'x' shadows variable declared at a.cx:4:2\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

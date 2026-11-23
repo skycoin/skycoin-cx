@@ -46,7 +46,7 @@ func map1Dto2D (i i32, w i32) (c i32, r i32) {
 	c = i32.mod(i, w)
 }
 
-func wrapX (x i32) (newX i32) {
+func wrapX (x i32) (newX i32) { global columns
 	newX = x
 	if i32.gteq(x, columns) {
 		newX = 0
@@ -58,7 +58,7 @@ func wrapX (x i32) (newX i32) {
 	}
 }
 
-func wrapY (y i32) (newY i32) {
+func wrapY (y i32) (newY i32) { global rows
 	newY = y
 	if i32.gteq(y, rows) {
 		newY = 0
@@ -70,7 +70,7 @@ func wrapY (y i32) (newY i32) {
 	}
 }
 
-func aliveNeighbours (cell Cell, cells [225]Cell) (aliveCount i32) {
+func aliveNeighbours (cell Cell, cells [225]Cell) (aliveCount i32) { global columns
 	aliveCount = 0
 	
 	var upCellX i32
@@ -171,7 +171,7 @@ func aliveNeighbours (cell Cell, cells [225]Cell) (aliveCount i32) {
 	// i32.print(aliveCount)
 }
 
-func changeState (cell Cell, cells [225]Cell) (newCell Cell) {
+func changeState (cell Cell, cells [225]Cell) (newCellResult Cell) {
 	cell.alive = cell.aliveNext
 	cell.aliveNext = cell.alive
 
@@ -201,7 +201,7 @@ func changeState (cell Cell, cells [225]Cell) (newCell Cell) {
 		}
 	}
 
-	newCell = cell
+	newCellResult = cell
 
 	// var counter i32
 	// for counter = 0; counter < 225; counter++ {
@@ -233,7 +233,7 @@ func makeVao (points [18]f32) (vao i32) {
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0)
 }
 
-func newCell (x i32, y i32) (cell Cell) {
+func newCell (x i32, y i32) (cell Cell) { global square, columns, rows
 	// points = []f32.make([]f32.len(square))
 	// []f32.copy(points, square)
 	var points [18]f32
@@ -271,7 +271,7 @@ func newCell (x i32, y i32) (cell Cell) {
 		y: y}
 }
 
-func makeCells () (cells [225]Cell) {
+func makeCells () (cells [225]Cell) { global rows, columns
 	// var cells [225]Cell
 	var x i32
 	var y i32
@@ -288,7 +288,7 @@ func makeCells () (cells [225]Cell) {
 	}
 }
 
-func initGlfw (window str) () {
+func initGlfw (window str) () { global width, height
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
@@ -369,7 +369,7 @@ func draw (cells [225]Cell, window str, program i32) () {
 	glfw.SwapBuffers("window")
 }
 
-func main () {
+func main () { global square
 	square = [18]f32{
 		-0.5, 0.5, 0.0,
 		-0.5, -0.5, 0.0,

@@ -2,11 +2,11 @@ package main
 
 var PI f32 = 3.14159
 
-func circleArea (radius f32) (area f32) {
+func circleArea (radius f32) (area f32) { global PI
     area = f32.mul(f32.mul(radius, radius), PI)
 }
 
-func circlePerimeter (radius f32) (perimeter f32) {
+func circlePerimeter (radius f32) (perimeter f32) { global PI
     perimeter = f32.mul(f32.mul(2.0, radius), PI)
 }
 

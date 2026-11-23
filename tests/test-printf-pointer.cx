@@ -18,7 +18,7 @@ func prefix(text str) (out str) {
 	out = string.SubstringByByteRange(text, 0, 2)
 }
 
-func main() {
+func main() { global gi
 	var p *i32 = &gi
 	printf("%s\n", prefix(sprintf("%v", p)))
 	var np *i32

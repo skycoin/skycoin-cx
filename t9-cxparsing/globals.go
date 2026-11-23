@@ -236,7 +236,9 @@ func globalDeferredType(prgrm *ast.CXProgram, pkg *ast.CXPackage, deferred *ast.
 	prgrm.CurrentPackage = ast.CXPackageIndex(pkg.Index)
 	fn := ast.MakeFunction(prgrm, functionName, deferred.GlobalDeferredFile, 0)
 	_, fnIdx := pkg.AddFunction(prgrm, fn)
+	actions.ScopeGlobalsInitializer = true
 	Passtwo(bytes.NewBufferString(globalDeferredSource(prgrm, pkg, deferred, text, functionName, valueName)))
+	actions.ScopeGlobalsInitializer = false
 
 	spec := globalValueSpec(prgrm, prgrm.GetFunctionFromArray(fnIdx), valueName)
 	// An error of the declaration made for the value leaves the spec unusable.

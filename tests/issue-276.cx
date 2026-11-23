@@ -2,6 +2,6 @@
 
 package main
 import "gui"
-func main()() {
+func main()() { global gui.g_modalSkin
 	test(gui.skin_test(gui.g_modalSkin), -1, "not ok")
 }

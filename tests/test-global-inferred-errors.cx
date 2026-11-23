@@ -10,7 +10,7 @@ var self = self + 1
 var nothing = none()
 var after = a + 1
 
-func main() {
+func main() { global a, b, c, self, after, nothing
 	i32.print(a + b + c + self + after)
 	i32.print(nothing)
 }

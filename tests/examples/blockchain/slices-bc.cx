@@ -7,7 +7,7 @@ package main
 import "bc"
 import "sys/string"
 
-func main () {
+func main () { global bc.numbers, bc.texts
 	// Initializing our CX chain numbers.
 	bc.numbers = append(bc.numbers, 1)
 	bc.numbers = append(bc.numbers, 2)

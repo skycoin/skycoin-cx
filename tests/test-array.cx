@@ -8,7 +8,7 @@ var byteArray [5]i8
 var boolArray [5]bool
 // var stringArray [5]str
 
-func testGetElement () {
+func testGetElement () { global intArray, longArray, floatArray, doubleArray, boolArray, byteArray
 	test(intArray[4], 5, "I32 Get element error")
 	test(longArray[2], 90L, "I64 Get element error")
 	test(floatArray[0], 3.9, "F32 Get element error")
@@ -210,7 +210,7 @@ func testGetElement () {
 // 	// stringArray[2] = tempString
 // }
 
-func main () () {
+func main () () { global intArray, longArray, floatArray, doubleArray, byteArray, boolArray
 	intArray = [5]i32{ 1, 2, 3, 4, 5}
 	longArray = [5]i64{20L, 30L, 90L, 1L, 5L}
 	floatArray = [5]f32{3.9, 6.7, 1.2, 5.3, 9.102}

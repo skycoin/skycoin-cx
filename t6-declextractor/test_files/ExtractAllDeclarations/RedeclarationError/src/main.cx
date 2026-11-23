@@ -12,7 +12,7 @@ var number i32 = 19
 
 var number i64 = 21L
 
-func main () {
+func main () { global msg
 
     str.print(msg)
 

@@ -7,13 +7,13 @@ var global1 i32 = 5
 var global2 f32 = 3.14159
 
 // a function which prints the vales of global variables 
-func printGlobals () () {
+func printGlobals () () { global global1, global2
 	i32.print(global1)
 	f32.print(global2)
 }
 
 // Main function 
-func main () (out i32) {
+func main () (out i32) { global global1, global2
 // call the function to print the values of the global variables 
 	printGlobals()
 // assigning new values to global variables

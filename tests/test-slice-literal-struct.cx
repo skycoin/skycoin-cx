@@ -23,7 +23,7 @@ func count(ps []Point) (n i32) {
 	n = len(ps)
 }
 
-func main() {
+func main() { global gpoints
 	var texts []TextInfo
 	texts = []TextInfo{TextInfo{Text: "hmm"}}
 	printf("len %d\n", len(texts))

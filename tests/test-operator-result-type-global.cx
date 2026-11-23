@@ -2,6 +2,6 @@ package main
 
 var g f32 = -1
 
-func main() {
+func main() { global g
 	f32.print(g)
 }

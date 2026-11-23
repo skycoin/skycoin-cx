@@ -5,7 +5,7 @@ package main
 var count i32=5
 var second f64
 
-func main()() {
+func main()() { global count, second
 	var test i32=6
 	test=2
 

@@ -2,7 +2,7 @@
 
 package main
 import "issue18"
-func main () {
+func main () { global issue18.string
 	test(issue18.string, "test", "")
 }
 

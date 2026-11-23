@@ -3,6 +3,6 @@ package main
 var i i32 = 5
 var i i32 = 4
 
-func main() {
+func main() { global i
 	i32.print(i)
 }

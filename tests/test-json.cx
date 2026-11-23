@@ -3,7 +3,7 @@ package main
 import "sys/json"
 
 var debug bool
-func debugOutput(s str) {
+func debugOutput(s str) { global debug
 	if debug {
 		printf(s);
 	}

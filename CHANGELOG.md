@@ -5,6 +5,10 @@
 #### Language
 
 - Language version 2611230001. File access, networking and `os.Run` are system libraries, `file`, `net` and `process`, called through the one opcode `LibraryCall` (795) with a library and a function number. Source is unchanged, but a call runs only when `cx --enable=file,net,process` enables its library, and otherwise is the runtime error `CX_RUNTIME_LIBRARY_DISABLED` (12) naming the library, on the old loop and on vm. The 68 opcodes of `sys/os` files, `sys/json`, the CPU profile and `sys/tcp` are deprecated, `os.Exit` stays opcode 190. Serialized programs must be recompiled (#492)
+- Language version 2611230002. A function declares every global it uses in a `global` statement at the top of its body, `global counter, config.Limit`, globals of its own package included, and reaches a global of another package only as `package.name`. An undeclared use, a declared global the function does not use and a `global` statement after another statement are compile errors (#486)
+- Shadowing is a compile error. A local, parameter, result, loop variable or `:=` name that has the name of a global, an imported package, a function or a type of its package, or a variable of an enclosing block reports `'x' shadows global declared at file:line:column`. `tests/issue-51.cx` passes and every program in the repository was migrated (#486, #25)
+- A `var` in a one line function body, `func f() { var s i32 }`, no longer declares a global `s` of the package as well
+- The errors of a parameter and of a name a `:=` declares point at the name. They pointed at the token after the parameter list or at the value
 - `printf` and `sprintf` print a `%s` argument as it is. They turned a `\n` or `\%` the str held as two bytes into a new line or `%`, and read the same escapes again in the format. `%%` prints `%`
 - String literals take every escape of Go. `\x41`, `\u00e9` and `\U0001F600` were `invalid character 'x' in hexadecimal escape`. An invalid escape is reported once, with the message of Go, and a raw string drops its carriage returns
 - `string.BytesOfString` and `string.StringOfBytes`, opcodes 793 and 794, convert between `str` and `[]ui8`

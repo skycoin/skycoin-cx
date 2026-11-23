@@ -26,7 +26,7 @@ type Wall struct {
 var prevTime f32
 var currTime f32
 var timeDelta f32
-func updateTiming() () {
+func updateTiming() () { global prevTime, currTime, timeDelta
 	// prevent 1st delta from being large, which would make moving objects teleport unpredictably 
 	if prevTime == 0.0 {
 		prevTime = f64.f32(glfw.GetTime())
@@ -71,7 +71,7 @@ func drawWall (w Wall, color f32) () {
 	gl.End()
 }
 
-func moveMaybeTeleport (box Item, w Wall, color f32) (box Item) {
+func moveMaybeTeleport (box Item, w Wall, color f32) (box Item) { global timeDelta
 	if f32.lteq(box.y, f32.add(-1.0, w.y)) {
 		box.y = 1.0
 	} else {

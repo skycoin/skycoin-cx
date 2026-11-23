@@ -14,7 +14,7 @@ type Test struct {
   failures []str
 }
 
-func StartTest(name str) {
+func StartTest(name str) { global g_tests, TEST_STATUS_RUNNING, g_current
   if i32.eq(len(g_tests), 0) {
     printBanner()
   }
@@ -28,7 +28,7 @@ func StartTest(name str) {
   g_current = test.id
 }
 
-func FinishTest() {
+func FinishTest() { global g_current, g_tests, TEST_STATUS_PASSED, TEST_STATUS_FAILED
   if i32.eq(g_current, -1) {
     printf("[!] Error - Test not running.\n"); return
   }
@@ -47,7 +47,7 @@ func FinishTest() {
   g_current = -1
 }
 
-func addFailure(failure str) {
+func addFailure(failure str) { global g_current, g_tests
   if i32.eq(g_current, -1) {
     printf("[!] Error - Test not running.\n"); return
   }
@@ -65,7 +65,7 @@ func printBanner() {
   printf("---------------------------------------------------------\n\n")
 }
 
-func Summary()  {
+func Summary()  { global g_tests, TEST_STATUS_PASSED, TEST_STATUS_FAILED
   var passed i32 = 0
   var failed i32 = 0
   var n_tests i32 = len(g_tests)

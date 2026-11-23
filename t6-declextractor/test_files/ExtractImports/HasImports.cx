@@ -57,7 +57,7 @@ package main
 import "foo"
 import "bar"
 
-func main () {
+func main () { global foo.num
 	// declaration of local variables in main function
 // This is how we can define aa variable from another package. 
 	var aPoint foo.Point

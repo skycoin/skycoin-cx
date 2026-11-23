@@ -25,13 +25,13 @@ func smash() {
 	}
 }
 
-func toGlobal() {
+func toGlobal() { global gp
 	var n i32
 	n = 11
 	gp = &n
 }
 
-func toGlobalStruct() {
+func toGlobalStruct() { global gpt
 	var pt Point
 	pt.x = 12
 	pt.y = 13
@@ -59,7 +59,7 @@ func toArray(a *[2]*i32) {
 	a[1] = &n
 }
 
-func main() {
+func main() { global gp, gpt
 	toGlobal()
 	smash()
 	i32.print(*gp)

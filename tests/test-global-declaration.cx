@@ -1,0 +1,32 @@
+package config
+
+var Limit i32 = 7
+
+func LimitDouble() i32 {
+	global Limit
+	return Limit * 2
+}
+
+package main
+
+import "config"
+
+var counter i32
+var names []str
+
+type Box struct { size i32 }
+
+var box Box = Box{size: 3}
+
+func (b Box) area() i32 { return b.size * b.size }
+
+func count() { global counter; counter++ }
+
+func main() {
+	global counter, names, box
+	global config.Limit
+	count()
+	count()
+	names = append(names, "a")
+	printf("%d %d %d %d %d\n", counter, len(names), box.area(), config.Limit, config.LimitDouble())
+}

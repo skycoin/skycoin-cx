@@ -15,7 +15,7 @@ func two() (i32, i32) {
 	return 30, 40
 }
 
-func main() {
+func main() { global ga, gb, gc, gd, ge, gi, gf, gg, gj, gh
 	var a, b i32
 	var c, d = 3, 4
 	var (

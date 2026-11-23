@@ -8,7 +8,7 @@ func show(v *str) {
 	printf("[%s]", *v)
 }
 
-func main() {
+func main() { global ts, tss, tn
 	printf("[%s]", ts)
 	var p *str = &ts
 	show(p)

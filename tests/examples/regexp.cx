@@ -19,19 +19,19 @@ func main() {
 	// Let's reset our regexp to "world".
 	r = regexp.MustCompile("world")
 	
-	var string str
+	var stringValue str
 	var found str
 
 	// Regexp should find "world" in `string`.
-	string = "Hello, world!"
-	found = r.Find(string)
+	stringValue = "Hello, world!"
+	found = r.Find(stringValue)
 
 	// Should print "world", because `regexp` found the string in `string`.
 	string.PrintLine(found)
 
 	// Changing string. Regexp should not find anything.
-	string = "¡Hola, mundo!"
-	found = r.Find(string)
+	stringValue = "¡Hola, mundo!"
+	found = r.Find(stringValue)
 
 	// Should print empty string.
 	string.PrintLine(found)

@@ -13,7 +13,7 @@ func count(s []*T) i32 {
 	return len(s)
 }
 
-func main() {
+func main() { global gs, gm, gx
 	var a T
 	a.v = 1
 	var b T

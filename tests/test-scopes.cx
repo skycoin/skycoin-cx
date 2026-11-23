@@ -5,29 +5,29 @@ import "sys/os"
 func main () {
 	var x i32 = 1
 	if false {
-		var x i32
+		var xThen i32
 		if true {
-			var x i32 = 3
-			test(x, 3, "")
+			var xThenNested i32 = 3
+			test(xThenNested, 3, "")
 		}
-		test(x, 0, "")
+		test(xThen, 0, "")
 	} else {
-		var x i32 = 5
+		var xElse i32 = 5
 		if true {
-			var x i32 = 3
+			var xElseNested i32 = 3
 		}
 	}
 	test(x, 1, "")
 
 	if x == 1 {
 		test(x, 1, "")
-		var x i32 = 5
-		test(x, 5, "")
+		var xBody i32 = 5
+		test(xBody, 5, "")
 		if true {
-			var x i32 = 3
-			test(x, 3, "")
+			var xBodyNested i32 = 3
+			test(xBodyNested, 3, "")
 		}
-		test(x, 5, "")
+		test(xBody, 5, "")
 	} else {
 		printf("scopes are not working properly for if statements")
 		os.Exit(cx.PANIC)
@@ -35,11 +35,11 @@ func main () {
 
 	var y i32 = 3131
 	
-	for y := 0; y < 10; y++ {
-		for y := 10; y < 20; y++ {
-			test(y >= 10, true, "")
+	for yOuter := 0; yOuter < 10; yOuter++ {
+		for yInner := 10; yInner < 20; yInner++ {
+			test(yInner >= 10, true, "")
 		}
-		test(y < 10, true, "")
+		test(yOuter < 10, true, "")
 	}
 
 	test(y, 3131, "")

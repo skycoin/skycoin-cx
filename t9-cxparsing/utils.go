@@ -2,6 +2,7 @@ package cxparsering
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"io/fs"
@@ -230,6 +231,8 @@ func Preliminarystage(srcStrs, srcNames []string) (int, []*ast.CXPackage) {
 				}
 			}
 
+			// A var in a one line body, func f() { var s i32 }, is no global.
+			inBlockLineStart := inBlock
 			if locs := reBodyOpen.FindAllIndex(line, -1); locs != nil {
 				for _, loc := range locs {
 					if !(multiCommentCloseLoc != nil && multiCommentCloseLoc[0] > loc[0]) {
@@ -284,7 +287,7 @@ func Preliminarystage(srcStrs, srcNames []string) (int, []*ast.CXPackage) {
 			if loc := reGlbl.FindIndex(line); loc != nil {
 				if (commentLoc != nil && commentLoc[0] < loc[0]) ||
 					(multiCommentOpenLoc != nil && multiCommentOpenLoc[0] < loc[0]) ||
-					(multiCommentCloseLoc != nil && multiCommentCloseLoc[0] > loc[0]) || inBlock != 0 {
+					(multiCommentCloseLoc != nil && multiCommentCloseLoc[0] > loc[0]) || inBlock != 0 || inBlockLineStart+bytes.Count(line[:loc[0]], []byte("{"))-bytes.Count(line[:loc[0]], []byte("}")) != 0 {
 					// then it's commented out or inside a block
 					continue
 				}

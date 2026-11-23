@@ -14,7 +14,7 @@ type S struct {
 var gp *S
 var gs S
 
-func main() {
+func main() { global gp, gs
 	var s S
 	s.txt = append(s.txt, "a")
 	s.txt = append(s.txt, "b")
@@ -35,7 +35,7 @@ func main() {
 	heap()
 }
 
-func heap() {
+func heap() { global gp
 	gp = &S{n: 3}
 	gp.vals = append(gp.vals, 7)
 	gp.vals = append(gp.vals, 8)

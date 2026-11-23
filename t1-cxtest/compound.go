@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-cxtestrunner"
@@ -69,8 +70,27 @@ var compoundTypes = []compoundType{
 
 // compoundProgram is a program that passes, returns, declares, assigns,
 // stores and prints values of typ.
+// compoundGlobals are the globals of compoundProgram that a value or show
+// statement may use, which its function declares (#486).
+var compoundGlobals = []string{"ti", "ts", "tsl", "tssl", "ta", "tp", "tps", "tpa", "tpi", "tpp", "tspi", "tas"}
+
+// compoundGlobalStatement is the global statement of a function whose body
+// is text, empty when the body uses no global.
+func compoundGlobalStatement(text string) string {
+	var used []string
+	for _, name := range compoundGlobals {
+		if regexp.MustCompile(`\b` + name + `\b`).MatchString(text) {
+			used = append(used, name)
+		}
+	}
+	if len(used) == 0 {
+		return ""
+	}
+	return "\tglobal " + strings.Join(used, ", ") + "\n"
+}
+
 func compoundProgram(typ compoundType, cases []string) string {
-	return strings.NewReplacer("TYPE", typ.name, "VALUE", typ.value, "SHOW", typ.show).Replace(`package main
+	return strings.NewReplacer("TYPE", typ.name, "VALUE_GLOBALS", compoundGlobalStatement(typ.value), "VALUE", typ.value, "SHOW_GLOBALS", compoundGlobalStatement(typ.show), "SHOW", typ.show).Replace(`package main
 
 type Point struct {
 	x i32
@@ -95,7 +115,7 @@ var tspi []*i32
 var tas [2][]i32
 
 func value() (r TYPE) {
-	VALUE
+VALUE_GLOBALS	VALUE
 	return r
 }
 
@@ -105,15 +125,16 @@ func identity(p TYPE) (r TYPE) {
 }
 
 func show(v TYPE) {
-	SHOW
+SHOW_GLOBALS	SHOW
 }
 
-var global TYPE
+var globalPlain TYPE
 var globalTyped TYPE = value()
 var globalInferred = value()
 var globalCopy = globalTyped
 
 func main() {
+	global globalPlain, globalTyped, globalInferred, globalCopy
 ` + strings.Join(cases, "\n") + `}
 `)
 }
@@ -126,7 +147,7 @@ var compoundCases = []string{
 	"\tvar assigned TYPE\n\tassigned = identity(value())\n\tshow(assigned)\n",
 	"\tvar declared TYPE = value()\n\tvar fromVar = declared\n\tshow(fromVar)\n",
 	"\tvar source TYPE = value()\n\tcopied := source\n\tshow(copied)\n",
-	"\tglobal = value()\n\tshow(global)\n",
+	"\tglobalPlain = value()\n\tshow(globalPlain)\n",
 	"\tshow(globalTyped)\n",
 	"\tshow(globalInferred)\n",
 	"\tshow(globalCopy)\n",

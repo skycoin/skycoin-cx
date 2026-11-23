@@ -8,12 +8,12 @@ type Item struct {
 
 var calls i32
 
-func mark(v bool) bool {
+func mark(v bool) bool { global calls
 	calls++
 	return v
 }
 
-func main() {
+func main() { global calls
 	var item Item
 	item.flag = true
 	var items [2]Item

@@ -6,7 +6,7 @@ import "sys/glfw"
 var width i32 = 800
 var height i32 = 600
 
-func main () () {
+func main () () { global width, height
     glfw.Init()
 
     glfw.CreateWindow("window", width, height, "Triangle")

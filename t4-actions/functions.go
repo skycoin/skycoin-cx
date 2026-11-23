@@ -36,6 +36,10 @@ type SymbolsData struct {
 	// shortDeclarationNew is whether the := being declared has declared a
 	// new name yet, see CXEXPR_SHORT_DECLARATION_SHARED.
 	shortDeclarationNew bool
+	// shortDeclarationFirst is the first name of that :=, where a := that
+	// declares nothing is reported.
+	shortDeclarationFirst ast.CXArgumentDebugGid
+	shortDeclarationOpen  bool
 }
 
 // FunctionHeader takes a function name ('fnName') and either creates the
@@ -311,6 +315,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	// Now an arena getter, site S0735.
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 
+	scopeGlobalsCheckBegin(fnIdx)
 	symbolsData.escaped, exprs = escapeFunction(prgrm, fn, inputs, outputs, exprs)
 	FunctionAddParameters(prgrm, fnIdx, inputs, outputs)
 	ProcessShortCircuitJumps(prgrm, exprs)
@@ -389,6 +394,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	fn.Size = offset
 
 	releaseFunctionSymbols(prgrm, symbolsData)
+	scopeGlobalsEnd(prgrm)
 }
 
 // symbolsScopeClose closes the scopes that expr ends.
@@ -1385,12 +1391,16 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 		switch expr.ExpressionType {
 		case ast.CXEXPR_SHORT_DECLARATION_SHARED, ast.CXEXPR_SHORT_DECLARATION_SHARED_LAST:
 			// https://go.dev/ref/spec#Short_variable_declarations
+			if !symbolsData.shortDeclarationOpen {
+				symbolsData.shortDeclarationFirst, symbolsData.shortDeclarationOpen = typeSig.ArgDetails, true
+			}
 			symbolsData.shortDeclarationNew = symbolsData.shortDeclarationNew || !found
 			if expr.ExpressionType == ast.CXEXPR_SHORT_DECLARATION_SHARED_LAST {
 				if !symbolsData.shortDeclarationNew {
-					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeShortDeclarationNoNew, typeSig.ArgDetails, ast.CompileErrorOperands{})
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeShortDeclarationNoNew, symbolsData.shortDeclarationFirst, ast.CompileErrorOperands{})
 				}
 				symbolsData.shortDeclarationNew = false
+				symbolsData.shortDeclarationOpen = false
 			}
 		default:
 			if found {
@@ -2209,7 +2219,7 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 		}
 
 		if !currFn.IsLocalVariable(typeSig.Name) {
-			GetGlobalSymbol(prgrm, symbolsData, typeSigPkg, typeSig.Name)
+			GetGlobalSymbol(prgrm, symbolsData, typeSigPkg, typeSig.Name, typeSig.ArgDetails)
 		}
 
 		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > 0, "UpdateSymbolsTable: symbol scope stack is empty")
@@ -2239,6 +2249,7 @@ func UpdateSymbolsTable(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigI
 			}
 
 			if !IsTempVar(prgrm, typeSig.Name) {
+				scopeShadowCheck(prgrm, symbolsData, typeSigPkg, typeSig)
 				// Change name to n:varname format
 				typeSig.Name = prgrm.CXProgramNameIntern(fmt.Sprintf("%v:%s", symbolsData.varCount, prgrm.CXProgramNameText(typeSig.Name)))
 				symbolsData.varCount++
@@ -2289,7 +2300,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	}
 
 	// The receiver may be a global, as box of box.Area().
-	GetGlobalSymbol(prgrm, symbolsData, receiverPkg, receiver.Name)
+	GetGlobalSymbol(prgrm, symbolsData, receiverPkg, receiver.Name, receiver.ArgDetails)
 	symbolTypeSig, err := lookupSymbol(prgrm, receiverPkg.Name, receiver.Name, symbolsData)
 	if err != nil {
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeIdentifierMissing, receiver.ArgDetails, ast.CompileErrorOperands{int64(receiver.Name)})
@@ -2468,7 +2479,7 @@ func GiveOffset(prgrm *ast.CXProgram, symbolsData *SymbolsData, typeSigIdx ast.C
 		}
 
 		if !currFn.IsLocalVariable(symTypeSigName) {
-			GetGlobalSymbol(prgrm, symbolsData, symPkg, symTypeSigName)
+			GetGlobalSymbol(prgrm, symbolsData, symPkg, symTypeSigName, symTypeSig.ArgDetails)
 		}
 
 		argTypeSignature, err := lookupSymbol(prgrm, symPkg.Name, symTypeSigName, symbolsData)
@@ -3344,10 +3355,11 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 }
 
 // GetGlobalSymbol tries to retrieve `ident` from `symPkg`'s globals if `ident` is not found in the local scope.
-func GetGlobalSymbol(prgrm *ast.CXProgram, symbolsData *SymbolsData, symPkg *ast.CXPackage, ident stringpool.StringGid) {
+func GetGlobalSymbol(prgrm *ast.CXProgram, symbolsData *SymbolsData, symPkg *ast.CXPackage, ident stringpool.StringGid, details ast.CXArgumentDebugGid) {
 	_, err := lookupSymbol(prgrm, symPkg.Name, ident, symbolsData)
 	if err != nil {
 		if glbl, err := symPkg.GetGlobal(prgrm, ident); err == nil {
+			scopeGlobalsUse(prgrm, symPkg, ident, details)
 			lastIdx := len(*&symbolsData.symbolsIndex) - 1
 
 			// add name to symbols

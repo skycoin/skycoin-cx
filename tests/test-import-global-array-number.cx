@@ -5,11 +5,11 @@ var F [2]f64
 var M [2][3]i32
 var S []i32
 
-func Get(i i32) (v i32) {
+func Get(i i32) (v i32) { global A
 	v = A[i]
 }
 
-func Fill() {
+func Fill() { global S, M
 	S = append(S, 10)
 	S = append(S, 20)
 	M[1][2] = 12

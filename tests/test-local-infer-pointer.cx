@@ -8,7 +8,7 @@ type Point struct {
 var gp Point = Point{x: 3, y: 4}
 var gi i32 = 5
 
-func main() {
+func main() { global gp, gi
 	var p *Point = &gp
 	var c = p
 	d := c

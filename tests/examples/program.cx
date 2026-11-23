@@ -16,7 +16,7 @@ type Point struct {
 
 // This main function will print a string in the terminal
 // string.PrintLine("") prints the string 
-func main () {
+func main () { global i
 
     var	loco i32
 

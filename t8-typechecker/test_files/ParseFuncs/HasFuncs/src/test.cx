@@ -25,7 +25,7 @@ var intArray [5]i32
 	- Global in a multiline comment
 */
 
-func main () {
+func main () { global Bool, Byte, I16, I32, I64, UByte, UI16, UI32, UI64, F32, F64, string, Affordance
 
 	bool.print(Bool)
 	i8.print(Byte)

@@ -22,7 +22,7 @@ type T struct {
 var gu U = U{a: 3, b: 4}
 var gt T = T{f: U{b: 5}, v: pk.V{x: 6}}
 
-func main() {
+func main() { global gu, gt
 	test(gu.b, 4, "global initialized from a struct literal")
 	test(gt.f.b, 5, "global with a nested struct literal")
 	test(gt.v.x, 6, "global with a struct literal of another package")

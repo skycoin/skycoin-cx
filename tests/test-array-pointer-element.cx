@@ -21,7 +21,7 @@ func mk(p *i32) (a [3]*i32) {
 	a[2] = p
 }
 
-func main() {
+func main() { global gns
 	n := 4
 	m := 9
 	var a [3]*i32

@@ -167,7 +167,25 @@ Three error records exist.
   `CompileErrorCodeReturnValueType` a value of the wrong type returned as
   the unnamed result of `func f() T`. 7062
   `CompileErrorCodeFunctionResultMissing` is a call of a function with no
-  results used as a value. A package that loads but has compile errors
+  results used as a value. 7065 to 7070 are the `global` statement of #486:
+  7065 `CompileErrorCodeGlobalUndeclared`, `function 'f' uses global
+  'counter' without declaring it`, at the first use, 7066
+  `CompileErrorCodeGlobalDeclaredUnused`, a declared global the function
+  does not use, 7067 `CompileErrorCodeGlobalDeclarationPlacement`, a
+  `global` statement after another statement or in an inner block, 7068
+  `CompileErrorCodeGlobalDeclarationMissing`, a name that is not a global
+  of its package, 7069 `CompileErrorCodeGlobalDeclarationPackageMissing`,
+  a `pkg.name` whose package is not imported, and 7070
+  `CompileErrorCodeGlobalDeclarationRepeated`, a global declared twice in
+  one function. 7071 to 7075 are shadowing, a local, parameter, result or
+  `:=` name that hides another name, `'x' shadows global declared at
+  main.cx:3:5`. Their operands are the name and the position of the other
+  declaration, and the code names what it hides: 7071
+  `CompileErrorCodeShadowGlobal`, 7072 `CompileErrorCodeShadowImport`, an
+  imported package, 7073 `CompileErrorCodeShadowFunction`, 7074
+  `CompileErrorCodeShadowType` and 7075 `CompileErrorCodeShadowVariable`, a
+  variable of an enclosing block.
+  A package that loads but has compile errors
   prints them with the errors of the program and fails like an import
   that cannot be loaded, without an error at the import. 7000 is
   `CompileErrorCodeNil` and `CompileErrorCodeEnd` is one past the last code.

@@ -9,12 +9,12 @@ var gs str = "s"
 var gi i32 = 7
 var gsl []i32
 
-func ptrStr() (r *str) {
+func ptrStr() (r *str) { global gs
 	r = &gs
 	return r
 }
 
-func ptrSlice() (r *[]i32) {
+func ptrSlice() (r *[]i32) { global gsl
 	if len(gsl) == 0 {
 		gsl = append(gsl, 3)
 	}
@@ -22,12 +22,12 @@ func ptrSlice() (r *[]i32) {
 	return r
 }
 
-func slicePtrs() (r []*i32) {
+func slicePtrs() (r []*i32) { global gi
 	r = append(r, &gi)
 	return r
 }
 
-func arrayPtrs() (r [2]*i32) {
+func arrayPtrs() (r [2]*i32) { global gi
 	r[1] = &gi
 	return r
 }
@@ -49,7 +49,7 @@ var inferredPtrs = slicePtrs()
 var inferredArray = arrayPtrs()
 var inferredSlices = arraySlices()
 
-func main() {
+func main() { global inferredStr, inferredSlice, typedSlice, inferredPtrs, inferredArray, inferredSlices
 	a := ptrStr()
 	b := ptrSlice()
 	c := slicePtrs()

@@ -7,9 +7,9 @@ type point struct {
 	y i32
 }
 
-var global f64
+var globalFloat f64
 
-func main() {
+func main() { global globalFloat
 	var i i32
 	var big i64
 	var flag bool
@@ -22,8 +22,8 @@ func main() {
 	s = "text"
 	a[1] = 7
 	p.y = 9
-	global = 2.5D
+	globalFloat = 2.5D
 	printf("none\n", 1, 2)
 	printf("%d\n", i, big, flag, s)
-	printf("%d and\n", i, a[1], p.y, global)
+	printf("%d and\n", i, a[1], p.y, globalFloat)
 }

@@ -3,7 +3,7 @@ package number
 var Num i32
 var F f64
 
-func Get() (r i32) {
+func Get() (r i32) { global Num
 	r = Num
 }
 
@@ -11,7 +11,7 @@ package main
 
 import "number"
 
-func main() {
+func main() { global number.Num, number.F
 	number.Num = 11
 	test(number.Num, 11, "read back")
 	test(number.Get(), 11, "read in its package")

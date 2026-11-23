@@ -78,4 +78,8 @@ type CXProgram struct {
 	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
 	// Now objects held by value, site S0187.
 	SysInitExprs []CXExpression
+
+	// ImportPositions is where each package imports another, for the shadowing
+	// errors of #486. Compiler only, never serialized.
+	ImportPositions map[CXProgramImportKey]CXProgramImportPosition
 }

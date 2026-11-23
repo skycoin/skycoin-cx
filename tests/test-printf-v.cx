@@ -15,7 +15,7 @@ type Line struct {
 
 var g [3]i32
 
-func main() {
+func main() { global g
 	var a [3]i32
 	a[0] = 1
 	a[1] = 2

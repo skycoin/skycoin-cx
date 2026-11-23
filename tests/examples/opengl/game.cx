@@ -114,7 +114,7 @@ func addNull (source str) (sourceWithNull str) {
 	sourceWithNull = string.Concatenation(source, "\000")
 }
 
-func initOpenGL () (program i32) {
+func initOpenGL () (program i32) { global vertexShaderSource, fragmentShaderSource
 	gl.Init()
 
 	var vertexShader i32
@@ -130,7 +130,7 @@ func initOpenGL () (program i32) {
 	gl.LinkProgram(program)
 }
 
-func initGlfw (window str) () {
+func initGlfw (window str) () { global width, height
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
@@ -146,7 +146,7 @@ func scale (x i32, max i32) (out f32) {
 	out = f32.div(i32.f32(x), i32.f32(max))
 }
 
-func drawChar (x i32, y i32, texture i32, sprite Sprite) () {
+func drawChar (x i32, y i32, texture i32, sprite Sprite) () { global size
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
 
@@ -184,7 +184,7 @@ func drawChar (x i32, y i32, texture i32, sprite Sprite) () {
 	gl.End()
 }
 
-func drawTile (x i32, y i32, sprite Sprite) () {
+func drawTile (x i32, y i32, sprite Sprite) () { global size
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
 
@@ -237,7 +237,7 @@ func setSprite (s Sprite, isObstacle bool, x1 i32, x2 i32, y1 i32, y2 i32, W i32
 	res = s
 }
 
-func setupScene () () {
+func setupScene () () { global size, tex_characters, tex_city, tex_dungeon, tex_indoor, tex_pack, sp_blue_carpet, w_pack, h_pack, sp_floor_brick_xx, sp_knight1, w_characters, h_characters, sp_brown_wall_tb, sp_brown_wall_tl, sp_brown_wall_ts, sp_brown_wall_rs, sp_brown_wall_bs, sp_brown_wall_ls, sp_brown_wall_tr, sp_brown_wall_br, sp_brown_wall_bl, sp_brown_wall_lr, sp_brown_wall_to, sp_brown_wall_ro, sp_brown_wall_bo, sp_brown_wall_lo, sp_brown_wall_xx, sp_water_t, sp_water_tr, sp_water_r, sp_water_br, sp_water_b, sp_water_bl, sp_water_l, sp_water_tl, sp_water_xx, sp_grass_1, sp_grass_2, sp_rock1, sp_rock2, sp_rock3, sp_empty, sp_act_up, sp_act_down, sp_act_left, sp_act_right, sp_act_water
 	gl.Disable(gl.DITHER)
 	gl.Disable(gl.POINT_SMOOTH)
 	gl.Disable(gl.LINE_SMOOTH)
@@ -352,7 +352,7 @@ func map1Dto2D (i i32, w i32) (c i32, r i32) {
 	c = i32.mod(i, w)
 }
 
-func getSprite (index i32) (sprite Sprite) {
+func getSprite (index i32) (sprite Sprite) { global sp_empty, sp_brown_wall_tb, sp_brown_wall_lr, sp_brown_wall_ts, sp_brown_wall_rs, sp_brown_wall_bs, sp_brown_wall_ls, sp_brown_wall_tr, sp_brown_wall_br, sp_brown_wall_bl, sp_brown_wall_tl, sp_brown_wall_to, sp_brown_wall_ro, sp_brown_wall_bo, sp_brown_wall_lo, sp_brown_wall_xx, sp_water_t, sp_water_tr, sp_water_r, sp_water_br, sp_water_b, sp_water_bl, sp_water_l, sp_water_tl, sp_water_xx, sp_grass_1, sp_grass_2, sp_rock1, sp_rock2, sp_rock3, sp_floor_brick_xx, sp_blue_carpet, sp_act_up, sp_act_down, sp_act_left, sp_act_right, sp_act_water
 	var s Sprite
 	// brown wall
 	if i32.eq(index, 0) {
@@ -480,7 +480,7 @@ func getSprite (index i32) (sprite Sprite) {
 var p1x i32 = 1
 var p1y i32 = 1
 
-func charActions (window str, key i32, scancode i32, action i32, mods i32) () {
+func charActions (window str, key i32, scancode i32, action i32, mods i32) () { global p1x, p1y, size, foreground
 	var northI i32
 	var southI i32
 	var westI i32
@@ -592,7 +592,7 @@ func charActions (window str, key i32, scancode i32, action i32, mods i32) () {
 	}
 }
 
-func main () {
+func main () { global background, foreground, vertexShaderSource, fragmentShaderSource, size, p1x, p1y, tex_characters, sp_knight1
 	// var vertexShaderSource str
 	// var fragmentShaderSource str
 

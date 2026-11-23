@@ -39,7 +39,7 @@ func drawBall (ball Ball) () {
     gl.End()
 }
 
-func main () () {
+func main () () { global width, height
     glfw.Init()
 
     glfw.CreateWindow("window", width, height, "Bouncing Ball")

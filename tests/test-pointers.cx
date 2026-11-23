@@ -25,7 +25,7 @@ var gi32Ptr *i32
 var gi64Ptr *i64
 var c [2]miniStruct
 
-func returnPtrArrayStruct () (ptr *[2]miniStruct) {
+func returnPtrArrayStruct () (ptr *[2]miniStruct) { global c
 	c[0] = miniStruct{mInt: 11, mString: "Foobar"}
 
 
@@ -35,7 +35,7 @@ func returnPtrArrayStruct () (ptr *[2]miniStruct) {
 	ptr = &c
 }
 
-func main () {
+func main () { global gi32Ptr, gi64Ptr
 	var li32Ptr *i32
 	var li64Ptr *i64
 	var num1 i32

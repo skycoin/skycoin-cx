@@ -19,27 +19,27 @@ var fooR i32
 
 //funtion to add 1 in the assign variable with no return 
 //
-func sum (num i32) {	
+func sum (num i32) { global fooR
 	fooR = i32.add(num, 1)
 }
 
 // function to subtract 1 from the global variable and return the result 
 //
-func subtract () (fooR i32){
+func subtract () (fooRResult i32){ global fooA
 	
-	fooR = i32.sub(fooA, 1)
+	fooRResult = i32.sub(fooA, 1)
 }
 
 // function to print the global varible 
 //
-func PrintfooA(){
+func PrintfooA(){ global fooV
 
 	i32.print(fooV)
 }
 
 // main function 
 //
-func main () {
+func main () { global fooR, fooA
 	// declare a new variable
 	//
 	var bar i32 = 20

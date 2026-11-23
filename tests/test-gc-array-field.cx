@@ -24,14 +24,14 @@ type Holder struct {
 var gHolder *Holder
 var bad i32
 
-func wantI(got i32, want i32) {
+func wantI(got i32, want i32) { global bad
 	if got != want {
 		bad = bad + 1
 		i32.print(got)
 	}
 }
 
-func wantS(got str, want str) {
+func wantS(got str, want str) { global bad
 	if !string.EqualityByByteValue(got, want) {
 		bad = bad + 1
 		string.PrintLine(got)
@@ -85,7 +85,7 @@ func check(h *Holder, base i32) {
 	}
 }
 
-func main() {
+func main() { global gHolder, bad
 	var h *Holder
 	h = mkHolder(7)
 	gHolder = mkHolder(8)

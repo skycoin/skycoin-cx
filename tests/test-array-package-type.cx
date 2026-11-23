@@ -28,7 +28,7 @@ func grid() (g [2][3]pack.Too) {
 	g[1][2].i = 8
 }
 
-func main() {
+func main() { global gts
 	var ts [2]pack.Too
 	ts[0].i = 1
 	ts[1].i = 2

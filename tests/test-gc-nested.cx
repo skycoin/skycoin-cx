@@ -31,14 +31,14 @@ var gGroups []Group
 var gOrg *Org
 var bad i32
 
-func wantI(got i32, want i32) {
+func wantI(got i32, want i32) { global bad
 	if got != want {
 		bad = bad + 1
 		i32.print(got)
 	}
 }
 
-func wantS(got str, want str) {
+func wantS(got str, want str) { global bad
 	if !string.EqualityByByteValue(got, want) {
 		bad = bad + 1
 		string.PrintLine(got)
@@ -122,7 +122,7 @@ func checkOrg(o *Org, base i32) {
 	}
 }
 
-func check(local [2]Group, org *Org) {
+func check(local [2]Group, org *Org) { global gGroups, gOrg
 	checkGroup(local[0], 100, 2)
 	checkGroup(local[1], 200, 3)
 	checkGroup(gGroups[0], 300, 2)
@@ -131,7 +131,7 @@ func check(local [2]Group, org *Org) {
 	checkOrg(org, 600)
 }
 
-func main() {
+func main() { global gGroups, gOrg, bad
 	var local [2]Group
 	local[0] = mkGroup(100, 2)
 	local[1] = mkGroup(200, 3)

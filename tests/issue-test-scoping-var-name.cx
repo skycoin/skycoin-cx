@@ -4,13 +4,13 @@ func main() {
   var x i32
   x=5
 
-  for x:=0;x<3;x++{
-    i32.print(x)
+  for xFirst:=0;xFirst<3;xFirst++{
+    i32.print(xFirst)
   }
 
 
-  for x:=3;x<6;x++{
-    i32.print(x)
+  for xSecond:=3;xSecond<6;xSecond++{
+    i32.print(xSecond)
   }
   
   if true {

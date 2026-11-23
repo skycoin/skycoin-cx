@@ -82,6 +82,9 @@ build-parser: ## Generate lexer and parser for CX grammar
     // Now a pointer at rest, site S1473.
     function *ast.CXFunction
     functionIndex ast.CXFunctionIndex
+
+    // The names of a global statement, see #486.
+    scopeGlobalNames []actions.ScopeGlobalName
 }
 
 %token  <bool>          BOOLEAN_LITERAL
@@ -96,7 +99,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 %token  <f32>           FLOAT_LITERAL
 %token  <f64>           DOUBLE_LITERAL
 %token  <tok>           FUNC OP LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK IDENTIFIER
-                        VAR COMMA PERIOD COMMENT STRING_LITERAL PACKAGE IF ELSE FOR TYPSTRUCT STRUCT
+                        VAR GLOBAL COMMA PERIOD COMMENT STRING_LITERAL PACKAGE IF ELSE FOR TYPSTRUCT STRUCT
                         SEMICOLON NEWLINE
                         ASSIGN CASSIGN IMPORT RETURN GOTO GT_OP LT_OP GTEQ_OP LTEQ_OP EQUAL COLON NEW
                         EQUALWORD GTHANWORD LTHANWORD
@@ -223,6 +226,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <expressions>   statement
 
 %type   <functionIndex>      function_header
+%type   <scopeGlobalNames>   global_names global_name
 
 %type   <string>        infer_action_arg
 %type   <stringA>       infer_action, infer_actions
@@ -356,10 +360,12 @@ function_header:
                 {
 			// yylval.line = 0
 			$$ = actions.FunctionHeader(actions.AST,$2, nil, false, $<line>2, $<column>2)
+			actions.ScopeGlobalsBegin($$)
                 }
         |       FUNC LPAREN parameter_type_list RPAREN IDENTIFIER
                 {
 			$$ = actions.FunctionHeader(actions.AST,$5, $3, true, $<line>5, $<column>5)
+			actions.ScopeGlobalsBegin($$)
                 }
         ;
 
@@ -434,6 +440,10 @@ parameter_declaration:
                 {
 			$2.Name = $1.Name
 			$2.Package = $1.Package
+			// The errors of a parameter point at its name, see #486.
+			nameDetails := actions.AST.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet($1.ArgDetails)
+			typeDetails := actions.AST.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet($2.ArgDetails)
+			typeDetails.FileName, typeDetails.FileLine, typeDetails.FileColumn = nameDetails.FileName, nameDetails.FileLine, nameDetails.FileColumn
 			actions.AST.ReleaseCXArgBuilder($1)
 
 			$$ = $2
@@ -450,6 +460,7 @@ direct_declarator:
 				_, arg := ast.MakeArgument(actions.AST, stringpool.StringGidNil, actions.CurrentFile, actions.LineNo)
 				arg.SetType(types.UNDEFINED)
 				arg.Name = actions.AST.CXProgramNameIntern($1)
+				actions.AST.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails).FileColumn = $<column>1
 				arg.Package = ast.CXPackageIndex(pkg.Index)
 				$$ = arg
 			} else {
@@ -1463,7 +1474,41 @@ block_item_list:
 block_item:
                 { $$ = nil }
         |       declaration
+                {
+			actions.ScopeGlobalsStatementSeen()
+			$$ = $1
+                }
         |       statement
+                {
+			actions.ScopeGlobalsStatementSeen()
+			$$ = $1
+                }
+        // global names the globals the function uses, as its first
+        // statements (#486). The lexer gives GLOBAL its brace depth.
+        |       GLOBAL global_names
+                {
+			actions.ScopeGlobalsDeclare(actions.AST, $2, $<i>1, $<line>1, $<column>1)
+			$$ = nil
+                }
+                ;
+
+global_names:
+                global_name
+        |       global_names COMMA global_name
+                {
+			$$ = append($1, $3...)
+                }
+                ;
+
+global_name:
+                IDENTIFIER
+                {
+			$$ = []actions.ScopeGlobalName{{Name: $1, Line: $<line>1, Column: $<column>1}}
+                }
+        |       IDENTIFIER PERIOD IDENTIFIER
+                {
+			$$ = []actions.ScopeGlobalName{{Package: $1, Name: $3, Line: $<line>1, Column: $<column>1}}
+                }
                 ;
 
 expression_statement:

@@ -19,7 +19,7 @@ func printX (p Point) {
 }
 
 func foo () {
-	var foo i32
+	var fooValue i32
 	
 	tgt := #{
 		expr(targetExpr)

@@ -12,7 +12,7 @@ var objSize i32 = len(objective)
 
 var totalIterations i32
 
-func genSolution() (solution [10]i32) {
+func genSolution() (solution [10]i32) { global objSize
 	for c := 0; c < objSize; c++ {
 		solution[c] = i32.rand(0, 2)
 	}
@@ -24,15 +24,15 @@ func concNums(nums [10]i32) (result str) {
 	}
 }
 
-func score(chars [10]i32) (score i32) {
+func score(chars [10]i32) (total i32) { global objSize, objective
 	for c := 0; c < objSize; c++ {
 		if i32.eq(chars[c], objective[c]) {
-			score++
+			total++
 		}
 	}
 }
 
-func crossover(sol1 [10]i32, sol2 [10]i32) (newSol1 [10]i32, newSol2 [10]i32) {
+func crossover(sol1 [10]i32, sol2 [10]i32) (newSol1 [10]i32, newSol2 [10]i32) { global objSize
 	var cut i32
 	cut = i32.rand(0, objSize)
 
@@ -62,9 +62,9 @@ func mutate(sol [10]i32) (mutatedSol [10]i32) {
 	mutatedSol = sol
 }
 
-func selectOne(population [20][10]i32, isGetBest bool) (selectedIdx i32) {
+func selectOne(populationParam [20][10]i32, isGetBest bool) (selectedIdx i32) { global popSize
 	var k f32
-	k = i32.f32(len(population)) * 0.30 // get 30% of population
+	k = i32.f32(len(populationParam)) * 0.30 // get 30% of population
 
 	var bestIdx i32
 	var bestScore i32
@@ -73,7 +73,7 @@ func selectOne(population [20][10]i32, isGetBest bool) (selectedIdx i32) {
 		var solIdx i32
 		var solScore i32
 		solIdx = i32.rand(0, popSize)
-		sol = population[solIdx]
+		sol = populationParam[solIdx]
 		solScore = score(sol)
 		if isGetBest {
 			if solScore > bestScore {
@@ -90,23 +90,23 @@ func selectOne(population [20][10]i32, isGetBest bool) (selectedIdx i32) {
 	selectedIdx = bestIdx
 }
 
-func selectGood(population [20][10]i32) (selectedIdx i32) {
-	selectedIdx = selectOne(population, true)
+func selectGood(populationParam [20][10]i32) (selectedIdx i32) {
+	selectedIdx = selectOne(populationParam, true)
 }
 
-func selectBad(population [20][10]i32) (selectedIdx i32) {
-	selectedIdx = selectOne(population, false)
+func selectBad(populationParam [20][10]i32) (selectedIdx i32) {
+	selectedIdx = selectOne(populationParam, false)
 }
 
-func selectBest(population [20][10]i32) (selectedIdx i32) {
+func selectBest(populationParam [20][10]i32) (selectedIdx i32) {
 	var k i32
-	k = len(population)
+	k = len(populationParam)
 
 	var bestScore i32
 	for c := 0; c < k; c++ {
 		var sol [10]i32
 		var solScore i32
-		solScore = score(population[c])
+		solScore = score(populationParam[c])
 		if solScore > bestScore {
 			selectedIdx = c
 			bestScore = solScore
@@ -114,7 +114,7 @@ func selectBest(population [20][10]i32) (selectedIdx i32) {
 	}
 }
 
-func reproduce(iterations i32) {
+func reproduce(iterations i32) { global totalIterations, population, popSize, objSize
 	var goodIdx1 i32
 	var goodIdx2 i32
 
@@ -158,7 +158,7 @@ func reproduce(iterations i32) {
 	}
 }
 
-func initPopulation() {
+func initPopulation() { global popSize, population
 	for c := 0; c < popSize; c++ {
 		var uniqueChars []str
 		var sol [10]i32

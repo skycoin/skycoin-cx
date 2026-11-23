@@ -12,7 +12,7 @@ func swap(p Point) (out Point) {
 
 var gp Point
 
-func main() {
+func main() { global gp
 	gp.x = 1
 	gp.y = 2
 	var pp *Point
