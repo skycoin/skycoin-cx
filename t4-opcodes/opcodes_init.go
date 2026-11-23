@@ -491,6 +491,8 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterFunction(prgrm, "string.ByteIndexOfLastSubstring", opStrLastIndex, In(ast.ConstCxArg_STR, ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
 	RegisterFunction(prgrm, "string.TrimSurroundingWhitespace", opStrTrimSpace, In(ast.ConstCxArg_STR), Out(ast.ConstCxArg_STR))
 	RegisterFunction(prgrm, "string.ByteLength", opStrByteLength, In(ast.ConstCxArg_STR), Out(ast.ConstCxArg_I32))
+	RegisterFunction(prgrm, "string.BytesOfString", opStrBytesOfString, In(ast.ConstCxArg_STR), Out(ast.Slice(types.UI8)))
+	RegisterFunction(prgrm, "string.StringOfBytes", opStrStringOfBytes, In(ast.Slice(types.UI8)), Out(ast.ConstCxArg_STR))
 
 	RegisterOperator(prgrm, "ptr.eq", opPtrEq, In(ast.ConstCxArg_PTR, ast.ConstCxArg_PTR), Out(ast.ConstCxArg_BOOL), types.POINTER, constants.OP_EQUAL)
 	RegisterOperator(prgrm, "ptr.uneq", opPtrUneq, In(ast.ConstCxArg_PTR, ast.ConstCxArg_PTR), Out(ast.ConstCxArg_BOOL), types.POINTER, constants.OP_UNEQUAL)

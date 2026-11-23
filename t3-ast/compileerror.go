@@ -104,6 +104,13 @@ const (
 	// CompileErrorCodeFunctionResultMissing is a call of a function with no
 	// results used as a value. Its operand is the function.
 	CompileErrorCodeFunctionResultMissing
+	// CompileErrorCodeMultipleValueSingle is a call of a function with more
+	// than one result used as one value. Its operands are the function and
+	// its result list.
+	CompileErrorCodeMultipleValueSingle
+	// CompileErrorCodeShortDeclarationNoNew is a := that declares no new
+	// variable.
+	CompileErrorCodeShortDeclarationNoNew
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

@@ -4,6 +4,17 @@
 
 #### Language
 
+- `printf` and `sprintf` print a `%s` argument as it is. They turned a `\n` or `\%` the str held as two bytes into a new line or `%`, and read the same escapes again in the format. `%%` prints `%`
+- String literals take every escape of Go. `\x41`, `\u00e9` and `\U0001F600` were `invalid character 'x' in hexadecimal escape`. An invalid escape is reported once, with the message of Go, and a raw string drops its carriage returns
+- `string.BytesOfString` and `string.StringOfBytes`, opcodes 793 and 794, convert between `str` and `[]ui8`
+- `(*pp).f` on a `**T` dereferences `pp` twice. It read the field at the address of the `*T`
+- Composite literals take pointer and mixed element types, `[]*i32{&x}`, `[2]*T{&a}`, `[]*[2]i32{&a}`, `[]*T{&T{}}`, `[2][]i32{{1}, {2, 3}}` and `[][2][]i32{...}`, and `[]*T{{x: 1}}` leaves out `&T`. They were syntax errors
+- An index of three levels mixing arrays and slices, `a[0][1][0]` on a `[][2][]i32`, `[2][][2]i32` and the others, reads the right element, and `(*s[i])[j]` on a `[]*[]T` reads through the pointer. They read the wrong address
+- A global `str` without a value is empty. It held its own address, so reading it, also through a `*str`, panicked with `slice bounds out of range`
+- `:=` with several names assigns the names its block has and declares the others, as in Go, and one that declares nothing is `no new variables on left side of :=`. It reported `'old' redeclared`
+- `a, b := two(), 1` is `multiple-value two() (value of type (a i32, b i32)) in single-value context` and `var y i32 = none()` is `function 'none' returns no value`, where they reported the receiving count of the call
+- `item.flag && f()` and `||` with a field, element or pointer field on the left read the field. The jump of the short circuit shared the operand with the bool op, whose field was resolved twice, so `&&` gave false and `items[i].flag && f()` read out of range
+
 - Pointers, slices, arrays and structs combine in any order as parameters, results, locals, globals, fields and elements. `x := f()` of a `*str`, `[]*T`, `[2]*i32` or `[N][]T` result reported a wrong receiving variable, a `*[]i32` result panicked with `type is not known`, and globals of such types could not be inferred. `[2]*[3]i32` parses, and an array whose elements point to arrays is sized and indexed as an array of pointers. `[]*[]i32` and `[][2][]i32` keep their whole type, where they took the type of a pointer to a slice and a slice of slices
 - `var c = p` and `c := p` in a function take the whole type of `p`, such as `*Point` or `**i32`. They reported `cannot assign *Point to c of type struct`
 - A call of a function without results used as a slice, array or struct literal element, an argument or an operand is the compile error `function 'f' returns no value`. A slice literal element panicked with `index out of range` and an array element was dropped without an error

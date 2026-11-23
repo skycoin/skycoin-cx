@@ -442,6 +442,13 @@ y: 20}`), array (`[5]i32{1, 2, 3, 4, 5}`), and slice (`[]i32{100, 200, 300}`)
 literals, in that order. These literals exist to simplify the creation
 of such data structures.
 
+A string literal in double quotes takes the escapes of Go: `\a`, `\b`,
+`\f`, `\n`, `\r`, `\t`, `\v`, `\\` and `\"`, a byte as `\x41` or as
+the octal `\101`, and a Unicode code point as `\u00e9` or `\U0001F600`,
+written in UTF-8. Any other escape is the compile error `unknown escape`.
+A raw string literal in back quotes takes no escapes, and its carriage
+returns are dropped. CX has no rune literals.
+
 A literal is a value, so it can be used wherever a value can: as the
 initializer of a `var`, as a function argument or result, as a field of
 a struct literal and as an element of an array or slice literal. Fields
@@ -489,6 +496,12 @@ type when it is itself a literal. `[][]i32{{1, 2}, {3}}` is
 `[2][2]i32{[2]i32{1, 2}, [2]i32{3, 4}}` and `[]Point{{x: 1}}` is
 `[]Point{Point{x: 1}}`. Leaving out the type of an element that is not
 an array, a slice or a struct, as in `[]i32{{1}}`, is a compile error.
+
+The element type may be a pointer or mix array and slice dimensions, as
+in `[]*i32{&x}`, `[2]*Point{&a, &b}`, `[]*[2]i32{&a}`,
+`[2][]i32{{1}, {2, 3}}` and `[][2][]i32{{{1}, {2}}}`. An element of a
+`[]*Point` may leave out `&Point` too, so `[]*Point{{x: 1}}` is
+`[]*Point{&Point{x: 1}}`.
 
 Some forms of Go are not supported yet. A struct literal names its
 fields, so `Point{1, 2}` is a syntax error and `[]Point{{1, 2}}` is a
@@ -1093,11 +1106,18 @@ func main () {
 ```
 
 A different number of targets and values is the compile error
-`assignment mismatch`. Two differences from Go remain. Every name on
-the left of `:=` must be new, so `a, b := 2, 3` after `a := 1` is the
-compile error `'a' redeclared`. An index of a target is read when the
-target is assigned, not before the values are computed, so after
-`i, s[i] = 1, 7` it is `s[1]` that holds 7.
+`assignment mismatch`. As in Go, `:=` with several names declares the
+names its block does not have yet and assigns the others, so
+`a, b := 2, 3` after `a := 1` assigns `a`. A name of an enclosing block
+is declared again in the inner one. A `:=` that declares no new name is
+the compile error `no new variables on left side of :=`. A call with
+several results used as one of several values, `a, b := two(), 1`, is
+the compile error `multiple-value two() (value of type (a i32, b i32))
+in single-value context`, and a call without results, `var y i32 =
+none()`, is `function 'none' returns no value`. One difference from Go
+remains. An index of a target is read when the target is assigned, not
+before the values are computed, so after `i, s[i] = 1, 7` it is `s[1]`
+that holds 7.
 
 ## [Affordances](#table-of-contents)
 
@@ -2526,6 +2546,10 @@ argument, followed by any number of arguments of type *str*, *i32*,
 directives: `%s` for strings, `%d` for integers and `%f` for floating
 point numbers.
 
+`%s` and `%v` print the bytes of a str as they are, and `%%` prints
+`%`. Escapes are read only in string literals, so a `\n` that a str
+holds as two bytes prints as `\n`.
+
 `%v` prints any value. A pointer prints as Go prints it, in hexadecimal
 with `0x`, a nil pointer as `<nil>` and a pointer to a struct as
 `&{x: 1, y: 2}`. Structs print their field names, so `%+v` prints as
@@ -2904,8 +2928,12 @@ is a compile error. Positions and lengths count bytes, not characters.
 ### `string.ParseDecimalI8`, `I16`, `I32`, `I64`, `UI8`, `UI16`, `UI32`, `UI64` `(s str)`
 ### `string.ParseFloatF32`, `string.ParseFloatF64` `(s str)`
 ### `string.PrintLine (s str) ()`
+### `string.BytesOfString (s str) ([]ui8)`
+### `string.StringOfBytes (b []ui8) (str)`
 
-`SubstringByByteRange` returns bytes `start` up to but not including
+`BytesOfString` returns a new `[]ui8` of the bytes of `s` and
+`StringOfBytes` a new `str` of the bytes of `b`, as `[]byte(s)` and
+`string(b)` do in Go. `SubstringByByteRange` returns bytes `start` up to but not including
 `end`. The index functions return -1 when `sub` is absent. The parse
 functions raise a runtime error when `s` does not parse.
 

@@ -740,6 +740,8 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{790, "al.SourceState", 0, 0, 0},
 	{791, "al.SourceUnqueueBuffers", 0, 0, 0},
 	{792, "string.ByteLength", 2611200002, 0, 0},
+	{793, "string.BytesOfString", 2611200002, 0, 0},
+	{794, "string.StringOfBytes", 2611200002, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.

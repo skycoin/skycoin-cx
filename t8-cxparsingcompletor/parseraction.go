@@ -174,7 +174,11 @@ func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator strin
 		}
 	}
 	if len(values) == 1 {
-		return actions.MultipleAssignmentCall(actions.AST, targets, operator, values[0])
+		result := actions.MultipleAssignmentCall(actions.AST, targets, operator, values[0])
+		if operator == ":=" {
+			actions.ShortDeclarationShare(actions.AST, targets, result)
+		}
+		return result
 	}
 	if len(values) != len(targets) {
 		actions.AST.CXProgramCompileErrorAdd(ast.CompileErrorCodeAssignmentCount, actions.CurrentFile, actions.LineNo, ast.CompileErrorOperands{int64(len(targets)), int64(len(values))})
@@ -188,10 +192,15 @@ func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator strin
 	names := make([]stringpool.StringGid, len(values))
 	for i, value := range values {
 		names[i] = actions.MultipleValueName(actions.AST)
+		actions.SingleValueCheck(actions.AST, value)
 		result = append(result, ParserActionAssignmentExpression(actions.MultipleValueRead(actions.AST, names[i]), ":=", value)...)
 	}
+	start := len(result)
 	for i, target := range targets {
 		result = append(result, ParserActionAssignmentExpression(target, operator, actions.MultipleValueRead(actions.AST, names[i]))...)
+	}
+	if operator == ":=" {
+		actions.ShortDeclarationShare(actions.AST, targets, result[start:])
 	}
 	return result
 }

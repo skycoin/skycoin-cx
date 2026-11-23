@@ -94,21 +94,9 @@ func (arg CXArgument) IsStruct() bool {
 }
 
 func (arg CXArgument) IsSlice() bool {
-	if dims := arg.SliceArrayDimensions(); dims > 0 {
-		// An element of [][N]T, as a[i] is, is an array.
-		return len(arg.Indexes) < dims
-	}
-	if dims := arg.ArraySliceDimensions(); dims > 0 {
-		// An element of [N][]T, as a[i] is, is a slice.
-		if len(arg.Indexes) < dims || len(arg.Indexes) >= len(arg.Lengths) {
-			return false
-		}
-		for _, val := range arg.Lengths[len(arg.Indexes):] {
-			if val != 0 {
-				return false
-			}
-		}
-		return true
+	if arg.ArraySliceMixed() {
+		// An element of [][N]T, as a[i] is, is an array, and of [N][]T a slice.
+		return len(arg.Indexes) < len(arg.Lengths) && arg.Lengths[len(arg.Indexes)] == 0
 	}
 	if len(arg.Lengths) > 0 {
 		for _, val := range arg.Lengths {
@@ -465,6 +453,12 @@ func (arg CXArgument) ArraySliceDimensions() int {
 		}
 	}
 	return 0
+}
+
+// ArraySliceMixed reports whether arg has both array and slice dimensions,
+// as [2][]i32 and [][2][]i32 have.
+func (arg CXArgument) ArraySliceMixed() bool {
+	return arg.ArraySliceDimensions() > 0 || arg.SliceArrayDimensions() > 0
 }
 
 // SliceArrayDimensions returns the number of slice dimensions of a slice of

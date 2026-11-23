@@ -16,6 +16,8 @@ package constants
 // 2611200001  deprecated    584 str.gt
 // 2611200001  deprecated    585 str.gteq
 // 2611200002  assigned      792 string.ByteLength
+// 2611200002  assigned      793 string.BytesOfString
+// 2611200002  assigned      794 string.StringOfBytes
 // 2611200002  renamed       561 str.concat string.Concatenation
 // 2611200002  renamed       562 str.i8 string.ParseDecimalI8
 // 2611200002  renamed       563 str.i16 string.ParseDecimalI16

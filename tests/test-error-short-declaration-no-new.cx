@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	a, b := 1, 2
+	a, b := 3, 4
+	var x i32
+	x, y := "s", 2
+	printf("%d %d %d %d\n", a, b, x, y)
+}

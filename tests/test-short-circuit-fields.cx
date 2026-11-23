@@ -1,0 +1,33 @@
+package main
+
+import "sys/string"
+
+type Item struct {
+	name str
+	flag bool
+	off  bool
+}
+
+var calls i32
+
+func mark(v bool) bool {
+	calls++
+	return v
+}
+
+func main() {
+	var item Item = Item{name: "b", flag: true}
+	var items []Item
+	items = append(items, item)
+	items = append(items, Item{name: "c"})
+	var p *Item = &item
+	var empty []i32
+	printf("%v %v %v\n", item.flag && string.EqualityByByteValue(item.name, "b"), items[0].flag && mark(true), p.flag && mark(true))
+	printf("%v %v %v\n", item.off && mark(true), items[1].flag && mark(true), p.off && mark(true))
+	printf("%v %v %v\n", item.flag || mark(false), items[0].flag || mark(false), p.flag || mark(false))
+	printf("%v %v %v\n", item.off || mark(true), items[1].off || mark(false), p.off || mark(true))
+	printf("%v %v\n", mark(true) && item.flag, mark(false) || items[0].flag)
+	printf("%v %v\n", mark(true) && p.off, mark(false) || items[1].flag)
+	printf("%v %v\n", len(empty) > 0 && empty[0] == 1, item.flag && p.flag && items[0].flag)
+	printf("calls %d\n", calls)
+}

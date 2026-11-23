@@ -89,6 +89,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeGlobalTypeUnknown, ast.CompileErrorOperands{text("g")}, header + " cannot infer the type of global 'g' from its value, declare it with a type\n"},
 		{ast.CompileErrorCodeInitializationCycle, ast.CompileErrorOperands{text("a"), text("a refers to b, b refers to a")}, header + " initialization cycle for 'a': a refers to b, b refers to a\n"},
 		{ast.CompileErrorCodeFunctionResultMissing, ast.CompileErrorOperands{text("none")}, header + " function 'none' returns no value\n"},
+		{ast.CompileErrorCodeMultipleValueSingle, ast.CompileErrorOperands{text("two"), text("a i32, b i32")}, header + " multiple-value two() (value of type (a i32, b i32)) in single-value context\n"},
+		{ast.CompileErrorCodeShortDeclarationNoNew, ast.CompileErrorOperands{}, header + " no new variables on left side of :=\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

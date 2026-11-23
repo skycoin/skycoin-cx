@@ -183,6 +183,8 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <bool>          list_end
 %type   <literalElements> literal_element
 %type   <expressions>   slice_literal_expression
+%type   <expressions>   compound_literal_expression
+%type   <argument>      compound_literal_type
 
 %type	<ReturnExpressions>	return_expression
 
@@ -721,6 +723,38 @@ slice_literal_expression:
 			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, TypeCode: types.Code($2)}, nil)
                 }
                 ;
+
+// A literal of a type with a pointer or with both array and slice
+// dimensions, such as []*T or [2][]i32.
+compound_literal_type:
+                indexing_literal MUL_OP declaration_specifiers
+                {
+			$$ = actions.DeclarationSpecifiers(actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_POINTER), types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
+                }
+        |       indexing_literal LBRACK RBRACK declaration_specifiers
+                {
+			$$ = actions.DeclarationSpecifiers(actions.DeclarationSpecifiers($4, []types.Pointer{0}, constants.DECL_SLICE), types.Cast_sint_to_sptr($1), constants.DECL_ARRAY)
+                }
+        |       indexing_slice_literal MUL_OP declaration_specifiers
+                {
+			$$ = actions.LiteralTypeSlices(actions.DeclarationSpecifiers($3, []types.Pointer{0}, constants.DECL_POINTER), len($1))
+                }
+        |       indexing_slice_literal indexing_literal array_element
+                {
+			$$ = actions.LiteralTypeSlices(actions.DeclarationSpecifiers($3, types.Cast_sint_to_sptr($2), constants.DECL_ARRAY), len($1))
+                }
+                ;
+
+compound_literal_expression:
+                compound_literal_type LBRACE literal_element_list list_end
+                {
+			$$ = actions.LiteralCompound(actions.AST, $1, $<line>1, $<column>1, $3)
+                }
+        |       compound_literal_type LBRACE RBRACE
+                {
+			$$ = actions.LiteralCompound(actions.AST, $1, $<line>1, $<column>1, nil)
+                }
+                ;
 infer_action_arg:
                 IDENTIFIER
                 {
@@ -897,6 +931,7 @@ primary_expression:
                 {
 			$$ = $1
                 }
+        |       compound_literal_expression
                 ;
 
 after_period:   type_specifier

@@ -1,0 +1,29 @@
+package main
+
+type Item struct {
+	count i32
+	flag  bool
+	off   bool
+}
+
+var calls i32
+
+func mark(v bool) bool {
+	calls++
+	return v
+}
+
+func main() {
+	var item Item
+	item.flag = true
+	var items [2]Item
+	items[0].flag = true
+	var p *Item = &item
+	printf("%v %v %v\n", item.flag && mark(true), items[0].flag && mark(true), p.flag && mark(true))
+	printf("%v %v %v\n", item.off && mark(true), items[1].flag && mark(true), p.off && mark(true))
+	printf("%v %v %v\n", item.flag || mark(false), items[0].flag || mark(false), p.flag || mark(false))
+	printf("%v %v %v\n", item.off || mark(true), items[1].off || mark(false), p.off || mark(true))
+	printf("%v %v\n", mark(true) && item.flag, mark(false) || items[0].flag)
+	printf("%v %v\n", mark(true) && p.off, mark(false) || items[1].flag)
+	printf("calls %d\n", calls)
+}

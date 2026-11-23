@@ -39,7 +39,7 @@ func main() {
 	printf("%v %v %v %v %v\n", i, f, d, flag, n.name)
 	printf("%s has %d\n", n.name, n.count)
 	printf("%b %b\n", flag, false)
-	printf("100\\% done, a \\n escape\n")
+	printf("100%% done, a \\n escape\n")
 	printf("missing %d and %d\n", i)
 	printf("%d on a float is empty: [%d]\n", i, d)
 

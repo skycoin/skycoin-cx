@@ -486,7 +486,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 				sym.Size = fromCXAtomicOpInputs.Size
 				sym.Lengths = fromCXAtomicOpInputs.Lengths
 			}
-			resultTyped := shortDeclarationResultTyped(fromExprs[lastFromExpressionIdx], fromExpressionOperator, outTypeArg)
+			resultTyped := shortDeclarationResultTyped(fromExprs[lastFromExpressionIdx], fromExpressionOperator, outTypeArg) || fromExprs[lastFromExpressionIdx].IsArrayLiteral() && literalTypeCompound(outTypeArg)
 			if resultTyped {
 				// A declared result, as *str, []*T or [N][]T, gives its whole type.
 				argumentTypeCopy(sym, outTypeArg)
@@ -982,6 +982,42 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 		exprs = shortDeclarationAfterMethodCalls(exprs, declarationCount)
 	}
 	return exprs
+}
+
+// ShortDeclarationShare marks the declarations exprs make for the names
+// targets of a := with more than one name, so each assigns a variable the
+// same scope already has, and only a := with no new name is an error.
+func ShortDeclarationShare(prgrm *ast.CXProgram, targets [][]ast.CXExpression, exprs []ast.CXExpression) {
+	var names []stringpool.StringGid
+	for _, target := range targets {
+		op, err := prgrm.GetCXAtomicOpFromExpressions(target, len(target)-1)
+		if err != nil || prgrm.GetFunctionFromArray(op.Operator) != nil || len(op.GetOutputs(prgrm)) != 1 {
+			continue
+		}
+		names = append(names, prgrm.GetCXTypeSignatureFromArray(op.GetOutputs(prgrm)[0]).Name)
+	}
+	last := -1
+	for i := range exprs {
+		if len(names) == 0 {
+			break
+		}
+		if exprs[i].Type == ast.CX_LINE || exprs[i].ExpressionType != ast.CXEXPR_UNUSED {
+			continue
+		}
+		op := &prgrm.CXAtomicOps[exprs[i].Index]
+		if prgrm.GetFunctionFromArray(op.Operator) != nil || len(op.GetInputs(prgrm)) != 0 || len(op.GetOutputs(prgrm)) != 1 {
+			continue
+		}
+		if prgrm.GetCXTypeSignatureFromArray(op.GetOutputs(prgrm)[0]).Name != names[0] {
+			continue
+		}
+		exprs[i].ExpressionType = ast.CXEXPR_SHORT_DECLARATION_SHARED
+		last = i
+		names = names[1:]
+	}
+	if last >= 0 {
+		exprs[last].ExpressionType = ast.CXEXPR_SHORT_DECLARATION_SHARED_LAST
+	}
 }
 
 // methodCallFound reports whether exprs hold a method call.

@@ -273,13 +273,11 @@ func vmTestStrImage(text string, code []ir.Instr) *ir.Image {
 // resuming after each full buffer, without allocating.
 func TestRunPrintStr(t *testing.T) {
 	text := string(bytes.Repeat([]byte(`a\%b\nc\`), 300))
-	escaped := string(bytes.Repeat([]byte("a%b\nc\\"), 300))
 	for _, c := range []struct {
 		mode ir.PrintStrMode
 		want string
 	}{
 		{ir.PrintStrModeRaw, text},
-		{ir.PrintStrModeEscaped, escaped},
 		{ir.PrintStrModeLine, text + "\n"},
 	} {
 		image := vmTestStrImage(text, []ir.Instr{

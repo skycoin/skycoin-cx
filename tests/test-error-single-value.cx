@@ -1,0 +1,16 @@
+package main
+
+func two() (a i32, b i32) {
+	return 1, 2
+}
+
+func none() {
+}
+
+func main() {
+	var old i32 = 3
+	m, old := two(), 1
+	var y i32 = none()
+	var late i32 = "s"
+	printf("%d %d %d %d\n", m, old, y, late)
+}

@@ -57,6 +57,14 @@ var compoundTypes = []compoundType{
 	{"[2][]Point", "r[1] = tps", `printf("%d\n", v[1][0].x)`, "7"},
 	{"*[2][]i32", "tas[1] = tsl\n\tr = &tas", `printf("%d\n", (*v)[1][0])`, "7"},
 	{"[]str", `r = append(r, "s")`, `printf("%s\n", v[0])`, "s"},
+	{"[][2][]i32", "var e [2][]i32\n\te[1] = append(e[1], 7)\n\tr = append(r, e)", `printf("%d\n", v[0][1][0])`, "7"},
+	{"[2][][2]i32", "var e [2]i32\n\te[1] = 7\n\tr[1] = append(r[1], e)", `printf("%d\n", v[1][0][1])`, "7"},
+	{"[][][2]i32", "var e [][2]i32\n\tvar f [2]i32\n\tf[1] = 7\n\te = append(e, f)\n\tr = append(r, e)", `printf("%d\n", v[0][0][1])`, "7"},
+	{"[2][2][]i32", "r[1][0] = append(r[1][0], 7)", `printf("%d\n", v[1][0][0])`, "7"},
+	{"[][2][2]i32", "var e [2][2]i32\n\te[1][0] = 7\n\tr = append(r, e)", `printf("%d\n", v[0][1][0])`, "7"},
+	{"[2][][]i32", "r[1] = append(r[1], tsl)", `printf("%d\n", v[1][0][0])`, "7"},
+	{"[2][2][2]i32", "r[1][0][1] = 7", `printf("%d\n", v[1][0][1])`, "7"},
+	{"[][]*[]i32", "var e []*[]i32\n\te = append(e, &tsl)\n\tr = append(r, e)", `printf("%d\n", (*v[0][0])[0])`, "7"},
 }
 
 // compoundProgram is a program that passes, returns, declares, assigns,

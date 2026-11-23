@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	// GCREACH: t3-ast owns the heap and the GC. This file allocates strs, which
 	// may run MarkAndCompact, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
@@ -139,4 +140,29 @@ func opStrCompareByValue(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []a
 
 func opStrByteLength(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outputs[0].Set_i32(prgrm, int32(len(inputs[0].Get_str(prgrm))))
+}
+
+// opStrBytesOfString returns a new []ui8 holding the bytes of a str, as
+// []byte(s) in Go.
+// GCREACH: allocates the output byte slice, which may run MarkAndCompact,
+// see docs/GarbageCollector.md.
+func opStrBytesOfString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	str := inputs[0].Get_str(prgrm)
+	count := types.Cast_int_to_ptr(len(str))
+	if count == 0 {
+		outputs[0].Set_ptr(prgrm, 0)
+		return
+	}
+	if count > ast.SliceElementLimit(1) {
+		panic(constants.HEAP_EXHAUSTED_ERROR)
+	}
+	slice := ast.SliceResizeEx(prgrm, 0, count, 1)
+	copy(ast.GetSliceData(prgrm, slice, 1), str)
+	outputs[0].Set_ptr(prgrm, slice)
+}
+
+// opStrStringOfBytes returns a new str holding the bytes of a []ui8, as
+// string(b) in Go.
+func opStrStringOfBytes(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_str(prgrm, string(inputs[0].GetSlice_ui8(prgrm)))
 }

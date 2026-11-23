@@ -1,0 +1,20 @@
+package main
+
+import "sys/string"
+
+func main() {
+	var b []ui8 = string.BytesOfString("h\xffi")
+	printf("%d %d %d %d\n", len(b), b[0], b[1], b[2])
+	b[0] = 72UB
+	b = append(b, 33UB)
+	var s str = string.StringOfBytes(b)
+	printf("%d\n", string.ByteLength(s))
+	var e []ui8 = string.BytesOfString("")
+	printf("%d [%s]\n", len(e), string.StringOfBytes(e))
+	var n []ui8
+	printf("[%s]\n", string.StringOfBytes(n))
+	var k str = "abc"
+	var kb []ui8 = string.BytesOfString(k)
+	kb[0] = 120UB
+	printf("%s %s\n", k, string.StringOfBytes(kb))
+}

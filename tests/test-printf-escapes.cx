@@ -1,0 +1,13 @@
+package main
+
+import "sys/string"
+
+func main() {
+	var a str = "\\n"
+	printf("%d [%s]\n", string.ByteLength(a), a)
+	var p str = "50\\%"
+	printf("%d [%s] [%v]\n", string.ByteLength(p), p, p)
+	var s str = sprintf("%s|%s", a, p)
+	printf("%d %s\n", string.ByteLength(s), s)
+	printf("100%% x\\%y\n")
+}

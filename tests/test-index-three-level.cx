@@ -1,0 +1,46 @@
+package main
+
+func main() {
+	var a [][2][]i32
+	var a1 [2][]i32
+	a1[1] = append(a1[1], 7)
+	a = append(a, a1)
+	a[0][1][0] = 8
+	printf("a %d %d %d\n", a[0][1][0], len(a[0][1]), len(a[0][0]))
+
+	var b [2][][2]i32
+	var b1 [2]i32
+	b1[1] = 7
+	b[1] = append(b[1], b1)
+	b[1][0][0] = 6
+	printf("b %d %d\n", b[1][0][1], b[1][0][0])
+
+	var c [][][2]i32
+	var c1 [][2]i32
+	c1 = append(c1, b1)
+	c = append(c, c1)
+	c[0][0][1] = 9
+	printf("c %d\n", c[0][0][1])
+
+	var d [2][2][]i32
+	d[1][0] = append(d[1][0], 7)
+	printf("d %d\n", d[1][0][0])
+
+	var e [][2][2]i32
+	var e1 [2][2]i32
+	e1[1][0] = 7
+	e = append(e, e1)
+	printf("e %d\n", e[0][1][0])
+
+	var f [2][][]i32
+	var f1 []i32
+	f1 = append(f1, 7)
+	f[1] = append(f[1], f1)
+	printf("f %d\n", f[1][0][0])
+
+	var g [][]*[]i32
+	var g1 []*[]i32
+	g1 = append(g1, &f1)
+	g = append(g, g1)
+	printf("g %d\n", (*g[0][0])[0])
+}

@@ -1,0 +1,22 @@
+package main
+
+import "sys/string"
+
+func show(s str) {
+	var b []ui8 = string.BytesOfString(s)
+	printf("%d:", len(b))
+	for i := 0; i < len(b); i++ {
+		printf(" %d", b[i])
+	}
+	printf("\n")
+}
+
+func main() {
+	show("\a\b\f\n\r\t\v\\\"")
+	show("\x41\x7f\xff\x00")
+	show("\101\000\377\177")
+	show("Aé€")
+	show("\U00000041\U0001F600")
+	show(`a\nb`)
+	show("")
+}

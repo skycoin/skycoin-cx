@@ -286,7 +286,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-vm-print.cx", types.CX_SUCCESS, "string.PrintLine and printf (skycoin-cx#408)",
 		"hello\nfrom a global\nfrom a field\n\n",
 		"-12 1234567890123 200\n1.5000000 2.2500000000000000\n-12 1.5 2.25 true from a field\n",
-		"from a field has 3\ntrue false\n100% done, a \n escape\nmissing -12 and %!d(MISSING)\n",
+		"from a field has 3\ntrue false\n100% done, a \\n escape\nmissing -12 and %!d(MISSING)\n",
 		"-12 on a float is empty: []\nelement 77\nthrough a pointer 77 77\n",
 	)
 	t.RunWant("test-array-index-negative.cx", types.CX_RUNTIME_INVALID_CAST, "a negative array index is a runtime error and the call stack prints without a panic",
@@ -898,6 +898,53 @@ func runTestCases(t *runner.TestRunner) {
 		"test-global-multiple-results-errors.cx:12:5 assignment mismatch: 3 variables but 2 values",
 		"test-global-multiple-results-errors.cx:13:5 assignment mismatch: 2 variables but 1 value")
 	t.RunMissing("test-global-multiple-results-errors.cx", types.CX_COMPILATION_ERROR, "the globals of var a, b = f() with the wrong number of results report nothing more", ":16 ")
+	t.RunWant("test-printf-escapes.cx", types.CX_SUCCESS, "printf and sprintf print the bytes of a %s argument and their format as they are, and %% prints %",
+		"2 [\\n]\n4 [50\\%] [50\\%]\n7 \\n|50\\%\n100% x\\%!y(MISSING)\n")
+	t.RunWant("--executor=old test-printf-escapes.cx", types.CX_SUCCESS, "printf and sprintf print a %s argument as it is, on the old loop",
+		"2 [\\n]\n4 [50\\%] [50\\%]\n7 \\n|50\\%\n100% x\\%!y(MISSING)\n")
+	t.RunWant("test-string-escapes.cx", types.CX_SUCCESS, "string literals take the escapes of Go, \\x, octal, \\u and \\U among them",
+		"9: 7 8 12 10 13 9 11 92 34\n4: 65 127 255 0\n4: 65 0 255 127\n6: 65 195 169 226 130 172\n5: 65 240 159 152 128\n4: 97 92 110 98\n0:\n")
+	t.RunWant("test-error-string-escapes.cx", types.CX_COMPILATION_ERROR, "an invalid escape is the error of Go and the errors after it are found",
+		"test-error-string-escapes.cx:4:16 unknown escape",
+		"test-error-string-escapes.cx:5:18 invalid character 'g' in hexadecimal escape",
+		"test-error-string-escapes.cx:6:19 octal escape value 256 > 255",
+		"test-error-string-escapes.cx:7:21 escape is invalid Unicode code point U+D800",
+		"test-error-string-escapes.cx:8:25 escape is invalid Unicode code point U+110000",
+		"test-error-string-escapes.cx:9:16 unknown escape",
+		"test-error-string-escapes.cx:10:16 unknown escape",
+		"test-error-string-escapes.cx:11:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-string-escapes.cx", types.CX_COMPILATION_ERROR, "an invalid escape is reported once", "invalid string literal")
+	t.RunWant("test-string-bytes.cx", types.CX_SUCCESS, "string.BytesOfString and string.StringOfBytes copy between str and []ui8",
+		"3 104 255 105\n4\n0 []\n[]\nabc xbc\n")
+	t.RunWant("test-pointer-pointer-field.cx", types.CX_SUCCESS, "(*pp).f on a **T dereferences pp twice",
+		"1 2\n9 9 9 9\n1 9\n5\n5 9\n")
+	t.RunWant("test-literal-compound.cx", types.CX_SUCCESS, "composite literals of pointer and mixed array and slice element types, elided elements and &T elided",
+		"a 1 2\nb 7 8\nc 5\nd 2 2\ne 3 3 2\nf 3\ng 9\nh 0\ni 2 3\n")
+	t.RunWant("--executor=old test-literal-compound.cx", types.CX_SUCCESS, "composite literals of pointer and mixed element types, on the old loop",
+		"a 1 2\nb 7 8\nc 5\nd 2 2\ne 3 3 2\nf 3\ng 9\nh 0\ni 2 3\n")
+	t.RunWant("test-index-three-level.cx", types.CX_SUCCESS, "indexes of three levels of arrays, slices and pointers",
+		"a 8 1 0\nb 7 6\nc 9\nd 7\ne 7\nf 7\ng 7\n")
+	t.RunWant("test-global-str-zero.cx", types.CX_SUCCESS, "a global str without a value is empty, also read through a pointer",
+		"[][][][x] 0\n")
+	t.RunWant("--executor=old test-global-str-zero.cx", types.CX_SUCCESS, "a global str without a value is empty, on the old loop",
+		"[][][][x] 0\n")
+	t.RunWant("test-short-declaration-reuse.cx", types.CX_SUCCESS, "a := of several names assigns the names its scope has and declares the others",
+		"5 2 6\n7 8\n5\n3 4\ny 1\n")
+	t.RunWant("test-error-short-declaration-no-new.cx", types.CX_COMPILATION_ERROR, "a := whose names its scope has all",
+		"test-error-short-declaration-no-new.cx:5:2 no new variables on left side of :=",
+		"test-error-short-declaration-no-new.cx:7:2 cannot assign value of type 'str' to identifier 'x' of type 'i32'")
+	t.RunMissing("test-error-short-declaration-no-new.cx", types.CX_COMPILATION_ERROR, "a := of several names reports no name redeclared", "redeclared")
+	t.RunWant("test-error-single-value.cx", types.CX_COMPILATION_ERROR, "a call of several results or of none used as one value",
+		"test-error-single-value.cx:12 multiple-value two() (value of type (a i32, b i32)) in single-value context",
+		"test-error-single-value.cx:13 function 'none' returns no value",
+		"test-error-single-value.cx:14:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
+	t.RunMissing("test-error-single-value.cx", types.CX_COMPILATION_ERROR, "the single value errors report nothing more", "redeclared", "expects to return")
+	t.RunWant("test-short-circuit-fields.cx", types.CX_SUCCESS, "&& and || on field, element and pointer field operands, on either side",
+		"true true true\nfalse false false\ntrue true true\ntrue false true\ntrue true\nfalse false\nfalse true\ncalls 9\n")
+	t.RunWant("--executor=vm test-short-circuit-fields-vm.cx", types.CX_SUCCESS, "&& and || on field, element and pointer field operands, on the vm",
+		"true true true\nfalse false false\ntrue true true\ntrue false true\ntrue true\nfalse false\ncalls 10\n")
+	t.RunWant("--executor=old test-short-circuit-fields-vm.cx", types.CX_SUCCESS, "&& and || on field, element and pointer field operands, on the old loop",
+		"true true true\nfalse false false\ntrue true true\ntrue false true\ntrue true\nfalse false\ncalls 10\n")
 	// t.Run("test-cipher.cx", types.CX_SUCCESS, "ProgramError in cipher lib.")
 
 	// issues

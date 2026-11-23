@@ -33,6 +33,9 @@ type SymbolsData struct {
 	// escapedSlots the frame slots of their declarations.
 	escaped      map[stringpool.StringGid]bool
 	escapedSlots []escapeSlot
+	// shortDeclarationNew is whether the := being declared has declared a
+	// new name yet, see CXEXPR_SHORT_DECLARATION_SHARED.
+	shortDeclarationNew bool
 }
 
 // FunctionHeader takes a function name ('fnName') and either creates the
@@ -1307,6 +1310,32 @@ func AddPointer(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 	}
 }
 
+// fieldPointerDeref dereferences sym once more when its explicit
+// dereferences and indexes leave a pointer to a struct, as (*pp).f does for
+// a **T pp and (*s[0]).f for a []**T s.
+func fieldPointerDeref(sym *ast.CXArgument, arg *ast.CXArgument) {
+	if arg.StructType == nil || !hasDerefOp(sym, constants.DEREF_POINTER) {
+		return
+	}
+	specs := append([]int(nil), arg.DeclarationSpecifiers...)
+	for _, deref := range sym.DereferenceOperations {
+		if len(specs) == 0 {
+			return
+		}
+		top := specs[len(specs)-1]
+		switch {
+		case deref == constants.DEREF_POINTER && top == constants.DECL_POINTER:
+		case (deref == constants.DEREF_ARRAY || deref == constants.DEREF_SLICE) && (top == constants.DECL_ARRAY || top == constants.DECL_SLICE):
+		default:
+			return
+		}
+		specs = specs[:len(specs)-1]
+	}
+	if len(specs) == 2 && specs[0] == constants.DECL_STRUCT && specs[1] == constants.DECL_POINTER {
+		sym.DereferenceOperations = append(sym.DereferenceOperations, constants.DEREF_POINTER)
+	}
+}
+
 // CheckRedeclared checks if `expr` represents a variable declaration and then checks if an
 // instance of that variable has already been declared.
 //
@@ -1346,8 +1375,20 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 		}
 
 		_, found := (symbolsData.symbolsIndex)[lastIdx][SymbolsDataKey{SymbolsDataKeyPackage: symPkg.Name, SymbolsDataKeyName: typeSig.Name}]
-		if found {
-			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeRedeclared, typeSig.ArgDetails, ast.CompileErrorOperands{int64(typeSig.Name)})
+		switch expr.ExpressionType {
+		case ast.CXEXPR_SHORT_DECLARATION_SHARED, ast.CXEXPR_SHORT_DECLARATION_SHARED_LAST:
+			// https://go.dev/ref/spec#Short_variable_declarations
+			symbolsData.shortDeclarationNew = symbolsData.shortDeclarationNew || !found
+			if expr.ExpressionType == ast.CXEXPR_SHORT_DECLARATION_SHARED_LAST {
+				if !symbolsData.shortDeclarationNew {
+					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeShortDeclarationNoNew, typeSig.ArgDetails, ast.CompileErrorOperands{})
+				}
+				symbolsData.shortDeclarationNew = false
+			}
+		default:
+			if found {
+				prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeRedeclared, typeSig.ArgDetails, ast.CompileErrorOperands{int64(typeSig.Name)})
+			}
 		}
 	}
 }
@@ -2458,7 +2499,9 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0929.
 		outputTypeSig := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
-		if IsTempVar(prgrm, outputTypeSig.Name) {
+		// An element of a literal of pointers or mixed dimensions, tmp[i], has
+		// its type from the literal.
+		if IsTempVar(prgrm, outputTypeSig.Name) && !argumentIndexedElement(prgrm, outputTypeSig) {
 			if outputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 				outputArgIdx := ast.CXArgumentIndex(outputTypeSig.Meta)
 
@@ -2875,6 +2918,7 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		// FIXME Maybe we can unify this later.
 		if len(sym.Fields) > 0 {
 			indexedFieldBaseDeref(sym, arg)
+			fieldPointerDeref(sym, arg)
 			elt := sym.GetAssignmentElement(prgrm)
 
 			declSpec := []int{}
@@ -2980,12 +3024,8 @@ func CopyArgFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignature *ast
 		}
 	}
 
-	if dims := arg.ArraySliceDimensions(); dims > 0 {
-		arraySliceDerefs(sym, dims)
-	}
-
-	if dims := arg.SliceArrayDimensions(); dims > 0 && hasDerefOp(sym, constants.DEREF_ARRAY) {
-		sliceArrayDerefs(sym, dims)
+	if arg.ArraySliceMixed() && (hasDerefOp(sym, constants.DEREF_ARRAY) || hasDerefOp(sym, constants.DEREF_SLICE)) {
+		indexDerefsOfLengths(sym, arg.Lengths)
 	} else if arg.IsSlice() {
 		if !hasDerefOp(sym, constants.DEREF_ARRAY) {
 			// Then we're handling the slice itself, and we need to dereference it.
@@ -3712,32 +3752,17 @@ func pointerTypeOfLastField(prgrm *ast.CXProgram, arg *ast.CXArgument) bool {
 	return field.IsPointer() && arg.PointerTargetType != types.POINTER
 }
 
-// arraySliceDerefs makes the indexes of arg after the dims array dimensions
-// of an array of slices, as j in a[i][j] on a [N][]T, index a slice.
-func arraySliceDerefs(arg *ast.CXArgument, dims int) {
+// indexDerefsOfLengths makes each index of arg index a slice or an array as
+// its dimension in lengths, outermost first, is a slice or an array, as
+// a[i][j][k] on a [][2][]i32 indexes a slice, an array and a slice.
+func indexDerefsOfLengths(arg *ast.CXArgument, lengths []types.Pointer) {
 	index := 0
 	for i, op := range arg.DereferenceOperations {
 		if op != constants.DEREF_ARRAY && op != constants.DEREF_SLICE {
 			continue
 		}
 		arg.DereferenceOperations[i] = constants.DEREF_ARRAY
-		if index >= dims {
-			arg.DereferenceOperations[i] = constants.DEREF_SLICE
-		}
-		index++
-	}
-}
-
-// sliceArrayDerefs makes the first dims indexes of arg, those of the slice
-// dimensions of a slice of arrays, as i in a[i][j] on a [][N]T, index a slice.
-func sliceArrayDerefs(arg *ast.CXArgument, dims int) {
-	index := 0
-	for i, op := range arg.DereferenceOperations {
-		if op != constants.DEREF_ARRAY && op != constants.DEREF_SLICE {
-			continue
-		}
-		arg.DereferenceOperations[i] = constants.DEREF_ARRAY
-		if index < dims {
+		if index < len(lengths) && lengths[index] == 0 {
 			arg.DereferenceOperations[i] = constants.DEREF_SLICE
 		}
 		index++
@@ -3975,9 +4000,25 @@ func dereferenceNonPointer(prgrm *ast.CXProgram, sym *ast.CXTypeSignature, decla
 	return false
 }
 
+// argumentIndexedElement reports whether sig names an element, tmp[i], of
+// a literal LiteralCompound builds, which has its type from the literal.
+func argumentIndexedElement(prgrm *ast.CXProgram, sig *ast.CXTypeSignature) bool {
+	if sig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return false
+	}
+	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(sig.Meta))
+	return len(arg.Indexes) > 0 && literalTypeCompound(arg)
+}
+
 // copyArgFieldsDeclarationSite reports whether sym sits where arg is declared,
 // which a use on the line of the declaration, as in func f() (r [2]i32) { r[1] = 2 }, does not.
 func copyArgFieldsDeclarationSite(prgrm *ast.CXProgram, sym *ast.CXArgument, arg *ast.CXArgument) bool {
+	for _, spec := range sym.DeclarationSpecifiers {
+		if spec == constants.DECL_INDEXING {
+			// An element, as tmp[i] of a literal on the line of tmp is.
+			return false
+		}
+	}
 	_, symLine := ast.CXArgumentDebugFileLine(prgrm, sym.ArgDetails)
 	_, argLine := ast.CXArgumentDebugFileLine(prgrm, arg.ArgDetails)
 	if symLine != argLine {
@@ -4114,12 +4155,12 @@ func symbolFieldTypeSet(nameField *ast.CXArgument, field *ast.CXArgument, sym *a
 	if field.IsSlice() {
 		nameField.DereferenceOperations = append([]int{constants.DEREF_POINTER}, nameField.DereferenceOperations...)
 	}
-	if dims := field.ArraySliceDimensions(); dims > 0 {
-		arraySliceDerefs(nameField, dims)
+	if field.ArraySliceDimensions() > 0 {
+		indexDerefsOfLengths(nameField, field.Lengths)
 	}
-	if dims := field.SliceArrayDimensions(); dims > 0 && hasDerefOp(nameField, constants.DEREF_ARRAY) {
+	if field.SliceArrayDimensions() > 0 && hasDerefOp(nameField, constants.DEREF_ARRAY) {
 		nameField.DereferenceOperations = nameField.DereferenceOperations[1:]
-		sliceArrayDerefs(nameField, dims)
+		indexDerefsOfLengths(nameField, field.Lengths)
 	}
 
 	nameField.PassBy = field.PassBy
@@ -4150,20 +4191,50 @@ func outputlessCallInvalidate(prgrm *ast.CXProgram, expression *ast.CXAtomicOper
 // function with no results, and makes the call a stand in typed
 // types.INVALID, see outputlessCallInvalidate.
 func outputlessValueCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
+	valueCheck(prgrm, exprs, false)
+}
+
+// SingleValueCheck reports the value exprs when it ends in a call of a
+// function with no results or with more than one, as Go does, and makes the
+// call a stand in typed types.INVALID.
+func SingleValueCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
+	valueCheck(prgrm, exprs, true)
+}
+
+// valueCheck is outputlessValueCheck, and SingleValueCheck when single is
+// true.
+func valueCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression, single bool) {
 	for i := len(exprs) - 1; i >= 0; i-- {
 		if exprs[i].Type == ast.CX_LINE {
 			continue
 		}
 		expression := &prgrm.CXAtomicOps[exprs[i].Index]
 		operator := prgrm.GetFunctionFromArray(expression.Operator)
-		if operator == nil || exprs[i].IsMethodCall() || len(expression.GetOutputs(prgrm)) > 0 || len(operator.GetOutputs(prgrm)) > 0 {
+		if operator == nil || exprs[i].IsMethodCall() || len(expression.GetOutputs(prgrm)) > 0 {
+			return
+		}
+		results := operator.GetOutputs(prgrm)
+		if len(results) == 1 || len(results) > 1 && !single {
 			return
 		}
 		file, line := CurrentFile, LineNo
 		if cxLine, err := prgrm.GetPreviousCXLine(exprs, i); err == nil && cxLine.LineNumber > 0 {
 			file, line = cxLine.FileName, cxLine.LineNumber
 		}
-		outputlessCallInvalidate(prgrm, expression, operator, file, line)
+		if len(results) == 0 {
+			outputlessCallInvalidate(prgrm, expression, operator, file, line)
+			return
+		}
+		list := make([]string, len(results))
+		for r, result := range results {
+			sig := prgrm.GetCXTypeSignatureFromArray(result)
+			list[r] = ast.GetFormattedType(prgrm, sig)
+			if name := prgrm.CXProgramNameText(StripNameNumber(prgrm, sig.Name)); name != "" {
+				list[r] = name + " " + list[r]
+			}
+		}
+		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeMultipleValueSingle, file, line, ast.CompileErrorOperands{int64(operator.Name), prgrm.CXProgramCompileErrorText(strings.Join(list, ", "))})
+		expression.Operator = invalidFunctionIndex(prgrm, expression.Package, operator.Name)
 		return
 	}
 }

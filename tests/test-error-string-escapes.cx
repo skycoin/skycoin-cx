@@ -1,0 +1,13 @@
+package main
+
+func main() {
+	var a str = "\q"
+	var b str = "\x4g"
+	var c str = "\400"
+	var d str = "\uD800"
+	var e str = "\U00110000"
+	var f str = "\'"
+	var g str = "\8"
+	var late i32 = "s"
+	printf("%s%s%s%s%s%s%s%d\n", a, b, c, d, e, f, g, late)
+}

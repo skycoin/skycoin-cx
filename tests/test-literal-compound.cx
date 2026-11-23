@@ -1,0 +1,43 @@
+package main
+
+type T struct {
+	v i32
+	w i32
+}
+
+var gx i32 = 3
+var gs []*i32 = []*i32{&gx}
+var gm = [2][]i32{{1}, {2, 3}}
+
+func count(s []*T) i32 {
+	return len(s)
+}
+
+func main() {
+	var a T
+	a.v = 1
+	var b T
+	b.v = 2
+	pa := [2]*T{&a, &b}
+	printf("a %d %d\n", pa[0].v, pa[1].v)
+	pe := [2]*T{{v: 7}, {w: 8}}
+	printf("b %d %d\n", pe[0].v, pe[1].w)
+	var sl []i32 = []i32{4, 5}
+	ss := []*[]i32{&sl}
+	printf("c %d\n", (*ss[0])[1])
+	at := [2][]*T{{&a}, {&b, &a}}
+	printf("d %d %d\n", at[1][0].v, len(at[1]))
+	printf("e %d %d %d\n", *gs[0], gm[1][1], len(gm))
+	printf("f %d\n", count([]*T{&a, &b, &a}))
+	var arr [2]i32
+	arr[1] = 9
+	pq := [2]*[2]i32{&arr, &arr}
+	printf("g %d\n", (*pq[1])[1])
+	e := [][2]i32{}
+	printf("h %d\n", len(e))
+	ml := [][]*i32{
+		{&gx},
+		{&gx, &gx},
+	}
+	printf("i %d %d\n", len(ml), *ml[1][1])
+}

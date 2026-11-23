@@ -968,25 +968,9 @@ func (machine *Machine) printBytes(src []byte, mode ir.PrintStrMode) Stop {
 		if len(out) == cap(out) {
 			return machine.printFull(out, cursor)
 		}
-		if mode != ir.PrintStrModeEscaped {
-			n := copy(out[len(out):cap(out)], src[cursor:])
-			out = out[:len(out)+n]
-			cursor += n
-			continue
-		}
-		ch := src[cursor]
-		if ch == '\\' && cursor+1 < len(src) {
-			switch src[cursor+1] {
-			case '%':
-				ch = '%'
-				cursor++
-			case 'n':
-				ch = '\n'
-				cursor++
-			}
-		}
-		out = append(out, ch)
-		cursor++
+		n := copy(out[len(out):cap(out)], src[cursor:])
+		out = out[:len(out)+n]
+		cursor += n
 	}
 	if mode == ir.PrintStrModeLine {
 		if len(out) == cap(out) {

@@ -23,22 +23,11 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 		if c < lenStr-1 {
 			nextCh = fmtStr[c+1]
 		}
-		if ch == '\\' {
-			switch nextCh {
-			case '%':
-				c++
-				res = append(res, nextCh)
-				continue
-			case 'n':
-				c++
-				res = append(res, '\n')
-				continue
-			default:
-				res = append(res, ch)
-				continue
-			}
+		if ch == '%' && nextCh == '%' {
+			c++
+			res = append(res, '%')
+			continue
 		}
-
 		if ch == '%' {
 			if specifiersCounter+1 == len(inputs) {
 				res = append(res, []byte(fmt.Sprintf("%%!%c(MISSING)", nextCh))...)
@@ -54,7 +43,7 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 			}
 			switch nextCh {
 			case 's':
-				res = append(res, []byte(CheckForEscapedChars(inp.Get_str(prgrm)))...)
+				res = append(res, inp.Get_str(prgrm)...)
 			case 'd':
 				switch inp.Type {
 				case types.I8:
@@ -122,37 +111,4 @@ func opSprintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue
 
 func opPrintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	fmt.Print(string(buildString(prgrm, inputs, outputs)))
-}
-
-// Only used in op_fmt.go, once
-func CheckForEscapedChars(str string) []byte {
-	var res []byte
-	var lenStr = int(len(str))
-	for c := 0; c < len(str); c++ {
-		var nextCh byte
-		ch := str[c]
-		if c < lenStr-1 {
-			nextCh = str[c+1]
-		}
-		if ch == '\\' {
-			switch nextCh {
-			case '%':
-				c++
-				res = append(res, nextCh)
-				continue
-			case 'n':
-				c++
-				res = append(res, '\n')
-				continue
-			default:
-				res = append(res, ch)
-				continue
-			}
-
-		} else {
-			res = append(res, ch)
-		}
-	}
-
-	return res
 }

@@ -1,0 +1,19 @@
+package main
+
+var ts str
+var tn i32
+var tss [2]str
+
+func show(v *str) {
+	printf("[%s]", *v)
+}
+
+func main() {
+	printf("[%s]", ts)
+	var p *str = &ts
+	show(p)
+	show(&tss[1])
+	ts = "x"
+	show(p)
+	printf(" %d\n", tn)
+}

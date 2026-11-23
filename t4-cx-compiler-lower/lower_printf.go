@@ -119,17 +119,9 @@ func (s *state) printfSteps(format []byte, inputs []ast.CXTypeSignatureIndex) ([
 		if c < len(format)-1 {
 			next = format[c+1]
 		}
-		if ch == '\\' {
-			switch next {
-			case '%':
-				c++
-				text([]byte{'%'})
-			case 'n':
-				c++
-				text([]byte{'\n'})
-			default:
-				text([]byte{ch})
-			}
+		if ch == '%' && next == '%' {
+			c++
+			text([]byte{'%'})
 			continue
 		}
 		if ch != '%' {
@@ -196,7 +188,7 @@ func (s *state) printfVerb(verb byte, signatureIndex ast.CXTypeSignatureIndex) (
 		if typ != types.STR {
 			return printfStep{}, false, ReasonPrintfFormat
 		}
-		return str(ir.PrintStrModeEscaped)
+		return str(ir.PrintStrModeRaw)
 	case 'd':
 		switch typ {
 		case types.I8, types.I16, types.I32, types.I64, types.UI8, types.UI16, types.UI32, types.UI64:

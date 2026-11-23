@@ -1,0 +1,24 @@
+package main
+
+type T struct {
+	a i32
+	b i32
+}
+
+func main() {
+	var t T
+	t.a = 1
+	t.b = 2
+	var p *T = &t
+	var pp **T = &p
+	var ppp ***T = &pp
+	printf("%d %d\n", (*pp).a, (*pp).b)
+	(*pp).b = 9
+	printf("%d %d %d %d\n", t.b, (**pp).b, (*p).b, p.b)
+	printf("%d %d\n", (**ppp).a, (***ppp).b)
+	(**ppp).a = 5
+	printf("%d\n", t.a)
+	var pps []**T
+	pps = append(pps, pp)
+	printf("%d %d\n", (*pps[0]).a, (*pps[0]).b)
+}

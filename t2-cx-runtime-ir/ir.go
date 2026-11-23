@@ -95,11 +95,8 @@ func ImageDataEnd(image *Image) uint32 {
 type PrintStrMode uint32
 
 const (
-	// PrintStrModeRaw writes the bytes as they are, printf %v.
+	// PrintStrModeRaw writes the bytes as they are, printf %s and %v.
 	PrintStrModeRaw PrintStrMode = iota
-	// PrintStrModeEscaped turns \% into % and \n into a new line, printf %s
-	// as CheckForEscapedChars does.
-	PrintStrModeEscaped
 	// PrintStrModeLine writes the bytes and a new line, string.PrintLine.
 	PrintStrModeLine
 )

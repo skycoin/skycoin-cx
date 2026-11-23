@@ -68,6 +68,8 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeCallResultCall - ast.CompileErrorCodeNil:             {Format: "%H the result of a call is not a function\n"},
 	ast.CompileErrorCodeMethodResultMissing - ast.CompileErrorCodeNil:        {Format: "%H method '%s.%s' returns no value\n"},
 	ast.CompileErrorCodeFunctionResultMissing - ast.CompileErrorCodeNil:      {Format: "%H function '%s' returns no value\n"},
+	ast.CompileErrorCodeMultipleValueSingle - ast.CompileErrorCodeNil:        {Format: "%H multiple-value %s() (value of type (%s)) in single-value context\n"},
+	ast.CompileErrorCodeShortDeclarationNoNew - ast.CompileErrorCodeNil:      {Format: "%H no new variables on left side of :=\n"},
 	ast.CompileErrorCodeAssignmentCount - ast.CompileErrorCodeNil:            {Format: "%H assignment mismatch: %d variable%+ but %d value%+\n"},
 	ast.CompileErrorCodeArrayLiteralLength - ast.CompileErrorCodeNil:         {Format: "%H array literal of length %d has %d element%+\n"},
 	ast.CompileErrorCodeStructLiteralFieldRepeated - ast.CompileErrorCodeNil: {Format: "%H duplicate field name '%s' in struct literal\n"},

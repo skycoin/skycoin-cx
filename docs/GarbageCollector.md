@@ -57,7 +57,7 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 - t6-cx-runtime-core/core.go:15, executor.go:12
 - t4-opcodes, allocating: op_aff.go:11, op_f32.go:11, op_f64.go:11,
   op_fmt.go:10, op_i8.go:10, op_i16.go:10, op_i32.go:10, op_i64.go:10,
-  op_serialize.go:8, op_slice.go:8, op_stdin.go:10, op_str.go:11,
+  op_serialize.go:8, op_slice.go:8, op_stdin.go:10, op_str.go:12,
   op_testing.go:10, op_ui8.go:11, op_ui16.go:11, op_ui32.go:10, op_ui64.go:10
 - t4-opcodes, not allocating: op_bool.go:8, op_misc.go:7, opcodes.go:11,
   opcodes_init.go:8
@@ -79,13 +79,14 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
   `getSignatureSlice`, `queryStructsInPackage`, `QueryFunction`,
   `QueryCaller`, `QueryProgram` and `opAffQuery`
 - t4-opcodes/op_serialize.go:24 `opSerialize`
+- t4-opcodes/op_str.go:159 `opStrBytesOfString`
 - t0-types/types.go:149 the `Allocator` hook, set by t11-cx/main.go:94 and
   t7-cx-core-run/main.go:27, called by t0-types/types_object.go:60 and :81
   and types_string.go:8
 - t6-cxfx/event.go:64, op_glfw_desktop.go:237, op_openal.go:47,
   op_opengl.go:464
 
-Through these, 88 functions reach `AllocateSeq`: 31 in t4-opcodes, 16 in
+Through these, 90 functions reach `AllocateSeq`: 33 in t4-opcodes, 16 in
 t5-cxos, 12 in t6-cxfx, 11 in t3-ast, 6 in t4-execute, 3 in t5-tcp, 2 in
 t5-regexp, 2 in t10-cxrepl, 2 in t11-cx, 2 in t7-cx-core-run and 1 in
 t6-cx-runtime-core. They are not marked one by one.
@@ -93,8 +94,8 @@ t6-cx-runtime-core. They are not marked one by one.
 ### GC root tables
 
 - t3-ast/cxfunction_def.go:48 `ListOfPointers` and :57 `ListOfSlots`
-- t4-actions/gcroot.go:31 adds to `ListOfSlots`, t4-actions/functions.go:1220
-  to :1305 reads and adds to `ListOfPointers`
+- t4-actions/gcroot.go:31 adds to `ListOfSlots`, t4-actions/functions.go:1223
+  to :1308 reads and adds to `ListOfPointers`
 - t3-ast/serialize.go:736 to :751 writes and :807 to :831 reads both tables
 
 ## Dependencies

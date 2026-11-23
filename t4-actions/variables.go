@@ -122,7 +122,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 					make([]byte, types.POINTER_SIZE), true)
 			} else {
 				glblArg = WritePrimary(prgrm, declaration_specifiers.Type,
-					make([]byte, totalSize), declaration_specifiers.ArraySliceDimensions() > 0)
+					make([]byte, totalSize), true)
 			}
 			glblArgOffset = glblArg.Offset
 			glblArgPassBy = glblArg.PassBy
@@ -274,7 +274,7 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 		if declaration_specifiers.IsSlice() { // TODO:PTR move branch in WritePrimary
 			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, types.POINTER_SIZE), true)
 		} else {
-			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, totalSize), declaration_specifiers.ArraySliceDimensions() > 0)
+			glblArg = WritePrimary(prgrm, declaration_specifiers.Type, make([]byte, totalSize), true)
 		}
 
 		declaration_specifiers.Name = declarator.Name
@@ -456,6 +456,7 @@ func DeclareLocal(prgrm *ast.CXProgram, declarator *ast.CXArgument, declarationS
 	// If `initializer` is `nil`, this means that an expression
 	// equivalent to nil was used, such as `[]i32{}`.
 	if doesInitialize && initializer != nil {
+		outputlessValueCheck(prgrm, initializer)
 		processLocalInitialization(prgrm, pkg, &initializer, localVarTypeSigIdx, declSpecIdx)
 		prgrm.ReleaseCXArgUnlessNamed(declarationSpecifiers, localVarTypeSigIdx)
 

@@ -425,6 +425,11 @@ func finalOffsetSliceIndexes(prgrm *CXProgram, fp types.Pointer, offset types.Po
 }
 
 func CalculateDereference_Slice(prgrm *CXProgram, drfsStruct *DereferenceStruct) {
+	if drfsStruct.isPointer && drfsStruct.finalOffset.IsValid() && drfsStruct.finalOffset >= prgrm.Heap.StartsAt {
+		// A slice behind a pointer into a heap object, as in (*s[i])[j] on a
+		// []*[]T, see PointerOfAddress.
+		drfsStruct.finalOffset += types.OBJECT_HEADER_SIZE
+	}
 	drfsStruct.sliceIndexed = true
 	drfsStruct.isPointer = false
 	drfsStruct.finalOffset = types.Read_ptr(prgrm.Memory, drfsStruct.finalOffset)

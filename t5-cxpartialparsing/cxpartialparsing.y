@@ -638,6 +638,20 @@ slice_literal_expression:
         |       indexing_slice_literal type_specifier LBRACE RBRACE
                 ;
 
+// A literal of a type with a pointer or with both array and slice
+// dimensions, such as []*T or [2][]i32.
+compound_literal_type:
+                indexing_literal MUL_OP declaration_specifiers
+        |       indexing_literal LBRACK RBRACK declaration_specifiers
+        |       indexing_slice_literal MUL_OP declaration_specifiers
+        |       indexing_slice_literal indexing_literal array_element
+                ;
+
+compound_literal_expression:
+                compound_literal_type LBRACE literal_element_list list_end
+        |       compound_literal_type LBRACE RBRACE
+                ;
+
 
 
 /* infer_action_arg: */
@@ -696,6 +710,7 @@ primary_expression:
         |       LPAREN expression RPAREN
         |       array_literal_expression
         |       slice_literal_expression
+        |       compound_literal_expression
                 ;
 
 after_period:   type_specifier
