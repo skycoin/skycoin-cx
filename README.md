@@ -18,9 +18,10 @@ Every Go package, binaries included, sits one level below the root as
 `t<N>-<name>`, so no Go file is deeper than `<dir>/<file>.go`. N is the
 package's tier in the import graph. A tier 0 package imports no other package
 of this module, and a tier N package imports only packages of lower tiers,
-tests included. `t11-cx` is the cx binary, `t1-cxtest` the CX program test
-runner. `tests/` holds the CX test programs, `lib/` CX libraries and
-`t0-benchmarks/` the CX and Go benchmarks. `CLEANUP.md` lists every file of
+tests included. `t11-cx` is the cx binary, `t7-cx-core-run` the core of
+`cx build` and `t1-cxtest` the CX program test runner. `tests/` holds the CX
+test programs, `lib/` CX libraries and `t0-benchmarks/` the CX and Go
+benchmarks. `CLEANUP.md` lists every file of
 the former CX repositories with a keep, merge or delete recommendation.
 
 Init lives in one place. No package has a Go `func init()`, and no setup is
@@ -70,7 +71,7 @@ cd skycoin-cx
 make build
 ```
 
-This puts the `cx` binary in `bin/`. Add that directory to your `PATH` if you
+This puts the `cx` binary and the `cx build` core `cx-core` in `bin/`. Add that directory to your `PATH` if you
 want to run `cx` from anywhere. To update, `git pull` and `make build` again.
 
 ## Build
@@ -86,6 +87,36 @@ and the GL, X11 and OpenAL headers. On Debian or Ubuntu:
 sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev
 make build-gui
 ```
+
+## cx build
+
+`cx build` turns a program into one executable file.
+
+```
+make build
+./bin/cx build hello.cx -o hello
+./hello
+```
+
+The file is the core binary `bin/cx-core`, which `make build` builds next to
+`cx`, with the compiled program and a trailer appended. The core reads the
+program from the end of its own file at start up and runs it, passing its
+command line arguments to the program as `os.Args`. Give another core with
+`--core path`. On Windows name the output `hello.exe`. The trailer is
+described in "Built programs" in [docs/IR.md](docs/IR.md#built-programs).
+
+The core is a minimum interpreter. It holds the deserializer, the executors,
+the memory manager and the opcodes that need no file system and no module
+outside the Go standard library. It has no parser and loads no source, and
+`TestCoreImports` in `t7-cx-core-run` fails when it imports anything else.
+`cx build` refuses a program that uses an opcode the core leaves out, such
+as the `os` file calls, `json`, `cipher` or `gl`, and lists those opcodes.
+The run time flags of cx, such as `--executor` and `-heap-max`, are not
+recorded and take their defaults.
+
+Two decisions about the core are still pending with the project lead. Until
+they are made, the core may use the Go standard library but no other module,
+and it has no file system access at all.
 
 ## Hello world
 

@@ -123,8 +123,10 @@ Three error records exist.
 
 - `FileError` in `t0-util/file_error.go` is the class A struct for file
   calls. Its failure codes are `FileErrorCodeNotFound` (1001) to
-  `FileErrorCodeFileSystemCallFailure` (1006), and its operation codes are
-  `FileOperationOpen` (1501) to `FileOperationSandboxRootOpen` (1505).
+  `FileErrorCodeContentInvalid` (1007), a file whose content is not in the
+  expected format such as a damaged `cx build` trailer, and its operation
+  codes are `FileOperationOpen` (1501) to `FileOperationWrite` (1506).
+  `FileErrorWrap` wraps a Go error of another package at its boundary.
 - `CompileErrorRecord` in `t3-ast/compileerror.go` holds one compile error.
   Its fields are `CompileErrorRecordCode`, `CompileErrorRecordFile`,
   `CompileErrorRecordLine`, `CompileErrorRecordColumn`, 0 when unknown, and

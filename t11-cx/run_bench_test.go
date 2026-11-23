@@ -13,6 +13,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute"
 	"github.com/skycoin/skycoin-cx/t4-opcodes"
+	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
 	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"
 )
@@ -252,11 +253,11 @@ func TestRunAllocs(t *testing.T) {
 // lower.
 func vmBenchMachine(tb testing.TB, p runBenchProgram) *vm.Machine {
 	compileRunProgram(tb, p)
-	image, _, outside := executorLower(actions.AST)
+	image, _, outside := core.ExecutorLower(actions.AST)
 	if outside != "" {
 		return nil
 	}
-	return vm.MachineNew(&image, executorOutputSize)
+	return vm.MachineNew(&image, core.ExecutorOutputSize)
 }
 
 // BenchmarkRunVm times vm on the BenchmarkRun programs that lower, as cx
@@ -274,7 +275,7 @@ func BenchmarkRunVm(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				if code := executorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
+				if code := core.ExecutorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
 					b.Fatalf("%s: code %d", p.name, code)
 				}
 			}
@@ -295,7 +296,7 @@ func TestRunVmAllocs(t *testing.T) {
 		lowered++
 		discardStdout(t)
 		allocs := testing.AllocsPerRun(3, func() {
-			if code := executorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
+			if code := core.ExecutorVmRunMachine(actions.AST, machine); code != types.CX_SUCCESS {
 				t.Fatalf("%s: code %d", p.name, code)
 			}
 		})

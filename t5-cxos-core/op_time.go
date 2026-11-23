@@ -1,6 +1,6 @@
 //go:build !nocxos
 
-package cxos
+package cxoscore
 
 import (
 	"time"

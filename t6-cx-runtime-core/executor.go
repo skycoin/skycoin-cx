@@ -1,6 +1,7 @@
-package main
+package core
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -9,25 +10,27 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
+	"github.com/skycoin/skycoin-cx/t4-execute"
+	"github.com/skycoin/skycoin-cx/t4-opcodes"
 	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
 )
 
 // The --executor values. auto runs a program on vm when every function
 // lowers and on the old loop otherwise, step 5 of #408.
 const (
-	executorAuto = "auto"
-	executorOld  = "old"
-	executorVm   = "vm"
+	ExecutorAuto = "auto"
+	ExecutorOld  = "old"
+	ExecutorVm   = "vm"
 )
 
-// executorOutputSize is the output buffer of a vm run.
-const executorOutputSize = 64 << 10
+// ExecutorOutputSize is the output buffer of a vm run.
+const ExecutorOutputSize = 64 << 10
 
-// executorLower lowers prgrm. It returns "" when the program can run on vm:
+// ExecutorLower lowers prgrm. It returns "" when the program can run on vm:
 // every function lowered, there is a main function, and the frames of *init
 // and main fit the stack, which the old loop checks only for main. Otherwise
 // it returns why not.
-func executorLower(prgrm *ast.CXProgram) (image ir.Image, failures []lower.Failure, outside string) {
+func ExecutorLower(prgrm *ast.CXProgram) (image ir.Image, failures []lower.Failure, outside string) {
 	image, failures = lower.Program(prgrm)
 	switch {
 	case len(failures) > 0:
@@ -56,17 +59,17 @@ func executorFailureDescribe(prgrm *ast.CXProgram, failure lower.Failure) string
 	return description + " in " + prgrm.CXProgramNameText(prgrm.CXFunctions[failure.FailureFunction].Name)
 }
 
-// executorVmRun runs image on vm as execute.RunCompiled and runProgram run
+// ExecutorVmRun runs image on vm as execute.RunCompiled and runProgram run
 // prgrm, writing to os.Stdout. It returns the exit code: CX_SUCCESS,
 // CX_ASSERT after a failed test, or the code of a runtime error, which it
 // prints like printer.PrinterRuntimeErrorPrint.
-func executorVmRun(prgrm *ast.CXProgram, image *ir.Image) int32 {
-	return executorVmRunMachine(prgrm, vm.MachineNew(image, executorOutputSize))
+func ExecutorVmRun(prgrm *ast.CXProgram, image *ir.Image) int32 {
+	return ExecutorVmRunMachine(prgrm, vm.MachineNew(image, ExecutorOutputSize))
 }
 
-// executorVmRunMachine runs the image of machine from a reset machine, see
-// executorVmRun.
-func executorVmRunMachine(prgrm *ast.CXProgram, machine *vm.Machine) int32 {
+// ExecutorVmRunMachine runs the image of machine from a reset machine, see
+// ExecutorVmRun.
+func ExecutorVmRunMachine(prgrm *ast.CXProgram, machine *vm.Machine) int32 {
 	image := machine.MachineImage
 	machine.Reset()
 	framePointer := uint32(0)
@@ -112,4 +115,42 @@ func executorOutputFlush(machine *vm.Machine) {
 	// ignores it.
 	os.Stdout.Write(machine.MachineOutput)
 	machine.MachineOutput = machine.MachineOutput[:0]
+}
+
+// ExecutorMemoryLimitsClamp keeps the heap and stack sizes below
+// constants.ESCAPE_OFFSET_FLAG, after the flags of cx have set them.
+func ExecutorMemoryLimitsClamp() {
+	constants.MAX_HEAP_SIZE = min(constants.MAX_HEAP_SIZE, constants.ESCAPE_OFFSET_FLAG/2)
+	constants.INIT_HEAP_SIZE = min(constants.INIT_HEAP_SIZE, constants.MAX_HEAP_SIZE)
+	constants.STACK_SIZE = min(constants.STACK_SIZE, constants.ESCAPE_OFFSET_FLAG/4)
+}
+
+// ExecutorRun runs the compiled or deserialized prgrm with executor, one of
+// ExecutorAuto, ExecutorOld and ExecutorVm, and cxArgs as os.Args. It
+// returns the exit code, after printing any runtime error.
+func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
+	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
+	prgrm.CxIrState.StringPool.StringPoolFreeze()
+
+	if executor != ExecutorOld {
+		image, _, outside := ExecutorLower(prgrm)
+		switch {
+		case outside == "":
+			return ExecutorVmRun(prgrm, &image)
+		case executor == ExecutorVm:
+			fmt.Fprintf(os.Stderr, "cannot run on vm: %s\n", outside)
+			return types.CX_RUNTIME_NOT_IMPLEMENTED
+		}
+	}
+
+	if err := execute.RunCompiled(prgrm, 0, cxArgs); err != nil {
+		panic(err)
+	}
+	if prgrm.RuntimeError.RuntimeErrorRecordRaised {
+		return int32(printer.PrinterRuntimeErrorPrint(prgrm))
+	}
+	if opcodes.AssertFailed() {
+		return types.CX_ASSERT
+	}
+	return types.CX_SUCCESS
 }

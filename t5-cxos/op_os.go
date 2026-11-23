@@ -802,11 +802,6 @@ func opOsGetWorkingDirectory(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs
 	outputs[0].Set_str(prgrm, wd)
 }
 
-func opOsExit(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	exitCode := inputs[0].Get_i32(prgrm)
-	os.Exit(int(exitCode))
-}
-
 func opOsRun(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	var runError int32 = OS_RUN_SUCCESS
 

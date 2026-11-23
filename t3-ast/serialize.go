@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
+
+// SerializeCodec compresses the serialized bytes, as t0-lz4codec does. The
+// interface keeps the compressor out of the packages that only load programs.
+type SerializeCodec interface {
+	Compress(src []byte) ([]byte, error)
+	Decompress(src []byte) ([]byte, error)
+}
 
 // A serialized program is a snapshot of the arenas and managers of a
 // compiled program, so that a deserialized program lowers and runs as the
@@ -23,7 +29,7 @@ import (
 // program gets zeroed memory of the same size. A nil codec leaves the bytes
 // uncompressed. A non-nil codec must be initialized, and the bytes then
 // include the memory and are compressed.
-func SerializeCXProgram(prgrm *CXProgram, includeMemory bool, codec *lz4codec.Codec) ([]byte, error) {
+func SerializeCXProgram(prgrm *CXProgram, includeMemory bool, codec SerializeCodec) ([]byte, error) {
 	b, _, err := encodeCXProgram(prgrm, includeMemory || codec != nil)
 	if err != nil || codec == nil {
 		return b, err
@@ -44,7 +50,7 @@ func SerializeDebugInfo(prgrm *CXProgram, includeMemory, wholeMemory bool) (Seri
 // The program's CompileErrorPrint is left nil for the caller to set.
 // OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 // Now a constructor, site S0461.
-func Deserialize(b []byte, codec *lz4codec.Codec) (*CXProgram, error) {
+func Deserialize(b []byte, codec SerializeCodec) (*CXProgram, error) {
 	if codec != nil {
 		var err error
 		if b, err = decompressCopy(codec, b); err != nil {
@@ -164,7 +170,7 @@ func serializeUnusedManagersCheck(state *CxIrState) error {
 
 // compressCopy compresses b with codec and copies the result out of the
 // codec's buffer.
-func compressCopy(codec *lz4codec.Codec, b []byte) ([]byte, error) {
+func compressCopy(codec SerializeCodec, b []byte) ([]byte, error) {
 	out, err := codec.Compress(b)
 	if err != nil {
 		return nil, err
@@ -174,7 +180,7 @@ func compressCopy(codec *lz4codec.Codec, b []byte) ([]byte, error) {
 
 // decompressCopy decompresses b with codec and copies the result out of the
 // codec's buffer.
-func decompressCopy(codec *lz4codec.Codec, b []byte) ([]byte, error) {
+func decompressCopy(codec SerializeCodec, b []byte) ([]byte, error) {
 	out, err := codec.Decompress(b)
 	if err != nil {
 		return nil, err

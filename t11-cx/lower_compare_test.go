@@ -27,6 +27,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-execute"
+	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
 )
 
 // lowerCompareProgramEnv names the program a child of TestLowerCompare
@@ -328,7 +329,7 @@ func lowerCompareChild(t *testing.T, program string) {
 	compileRunSources(t, names, sources)
 	lowerCompareEmit(t, lowerCompareResult{Stage: lowerCompareStageCompiled})
 
-	image, failures, outside := executorLower(actions.AST)
+	image, failures, outside := core.ExecutorLower(actions.AST)
 	if outside != "" {
 		result := lowerCompareResult{Stage: lowerCompareStageOutside}
 		for _, failure := range failures {
@@ -349,12 +350,12 @@ func lowerCompareChild(t *testing.T, program string) {
 		return
 	}
 
-	machine := vm.MachineNew(&image, executorOutputSize)
+	machine := vm.MachineNew(&image, core.ExecutorOutputSize)
 	// A wrong jump can loop for ever, so vm gets a time limit.
 	done := make(chan int32, 1)
 	var vmCode int32
 	lowerCompareCaptureStdout(t, func() {
-		go func() { done <- executorVmRunMachine(actions.AST, machine) }()
+		go func() { done <- core.ExecutorVmRunMachine(actions.AST, machine) }()
 		select {
 		case vmCode = <-done:
 		case <-time.After(time.Minute):

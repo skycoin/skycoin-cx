@@ -59,6 +59,7 @@
   * [`gl` Package Functions](#gl-package-functions)
   * [`glfw` Package Functions](#glfw-package-functions)
   * [`gltext` Package Functions](#gltext-package-functions)
+* [Building an executable](#building-an-executable)
 * [Language versions](#language-versions)
 
 # [Syntax](#table-of-contents)
@@ -3514,6 +3515,47 @@ windows. Different fonts can be used by loading font files using `gltext.LoadTru
 ### `gltext.NextRune (str, str, i32) (i32, i32, i32, i32, i32, i32, i32)`
 ### `gltext.Printf`
 ### `gltext.Texture`
+# [Building an executable](#table-of-contents)
+
+`cx build` compiles a program into one executable file that runs without
+cx and without the source.
+
+```
+cx build hello.cx -o hello
+./hello first second
+```
+
+Several files and the compile flags of cx are given as they are to cx,
+`cx build --cxpath ws main.cx util.cx -o app`. `-o` names the output, on
+Windows with `.exe`, and `--core path` the core binary, by default `cx-core`
+next to cx, which `make build` builds.
+
+The output is the core binary with the serialized program and a trailer
+appended. The core is a minimum interpreter with no parser. At start up it
+reads the program from the end of its own file and runs it, on vm when the
+program lowers and on the old loop otherwise. Its command line arguments
+reach the program unchanged as `os.Args`, so `./hello ++a` sees what
+`cx hello.cx ++a` sees. The run time flags of cx, such as `--executor` and
+`-heap-max`, are not recorded and take their defaults.
+
+The core includes the built-in functions, `sys/string`, `sys/regexp`,
+`sys/tcp`, `sys/time` and `os.Exit` of `sys/os`. It has no file system
+access, so a program that calls `os.Open`, `os.ReadStr`,
+`os.GetWorkingDirectory`, `os.Run`, `json`, `cipher`, `gl` or another opcode
+outside the core is refused.
+
+```
+cx build: the core has no file system access and no module outside the Go standard library, and the program uses opcodes it does not include: os.Open, os.Close, os.ReadI32Slice
+```
+
+Every `cx build` failure exits with `CX_COMPILATION_ERROR` (1). A core with
+no program appended, or one whose trailer is damaged, prints a message and
+exits with the same code.
+
+Whether the core may use modules outside the Go standard library and
+whether it may use the file system are open decisions. Until they are made
+it uses neither.
+
 # [Language versions](#table-of-contents)
 
 A language version is a change to what CX source may say or to the opcode

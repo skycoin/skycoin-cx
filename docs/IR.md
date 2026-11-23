@@ -20,6 +20,7 @@ numbers quoted below are the same in every build. See [Opcodes](#opcodes).
 * [How the VM runs an expression](#how-the-vm-runs-an-expression)
 * [Worked example](#worked-example)
 * [Serialized form](#serialized-form)
+  * [Built programs](#built-programs)
 * [Opcodes](#opcodes)
 * [The runtime image](#the-runtime-image)
 * [Known oddities](#known-oddities)
@@ -505,7 +506,8 @@ per-expression native copies.
 * With `includeMemory` the memory goes in too, from its first to its last
   nonzero byte. Without it `Deserialize` makes zeroed memory of the same
   size, so literals in the data segment read as zero.
-* With a non-nil `*lz4codec.Codec` (`t0-lz4codec`) the memory always goes
+* With a non-nil `ast.SerializeCodec`, such as a `*lz4codec.Codec`
+  (`t0-lz4codec`), the memory always goes
   in and the result is one LZ4 block from `Codec.Compress`. The block does
   not store the original length, so `Codec.Decompress` relies on the limits
   set in `lz4codec.Config`. `Deserialize` must be given a codec when the
@@ -601,6 +603,38 @@ after one, so a program only loads in a build with its pointer size
 * The flags that sized the memory. The program keeps the stack, data and
   heap bounds it was compiled with.
 
+### Built programs
+
+`cx build` (`t11-cx/build.go`) writes one executable file: the core binary
+of `t7-cx-core-run`, then the serialized program with its memory and no
+compression, then a 32 byte trailer, little endian.
+
+| Offset from the trailer start | Size | Field |
+|---|---|---|
+| 0 | 8 | offset of the program from the start of the file, the core size |
+| 8 | 8 | length of the program in bytes |
+| 16 | 4 | CRC-32 (IEEE) of the program |
+| 20 | 4 | trailer format version, 1 |
+| 24 | 8 | magic `CXBUNDLE` |
+
+The serialized form has no total length, so the trailer gives both the
+offset and the length, and the offset plus the length plus 32 must be the
+file size. `core.CoreTrailerAppend` writes it and `core.CoreTrailerRead`
+(`t6-cx-runtime-core/trailer.go`) reads it from `os.Executable()` when the
+core starts. A file without the magic is no built program, and the core
+prints a message and exits with `CX_COMPILATION_ERROR`. A trailer that does
+not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
+
+`core.CoreRegister` registers the opcodes of the core, the built-in ones and
+those of `sys/regexp`, `sys/tcp`, `sys/time` and `os.Exit` (`t5-cxos-core`).
+`cx build` refuses a program that uses any other opcode and lists them,
+since build tags are not recorded. The core runs the program on vm when it
+lowers and on the old loop otherwise, as `cx --executor=auto` does, and
+passes its command line arguments to the program as `os.Args`. It has no
+flags, so the run time flags of cx, `--executor`, `-heap-max`,
+`-min-heap-free`, `-max-heap-free` and `--debug-go-stack`, take their
+defaults.
+
 ## Opcodes
 
 This document does not list the opcodes. The list is
@@ -618,8 +652,8 @@ This document does not list the opcodes. The list is
 * Every other opcode is registered by name through
   `opcodes.RegisterFunction` or `opcodes.RegisterOperator`, in
   [t4-opcodes/opcodes_init.go](../t4-opcodes/opcodes_init.go) and the
-  `RegisterPackage` functions of `t5-cipher`, `t5-cxos`, `t5-regexp`,
-  `t5-tcp` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
+  `RegisterPackage` functions of `t5-cipher`, `t5-cxos`, `t5-cxos-core`,
+  `t5-regexp`, `t5-tcp` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
   `constants.OpcodeLifecycleLiveByName`.
 * `opcodes.RegisterOpCode` asserts that the number is a live row with that
   name, then fills `ast.OpcodeHandlers`, `ast.OpNames`, `ast.OpCodes` and

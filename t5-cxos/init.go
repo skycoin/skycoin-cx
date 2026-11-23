@@ -9,11 +9,6 @@ import (
 )
 
 func RegisterPackage(prgrm *ast.CXProgram) {
-	// time
-	opcodes.RegisterFunction(prgrm, "time.Sleep", opTimeSleep, opcodes.In(ast.ConstCxArg_I32), nil)
-	opcodes.RegisterFunction(prgrm, "time.UnixMilli", opTimeUnixMilli, nil, opcodes.Out(ast.ConstCxArg_I64))
-	opcodes.RegisterFunction(prgrm, "time.UnixNano", opTimeUnixNano, nil, opcodes.Out(ast.ConstCxArg_I64))
-
 	// os
 	opcodes.RegisterFunction(prgrm, "os.GetWorkingDirectory", opOsGetWorkingDirectory, nil, opcodes.Out(ast.ConstCxArg_STR))
 	opcodes.RegisterFunction(prgrm, "os.LogFile", opOsLogFile, opcodes.In(ast.ConstCxArg_BOOL), nil)
@@ -108,7 +103,6 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 	opcodes.RegisterFunction(prgrm, "os.WriteI8Slice", opOsWriteI8Slice, opcodes.In(ast.ConstCxArg_I32, ast.Slice(types.I8)), opcodes.Out(ast.ConstCxArg_BOOL))
 
 	opcodes.RegisterFunction(prgrm, "os.Run", opOsRun, opcodes.In(ast.ConstCxArg_STR, ast.ConstCxArg_I32, ast.ConstCxArg_I32, ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_I32, ast.ConstCxArg_I32, ast.ConstCxArg_STR))
-	opcodes.RegisterFunction(prgrm, "os.Exit", opOsExit, opcodes.In(ast.ConstCxArg_I32), nil)
 
 	// json
 	opcodes.RegisterFunction(prgrm, "json.Open", opJsonOpen, opcodes.In(ast.ConstCxArg_STR), opcodes.Out(ast.ConstCxArg_I32))

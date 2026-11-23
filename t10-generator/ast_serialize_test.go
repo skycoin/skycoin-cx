@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/skycoin/skycoin-cx/t0-lz4codec"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	cxgenerator "github.com/skycoin/skycoin-cx/t10-generator"
 	cxast "github.com/skycoin/skycoin-cx/t3-ast"
@@ -45,7 +44,7 @@ func TestSerialize(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.scenario, func(t *testing.T) {
 			program := generateSampleProgramFromCXEvolves(t, tc.withLiteral)
-			var codec *lz4codec.Codec
+			var codec cxast.SerializeCodec
 			if tc.useCompression {
 				codec = newProgramCodec(t)
 			}

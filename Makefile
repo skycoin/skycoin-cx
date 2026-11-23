@@ -13,8 +13,9 @@ endif
 TAGS ?=
 GUI_TAGS := cxfx
 
-build: ## Build cx into ./bin
+build: ## Build cx and the cx build core cx-core into ./bin
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
+	go build -tags="$(TAGS)" -o ./bin/cx-core$(EXE) ./t7-cx-core-run
 
 build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/GL headers)
 	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/$(CXEXE) ./t11-cx

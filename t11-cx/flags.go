@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorAuto; no depth gain
 )
 
 type cxCmdFlags struct {
@@ -44,7 +46,7 @@ func defaultCmdFlags() cxCmdFlags {
 		printVersion:    false,
 		debugFileAccess: false,
 		debugProfile:    0,
-		executor:        executorAuto,
+		executor:        core.ExecutorAuto,
 	}
 }
 

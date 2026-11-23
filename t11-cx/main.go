@@ -7,7 +7,7 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t0-util"    // thin: only CXCreateFile, CXLogFile, CXOpenFile, ProgramSandboxRootOpen; no depth gain
-	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only AssertFailed, RegisterOpcodes; no depth gain
+	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only RegisterOpcodes; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t1-profiling"
@@ -15,11 +15,10 @@ import (
 	"github.com/skycoin/skycoin-cx/t2-globals"      // thin: only DBG_GOLANG_STACK_TRACE; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t4-execute" // thin: only RunCompiled; no depth gain
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
-	"github.com/skycoin/skycoin-cx/t5-cxos"        // thin: only InitConstants; no depth gain
-	"github.com/skycoin/skycoin-cx/t6-cxfx"        // thin: only InitConstants; no depth gain
-	cxinit "github.com/skycoin/skycoin-cx/t7-init" // thin: only MakeProgram, RegisterPackages; no depth gain
+	"github.com/skycoin/skycoin-cx/t5-cxos"                 // thin: only InitConstants; no depth gain
+	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
+	"github.com/skycoin/skycoin-cx/t6-cxfx"                 // thin: only InitConstants; no depth gain
+	cxinit "github.com/skycoin/skycoin-cx/t7-init"          // thin: only MakeProgram, RegisterPackages; no depth gain
 )
 
 func main() {
@@ -28,6 +27,9 @@ func main() {
 
 func Run(args []string) {
 	defer operationCountPrint()
+	if len(args) > 0 && args[0] == buildCommand {
+		os.Exit(buildRun(args[1:]))
+	}
 	options, cxArgs, sourceCode, fileNames, start := runStart(args)
 	if !start {
 		return
@@ -69,7 +71,7 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 
 	defer profiling.StopProfile("run")
 
-	if options.executor != executorAuto && options.executor != executorOld && options.executor != executorVm {
+	if options.executor != core.ExecutorAuto && options.executor != core.ExecutorOld && options.executor != core.ExecutorVm {
 		fmt.Fprintf(os.Stderr, "unknown --executor %q, want auto, old or vm\n", options.executor)
 		os.Exit(types.CX_COMPILATION_ERROR)
 	}
@@ -79,34 +81,8 @@ func runProgram(options cxCmdFlags, cxArgs []string, sourceCode []*os.File) {
 		return
 	}
 
-	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
-	actions.AST.CxIrState.StringPool.StringPoolFreeze()
-
-	if options.executor != executorOld {
-		image, _, outside := executorLower(actions.AST)
-		switch {
-		case outside == "":
-			if code := executorVmRun(actions.AST, &image); code != types.CX_SUCCESS {
-				os.Exit(int(code))
-			}
-			return
-		case options.executor == executorVm:
-			fmt.Fprintf(os.Stderr, "cannot run on vm: %s\n", outside)
-			os.Exit(types.CX_RUNTIME_NOT_IMPLEMENTED)
-		}
-	}
-
-	err := execute.RunCompiled(actions.AST, 0, cxArgs)
-
-	if err != nil {
-		panic(err)
-	}
-	if actions.AST.RuntimeError.RuntimeErrorRecordRaised {
-		os.Exit(printer.PrinterRuntimeErrorPrint(actions.AST))
-	}
-
-	if opcodes.AssertFailed() {
-		os.Exit(types.CX_ASSERT)
+	if code := core.ExecutorRun(actions.AST, options.executor, cxArgs); code != types.CX_SUCCESS {
+		os.Exit(int(code))
 	}
 }
 
@@ -224,9 +200,7 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 		constants.STACK_SIZE = parseMemoryString(options.stackSize)
 	}
 	// Memory stays below constants.ESCAPE_OFFSET_FLAG.
-	constants.MAX_HEAP_SIZE = min(constants.MAX_HEAP_SIZE, constants.ESCAPE_OFFSET_FLAG/2)
-	constants.INIT_HEAP_SIZE = min(constants.INIT_HEAP_SIZE, constants.MAX_HEAP_SIZE)
-	constants.STACK_SIZE = min(constants.STACK_SIZE, constants.ESCAPE_OFFSET_FLAG/4)
+	core.ExecutorMemoryLimitsClamp()
 
 	/*
 		options.minHeapFreeRatio checks for flags string "--min-heap-free"
