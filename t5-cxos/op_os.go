@@ -42,6 +42,7 @@ func opOsLogFile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	util.CXLogFile(inputs[0].Get_bool(prgrm))
 }
 
+// VIOLATION STRHOT-131: B, hands a path or text to Go or the OS, #412.
 func opOsReadAllText(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	success := false
 
@@ -141,6 +142,7 @@ func libraryFileSeekVm(memory []byte, block uint32) {
 	types.Write_i64(memory, types.Pointer(block+16), position)
 }
 
+// VIOLATION STRHOT-134: B, hands a path or text to Go or the OS, #412.
 func opOsReadStr(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	var len uint64
 	var value string
@@ -301,6 +303,7 @@ func opOsReadBOOL(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVa
 	outputs[1].Set_bool(prgrm, success)
 }
 
+// VIOLATION STRHOT-135: B, hands a path or text to Go or the OS, #412.
 func opOsWriteStr(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	success := false
 	if file := ValidFile(inputs[0].Get_i32(prgrm)); file != nil {
@@ -817,6 +820,7 @@ func opOsWriteI8Slice(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.
 	outputs[0].Set_bool(prgrm, success)
 }
 
+// VIOLATION STRHOT-136: B, hands a path or text to Go or the OS, #412.
 func opOsGetWorkingDirectory(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	wd, err := os.Getwd()
 	if err == nil && !strings.HasSuffix(wd, string(os.PathSeparator)) {
@@ -825,6 +829,7 @@ func opOsGetWorkingDirectory(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs
 	outputs[0].Set_str(prgrm, wd)
 }
 
+// VIOLATION STRHOT-137: B, hands a path or text to Go or the OS, #412.
 func opOsRun(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	var runError int32 = OS_RUN_SUCCESS
 
@@ -899,6 +904,7 @@ func opOsRun(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) 
 // splitCommand splits an os.Run command into words at spaces and tabs.
 // Single or double quotes group a word. Backslashes are literal, so
 // Windows paths need no escaping.
+// VIOLATION STRHOT-138: B, hands a path or text to Go or the OS, #412.
 func splitCommand(command string) ([]string, error) {
 	var args []string
 	var word strings.Builder

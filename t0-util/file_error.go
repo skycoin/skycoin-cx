@@ -43,6 +43,7 @@ type FileError struct {
 const fileSystemPathEscapeMessage = "path escapes from parent"
 
 // fileErrorFromFileSystemError wraps a Go error from the os package.
+// VIOLATION STRHOT-268: B, hands a path or text to Go or the OS, #412.
 func fileErrorFromFileSystemError(operation FileOperationCode, path string, fileSystemError error) *FileError {
 	code := FileErrorCodeFileSystemCallFailure
 	var pathError *fs.PathError

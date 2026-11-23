@@ -12,6 +12,7 @@ import (
 )
 
 // The built-in str function returns the base 10 string representation of operand 1.
+// VIOLATION STRHOT-084: O, the opcode works on Go string copies of CX strs, #412.
 func opF64ToStr(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outV0 := strconv.FormatFloat(inputs[0].Get_f64(prgrm), 'f', -1, 64)
 	outputs[0].Set_str(prgrm, outV0)
@@ -78,6 +79,7 @@ func opF64Isnan(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 }
 
 // The print built-in function formats its arguments and prints them.
+// VIOLATION STRHOT-085: O, the opcode works on Go string copies of CX strs, #412.
 func opF64Print(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	fmt.Println(inputs[0].Get_f64(prgrm))
 }

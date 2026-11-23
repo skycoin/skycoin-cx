@@ -26,6 +26,7 @@ func LibraryLinked(library int) bool {
 
 // BuiltInName returns the name of the built-in fn calls, the library function
 // for constants.OP_LIBRARY_CALL and the opcode otherwise.
+// VIOLATION STRHOT-286: B, name text for compiler code run by an opcode, #412.
 func (fn *CXFunction) BuiltInName() string {
 	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		// A binary that does not link the library, such as a cx build core,
@@ -42,6 +43,7 @@ type RuntimeLibraryDisabled string
 
 // RuntimeLibraryDisabledMessage is the message of a call into the disabled
 // library number.
+// VIOLATION STRHOT-288: E, error or assert text, built on a failure branch only, #412.
 func RuntimeLibraryDisabledMessage(library int) string {
 	name := constants.LibraryNameOf(library)
 	return "library " + name + " is not enabled, enable it with --enable=" + name
@@ -49,6 +51,7 @@ func RuntimeLibraryDisabledMessage(library int) string {
 
 // libraryCall runs library function fn after the sandbox check, one indexed
 // load and compare.
+// VIOLATION STRHOT-287: E, error or assert text, built on a failure branch only, #412.
 func libraryCall(prgrm *CXProgram, fn *CXFunction, inputs []CXValue, outputs []CXValue) {
 	if !prgrm.ProgramLibrariesEnabled[fn.LibraryNumber] {
 		panic(RuntimeLibraryDisabled(RuntimeLibraryDisabledMessage(fn.LibraryNumber)))

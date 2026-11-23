@@ -92,6 +92,7 @@ func AllocateSeq(prgrm *CXProgram, size types.Pointer) types.Pointer {
 // after the allocation, which may give prgrm a new Memory.
 // GCREACH: allocates through AllocateSeq, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-281: O, the opcode works on Go string copies of CX strs, #412.
 func AllocateStr(prgrm *CXProgram, data string) types.Pointer {
 	size := types.OBJECT_HEADER_SIZE + types.Cast_int_to_ptr(len(data))
 	object := AllocateSeq(prgrm, size)
@@ -103,6 +104,7 @@ func AllocateStr(prgrm *CXProgram, data string) types.Pointer {
 // at address. Nothing collects inside it, so address stays valid.
 // GCREACH: allocates through AllocateSeq, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-282: O, the opcode works on Go string copies of CX strs, #412.
 func AllocateStrAt(prgrm *CXProgram, address types.Pointer, data string) {
 	types.Write_ptr(prgrm.Memory, address, AllocateStr(prgrm, data))
 }

@@ -120,3 +120,10 @@ document or check script.
     local enters the symbol table. See the Global variables, Scopes and
     shadowing and Imports into scope sections of
     [LanguageGuide.md](../LanguageGuide.md), #486 and #487.
+18. **Strings on the run path.** The old loop does no string operation
+    on its run path outside printing, failure branches and the boundaries
+    to Go and the OS. Every one it can reach has a `VIOLATION STRHOT-nnn:`
+    comment above it or above its function, with the code and class of
+    [strhot-codes.txt](../strhot-codes.txt). `make check-strhot` runs
+    [check-strhot.sh](../check-strhot.sh). See
+    [StringsHotPath.md](StringsHotPath.md) and #412.

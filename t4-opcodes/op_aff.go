@@ -30,6 +30,7 @@ var ofMessages = map[string]string{
 }
 
 // GetInferActions ...
+// VIOLATION STRHOT-070: B, an affordance query runs compiler code by name, #412.
 func GetInferActions(prgrm *ast.CXProgram, inp *ast.CXTypeSignature, fp types.Pointer) []string {
 	inpOffset := ast.GetFinalOffset(prgrm, fp, nil, inp)
 
@@ -47,6 +48,7 @@ func GetInferActions(prgrm *ast.CXProgram, inp *ast.CXTypeSignature, fp types.Po
 	return result
 }
 
+// VIOLATION STRHOT-071: B, an affordance query runs compiler code by name, #412.
 func opAffPrint(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	inp1 := inputs[0]
 
@@ -115,6 +117,7 @@ func CallAffPredicate(prgrm *ast.CXProgram, fn *ast.CXFunction, predValue []byte
 // Used by QueryArgument to query inputs and then outputs from expressions.
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-072: B, an affordance query runs compiler code by name, #412.
 func queryParam(prgrm *ast.CXProgram, fn *ast.CXFunction, argsIdx []ast.CXArgumentIndex, exprLbl string, argOffsetB []byte, affOffset *types.Pointer) {
 	for i, argIdx := range argsIdx {
 		// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -172,6 +175,7 @@ func queryParam(prgrm *ast.CXProgram, fn *ast.CXFunction, argsIdx []ast.CXArgume
 }
 
 // QueryArgument ...
+// VIOLATION STRHOT-073: B, an affordance query runs compiler code by name, #412.
 func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, argOffsetB []byte, affOffset *types.Pointer) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1257.
@@ -228,6 +232,7 @@ func QueryArgument(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 // QueryExpressions ...
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-074: B, an affordance query runs compiler code by name, #412.
 func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, exprOffsetB []byte, affOffset *types.Pointer) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1262.
@@ -290,6 +295,7 @@ func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpr
 // TODO: remove params arg
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-075: B, an affordance query runs compiler code by name, #412.
 func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, paramsTypeSig []ast.CXTypeSignatureIndex) types.Pointer {
 	var sliceOffset types.Pointer
 
@@ -344,6 +350,7 @@ func getSignatureSlice(prgrm *ast.CXProgram, params []ast.CXArgumentIndex, param
 // Helper function for QueryStructure. Used to query all the structs in a particular package
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-076: B, an affordance query runs compiler code by name, #412.
 func queryStructsInPackage(prgrm *ast.CXProgram, fn *ast.CXFunction, strctOffsetB []byte, affOffset *types.Pointer, pkg *ast.CXPackage) {
 	for _, fIdx := range pkg.Structs {
 		f := prgrm.CXStructs[fIdx]
@@ -399,6 +406,7 @@ func QueryStructure(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpres
 // QueryFunction ...
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-077: B, an affordance query runs compiler code by name, #412.
 func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, fnOffsetB []byte, affOffset *types.Pointer) {
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1273.
@@ -460,6 +468,7 @@ func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 // QueryCaller ...
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-078: B, an affordance query runs compiler code by name, #412.
 func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, callerOffsetB []byte, affOffset *types.Pointer) {
 	if prgrm.CallCounter == 0 {
 		// then it's entry point
@@ -505,6 +514,7 @@ func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressio
 // QueryProgram ...
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-079: B, an affordance query runs compiler code by name, #412.
 func QueryProgram(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpression, prgrmOffsetB []byte, affOffset *types.Pointer) {
 	prgrmOffset := ast.AllocateSeq(prgrm, types.OBJECT_HEADER_SIZE+types.I32_SIZE+types.I64_SIZE+types.STR_SIZE+types.I32_SIZE)
 	// Callcounter
@@ -1267,6 +1277,7 @@ func readArgAff(prgrm *ast.CXProgram, aff string, tgtFn *ast.CXFunction) *ast.CX
 
 // GCREACH: allocates query strs and objects, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-080: B, an affordance query runs compiler code by name, #412.
 func opAffQuery(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	call := prgrm.GetCurrentCall()
 	expr := call.Operator.Expressions[call.Line]
@@ -1397,6 +1408,7 @@ func affPackage(prgrm *ast.CXProgram, text string) (*ast.CXPackage, error) {
 }
 
 // affFunction finds the function named by text in pkg or its imports.
+// VIOLATION STRHOT-317: B, an affordance query runs compiler code by name, #412.
 func affFunction(prgrm *ast.CXProgram, pkg *ast.CXPackage, text string) (*ast.CXFunction, error) {
 	gid, found := prgrm.CXProgramNameFind(text)
 	if !found {

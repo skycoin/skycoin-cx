@@ -426,6 +426,7 @@ func argumentDebugAlloc(prgrm *CXProgram, fileName SourceFileGid, fileLine int) 
 // CXArgumentDebugFileLine returns the file name and line that gid names in
 // prgrm, the name as text for diagnostics. A native parameter has none and
 // gets "" and -1, as Param gave it.
+// VIOLATION STRHOT-229: P, builds the text of a printed value, #412.
 func CXArgumentDebugFileLine(prgrm *CXProgram, gid CXArgumentDebugGid) (string, int) {
 	if gid == CXArgumentDebugGidNil {
 		return "", -1

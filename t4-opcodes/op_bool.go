@@ -8,6 +8,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// VIOLATION STRHOT-081: O, the opcode works on Go string copies of CX strs, #412.
 func opBoolPrint(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	fmt.Println(inputs[0].Get_bool(prgrm))
 }

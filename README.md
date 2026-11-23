@@ -214,6 +214,8 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
     managers.
   - `check-gcreach`, the vm and the IR base stay free of the garbage
     collector.
+  - `check-strhot`, every string operation on the run path of the old loop
+    has a STRHOT code, see [docs/StringsHotPath.md](docs/StringsHotPath.md).
 - `make test` runs the stable CX program tests and compiles every complete
   `cx` code block in `LanguageGuide.md`, 786 tests in all.
 - `make test-all` also runs the tests marked as known issues. None is

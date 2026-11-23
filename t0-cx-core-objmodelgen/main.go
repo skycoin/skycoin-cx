@@ -50,6 +50,31 @@ var objmodelgenObjects = []objmodelgenObject{
 	{"CXCall", 0x0E, "OBJ.Line = VALUE", "OBJ.Line"},
 }
 
+// objmodelgenStrhotCodes are the STRHOT codes of the manager functions on
+// the run path, see strhot-codes.txt and #412.
+var objmodelgenStrhotCodes = map[string]string{
+	"CXArgumentDebugGet":            "STRHOT-002",
+	"CXArgumentGet":                 "STRHOT-003",
+	"CXLineGet":                     "STRHOT-004",
+	"CXTypeSignature_ArrayGet":      "STRHOT-005",
+	"CXTypeSignatureGet":            "STRHOT-006",
+	"CXTypeSignature_StructGet":     "STRHOT-007",
+	"CXArgumentDebugMngInit":        "STRHOT-242",
+	"CXArgumentMngInit":             "STRHOT-244",
+	"CXAtomicOperatorMngInit":       "STRHOT-246",
+	"CXCallMngInit":                 "STRHOT-247",
+	"CXExpressionMngInit":           "STRHOT-248",
+	"CXFunctionMngInit":             "STRHOT-249",
+	"CXLineMngInit":                 "STRHOT-250",
+	"CXNativeFunctionMngInit":       "STRHOT-252",
+	"CXPackageMngInit":              "STRHOT-253",
+	"CXProgramMngInit":              "STRHOT-254",
+	"CXStructMngInit":               "STRHOT-255",
+	"CXTypeSignature_ArrayMngInit":  "STRHOT-256",
+	"CXTypeSignatureMngInit":        "STRHOT-258",
+	"CXTypeSignature_StructMngInit": "STRHOT-260",
+}
+
 // objmodelgenTagOnlyObjects are Gid types with a tag and a name in the table
 // but a hand written manager, such as the string pool and the source files
 // of #413.
@@ -73,9 +98,11 @@ func objmodelgenRender(tmpl *template.Template, name string, object objmodelgenO
 		other = 0x02
 	}
 	data := map[string]any{
-		"Obj":      object.Obj,
-		"TypeTag":  fmt.Sprintf("0x%02X", object.TypeTag),
-		"OtherTag": fmt.Sprintf("0x%02X", other),
+		"Obj":        object.Obj,
+		"TypeTag":    fmt.Sprintf("0x%02X", object.TypeTag),
+		"OtherTag":   fmt.Sprintf("0x%02X", other),
+		"StrhotInit": objmodelgenStrhotCodes[object.Obj+"MngInit"],
+		"StrhotGet":  objmodelgenStrhotCodes[object.Obj+"Get"],
 		"Set": func(target string, value string) string {
 			return strings.NewReplacer("OBJ", target, "VALUE", value).Replace(object.MarkerSet)
 		},

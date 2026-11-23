@@ -10,6 +10,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
+// VIOLATION STRHOT-086: O, the opcode works on Go string copies of CX strs, #412.
 func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) []byte {
 	fmtStr := inputs[0].Get_str(prgrm)
 
@@ -105,10 +106,12 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	return res
 }
 
+// VIOLATION STRHOT-087: O, the opcode works on Go string copies of CX strs, #412.
 func opSprintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outputs[0].Set_str(prgrm, string(buildString(prgrm, inputs, outputs)))
 }
 
+// VIOLATION STRHOT-088: O, the opcode works on Go string copies of CX strs, #412.
 func opPrintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	fmt.Print(string(buildString(prgrm, inputs, outputs)))
 }

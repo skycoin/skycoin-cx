@@ -17,6 +17,7 @@ var lc net.ListenConfig
 // VIOLATION: state outside State. Owner: t5-tcp; moves to TCPConnMng in phase 1.
 var conn net.Conn
 
+// VIOLATION STRHOT-145: B, hands a path or text to Go or the OS, #412.
 func errString(err error) string {
 	if err == nil {
 		return ""
@@ -24,6 +25,7 @@ func errString(err error) string {
 	return err.Error()
 }
 
+// VIOLATION STRHOT-146: B, hands a path or text to Go or the OS, #412.
 func opTCPDial(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	c, err := net.Dial(inputs[0].Get_str(prgrm), inputs[1].Get_str(prgrm))
 	if err == nil {
@@ -56,6 +58,7 @@ func tcpClose() {
 	}
 }
 
+// VIOLATION STRHOT-147: B, hands a path or text to Go or the OS, #412.
 func opTCPAccept(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	if ln == nil {
 		outputs[0].Set_str(prgrm, "tcp: not listening")
@@ -71,6 +74,7 @@ func opTCPAccept(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	outputs[0].Set_str(prgrm, errString(err))
 }
 
+// VIOLATION STRHOT-148: B, hands a path or text to Go or the OS, #412.
 func opTCPListen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

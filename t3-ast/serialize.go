@@ -50,6 +50,7 @@ func SerializeDebugInfo(prgrm *CXProgram, includeMemory, wholeMemory bool) (Seri
 // The program's CompileErrorPrint is left nil for the caller to set.
 // OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 // Now a constructor, site S0461.
+// VIOLATION STRHOT-265: B, the serializer, compiler code run by an opcode, #412.
 func Deserialize(b []byte, codec SerializeCodec) (*CXProgram, error) {
 	if codec != nil {
 		var err error
@@ -89,6 +90,7 @@ func Deserialize(b []byte, codec SerializeCodec) (*CXProgram, error) {
 // SerializedHeaderCheck returns nil when b starts with the header of a
 // program this cx can load: the magic, this format version, this pointer size
 // and this language version. Otherwise it says which one differs.
+// VIOLATION STRHOT-310: B, the serializer, compiler code run by an opcode, #412.
 func SerializedHeaderCheck(b []byte) error {
 	if len(b) < serializeHeaderSize || string(b[:len(serializeMagic)]) != serializeMagic {
 		return fmt.Errorf("not a serialized CX program")
@@ -146,6 +148,7 @@ func encodeCXProgram(prgrm *CXProgram, includeMemory bool) ([]byte, SerializedDa
 
 // serializeUnusedManagersCheck fails when a manager that no compile stage
 // fills yet holds an object, since the serialized form does not carry it.
+// VIOLATION STRHOT-312: E, error or assert text, built on a failure branch only, #412.
 func serializeUnusedManagersCheck(state *CxIrState) error {
 	unused := []struct {
 		typeTag objmodel.TypeTag
@@ -193,6 +196,7 @@ func decompressCopy(codec SerializeCodec, b []byte) ([]byte, error) {
 
 // serializeStructReference returns the index in prgrm.CXStructs of the struct
 // a pointer field names, or -1 for nil.
+// VIOLATION STRHOT-311: E, error or assert text, built on a failure branch only, #412.
 func serializeStructReference(prgrm *CXProgram, strct *CXStruct) (int64, error) {
 	if strct == nil {
 		return -1, nil
@@ -206,6 +210,7 @@ func serializeStructReference(prgrm *CXProgram, strct *CXStruct) (int64, error) 
 	return 0, fmt.Errorf("cannot serialize the program: struct %q is referenced but is not in CXStructs", prgrm.CXProgramNameText(strct.Name))
 }
 
+// VIOLATION STRHOT-307: B, the serializer, compiler code run by an opcode, #412.
 func deserializeStructReference(prgrm *CXProgram, decoder *serializeDecoder) *CXStruct {
 	index := decoder.serializeDecoderIntRange(-1, int64(len(prgrm.CXStructs))-1, "struct reference")
 	if index < 0 || decoder.serializeDecoderError != nil {
@@ -308,6 +313,7 @@ func serializeManager[Object any](encoder *serializeEncoder, objects []Object, s
 
 // deserializeManager reads what serializeManager wrote and checks that the
 // slot counts agree, the invariant every manager call asserts.
+// VIOLATION STRHOT-302: B, the serializer, compiler code run by an opcode, #412.
 func deserializeManager[Object any](decoder *serializeDecoder, name string, objectDecode func(object *Object)) ([]Object, serializeManagerSlots) {
 	var slots serializeManagerSlots
 	capacity := decoder.serializeDecoderUint()
@@ -427,6 +433,7 @@ func serializeProgramFields(prgrm *CXProgram, encoder *serializeEncoder) error {
 	return nil
 }
 
+// VIOLATION STRHOT-304: B, the serializer, compiler code run by an opcode, #412.
 func deserializeProgramFields(prgrm *CXProgram, decoder *serializeDecoder) []serializeCallReference {
 	prgrm.Stack.Size = decoder.serializeDecoderPointer()
 	prgrm.Stack.StartsAt = decoder.serializeDecoderPointer()
@@ -487,6 +494,7 @@ func deserializeProgramFields(prgrm *CXProgram, decoder *serializeDecoder) []ser
 
 // deserializeCallStack points the call stack entries at their functions,
 // which are read after the program section.
+// VIOLATION STRHOT-299: B, the serializer, compiler code run by an opcode, #412.
 func deserializeCallStack(prgrm *CXProgram, decoder *serializeDecoder, calls []serializeCallReference) {
 	if decoder.serializeDecoderError != nil {
 		return
@@ -531,6 +539,7 @@ func serializeStrings(prgrm *CXProgram, encoder *serializeEncoder) {
 
 // deserializeStrings interns the strings in their slot order, which gives
 // every string the Gid it had.
+// VIOLATION STRHOT-306: B, the serializer, compiler code run by an opcode, #412.
 func deserializeStrings(prgrm *CXProgram, decoder *serializeDecoder) {
 	state := prgrm.CxIrState
 	count := decoder.serializeDecoderUint()
@@ -576,6 +585,7 @@ func deserializeStrings(prgrm *CXProgram, decoder *serializeDecoder) {
 }
 
 // deserializeStringGid reads a string Gid and checks that it names a slot.
+// VIOLATION STRHOT-305: B, the serializer, compiler code run by an opcode, #412.
 func deserializeStringGid(decoder *serializeDecoder, pool *stringpool.StringPool) stringpool.StringGid {
 	gid := decoder.serializeDecoderInt()
 	if gid == int64(stringpool.StringGidNil) {
@@ -783,6 +793,7 @@ func deserializeFunctions(prgrm *CXProgram, decoder *serializeDecoder) {
 
 // GCREACH: reads the GC root tables ListOfPointers and ListOfSlots,
 // see docs/GarbageCollector.md.
+// VIOLATION STRHOT-063: B, the serializer, compiler code run by an opcode, #412.
 func deserializeFunction(prgrm *CXProgram, decoder *serializeDecoder, fn *CXFunction) {
 	fn.Index = decoder.serializeDecoderIntValue()
 	fn.Name = stringpool.StringGid(decoder.serializeDecoderInt())
@@ -894,6 +905,7 @@ func serializeExpressions(prgrm *CXProgram, encoder *serializeEncoder) error {
 	})
 }
 
+// VIOLATION STRHOT-300: B, the serializer, compiler code run by an opcode, #412.
 func deserializeExpressions(prgrm *CXProgram, decoder *serializeDecoder) {
 	if length := decoder.serializeDecoderLength(8); length >= 0 {
 		// OBJMODEL: state.CXAtomicOperatorMng (manager storage) or []CXAtomicOperatorGid, phase 4 #341.
@@ -1013,6 +1025,7 @@ func serializeArguments(prgrm *CXProgram, encoder *serializeEncoder) error {
 	})
 }
 
+// VIOLATION STRHOT-298: B, the serializer, compiler code run by an opcode, #412.
 func deserializeArguments(prgrm *CXProgram, decoder *serializeDecoder) {
 	arguments, slots := deserializeManager(decoder, "CXArgumentMng", func(arg *CXArgument) { deserializeArgument(prgrm, decoder, arg) })
 	if decoder.serializeDecoderError != nil {
@@ -1091,6 +1104,7 @@ func serializeTypeSignatures(prgrm *CXProgram, encoder *serializeEncoder) error 
 	})
 }
 
+// VIOLATION STRHOT-308: B, the serializer, compiler code run by an opcode, #412.
 func deserializeTypeSignatures(prgrm *CXProgram, decoder *serializeDecoder) {
 	state := prgrm.CxIrState
 	signatures, slots := deserializeManager(decoder, "CXTypeSignatureMng", func(signature *CXTypeSignature) {
@@ -1168,6 +1182,7 @@ func serializeMemory(prgrm *CXProgram, encoder *serializeEncoder, includeMemory 
 	encoder.serializeEncoderByteSlice(prgrm.Memory[first:last])
 }
 
+// VIOLATION STRHOT-303: B, the serializer, compiler code run by an opcode, #412.
 func deserializeMemory(prgrm *CXProgram, decoder *serializeDecoder) {
 	size := decoder.serializeDecoderUint()
 	included := decoder.serializeDecoderBool()
@@ -1203,6 +1218,7 @@ func serializeLibraries(encoder *serializeEncoder, libraries *[constants.Library
 
 // deserializeLibraries reads a set that serializeLibraries wrote. A program
 // with another number of libraries fails.
+// VIOLATION STRHOT-301: B, the serializer, compiler code run by an opcode, #412.
 func deserializeLibraries(decoder *serializeDecoder, libraries *[constants.LibraryCount]bool) {
 	if count := decoder.serializeDecoderUint(); decoder.serializeDecoderError == nil && count != uint64(len(libraries)) {
 		decoder.serializeDecoderFailf("%d system libraries, this cx has %d", count, len(libraries))

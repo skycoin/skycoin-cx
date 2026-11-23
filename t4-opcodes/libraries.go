@@ -73,6 +73,7 @@ func registerLibraryCall() {
 	ast.OpcodeHandlers[code] = opLibraryCall
 }
 
+// VIOLATION STRHOT-316: E, error or assert text, built on a failure branch only, #412.
 func opLibraryCall(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	coreassert.AssertInvariantTrue(false, "LibraryCall reached its opcode handler, the loop runs it")
 }

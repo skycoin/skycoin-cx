@@ -71,6 +71,7 @@ func (cxprogram *CXProgram) AddPackageInArray(pkg *CXPackage) CXPackageIndex {
 	return CXPackageIndex(pkg.Index)
 }
 
+// VIOLATION STRHOT-231: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetPackageFromArray(index CXPackageIndex) (*CXPackage, error) {
 	if int(index) > (len(cxprogram.CXPackages) - 1) {
 		return nil, fmt.Errorf("error: CXPackages[%d]: index out of bounds", index)
@@ -196,6 +197,7 @@ func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFun
 	return CXFunctionIndex(fnNative.Index)
 }
 
+// VIOLATION STRHOT-232: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetFunctionFromArray(index CXFunctionIndex) *CXFunction {
 	if index == -1 {
 		return nil
@@ -243,6 +245,7 @@ func (cxprogram *CXProgram) GetStructFromArray(index CXStructIndex) *CXStruct {
 
 // GetCXLine returns the line in slot index of the program's CXLineMng. An
 // expression keeps the slot index, not the Gid, until phase 5 of CXLine.
+// VIOLATION STRHOT-233: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXLine(index int) (*CXLine, error) {
 	manager := &cxprogram.CxIrState.CXLineMng
 	if index < 0 || index >= int(manager.CXLineMngNext) {
@@ -256,6 +259,7 @@ func (cxprogram *CXProgram) GetCXLine(index int) (*CXLine, error) {
 // GetCXArg returns the argument in slot index of the program's
 // CXArgumentMng. An argument is named by its slot index, not its Gid, until
 // phase 5 of CXArgument.
+// VIOLATION STRHOT-234: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXArg(index CXArgumentIndex) *CXArgument {
 	manager := &cxprogram.CxIrState.CXArgumentMng
 	if index < 0 || int(index) >= int(manager.CXArgumentMngNext) {
@@ -266,6 +270,7 @@ func (cxprogram *CXProgram) GetCXArg(index CXArgumentIndex) *CXArgument {
 	return manager.CXArgumentGet(CXArgumentGid(gid))
 }
 
+// VIOLATION STRHOT-235: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXAtomicOp(index int) (*CXAtomicOperator, error) {
 	if index > (len(cxprogram.CXAtomicOps) - 1) {
 		return nil, fmt.Errorf("error: CXAtomicOps[%d]: index out of bounds", index)
@@ -326,6 +331,7 @@ func (cxprogram *CXProgram) AllocCXTypeSignatureCopy(src *CXTypeSignature) (CXTy
 // GetCXTypeSignatureFromArray returns the type signature in slot index of
 // the program's CXTypeSignatureMng, or nil for -1. A type signature is named
 // by its slot index, not its Gid, until phase 5 of CXTypeSignature.
+// VIOLATION STRHOT-236: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureIndex) *CXTypeSignature {
 	if index == -1 {
 		return nil
@@ -348,6 +354,7 @@ func (cxprogram *CXProgram) GetCXTypeSignatureFromArray(index CXTypeSignatureInd
 // of the program's CXTypeSignature_ArrayMng, or nil for -1. A type signature's
 // Meta keeps the slot index, not the Gid, until phase 5 of
 // CXTypeSignature_Array.
+// VIOLATION STRHOT-237: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXTypeSignatureArrayFromArray(index int) *CXTypeSignature_Array {
 	if index == -1 {
 		return nil
@@ -370,6 +377,7 @@ func (cxprogram *CXProgram) GetCXTypeSignatureArrayFromArray(index int) *CXTypeS
 // of the program's CXTypeSignature_StructMng, or nil for -1. A type
 // signature's Meta keeps the slot index, not the Gid, until phase 5 of
 // CXTypeSignature_Struct.
+// VIOLATION STRHOT-238: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetCXTypeSignatureStructFromArray(index int) *CXTypeSignature_Struct {
 	if index == -1 {
 		return nil
@@ -566,6 +574,7 @@ func (cxprogram *CXProgram) AddPointerArgsToTypeSignaturesArray(cxArgs []*CXArgu
 // ----------------------------------------------------------------
 //                             `CXProgram` Getters
 
+// VIOLATION STRHOT-239: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator, *CXLine, error) {
 	switch expr.Type {
 	case CX_ATOMIC_OPERATOR:
@@ -600,6 +609,7 @@ func (cxprogram *CXProgram) GetOperation(expr *CXExpression) (*CXAtomicOperator,
 	return &CXAtomicOperator{}, nil, fmt.Errorf("operation type is not found.")
 }
 
+// VIOLATION STRHOT-240: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) GetPreviousCXLine(exprs []CXExpression, currIndex int) (*CXLine, error) {
 	// A runtime error while the inputs of an empty function are copied stops at
 	// line 0 of a call with no expressions.

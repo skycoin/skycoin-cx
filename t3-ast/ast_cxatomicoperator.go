@@ -5,6 +5,7 @@ import stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 // ----------------------------------------------------------------
 //                             `CXAtomicOperator` Getters
 
+// VIOLATION STRHOT-230: P, builds the text of a printed value, #412.
 func (op *CXAtomicOperator) GetOperatorName(prgrm *CXProgram) string {
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S0089.
