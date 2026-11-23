@@ -28,3 +28,20 @@ kind, for review. Add `REPOS="../skycoin-cx-forth"` to scan more repositories.
 - `make check` passes before every push.
 - One branch and one pull request per change, merged into `main`.
 - No coding tool attribution in commits or pull requests.
+
+## Decisions
+
+A question that needs the project lead's decision is a decision request.
+
+- A progress report only says that decisions are open. The requests go in a
+  separate message, one per message or all of them grouped in one.
+- Every request has a number that never changes and is never reused, and a
+  self describing name, for example `D12 GlobalSamePackageDeclarationDecision`.
+  The lead can answer by number.
+- Each request states what exists now with real names and files, asks one
+  question, gives the options as full sentences that each say what changes,
+  and ends with a recommendation and its reason.
+- An unanswered request that the lead leaves to us takes the recommended
+  option, and the report says so.
+- The answer is recorded on the matching issue, or in the pull request that
+  carries it out.
