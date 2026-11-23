@@ -265,10 +265,13 @@ func SliceLiteralElement(prgrm *ast.CXProgram, element []ast.CXExpression, line 
 
 // SliceLiteralStructExpression handles a slice literal of the struct
 // structName, `[]T{T{x: 1}, t}`, as SliceLiteralExpression does for []i32.
-func SliceLiteralStructExpression(prgrm *ast.CXProgram, structName string, exprs []ast.CXExpression) []ast.CXExpression {
-	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo, 0)
+func SliceLiteralStructExpression(prgrm *ast.CXProgram, structName string, line int, column int, exprs []ast.CXExpression) []ast.CXExpression {
+	if column == 0 {
+		line = LineNo
+	}
+	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, line, column)
 	if elt.StructType == nil {
-		return nil
+		return structLiteralInvalid(prgrm)
 	}
 	return sliceLiteralExpressionOf(prgrm, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs, constants.ELEMENT_PREFIX))
 }
@@ -357,10 +360,12 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 }
 
 // PrimaryStructLiteral creates a struct literal value. Its fields are written
-// to a new zeroed variable, which the last expression gives as the value.
-func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+// to a new zeroed variable, which the last expression gives as the value. A
+// missing struct is an error at line and column, where its name is, or at the
+// token the parser is at for a column of 0.
+func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, line int, column int, structFields []ast.CXExpression) []ast.CXExpression {
 	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-	writes, strct := primaryStructLiteralWrites(prgrm, structName, name, structFields)
+	writes, strct := primaryStructLiteralWrites(prgrm, structName, line, column, name, structFields)
 	if strct == nil {
 		return structLiteralInvalid(prgrm)
 	}
@@ -370,12 +375,12 @@ func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, structFields 
 // PrimaryStructLiteralReference creates &T{...}, the address of the value
 // PrimaryStructLiteral makes, which escape analysis may move to the heap.
 func PrimaryStructLiteralReference(prgrm *ast.CXProgram, operator string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
-	return UnaryExpression(prgrm, operator, PrimaryStructLiteral(prgrm, structName, structFields))
+	return UnaryExpression(prgrm, operator, PrimaryStructLiteral(prgrm, structName, LineNo, 0, structFields))
 }
 
 // primaryStructLiteralWrites makes each field write of a struct literal of
 // structName write outputName.field, and returns the struct.
-func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
+func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, line int, column int, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
 	var result []ast.CXExpression
 	var structResult *ast.CXStruct
 	var fieldNames []stringpool.StringGid
@@ -412,6 +417,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					structLiteralValueTypeSet(prgrm, strct, prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)), name)
 
 					_, field := ast.MakeArgument(prgrm, name, CurrentFile, LineNo)
+					argumentDebugPositionCopy(prgrm, field.ArgDetails, cxAtomicOpOutputTypeSig.ArgDetails)
 					// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 					// Now an arena getter, site S1742.
 					field.Type = prgrm.GetCXArg(ast.CXArgumentIndex(cxAtomicOpOutputIdx)).Type
@@ -463,6 +469,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					newCXArg.Name = outputName
 
 					_, field := ast.MakeArgument(prgrm, cxAtomicOpOutputTypeSig.Name, CurrentFile, LineNo)
+					argumentDebugPositionCopy(prgrm, field.ArgDetails, cxAtomicOpOutputTypeSig.ArgDetails)
 					field.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					field.StructType = strct
 					fieldIdx := ast.CXArgumentIndex(field.Index)
@@ -493,6 +500,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 					newCXArg.Name = outputName
 
 					_, field := ast.MakeArgument(prgrm, cxAtomicOpOutputTypeSig.Name, CurrentFile, LineNo)
+					argumentDebugPositionCopy(prgrm, field.ArgDetails, cxAtomicOpOutputTypeSig.ArgDetails)
 					field.Type = types.Code(cxAtomicOpOutputTypeSig.Meta)
 					field.StructType = strct
 					fieldIdx := ast.CXArgumentIndex(field.Index)
@@ -511,7 +519,7 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 				result = append(result, expr)
 			}
 		} else {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+			structLiteralMissing(prgrm, line, column, err)
 		}
 	} else {
 		panic(err)
@@ -522,9 +530,9 @@ func primaryStructLiteralWrites(prgrm *ast.CXProgram, structName string, outputN
 
 // PrimaryStructLiteralExternal creates a value of the struct literal
 // importName.structName{...}, as PrimaryStructLiteral does.
-func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, structName string, line int, column int, structFields []ast.CXExpression) []ast.CXExpression {
 	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
-	writes, strct := primaryStructLiteralExternalWrites(prgrm, importName, structName, name, structFields)
+	writes, strct := primaryStructLiteralExternalWrites(prgrm, importName, structName, line, column, name, structFields)
 	if strct == nil {
 		return structLiteralInvalid(prgrm)
 	}
@@ -533,7 +541,7 @@ func PrimaryStructLiteralExternal(prgrm *ast.CXProgram, importName string, struc
 
 // primaryStructLiteralExternalWrites is primaryStructLiteralWrites for a
 // struct of the package importName.
-func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string, structName string, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
+func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string, structName string, line int, column int, outputName stringpool.StringGid, structFields []ast.CXExpression) ([]ast.CXExpression, *ast.CXStruct) {
 	var result []ast.CXExpression
 	var structResult *ast.CXStruct
 	var fieldNames []stringpool.StringGid
@@ -565,6 +573,7 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 					if cxAtomicOpOutputTypeSig.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
 						cxAtomicOpOutputIdx := cxAtomicOpOutputTypeSig.Meta
 						_, field := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
+						argumentDebugPositionCopy(prgrm, field.ArgDetails, cxAtomicOpOutputTypeSig.ArgDetails)
 						field.SetType(types.IDENTIFIER)
 						// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 						// Now an arena getter, site S1750.
@@ -603,7 +612,7 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 				}
 			} else if !prgrm.CXProgramImportFailed(importNameGid) {
 				// A package whose import failed has no types, and its import is the error.
-				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+				structLiteralMissing(prgrm, line, column, err)
 			}
 		} else {
 			panic(err)
@@ -623,24 +632,29 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 //	 arraySizes - len(arraySizes) is the length of the array while contents of
 //					 arraySizes define the size of each dimension.
 //	 typeCode - type code of the array.
+//	 line, column - where the literal starts, or a column of 0 for the token the
+//					 parser is at, where its errors are.
 //	 exprs - the array of expressions composing the array literal expression.
-func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, exprs []ast.CXExpression) []ast.CXExpression {
-	return arrayLiteralExpressionOf(prgrm, arraySizes, typeCode, nil, exprs)
+func ArrayLiteralExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, line int, column int, exprs []ast.CXExpression) []ast.CXExpression {
+	return arrayLiteralExpressionOf(prgrm, arraySizes, typeCode, nil, line, column, exprs)
 }
 
 // ArrayLiteralStructExpression handles an array literal of the struct
 // structName, `[2]T{T{x: 1}, t}`, as ArrayLiteralExpression does for [2]i32.
-func ArrayLiteralStructExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, structName string, exprs []ast.CXExpression) []ast.CXExpression {
-	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, LineNo, 0)
-	if elt.StructType == nil {
-		return nil
+func ArrayLiteralStructExpression(prgrm *ast.CXProgram, arraySizes []types.Pointer, structName string, line int, column int, exprs []ast.CXExpression) []ast.CXExpression {
+	if column == 0 {
+		line = LineNo
 	}
-	return arrayLiteralExpressionOf(prgrm, arraySizes, types.STRUCT, elt.StructType, sliceLiteralStructElements(prgrm, elt.StructType, exprs, constants.ARRAY_ELEMENT_PREFIX))
+	elt := DeclarationSpecifiersStruct(prgrm, structName, "", false, CurrentFile, line, column)
+	if elt.StructType == nil {
+		return structLiteralInvalid(prgrm)
+	}
+	return arrayLiteralExpressionOf(prgrm, arraySizes, types.STRUCT, elt.StructType, line, column, sliceLiteralStructElements(prgrm, elt.StructType, exprs, constants.ARRAY_ELEMENT_PREFIX))
 }
 
 // arrayLiteralExpressionOf is ArrayLiteralExpression for elements of type
 // typeCode, or of the struct strct when it is set.
-func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, strct *ast.CXStruct, exprs []ast.CXExpression) []ast.CXExpression {
+func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, typeCode types.Code, strct *ast.CXStruct, line int, column int, exprs []ast.CXExpression) []ast.CXExpression {
 	var result []ast.CXExpression
 
 	pkg, err := prgrm.GetCurrentPackage()
@@ -755,7 +769,12 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 	}
 
 	if len(arraySizes) > 0 && types.Pointer(endPointsCounter) > arraySizes[0] {
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeArrayLiteralLength, CurrentFile, LineNo, ast.CompileErrorOperands{int64(arraySizes[0]), int64(endPointsCounter)})
+		operands := ast.CompileErrorOperands{int64(arraySizes[0]), int64(endPointsCounter)}
+		if column == 0 {
+			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeArrayLiteralLength, CurrentFile, LineNo, operands)
+		} else {
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeArrayLiteralLength, CurrentFile, line, column, operands)
+		}
 	}
 
 	symNameOutput := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
@@ -803,13 +822,16 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 //
 //	prgrm - a CXProgram that contains all the data and arrays of the program.
 //	structName - name of the struct.
-func StructLiteralFields(prgrm *ast.CXProgram, structName string) ast.CXExpression {
+func StructLiteralFields(prgrm *ast.CXProgram, structName string, line int, column int) ast.CXExpression {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
 		panic(err)
 	}
 
 	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
+	// The errors of the field are at its name.
+	details := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails)
+	details.FileLine, details.FileColumn = line, column
 	arg.SetType(types.IDENTIFIER)
 	arg.Name = prgrm.CXProgramNameIntern(structName)
 	arg.Package = ast.CXPackageIndex(pkg.Index)
@@ -847,12 +869,13 @@ func structLiteralValueTypeSet(prgrm *ast.CXProgram, strct *ast.CXStruct, value 
 }
 
 // StructLiteralField writes value to the field fieldName of a struct literal,
-// marked so PrimaryStructLiteral can tell the write from the value.
-func StructLiteralField(prgrm *ast.CXProgram, fieldName string, value []ast.CXExpression) []ast.CXExpression {
+// marked so PrimaryStructLiteral can tell the write from the value. The name
+// is at line and column.
+func StructLiteralField(prgrm *ast.CXProgram, fieldName string, line int, column int, value []ast.CXExpression) []ast.CXExpression {
 	value = ShortCircuitStrip(prgrm, value)
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 	// Now a slice of objects, sites S1482 S1483 S1484 S1485.
-	field := []ast.CXExpression{StructLiteralFields(prgrm, fieldName)}
+	field := []ast.CXExpression{StructLiteralFields(prgrm, fieldName, line, column)}
 	var result []ast.CXExpression
 	if structLiteralReference(value) {
 		result = StructLiteralAssignment(prgrm, field, value)
@@ -930,7 +953,7 @@ func structLiteralFieldRepeatedCheck(prgrm *ast.CXProgram, fieldNames *[]stringp
 	name := prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[expr.Index].GetOutputs(prgrm)[0]).Name
 	for _, seen := range *fieldNames {
 		if seen == name {
-			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeStructLiteralFieldRepeated, CurrentFile, LineNo, ast.CompileErrorOperands{int64(name)})
+			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeStructLiteralFieldRepeated, prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[expr.Index].GetOutputs(prgrm)[0]).ArgDetails, ast.CompileErrorOperands{int64(name)})
 			return
 		}
 	}
@@ -960,7 +983,7 @@ func sliceLiteralStructInner(prgrm *ast.CXProgram, element []ast.CXExpression) b
 
 // PrimaryStructLiteralExternalOf creates pkg.T{...}, where pkgExprs is the
 // expression pkg, as PrimaryStructLiteralExternal does.
-func PrimaryStructLiteralExternalOf(prgrm *ast.CXProgram, pkgExprs []ast.CXExpression, structName string, structFields []ast.CXExpression) []ast.CXExpression {
+func PrimaryStructLiteralExternalOf(prgrm *ast.CXProgram, pkgExprs []ast.CXExpression, structName string, line int, column int, structFields []ast.CXExpression) []ast.CXExpression {
 	cxAtomicOp, err := prgrm.GetCXAtomicOpFromExpressions(pkgExprs, 0)
 	if err != nil {
 		panic(err)
@@ -968,7 +991,7 @@ func PrimaryStructLiteralExternalOf(prgrm *ast.CXProgram, pkgExprs []ast.CXExpre
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S1492.
 	importName := prgrm.GetCXTypeSignatureFromArray(cxAtomicOp.GetOutputs(prgrm)[0]).Name
-	return PrimaryStructLiteralExternal(prgrm, prgrm.CXProgramNameText(importName), structName, structFields)
+	return PrimaryStructLiteralExternal(prgrm, prgrm.CXProgramNameText(importName), structName, line, column, structFields)
 }
 
 // structLiteralInvalid is the value of a literal of a struct that does not
@@ -994,4 +1017,27 @@ func structLiteralInvalid(prgrm *ast.CXProgram) []ast.CXExpression {
 	prgrm.CXAtomicOps[use.Index].Package = ast.CXPackageIndex(pkg.Index)
 	prgrm.CXAtomicOps[use.Index].AddOutput(prgrm, variable(false))
 	return []ast.CXExpression{*declCXLine, *decl, *use}
+}
+
+// structLiteralMissing records err, the struct of a literal that does not
+// exist, at line and column, where its name is, or at the token the parser
+// is at for a column of 0.
+func structLiteralMissing(prgrm *ast.CXProgram, line int, column int, err error) {
+	operands := ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())}
+	if column == 0 {
+		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, operands)
+		return
+	}
+	prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, CurrentFile, line, column, operands)
+}
+
+// argumentDebugPositionCopy gives the debug record details the position of
+// the debug record from.
+func argumentDebugPositionCopy(prgrm *ast.CXProgram, details ast.CXArgumentDebugGid, from ast.CXArgumentDebugGid) {
+	if details == ast.CXArgumentDebugGidNil || from == ast.CXArgumentDebugGidNil {
+		return
+	}
+	file, line, column := ast.CXArgumentDebugPosition(prgrm, from)
+	record := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(details)
+	record.FileName, record.FileLine, record.FileColumn = file, line, column
 }

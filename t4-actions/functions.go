@@ -218,7 +218,7 @@ func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currInde
 	expressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[expressionIdx].Operator)
 	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, &exprs[currIndex]) {
 		file, line := exprLine(prgrm, exprs, currIndex)
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
+		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
 	}
 }
 
@@ -416,7 +416,7 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIn
 		if typedOp == nil {
 			if ast.OpcodeHandlers[expressionOperator.AtomicOPCode] == nil {
 				file, line := exprLine(prgrm, exprs, currIndex)
-				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
+				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode])})
 			}
 			return
 		}
@@ -1115,7 +1115,7 @@ func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 			inp2Type = ast.GetFormattedType(prgrm, expressionInputSecondTypeSig)
 			if inp1Type != inp2Type {
 				file, line := exprLine(prgrm, exprs, currIndex)
-				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeInputTypesNotEqual, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode]), prgrm.CXProgramCompileErrorText(inp1Type), prgrm.CXProgramCompileErrorText(inp2Type)})
+				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeInputTypesNotEqual, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(ast.OpNames[expressionOperator.AtomicOPCode]), prgrm.CXProgramCompileErrorText(inp1Type), prgrm.CXProgramCompileErrorText(inp2Type)})
 			}
 		}
 	}
@@ -1396,7 +1396,7 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 			// A return jumps past the end with a generated label and no target.
 			if !labelFound && !strings.HasPrefix(prgrm.CXProgramNameText(expression.Label), constants.LABEL_PREFIX) {
 				file, line := exprLine(prgrm, exprs, i)
-				prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeGotoLabelMissing, file, line, ast.CompileErrorOperands{int64(expression.Label)})
+				prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeGotoLabelMissing, file, line, ast.CompileErrorOperands{int64(expression.Label)})
 			}
 		}
 	}
@@ -2236,6 +2236,8 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 		panic(err)
 	}
 
+	// The receiver may be a global, as box of box.Area().
+	GetGlobalSymbol(prgrm, symbolsData, receiverPkg, receiver.Name)
 	symbolTypeSig, err := lookupSymbol(prgrm, receiverPkg.Name, receiver.Name, symbolsData)
 	if err != nil {
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeIdentifierMissing, receiver.ArgDetails, ast.CompileErrorOperands{int64(receiver.Name)})
@@ -3089,7 +3091,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 			panic(err)
 		}
 
-		for _, fldIdx := range symFields {
+		for fieldNumber, fldIdx := range symFields {
 			// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
 			// Now an arena getter, site S0968.
 			field := prgrm.GetCXArgFromArray(fldIdx)
@@ -3097,6 +3099,9 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 				if inFld.GetStructType(prgrm) != nil {
 					field.StructType = strct
 					strct = inFld.GetStructType(prgrm)
+				} else if fieldNumber < len(symFields)-1 {
+					symbolFieldsAfterNonStruct(prgrm, field, inFld, symFields[fieldNumber+1:])
+					return
 				}
 			} else {
 				// OBJMODEL: state.CXArgumentMng.CXArgumentGet(gid), phase 5 #327.
@@ -3126,6 +3131,8 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 					}
 				} else {
 					prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeMessage, field.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+					// The field has no type, so its uses report nothing more.
+					field.Type = types.INVALID
 				}
 			}
 		}
@@ -3368,7 +3375,7 @@ func ProcessLoopJumpsOutsideLoop(prgrm *ast.CXProgram, exprs []ast.CXExpression)
 				file, line = cxLine.FileName, cxLine.LineNumber
 			}
 		}
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeLoopJumpOutsideLoop, file, line, ast.CompileErrorOperands{int64(prgrm.CXProgramNameIntern(keyword))})
+		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeLoopJumpOutsideLoop, file, line, ast.CompileErrorOperands{int64(prgrm.CXProgramNameIntern(keyword))})
 	}
 }
 
@@ -3532,7 +3539,7 @@ func checkOperatorSameType(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	}
 	if err := checkSameNativeType(prgrm, &exprs[currIndex]); err != nil {
 		file, line := exprLine(prgrm, exprs, currIndex)
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
+		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeMessage, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 	}
 }
 
@@ -4001,4 +4008,17 @@ func copyArgFieldsDeclarationSite(prgrm *ast.CXProgram, sym *ast.CXArgument, arg
 	symColumn := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(sym.ArgDetails).FileColumn
 	argColumn := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails).FileColumn
 	return symColumn == argColumn
+}
+
+// symbolFieldsAfterNonStruct records the access of the fields after field,
+// whose type inFld is not a struct, as h.c.radius of an i32 c, unless the
+// type of field is invalid, as that of a struct of a failed import is. The
+// fields after it then have no type, so their uses report nothing more.
+func symbolFieldsAfterNonStruct(prgrm *ast.CXProgram, field *ast.CXArgument, inFld *ast.CXTypeSignature, after []ast.CXArgumentIndex) {
+	if !typeSignatureInvalid(prgrm, inFld) {
+		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodePrimitiveFieldAccess, prgrm.GetCXArgFromArray(after[0]).ArgDetails, ast.CompileErrorOperands{int64(field.Name), prgrm.CXProgramCompileErrorText(ast.GetFormattedType(prgrm, inFld))})
+	}
+	for _, fieldIdx := range after {
+		prgrm.GetCXArgFromArray(fieldIdx).Type = types.INVALID
+	}
 }

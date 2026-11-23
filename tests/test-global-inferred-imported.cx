@@ -1,0 +1,11 @@
+package main
+
+import "math/geometry"
+
+var circle = &geometry.Circle{radius: 2.0}
+var box = geometry.Rectangle{sideA: 2.0, sideB: circle.radius + 1.0}
+var area = box.Area()
+
+func main() {
+	printf("%f %f\n", circle.radius, area)
+}

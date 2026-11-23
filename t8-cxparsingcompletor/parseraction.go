@@ -1,6 +1,7 @@
 package parsingcompletor
 
 import (
+	"github.com/skycoin/skycoin-cx/t0-types"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
@@ -220,7 +221,6 @@ func ParserActionDeclareLocals(names []*ast.CXArgument, spec *ast.CXArgument, va
 	for i, name := range names {
 		targets[i] = actions.PrimaryIdentifier(actions.AST, actions.AST.CXProgramNameText(name.Name))
 		if spec == nil {
-			actions.AST.ReleaseCXArgBuilder(name)
 			continue
 		}
 		nameSpec := spec
@@ -229,12 +229,26 @@ func ParserActionDeclareLocals(names []*ast.CXArgument, spec *ast.CXArgument, va
 		}
 		result = append(result, actions.DeclareLocal(actions.AST, name, nameSpec, nil, false)...)
 	}
-	operator := "="
-	if spec == nil {
-		operator = ":="
+	if spec != nil {
+		if len(targets) == 1 && len(values) == 1 {
+			return append(result, ParserActionAssignmentExpression(targets[0], "=", values[0])...)
+		}
+		return append(result, ParserActionMultipleAssignment(targets, "=", values)...)
 	}
 	if len(targets) == 1 && len(values) == 1 {
-		return append(result, ParserActionAssignmentExpression(targets[0], operator, values[0])...)
+		actions.AST.ReleaseCXArgBuilder(names[0])
+		return ParserActionAssignmentExpression(targets[0], ":=", values[0])
 	}
-	return append(result, ParserActionMultipleAssignment(targets, operator, values)...)
+	if result = ParserActionMultipleAssignment(targets, ":=", values); result != nil {
+		for _, name := range names {
+			actions.AST.ReleaseCXArgBuilder(name)
+		}
+		return result
+	}
+	// The names of var a, b = 1 are invalid, so their uses report nothing more
+	// than the count, as the global form does.
+	for _, name := range names {
+		result = append(result, actions.DeclareLocal(actions.AST, name, actions.DeclarationSpecifiersBasic(actions.AST, types.INVALID), nil, false)...)
+	}
+	return result
 }

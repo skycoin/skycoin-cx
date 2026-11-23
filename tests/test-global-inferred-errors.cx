@@ -1,0 +1,16 @@
+package main
+
+func none() {
+}
+
+var a = b + 1
+var b = c * 2
+var c = a
+var self = self + 1
+var nothing = none()
+var after = a + 1
+
+func main() {
+	i32.print(a + b + c + self + after)
+	i32.print(nothing)
+}

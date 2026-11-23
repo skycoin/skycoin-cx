@@ -1,6 +1,7 @@
 package parsingcompletor
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
@@ -95,4 +96,28 @@ func (lval *yySymType) scancopy(tok *yySymType) {
 	lval.ui64 = tok.ui64
 	lval.ui8 = tok.ui8
 	lval.yys = tok.yys
+}
+
+// Identifiers returns the identifiers of the expression text that can name a
+// global or a function. A name after a period is a field or a member of a
+// package, and a name before a colon is a key of a struct literal.
+func Identifiers(text string) []string {
+	lexer := NewLexer(bytes.NewBufferString(text))
+	var result []string
+	previous := 0
+	pending := ""
+	for {
+		kind := lexer.Next()
+		if pending != "" && kind != COLON {
+			result = append(result, pending)
+		}
+		pending = ""
+		if kind <= 0 {
+			return result
+		}
+		if kind == IDENTIFIER && previous != PERIOD {
+			pending = lexer.tok.tok
+		}
+		previous = kind
+	}
 }

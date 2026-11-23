@@ -808,21 +808,52 @@ func runTestCases(t *runner.TestRunner) {
 		"test-function-results-unnamed-errors.cx:8:12 cannot use value of type 'i32' as type 'str' in return statement")
 	t.RunWant("--executor=old test-var-grouped.cx", types.CX_SUCCESS, "var a, b T, var a, b = x, y and var ( ... ) as globals and locals, on the old loop", "10 37 140\nf g j e 4 2.5\n")
 	t.RunWant("--executor=vm test-var-grouped.cx", types.CX_SUCCESS, "var a, b T, var a, b = x, y and var ( ... ) as globals and locals, on vm", "10 37 140\nf g j e 4 2.5\n")
-	t.RunWant("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "a grouped var with the wrong number of values, and a global whose type a value cannot give",
-		"test-var-grouped-errors.cx:7:5 cannot infer the type of global 'g' from a value that is not a literal, declare it with a type",
-		"test-var-grouped-errors.cx:8:5 assignment mismatch: 2 variables but 1 value",
-		"test-var-grouped-errors.cx:9:5 assignment mismatch: 2 variables but 3 values",
-		"test-var-grouped-errors.cx:12:6 assignment mismatch: 2 variables but 1 value",
-		"test-var-grouped-errors.cx:13:6 assignment mismatch: 2 variables but 3 values")
-	t.RunMissing("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "a grouped var with the wrong number of values reports nothing more", ":14 ", "does not exist")
+	t.RunWant("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "a grouped var with the wrong number of values, and a global whose value has no type",
+		"test-var-grouped-errors.cx:6:5 cannot infer the type of global 'g' from its value, declare it with a type",
+		"test-var-grouped-errors.cx:7:5 assignment mismatch: 2 variables but 1 value",
+		"test-var-grouped-errors.cx:8:5 assignment mismatch: 2 variables but 3 values",
+		"test-var-grouped-errors.cx:11:6 assignment mismatch: 2 variables but 1 value",
+		"test-var-grouped-errors.cx:12:6 assignment mismatch: 2 variables but 3 values")
+	t.RunMissing("test-var-grouped-errors.cx", types.CX_COMPILATION_ERROR, "the names of a grouped var with the wrong number of values are declared, globals and locals", ":13 ", "does not exist")
 	t.RunWant("test-if-composite-literal.cx", types.CX_COMPILATION_ERROR, "a bare struct literal in an if header gets Go's hint",
 		"test-if-composite-literal.cx:11:11 syntax error: unexpected ., composite literal in condition must be parenthesized")
 	t.RunWant("test-if-composite-literal-parenthesized.cx", types.CX_SUCCESS, "a parenthesized struct literal in an if or for header", "first\nloop 0\nloop 1\nsecond\n")
-	t.RunWant("test-struct-literal-missing.cx", types.CX_COMPILATION_ERROR, "a literal of a struct that does not exist is an error, not a panic",
-		"test-struct-literal-missing.cx:4 struct 'Missing' not found in package 'main'",
-		"test-struct-literal-missing.cx:5 struct 'Missing' not found in package 'main'",
-		"test-struct-literal-missing.cx:6 struct 'Missing' not found in package 'main'")
+	t.RunWant("test-struct-literal-missing.cx", types.CX_COMPILATION_ERROR, "a literal of a struct that does not exist is an error at its name, not a panic",
+		"test-struct-literal-missing.cx:4:7 struct 'Missing' not found in package 'main'",
+		"test-struct-literal-missing.cx:5:8 struct 'Missing' not found in package 'main'",
+		"test-struct-literal-missing.cx:6:17 struct 'Missing' not found in package 'main'")
 	t.RunMissing("test-struct-literal-missing.cx", types.CX_COMPILATION_ERROR, "a literal of a struct that does not exist is an error, not a panic", "panic", "goroutine", ":7 ")
+	t.RunWant("test-global-inferred.cx", types.CX_SUCCESS, "a global without a type takes the type of any value, globals initialize after the globals they refer to, and a method of a global is called",
+		"3 1 2 4\n2 4 7 3\n2.5000000 10 8 true\n6 x 42 6 12\n")
+	t.RunWant("test-global-inferred-errors.cx", types.CX_COMPILATION_ERROR, "an initialization cycle among globals without a type, and a value with no type",
+		"test-global-inferred-errors.cx:6:5 initialization cycle for 'a': a refers to b, b refers to c, c refers to a",
+		"test-global-inferred-errors.cx:9:5 initialization cycle for 'self': self refers to itself",
+		"test-global-inferred-errors.cx:10:5 cannot infer the type of global 'nothing' from its value, declare it with a type")
+	t.RunMissing("test-global-inferred-errors.cx", types.CX_COMPILATION_ERROR, "the globals of a cycle report nothing more", ":11 ", ":14 ", ":15 ", "cxGlobal")
+	t.RunWant("test-global-init-cycle.cx", types.CX_COMPILATION_ERROR, "an initialization cycle through a function, and one of globals with a type",
+		"test-global-init-cycle.cx:7:5 initialization cycle for 'loop': loop refers to back, back refers to loop",
+		"test-global-init-cycle.cx:8:5 initialization cycle for 'typed': typed refers to typedToo, typedToo refers to typed")
+	t.RunWant("--cxpath test-workspace test-global-inferred-imported.cx", types.CX_SUCCESS, "a global without a type of a struct of an imported package, and a method call of a global in an initializer", "2.0000000 6.0000000\n")
+	t.RunWant("test-global-field-failed-import.cx", types.CX_COMPILATION_ERROR, "a field of a struct of a failed import reports nothing, and a field of an i32 names the i32",
+		"test-global-field-failed-import.cx:3:8 could not import math/geometry",
+		"test-global-field-failed-import.cx:13:21 illegal method call or field access on identifier 'n' of primitive type 'i32'")
+	t.RunMissing("test-global-field-failed-import.cx", types.CX_COMPILATION_ERROR, "a field of a struct of a failed import reports nothing", ":12 ", "Holder")
+	t.RunWant("test-struct-literal-field-position.cx", types.CX_COMPILATION_ERROR, "the errors of a literal are at its field or its start, not at its closing brace",
+		"test-struct-literal-field-position.cx:8:15 duplicate field name 'a' in struct literal",
+		"test-struct-literal-field-position.cx:9:9 field 'b' not found in struct 'T'",
+		"test-struct-literal-field-position.cx:11:3 field 'b' not found in struct 'T'",
+		"test-struct-literal-field-position.cx:12:7 array literal of length 2 has 3 elements",
+		"test-struct-literal-field-position.cx:13:7 struct 'Missing' not found in package 'main'",
+		"test-struct-literal-field-position.cx:14:7 struct 'Missing' not found in package 'main'")
+	t.RunMissing("test-struct-literal-field-position.cx", types.CX_COMPILATION_ERROR, "a field that does not exist reports nothing more", "expected argument", ":15 ")
+	t.RunWant("test-one-line-function-errors.cx", types.CX_COMPILATION_ERROR, "an error of a one line function is not at the token after it",
+		"test-one-line-function-errors.cx:3 operands are not of the same type: f32 != i32",
+		"test-one-line-function-errors.cx:5:20 function 'count' expects to return 1 argument, but 2 output arguments were provided",
+		"test-one-line-function-errors.cx:7 label 'nowhere' is not defined",
+		"test-one-line-function-errors.cx:9 break is not in a loop")
+	t.RunMissing("test-one-line-function-errors.cx", types.CX_COMPILATION_ERROR, "an error of a one line function is not at the token after it", ":3:", ":7:", ":9:")
+	t.RunWant("test-short-decl-chained.cx", types.CX_SUCCESS, "x := a * b + c declares x with the type of the last operator", "true\ntrue\nfalse\n4\n7\ntrue\n")
+	t.RunWant("test-global-composite-forms.cx", types.CX_SUCCESS, "globals whose literal spans lines or sits in a var group, with and without a type", "1 2 3 4\n6 8 9 10\n11 12 13\n")
 	t.RunMissing("-ast test-pointers.cx", types.CX_COMPILATION_ERROR, "-ast of a program missing its struct file reports errors, not a panic", "panic", "goroutine")
 	t.RunWant("-ast ./examples/packages.cx", types.CX_SUCCESS, "-ast prints packages after the packages they import, the same on every run",
 		"0.- Package: foo\n", "1.- Package: nosal\n", "2.- Package: bar\n", "3.- Package: main\n")

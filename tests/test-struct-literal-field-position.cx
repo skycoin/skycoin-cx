@@ -1,0 +1,16 @@
+package main
+
+type T struct {
+	a i32
+}
+
+func main() {
+	t := T{a: 1, a: 2}
+	u := T{b: 1}
+	v := T{a: 1,
+		b: 2}
+	w := [2]i32{1, 2, 3}
+	x := []Missing{}
+	y := [2]Missing{}
+	i32.print(t.a + u.a + v.a + w[0] + len(x) + len(y))
+}

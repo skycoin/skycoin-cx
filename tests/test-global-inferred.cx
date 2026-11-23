@@ -1,0 +1,57 @@
+package main
+
+// Globals without a type take the type of any value, as in Go.
+type Point struct {
+	x i32
+	y i32
+}
+
+func one() (r i32) {
+	return 1
+}
+
+func half(p Point) (r Point) {
+	return Point{x: p.x / 2, y: p.y / 2}
+}
+
+// early is compiled before the globals it reads are declared.
+func early() (r i32) {
+	return total + 1
+}
+
+func (p Point) sum() (r i32) {
+	r = p.x + p.y
+}
+
+func base2() (r i32) {
+	return base * 2
+}
+
+// total comes after first and second, which it refers to.
+var total = first + second
+var first = one()
+var second = 2
+var origin = Point{x: 4, y: 8}
+var small = half(origin)
+var values = []i32{5, 6, 7}
+var grid = [2]f32{1.5, 2.5}
+var pointer = &Point{x: 9, y: 10}
+var count = len(values)
+var depth = origin.y
+var less = first < second
+var (
+	twice = total * 2
+	label = "x"
+)
+
+// doubled refers to base through base2.
+var doubled = base2()
+var base = 21
+var summed = small.sum()
+
+func main() {
+	printf("%d %d %d %d\n", total, first, second, early())
+	printf("%d %d %d %d\n", small.x, small.y, values[2], count)
+	printf("%f %d %d %v\n", grid[1], pointer.y, depth, less)
+	printf("%d %s %d %d %d\n", twice, label, doubled, summed, origin.sum())
+}

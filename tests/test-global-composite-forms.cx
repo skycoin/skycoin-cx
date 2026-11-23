@@ -1,0 +1,26 @@
+package main
+
+// Globals whose literal spans lines or sits in a var group, with and
+// without a type.
+type Point struct {
+	x i32
+	y i32
+}
+
+var p = Point{x: 1,
+	y: 2}
+var typed Point = Point{x: 3,
+	y: 4}
+var (
+	q = []i32{5,
+		6}
+	r Point = Point{x: 7, y: 8}
+	s = Point{x: 9, y: 10}
+)
+var a, b = []i32{11}, Point{x: 12, y: 13}
+
+func main() {
+	printf("%d %d %d %d\n", p.x, p.y, typed.x, typed.y)
+	printf("%d %d %d %d\n", q[1], r.y, s.x, s.y)
+	printf("%d %d %d\n", a[0], b.x, b.y)
+}

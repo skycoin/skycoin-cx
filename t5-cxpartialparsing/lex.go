@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/skycoin/skycoin-cx/t4-actions"
 )
 
 type Lexer struct {
@@ -25,6 +27,9 @@ type Lexer struct {
 	// tokenBefore and tokenBeforeLast are the two tokens before tok, which
 	// varValueLiteralType reads.
 	tokenBefore, tokenBeforeLast lexerToken
+
+	// varValues holds the values of var specs that varValueRead read.
+	varValues []actions.GlobalValue
 
 	// headerLiteral tracks the braces after if T or for T, which are a body to
 	// the parser and a struct literal to the writer, for the hint of Error.

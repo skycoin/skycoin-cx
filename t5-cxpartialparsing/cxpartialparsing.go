@@ -1245,13 +1245,13 @@ yydefault:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line t5-cxpartialparsing/cxpartialparsing.y:207
 		{
-			actions.DeclareGlobals(Program, yyDollar[1].arguments, yyDollar[2].argument, nil, varValueTypes(yyDollar[4].ints), true)
+			actions.DeclareGlobals(Program, yyDollar[1].arguments, yyDollar[2].argument, nil, varValues(yylex, yyDollar[4].ints), true)
 		}
 	case 16:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line t5-cxpartialparsing/cxpartialparsing.y:211
 		{
-			actions.DeclareGlobals(Program, yyDollar[1].arguments, nil, nil, varValueTypes(yyDollar[3].ints), true)
+			actions.DeclareGlobals(Program, yyDollar[1].arguments, nil, nil, varValues(yylex, yyDollar[3].ints), true)
 		}
 	case 17:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -1269,13 +1269,13 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line t5-cxpartialparsing/cxpartialparsing.y:231
 		{
-			yyVAL.ints = []int{varValueLiteralType(yylex, yyDollar[1].line, yyDollar[1].column)}
+			yyVAL.ints = []int{varValueRead(yylex, yyDollar[1].line, yyDollar[1].column)}
 		}
 	case 20:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line t5-cxpartialparsing/cxpartialparsing.y:235
 		{
-			yyVAL.ints = append(yyDollar[1].ints, varValueLiteralType(yylex, yyDollar[3].line, yyDollar[3].column))
+			yyVAL.ints = append(yyDollar[1].ints, varValueRead(yylex, yyDollar[3].line, yyDollar[3].column))
 		}
 	case 21:
 		yyDollar = yyS[yypt-4 : yypt+1]

@@ -455,6 +455,11 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 			_, sym = ast.MakeArgument(prgrm, toExpressionOutputTypeSig.Name, CurrentFile, LineNo)
 			sym.SetType(outType)
+			if outType == types.UNDEFINED && shortDeclarationOperatorChained(prgrm, fromExprs) {
+				// x := a + b + c, which ProcessShortDeclaration types from the
+				// operand a + b once that has its type.
+				sym.Type, sym.Size = types.IDENTIFIER, types.IDENTIFIER.Size()
+			}
 
 			if fromExprs[lastFromExpressionIdx].IsArrayLiteral() {
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -959,7 +964,7 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 	// x := f().y reads the result of f, so the declaration moves after the call.
 	valueRead := fromExpressionOperator == nil && expressionsCount(fromExprs) > 1
 	exprs := processAssignment(prgrm, toExprs, fromExprs, toExpression)
-	if assignOp == ":=" && (valueRead || methodCallFound(fromExprs)) {
+	if assignOp == ":=" && (valueRead || methodCallFound(fromExprs) || shortDeclarationOperatorChained(prgrm, fromExprs) && shortDeclarationUntyped(prgrm, toExprs)) {
 		exprs = shortDeclarationAfterMethodCalls(exprs, declarationCount)
 	}
 	return exprs
@@ -1091,4 +1096,33 @@ func expressionsCount(exprs []ast.CXExpression) int {
 		}
 	}
 	return count
+}
+
+// shortDeclarationOperatorChained reports whether the value exprs of a := is
+// an operator of the value of another expression, as a + b + c is, whose type
+// is not known until that expression has its type.
+func shortDeclarationOperatorChained(prgrm *ast.CXProgram, exprs []ast.CXExpression) bool {
+	if expressionsCount(exprs) < 2 || exprs[len(exprs)-1].Type == ast.CX_LINE {
+		return false
+	}
+	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[exprs[len(exprs)-1].Index].Operator)
+	return operator != nil && ast.IsOperator(operator.AtomicOPCode)
+}
+
+// shortDeclarationUntyped reports whether the declaration of a :=, the first
+// expression of toExprs after its line, waits for ProcessShortDeclaration to
+// give it a type.
+func shortDeclarationUntyped(prgrm *ast.CXProgram, toExprs []ast.CXExpression) bool {
+	for _, expr := range toExprs {
+		if expr.Type == ast.CX_LINE {
+			continue
+		}
+		outputs := prgrm.CXAtomicOps[expr.Index].GetOutputs(prgrm)
+		if len(outputs) == 0 {
+			return false
+		}
+		sig := prgrm.GetCXTypeSignatureFromArray(outputs[0])
+		return sig.Type == ast.TYPE_CXARGUMENT_DEPRECATE && prgrm.GetCXArg(ast.CXArgumentIndex(sig.Meta)).Type == types.IDENTIFIER
+	}
+	return false
 }

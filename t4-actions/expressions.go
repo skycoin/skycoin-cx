@@ -14,6 +14,9 @@ import (
 // For example: `return foo() + bar()` is a set of 3 expressions and they represent a single return argument
 type ReturnExpressions struct {
 	Size int
+	// Line and Column are where the return keyword is, or 0.
+	Line   int
+	Column int
 	// OBJMODEL: []CXExpressionGid or CXExpressionGid, phase 5 #347.
 	// Now objects held by value, site S0607.
 	Expressions []ast.CXExpression
@@ -1122,12 +1125,16 @@ func AddJmpToReturnExpressions(prgrm *ast.CXProgram, exprs ReturnExpressions) []
 	retExprs := exprs.Expressions
 	fnOutputs := fn.GetOutputs(prgrm)
 	if len(fnOutputs) != exprs.Size && exprs.Expressions != nil {
-		// lastExpr := retExprs[len(retExprs)-1]
-		file, line := CurrentFile, LineNo
-		if lastExprCXLine, err := prgrm.GetPreviousCXLine(retExprs, len(retExprs)-1); err == nil {
-			file, line = lastExprCXLine.FileName, lastExprCXLine.LineNumber
+		operands := ast.CompileErrorOperands{int64(fn.Name), int64(len(fnOutputs)), int64(exprs.Size)}
+		if exprs.Column > 0 {
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeFunctionReturnCount, CurrentFile, exprs.Line, exprs.Column, operands)
+		} else {
+			file, line := CurrentFile, LineNo
+			if lastExprCXLine, err := prgrm.GetPreviousCXLine(retExprs, len(retExprs)-1); err == nil {
+				file, line = lastExprCXLine.FileName, lastExprCXLine.LineNumber
+			}
+			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeFunctionReturnCount, file, line, operands)
 		}
-		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeFunctionReturnCount, file, line, ast.CompileErrorOperands{int64(fn.Name), int64(len(fnOutputs)), int64(exprs.Size)})
 	}
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.

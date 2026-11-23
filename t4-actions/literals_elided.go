@@ -27,6 +27,10 @@ type LiteralType struct {
 	Slice      bool
 	TypeCode   types.Code
 	StructName string
+	// Line and Column are where the literal starts, where a missing struct
+	// is reported, or 0 for the token the parser is at.
+	Line   int
+	Column int
 }
 
 // LiteralElementsFlatten flattens elems of a literal of type typ into the
@@ -65,7 +69,7 @@ func literalElementElidedBuild(prgrm *ast.CXProgram, typ LiteralType, elem Liter
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeStructLiteralFieldNames, CurrentFile, elem.Line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(typ.StructName)})
 			return nil
 		}
-		return PrimaryStructLiteral(prgrm, typ.StructName, elem.Fields)
+		return PrimaryStructLiteral(prgrm, typ.StructName, elem.Line, 0, elem.Fields)
 	}
 	if elem.Keyed && len(elem.Fields) > 0 {
 		prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeLiteralElementType, CurrentFile, elem.Line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(literalTypeName(typ))})
@@ -76,9 +80,9 @@ func literalElementElidedBuild(prgrm *ast.CXProgram, typ LiteralType, elem Liter
 		return LiteralSlice(prgrm, typ, inner)
 	}
 	if typ.StructName != "" {
-		return ArrayLiteralStructExpression(prgrm, typ.Lengths, typ.StructName, inner)
+		return ArrayLiteralStructExpression(prgrm, typ.Lengths, typ.StructName, elem.Line, 0, inner)
 	}
-	return ArrayLiteralExpression(prgrm, typ.Lengths, typ.TypeCode, inner)
+	return ArrayLiteralExpression(prgrm, typ.Lengths, typ.TypeCode, elem.Line, 0, inner)
 }
 
 // LiteralSlice builds a slice literal of type typ from flattened elements,
@@ -86,7 +90,11 @@ func literalElementElidedBuild(prgrm *ast.CXProgram, typ LiteralType, elem Liter
 func LiteralSlice(prgrm *ast.CXProgram, typ LiteralType, exprs []ast.CXExpression) []ast.CXExpression {
 	var result []ast.CXExpression
 	if typ.StructName != "" {
-		result = SliceLiteralStructExpression(prgrm, typ.StructName, exprs)
+		result = SliceLiteralStructExpression(prgrm, typ.StructName, typ.Line, typ.Column, exprs)
+		if literalValueInvalid(prgrm, result) {
+			// The struct does not exist, and its error is recorded.
+			return result
+		}
 	} else {
 		result = SliceLiteralExpression(prgrm, typ.TypeCode, exprs)
 	}
@@ -168,4 +176,14 @@ func LiteralSliceNest(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXEx
 	}
 	exprs[len(exprs)-1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
 	return exprs
+}
+
+// literalValueInvalid reports whether the value exprs is the invalid value
+// of structLiteralInvalid.
+func literalValueInvalid(prgrm *ast.CXProgram, exprs []ast.CXExpression) bool {
+	if len(exprs) == 0 || exprs[len(exprs)-1].Type == ast.CX_LINE {
+		return false
+	}
+	outputs := prgrm.CXAtomicOps[exprs[len(exprs)-1].Index].GetOutputs(prgrm)
+	return len(outputs) == 1 && typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(outputs[0]))
 }

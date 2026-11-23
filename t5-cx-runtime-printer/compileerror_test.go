@@ -86,7 +86,8 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeMethodPointerValue, ast.CompileErrorOperands{text("p"), text("T")}, header + " cannot call pointer method p on T\n"},
 		{ast.CompileErrorCodeArrayLiteralElementType, ast.CompileErrorOperands{text("U"), text("T")}, header + " cannot use value of type 'U' as type 'T' in array literal\n"},
 		{ast.CompileErrorCodeReturnValueType, ast.CompileErrorOperands{text("bool"), text("i32")}, header + " cannot use value of type 'bool' as type 'i32' in return statement\n"},
-		{ast.CompileErrorCodeGlobalTypeUnknown, ast.CompileErrorOperands{text("g")}, header + " cannot infer the type of global 'g' from a value that is not a literal, declare it with a type\n"},
+		{ast.CompileErrorCodeGlobalTypeUnknown, ast.CompileErrorOperands{text("g")}, header + " cannot infer the type of global 'g' from its value, declare it with a type\n"},
+		{ast.CompileErrorCodeInitializationCycle, ast.CompileErrorOperands{text("a"), text("a refers to b, b refers to a")}, header + " initialization cycle for 'a': a refers to b, b refers to a\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

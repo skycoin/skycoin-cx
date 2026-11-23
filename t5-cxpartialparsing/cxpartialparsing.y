@@ -205,11 +205,11 @@ global_var_spec:
                 }
         |       var_names declaration_specifiers ASSIGN var_values
                 {
-			actions.DeclareGlobals(Program, $1, $2, nil, varValueTypes($4), true)
+			actions.DeclareGlobals(Program, $1, $2, nil, varValues(yylex, $4), true)
                 }
         |       var_names ASSIGN var_values
                 {
-			actions.DeclareGlobals(Program, $1, nil, nil, varValueTypes($3), true)
+			actions.DeclareGlobals(Program, $1, nil, nil, varValues(yylex, $3), true)
                 }
                 ;
 
@@ -224,16 +224,16 @@ var_names:
                 }
                 ;
 
-// var_values holds the type of each value that is a literal, which a global
-// declared without a type takes.
+// var_values holds the index of each value in the values the lexer read, see
+// varValueRead.
 var_values:
                 conditional_expression
                 {
-			$$ = []int{varValueLiteralType(yylex, $<line>1, $<column>1)}
+			$$ = []int{varValueRead(yylex, $<line>1, $<column>1)}
                 }
         |       var_values COMMA conditional_expression
                 {
-			$$ = append($1, varValueLiteralType(yylex, $<line>3, $<column>3))
+			$$ = append($1, varValueRead(yylex, $<line>3, $<column>3))
                 }
                 ;
 

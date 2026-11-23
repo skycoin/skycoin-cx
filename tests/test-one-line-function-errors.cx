@@ -1,0 +1,12 @@
+package main
+
+func mixed() i32 { return 1 + 2.0 }
+
+func count() i32 { return 1, 2 }
+
+func jump() { goto nowhere }
+
+func stop() { break }
+
+func main() {
+}

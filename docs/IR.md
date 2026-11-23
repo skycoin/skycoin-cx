@@ -592,6 +592,9 @@ after one, so a program only loads in a build with its pointer size
   `Heap.Visited`.
 * `CxIrState.CompileErrorList`. A program with compile errors does not
   run.
+* `CxIrState.CxIrStateGlobalsDeferred` and
+  `CxIrState.CxIrStateGlobalInitializers`, which only the compiler reads
+  while it types globals and orders their initializers.
 * The build tags. A program that calls an opcode from a package the
   reading build leaves out, such as `sys/os` under `nocxos`, finds no
   handler for it.

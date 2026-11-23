@@ -207,10 +207,16 @@ in different files of the package.
 
 Several globals can share one declaration, as in Go. `var a, b i32`
 declares two, `var a, b i32 = 1, 2` gives each its value, and
-`var ( ... )` groups declarations. A global without a type,
-`var count = 3`, takes the type of its value, which must be a literal
-or a negated number. `var g = f()` is a compile error that asks for
-the type.
+`var ( ... )` groups declarations. A global without a type takes the
+type of its value, which may be any expression, as in Go: `var count = 3`,
+`var total = f() + count`, `var p = Point{x: 1}` or `var s = []i32{1, 2}`.
+A value with no type, such as the call of a function without results, is
+a compile error that asks for the type.
+
+Globals are initialized in the order they are declared, except that a
+global comes after the globals its value refers to, directly or through
+the functions it calls, as in Go. A global whose value refers back to
+itself is the compile error `initialization cycle`.
 
 ```cx
 package main
@@ -221,9 +227,17 @@ var (
 	scale f32 = 2.5
 )
 
+// area comes after sides, which it refers to.
+var area = width * height * sides
+var sides = count()
+
+func count() (r i32) {
+	return 4
+}
+
 func main () {
-	var area, sides = width * height, 4
-	printf("%s %d %d %v\n", name, area, sides, scale)
+	var perimeter, corners = 2 * (width + height), 4
+	printf("%s %d %d %d %v\n", name, area, perimeter, corners, scale)
 }
 ```
 

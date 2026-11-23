@@ -339,7 +339,9 @@ func AddInitFunction(prgrm *ast.CXProgram) error {
 	// Now a constructor call, site S1629.
 	initFn := ast.MakeFunction(prgrm, prgrm.CxIrState.CxIrStateNameSysInit, actions.CurrentFile, actions.LineNo)
 	_, fnIdx := mainPkg.AddFunction(prgrm, initFn)
+	globalsMethodResultsDeclare(prgrm, prgrm.GetFunctionFromArray(fnIdx))
 
+	globalsInitializersOrder(prgrm)
 	//Init Expressions
 	actions.FunctionDeclaration(prgrm, fnIdx, nil, nil, prgrm.SysInitExprs)
 

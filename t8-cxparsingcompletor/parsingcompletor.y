@@ -606,11 +606,11 @@ struct_literal_fields:
                 { $$ = nil }
         |       IDENTIFIER COLON conditional_expression
                 {
-                        $$ = actions.StructLiteralField(actions.AST, $1, $3)
+                        $$ = actions.StructLiteralField(actions.AST, $1, $<line>1, $<column>1, $3)
                 }
         |       struct_literal_fields COMMA IDENTIFIER COLON conditional_expression
                 {
-                        $$ = append($1, actions.StructLiteralField(actions.AST, $3, $5)...)
+                        $$ = append($1, actions.StructLiteralField(actions.AST, $3, $<line>3, $<column>3, $5)...)
                 }
                 ;
 
@@ -665,34 +665,34 @@ array_literal_expression:
                 indexing_literal IDENTIFIER LBRACE literal_element_list RBRACE
                 {
 			lengths := types.Cast_sint_to_sptr($1)
-			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: $2}, $4)
-			$$ = actions.ArrayLiteralStructExpression(actions.AST, lengths, $2, elements)
+			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: $2, Line: $<line>1, Column: $<column>1}, $4)
+			$$ = actions.ArrayLiteralStructExpression(actions.AST, lengths, $2, $<line>1, $<column>1, elements)
                 }
         |       indexing_literal IDENTIFIER LBRACE RBRACE
                 {
-			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, nil)
+			$$ = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr($1), $2, $<line>1, $<column>1, nil)
                 }
         |       indexing_literal type_specifier LBRACE literal_element_list RBRACE
                 {
 			lengths := types.Cast_sint_to_sptr($1)
 			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, TypeCode: types.Code($2)}, $4)
-			$$ = actions.ArrayLiteralExpression(actions.AST, lengths, types.Code($2), elements)
+			$$ = actions.ArrayLiteralExpression(actions.AST, lengths, types.Code($2), $<line>1, $<column>1, elements)
                 }
         |       indexing_literal type_specifier LBRACE RBRACE
                 {
-			$$ = actions.ArrayLiteralExpression(actions.AST, types.Cast_sint_to_sptr($1), types.Code($2), nil)
+			$$ = actions.ArrayLiteralExpression(actions.AST, types.Cast_sint_to_sptr($1), types.Code($2), $<line>1, $<column>1, nil)
                 }
                 ;
 
 slice_literal_expression:
                 indexing_slice_literal IDENTIFIER LBRACE literal_element_list RBRACE
                 {
-			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2}
+			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2, Line: $<line>1, Column: $<column>1}
 			$$ = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, $4))
                 }
         |       indexing_slice_literal IDENTIFIER LBRACE RBRACE
                 {
-			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2}, nil)
+			$$ = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr($1), Slice: true, StructName: $2, Line: $<line>1, Column: $<column>1}, nil)
                 }
         |       indexing_slice_literal type_specifier LBRACE literal_element_list RBRACE
                 {
@@ -930,11 +930,11 @@ postfix_expression:
 struct_literal_value:
 		IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
-			$$ = actions.PrimaryStructLiteral(actions.AST,$1, $3)
+			$$ = actions.PrimaryStructLiteral(actions.AST, $1, $<line>1, $<column>1, $3)
                 }
         |       postfix_expression PERIOD IDENTIFIER LBRACE struct_literal_fields RBRACE
                 {
-			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $5)
+			$$ = actions.PrimaryStructLiteralExternalOf(actions.AST, $1, $3, $<line>3, $<column>3, $5)
                 }
                 ;
 
@@ -1615,7 +1615,9 @@ jump_statement: GOTO IDENTIFIER
                 }
 	|       RETURN return_expression
                 {
-			$$ = actions.AddJmpToReturnExpressions(actions.AST,$2)
+			returnExpressions := $2
+			returnExpressions.Line, returnExpressions.Column = $<line>1, $<column>1
+			$$ = actions.AddJmpToReturnExpressions(actions.AST, returnExpressions)
                 }
                 ;
 %%

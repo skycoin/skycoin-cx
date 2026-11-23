@@ -73,6 +73,8 @@ func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 		can be of a custom type (and it could be imported) the signatures
 		of functions and methods are added in the cxpartialparsing.y pass
 	*/
+	// The globals of the imports, which Preliminarystage compiles, come first.
+	deferredFrom := len(actions.AST.CxIrState.CxIrStateGlobalsDeferred)
 	parseErrors := 0
 	var packages []*ast.CXPackage
 	if len(sourceCodeStrings) > 0 {
@@ -85,13 +87,12 @@ func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	// A syntax error leaves the declarations incomplete. After other errors the
 	// bodies are compiled too, and report each error pass one found once.
 	if parseErrors > 0 {
+		actions.AST.CxIrState.CxIrStateGlobalsDeferred = actions.AST.CxIrState.CxIrStateGlobalsDeferred[:deferredFrom]
 		return ErrCompilation
 	}
 	for _, pkg := range packages {
 		actions.PackageRedeclarationCheck(actions.AST, pkg)
 	}
-	actions.AST.CxIrState.CompileErrorList.CompileErrorListPreliminary = len(actions.AST.CxIrState.CompileErrorList.CompileErrorListRecords)
-
 	/*
 		Adding global variables `OS_ARGS` to the `os` (operating system)
 		package.
@@ -109,6 +110,10 @@ func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 			actions.DeclareGlobalInPackage(actions.AST, osPkg, arg0, arg1, nil, false)
 		}
 	}
+
+	globalsDeferredInfer(actions.AST, sourceCodeStrings, fileNames, deferredFrom)
+	// The body pass meets the errors of the values of deferred globals again.
+	actions.AST.CxIrState.CompileErrorList.CompileErrorListPreliminary = len(actions.AST.CxIrState.CompileErrorList.CompileErrorListRecords)
 
 	profiling.StartProfile("4. passtwo")
 

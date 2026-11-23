@@ -389,7 +389,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line t8-cxparsingcompletor/parsingcompletor.y:1621
+//line t8-cxparsingcompletor/parsingcompletor.y:1623
 
 //line yacctab:1
 var yyExca = [...]int16{
@@ -1669,13 +1669,13 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:608
 		{
-			yyVAL.expressions = actions.StructLiteralField(actions.AST, yyDollar[1].tok, yyDollar[3].expressions)
+			yyVAL.expressions = actions.StructLiteralField(actions.AST, yyDollar[1].tok, yyDollar[1].line, yyDollar[1].column, yyDollar[3].expressions)
 		}
 	case 84:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:612
 		{
-			yyVAL.expressions = append(yyDollar[1].expressions, actions.StructLiteralField(actions.AST, yyDollar[3].tok, yyDollar[5].expressions)...)
+			yyVAL.expressions = append(yyDollar[1].expressions, actions.StructLiteralField(actions.AST, yyDollar[3].tok, yyDollar[3].line, yyDollar[3].column, yyDollar[5].expressions)...)
 		}
 	case 86:
 		yyDollar = yyS[yypt-3 : yypt+1]
@@ -1730,14 +1730,14 @@ yydefault:
 //line t8-cxparsingcompletor/parsingcompletor.y:666
 		{
 			lengths := types.Cast_sint_to_sptr(yyDollar[1].ints)
-			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: yyDollar[2].tok}, yyDollar[4].literalElements)
-			yyVAL.expressions = actions.ArrayLiteralStructExpression(actions.AST, lengths, yyDollar[2].tok, elements)
+			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, StructName: yyDollar[2].tok, Line: yyDollar[1].line, Column: yyDollar[1].column}, yyDollar[4].literalElements)
+			yyVAL.expressions = actions.ArrayLiteralStructExpression(actions.AST, lengths, yyDollar[2].tok, yyDollar[1].line, yyDollar[1].column, elements)
 		}
 	case 95:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:672
 		{
-			yyVAL.expressions = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr(yyDollar[1].ints), yyDollar[2].tok, nil)
+			yyVAL.expressions = actions.ArrayLiteralStructExpression(actions.AST, types.Cast_sint_to_sptr(yyDollar[1].ints), yyDollar[2].tok, yyDollar[1].line, yyDollar[1].column, nil)
 		}
 	case 96:
 		yyDollar = yyS[yypt-5 : yypt+1]
@@ -1745,26 +1745,26 @@ yydefault:
 		{
 			lengths := types.Cast_sint_to_sptr(yyDollar[1].ints)
 			elements := actions.LiteralElementsFlatten(actions.AST, actions.LiteralType{Lengths: lengths, TypeCode: types.Code(yyDollar[2].i)}, yyDollar[4].literalElements)
-			yyVAL.expressions = actions.ArrayLiteralExpression(actions.AST, lengths, types.Code(yyDollar[2].i), elements)
+			yyVAL.expressions = actions.ArrayLiteralExpression(actions.AST, lengths, types.Code(yyDollar[2].i), yyDollar[1].line, yyDollar[1].column, elements)
 		}
 	case 97:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:682
 		{
-			yyVAL.expressions = actions.ArrayLiteralExpression(actions.AST, types.Cast_sint_to_sptr(yyDollar[1].ints), types.Code(yyDollar[2].i), nil)
+			yyVAL.expressions = actions.ArrayLiteralExpression(actions.AST, types.Cast_sint_to_sptr(yyDollar[1].ints), types.Code(yyDollar[2].i), yyDollar[1].line, yyDollar[1].column, nil)
 		}
 	case 98:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:689
 		{
-			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr(yyDollar[1].ints), Slice: true, StructName: yyDollar[2].tok}
+			typ := actions.LiteralType{Lengths: types.Cast_sint_to_sptr(yyDollar[1].ints), Slice: true, StructName: yyDollar[2].tok, Line: yyDollar[1].line, Column: yyDollar[1].column}
 			yyVAL.expressions = actions.LiteralSlice(actions.AST, typ, actions.LiteralElementsFlatten(actions.AST, typ, yyDollar[4].literalElements))
 		}
 	case 99:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:694
 		{
-			yyVAL.expressions = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr(yyDollar[1].ints), Slice: true, StructName: yyDollar[2].tok}, nil)
+			yyVAL.expressions = actions.LiteralSlice(actions.AST, actions.LiteralType{Lengths: types.Cast_sint_to_sptr(yyDollar[1].ints), Slice: true, StructName: yyDollar[2].tok, Line: yyDollar[1].line, Column: yyDollar[1].column}, nil)
 		}
 	case 100:
 		yyDollar = yyS[yypt-5 : yypt+1]
@@ -2053,13 +2053,13 @@ yydefault:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:932
 		{
-			yyVAL.expressions = actions.PrimaryStructLiteral(actions.AST, yyDollar[1].tok, yyDollar[3].expressions)
+			yyVAL.expressions = actions.PrimaryStructLiteral(actions.AST, yyDollar[1].tok, yyDollar[1].line, yyDollar[1].column, yyDollar[3].expressions)
 		}
 	case 143:
 		yyDollar = yyS[yypt-6 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:936
 		{
-			yyVAL.expressions = actions.PrimaryStructLiteralExternalOf(actions.AST, yyDollar[1].expressions, yyDollar[3].tok, yyDollar[5].expressions)
+			yyVAL.expressions = actions.PrimaryStructLiteralExternalOf(actions.AST, yyDollar[1].expressions, yyDollar[3].tok, yyDollar[3].line, yyDollar[3].column, yyDollar[5].expressions)
 		}
 	case 144:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -2772,7 +2772,9 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:1617
 		{
-			yyVAL.expressions = actions.AddJmpToReturnExpressions(actions.AST, yyDollar[2].ReturnExpressions)
+			returnExpressions := yyDollar[2].ReturnExpressions
+			returnExpressions.Line, returnExpressions.Column = yyDollar[1].line, yyDollar[1].column
+			yyVAL.expressions = actions.AddJmpToReturnExpressions(actions.AST, returnExpressions)
 		}
 	}
 	goto yystack /* stack new state and value */

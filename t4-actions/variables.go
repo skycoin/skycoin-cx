@@ -8,6 +8,9 @@ import (
 )
 
 func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpression, glblIdx ast.CXTypeSignatureIndex) {
+	start := len(prgrm.SysInitExprs)
+	glbl := prgrm.GetCXTypeSignatureFromArray(glblIdx)
+	defer prgrm.CXProgramGlobalInitializerAdd(prgrm.CurrentPackage, glbl.Name, start)
 	initializerExpressionIdx := initializer[len(initializer)-1].Index
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, site S1209.
@@ -100,6 +103,9 @@ func DeclareGlobalInPackage(prgrm *ast.CXProgram, pkg *ast.CXPackage,
 
 	// ParseGlobals passes the argument the global already names as declarator.
 	declaratorTaken := false
+	if _, err := pkg.GetGlobal(prgrm, declarator.Name); err != nil {
+		globalPlaceholderAdd(prgrm, pkg, declarator)
+	}
 	// Treat the name a bit different whether it's defined already or not.
 	if glbl, err := pkg.GetGlobal(prgrm, declarator.Name); err == nil {
 		// then it was only added a reference to the symbol
@@ -503,20 +509,38 @@ func GlobalRedeclarationCheck(prgrm *ast.CXProgram, declarator *ast.CXArgument) 
 	return true
 }
 
+// GlobalValue is a value of var a, b = x, y as pass one reads it, the type
+// of a literal or types.UNDEFINED, and the positions of its start and of the
+// token after it.
+type GlobalValue struct {
+	GlobalValueType        types.Code
+	GlobalValueStartLine   int
+	GlobalValueStartColumn int
+	GlobalValueEndLine     int
+	GlobalValueEndColumn   int
+}
+
 // DeclareGlobals declares the globals of var a, b T and var a, b T = x, y.
-// Pass one passes the type of each value in valueTypes, and pass two the
-// values. A spec without a type, var a, b = x, y, takes the type of each
-// literal value in pass one, and pass two reads it back from the global.
-func DeclareGlobals(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *ast.CXArgument, values [][]ast.CXExpression, valueTypes []types.Code, initialized bool) {
+// Pass one passes each value in passOneValues, and pass two the values. A
+// spec without a type, var a, b = x, y, takes the type of each literal value
+// in pass one, and the inference pass of t9-cxparsing gives the others the
+// type of their value. Pass two then only adds the initializer.
+func DeclareGlobals(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *ast.CXArgument, values [][]ast.CXExpression, passOneValues []GlobalValue, initialized bool) {
 	count := len(values)
-	if valueTypes != nil {
-		count = len(valueTypes)
+	if passOneValues != nil {
+		count = len(passOneValues)
 	}
 	if initialized && count != len(names) {
 		file, line, column := ast.CXArgumentDebugPosition(prgrm, names[0].ArgDetails)
 		prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeAssignmentCount, file, line, column, ast.CompileErrorOperands{int64(len(names)), int64(count)})
 		initialized = false
 		if spec == nil {
+			// The names are invalid, so their uses report nothing more.
+			for _, name := range names {
+				if !GlobalRedeclarationCheck(prgrm, name) {
+					DeclareGlobalInPackage(prgrm, nil, name, DeclarationSpecifiersBasic(prgrm, types.INVALID), nil, false)
+				}
+			}
 			return
 		}
 	}
@@ -525,15 +549,29 @@ func DeclareGlobals(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *ast.CXA
 		if spec != nil && i < len(names)-1 {
 			nameSpec = argumentCopy(prgrm, spec)
 		}
-		if nameSpec == nil {
-			code := globalValueType(prgrm, name, valueTypes, i)
+		if nameSpec == nil && passOneValues != nil {
+			code := passOneValues[i].GlobalValueType
 			if code == types.UNDEFINED {
+				if !GlobalRedeclarationCheck(prgrm, name) {
+					globalDeferredAdd(prgrm, name, passOneValues[i])
+				}
+				continue
+			}
+			nameSpec = DeclarationSpecifiersBasic(prgrm, code)
+		} else if nameSpec == nil {
+			glbl := globalDeclared(prgrm, name)
+			if glbl == nil {
 				file, line, column := ast.CXArgumentDebugPosition(prgrm, name.ArgDetails)
 				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalTypeUnknown, file, line, column, ast.CompileErrorOperands{int64(name.Name)})
 				// Its uses report nothing more.
-				code = types.INVALID
+				nameSpec = DeclarationSpecifiersBasic(prgrm, types.INVALID)
+			} else {
+				if !GlobalRedeclarationCheck(prgrm, name) && initialized && values[i] != nil {
+					processGlobalInitializer(prgrm, values[i], glbl.Index)
+				}
+				prgrm.ReleaseCXArgBuilder(name)
+				continue
 			}
-			nameSpec = DeclarationSpecifiersBasic(prgrm, code)
 		}
 		if GlobalRedeclarationCheck(prgrm, name) {
 			continue
@@ -546,38 +584,63 @@ func DeclareGlobals(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *ast.CXA
 	}
 }
 
-// globalValueType is the type the global name of var name = value takes,
-// read from valueTypes in pass one and from the global in pass two, or
-// types.UNDEFINED.
-func globalValueType(prgrm *ast.CXProgram, name *ast.CXArgument, valueTypes []types.Code, i int) types.Code {
-	if valueTypes != nil {
-		return valueTypes[i]
-	}
+// globalDeferredAdd records the global name of var name = value, whose value
+// is not a literal, for the inference pass of t9-cxparsing.
+func globalDeferredAdd(prgrm *ast.CXProgram, name *ast.CXArgument, value GlobalValue) {
 	pkg, err := prgrm.GetCurrentPackage()
 	if err != nil {
-		return types.UNDEFINED
+		panic(err)
+	}
+	file, _, _ := ast.CXArgumentDebugPosition(prgrm, name.ArgDetails)
+	prgrm.CXProgramGlobalDeferredAdd(ast.GlobalDeferred{
+		GlobalDeferredDeclarator:  ast.CXArgumentIndex(name.Index),
+		GlobalDeferredPackage:     ast.CXPackageIndex(pkg.Index),
+		GlobalDeferredFile:        file,
+		GlobalDeferredStartLine:   value.GlobalValueStartLine,
+		GlobalDeferredStartColumn: value.GlobalValueStartColumn,
+		GlobalDeferredEndLine:     value.GlobalValueEndLine,
+		GlobalDeferredEndColumn:   value.GlobalValueEndColumn,
+	})
+}
+
+// globalDeclared is the global of the current package that name names when
+// an earlier pass gave it its type, or nil.
+func globalDeclared(prgrm *ast.CXProgram, name *ast.CXArgument) *ast.CXTypeSignature {
+	pkg, err := prgrm.GetCurrentPackage()
+	if err != nil {
+		return nil
 	}
 	glbl, err := pkg.GetGlobal(prgrm, name.Name)
 	if err != nil {
-		return types.UNDEFINED
+		return nil
 	}
-	switch glbl.Type {
-	case ast.TYPE_ATOMIC:
-		if glbl.Offset.IsValid() {
-			return types.Code(glbl.Meta)
+	if glbl.Type == ast.TYPE_CXARGUMENT_DEPRECATE {
+		if !prgrm.GetCXArg(ast.CXArgumentIndex(glbl.Meta)).Offset.IsValid() {
+			return nil
 		}
-	case ast.TYPE_CXARGUMENT_DEPRECATE:
-		// A str global keeps its argument.
-		arg := prgrm.GetCXArg(ast.CXArgumentIndex(glbl.Meta))
-		if arg.Offset.IsValid() && len(arg.Lengths) == 0 && arg.StructType == nil && len(arg.DeclarationSpecifiers) <= 1 {
-			return arg.Type
-		}
+	} else if !glbl.Offset.IsValid() {
+		return nil
 	}
-	return types.UNDEFINED
+	return glbl
 }
 
 // DeclarationSpecifiersCopy copies the type spec of var a, b T for the
 // second name and on.
 func DeclarationSpecifiersCopy(prgrm *ast.CXProgram, spec *ast.CXArgument) *ast.CXArgument {
 	return argumentCopy(prgrm, spec)
+}
+
+// globalPlaceholderAdd adds to pkg the global that declarator names, with no
+// type yet, as Preliminarystage adds the globals it finds. The global then
+// keeps its argument, as a global Preliminarystage found does, which the
+// name of var ( g = T{...} ) or of var g = T{x: 1, on its own line is not.
+func globalPlaceholderAdd(prgrm *ast.CXProgram, pkg *ast.CXPackage, declarator *ast.CXArgument) {
+	file, line, column := ast.CXArgumentDebugPosition(prgrm, declarator.ArgDetails)
+	_, arg := ast.MakeArgument(prgrm, declarator.Name, file, line)
+	if arg.ArgDetails != ast.CXArgumentDebugGidNil {
+		prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(arg.ArgDetails).FileColumn = column
+	}
+	arg.Offset = types.InvalidPointer
+	arg.Package = ast.CXPackageIndex(pkg.Index)
+	pkg.AddGlobal(prgrm, ast.CXArgumentIndex(arg.Index))
 }

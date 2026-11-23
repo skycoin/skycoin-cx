@@ -1,15 +1,14 @@
 package main
 
-func one() (i32) {
-	return 1
+func none() {
 }
 
-var g = one()
+var g = none()
 var a, b = 1
 var c, d i32 = 1, 2, 3
 
 func main() {
 	var x, y = 1
 	var z, w i32 = 1, 2, 3
-	i32.print(g + c + d + z + w)
+	i32.print(g + a + b + c + d + z + w + x + y)
 }

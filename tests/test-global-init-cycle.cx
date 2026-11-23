@@ -1,0 +1,13 @@
+package main
+
+func back() (r i32) {
+	return loop
+}
+
+var loop = back()
+var typed i32 = typedToo
+var typedToo i32 = typed + 1
+
+func main() {
+	i32.print(loop + typed)
+}

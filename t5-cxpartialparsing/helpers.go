@@ -7,6 +7,7 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
+	"github.com/skycoin/skycoin-cx/t4-actions"
 )
 
 // VIOLATION: state outside State. Owner: t5-cxpartialparsing; moves to ParseMng in phase 2.
@@ -253,24 +254,35 @@ type lexerToken struct {
 	lexerTokenColumn int
 }
 
+// varValueRead records the value of var g = value that starts at line and
+// column, and returns its index in the values of the lexer. The parser has
+// read the token after the value, where the value ends.
+func varValueRead(yylex yyLexer, line int, column int) int {
+	lexer := yylex.(*Lexer)
+	lexer.varValues = append(lexer.varValues, actions.GlobalValue{
+		GlobalValueType:        varValueLiteralType(lexer, line, column),
+		GlobalValueStartLine:   line,
+		GlobalValueStartColumn: column,
+		GlobalValueEndLine:     lexer.tok.line,
+		GlobalValueEndColumn:   lexer.tok.column,
+	})
+	return len(lexer.varValues) - 1
+}
+
 // varValueLiteralType is the type of the value of var g = value that starts
 // at line and column when it is a literal or a negated number literal, and
-// types.UNDEFINED otherwise. The parser has read the token after the value.
-func varValueLiteralType(yylex yyLexer, line int, column int) int {
-	lexer, ok := yylex.(*Lexer)
-	if !ok {
-		return int(types.UNDEFINED)
-	}
+// types.UNDEFINED otherwise.
+func varValueLiteralType(lexer *Lexer, line int, column int) types.Code {
 	last := lexer.tokenBefore
 	if last.lexerTokenLine == line && last.lexerTokenColumn == column {
-		return int(varLiteralTokenType(last.lexerTokenKind))
+		return varLiteralTokenType(last.lexerTokenKind)
 	}
 	sign := lexer.tokenBeforeLast
 	code := varLiteralTokenType(last.lexerTokenKind)
 	if sign.lexerTokenLine == line && sign.lexerTokenColumn == column && (sign.lexerTokenKind == SUB_OP || sign.lexerTokenKind == ADD_OP) && code != types.STR && code != types.BOOL {
-		return int(code)
+		return code
 	}
-	return int(types.UNDEFINED)
+	return types.UNDEFINED
 }
 
 // varLiteralTokenType is the type of a literal token, as pass two writes it.
@@ -304,11 +316,12 @@ func varLiteralTokenType(kind int) types.Code {
 	return types.UNDEFINED
 }
 
-// varValueTypes converts the value types var_values holds.
-func varValueTypes(codes []int) []types.Code {
-	result := make([]types.Code, len(codes))
-	for i, code := range codes {
-		result[i] = types.Code(code)
+// varValues returns the values var_values holds the indexes of.
+func varValues(yylex yyLexer, indexes []int) []actions.GlobalValue {
+	lexer := yylex.(*Lexer)
+	result := make([]actions.GlobalValue, len(indexes))
+	for i, index := range indexes {
+		result[i] = lexer.varValues[index]
 	}
 	return result
 }

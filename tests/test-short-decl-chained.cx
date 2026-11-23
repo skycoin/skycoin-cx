@@ -1,0 +1,19 @@
+package main
+
+func main() {
+	a := 1
+	b := 2
+	y := a + 2 < 4
+	bool.print(y)
+	z := a < b
+	bool.print(z)
+	w := (a < 2) && (3 < b)
+	bool.print(w)
+	f := 1.5
+	g := f * 2.0 + 1.0
+	f32.print(g)
+	h := a * b - a * b + 7
+	i32.print(h)
+	k := a == b || b == 2
+	bool.print(k)
+}

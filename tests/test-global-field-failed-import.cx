@@ -1,0 +1,14 @@
+package main
+
+import "math/geometry"
+
+type Holder struct {
+	c *geometry.Circle
+	n i32
+}
+
+func main() {
+	var h Holder
+	printf("%f\n", h.c.radius)
+	printf("%d\n", h.n.size)
+}

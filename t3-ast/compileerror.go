@@ -95,8 +95,12 @@ const (
 	// the unnamed result of func f() T. Its operands are the two types.
 	CompileErrorCodeReturnValueType
 	// CompileErrorCodeGlobalTypeUnknown is a global declared without a type
-	// whose value is not a literal, var g = f(). Its operand is the global.
+	// whose value has no type it can take. Its operand is the global.
 	CompileErrorCodeGlobalTypeUnknown
+	// CompileErrorCodeInitializationCycle is a global whose initializer refers
+	// to itself through other globals or functions. Its operands are the
+	// global and the chain of references.
+	CompileErrorCodeInitializationCycle
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )
@@ -242,4 +246,11 @@ func (prgrm *CXProgram) CXProgramImportFailed(name stringpool.StringGid) bool {
 		}
 	}
 	return false
+}
+
+// CXProgramCompileErrorAddLine records a compile error at file and line with
+// no column, for a check after a function is parsed, when the token the
+// parser is at is past the function.
+func (prgrm *CXProgram) CXProgramCompileErrorAddLine(code CompileErrorCode, file SourceFileGid, line int, operands CompileErrorOperands) {
+	prgrm.CXProgramCompileErrorAddPosition(code, file, line, 0, operands)
 }
