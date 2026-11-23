@@ -1,64 +1,18 @@
 ![cx logo](https://user-images.githubusercontent.com/26845312/32426758-2a4bbb00-c282-11e7-858e-a1eaf3ea92f3.png)
 
 # CX Programming Language
- 
+
 [![check](https://github.com/skycoin/skycoin-cx/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/skycoin/skycoin-cx/actions/workflows/check.yml)
 
-CX is a general purpose, interpreted and compiled programming
-language, with a very strict type system and a syntax
-similar to Golang's. CX provides a new programming paradigm based on
-the concept of affordances.
+CX is a general purpose programming language with a strict type system and a
+syntax close to Go's. This repository holds its compiler, which is written in
+Go, the two loops that run a compiled program, and `cx build`, which turns a
+program into one executable file. CX has no native code generator. A built
+program is a CX core binary with the compiled program appended.
 
-The rules of this repository are listed in
-[docs/Conventions.md](docs/Conventions.md).
-
-## Repository layout
-
-Every Go package, binaries included, sits one level below the root as
-`t<N>-<name>`, so no Go file is deeper than `<dir>/<file>.go`. N is the
-package's tier in the import graph. A tier 0 package imports no other package
-of this module, and a tier N package imports only packages of lower tiers,
-tests included. `t11-cx` is the cx binary, `t7-cx-core-run` the core of
-`cx build` and `t1-cxtest` the CX program test runner. `tests/` holds the CX
-test programs, `lib/` CX libraries and `t0-benchmarks/` the CX and Go
-benchmarks. `CLEANUP.md` lists every file of
-the former CX repositories with a keep, merge or delete recommendation.
-
-Init lives in one place. No package has a Go `func init()`, and no setup is
-hidden in a constructor or in a package level variable. A constructor only
-returns a new object. Setup that touches shared state is an explicit,
-exported Init function, and `t11-cx` main calls each one in a numbered order
-before the run loop. `make check-inits` fails on `func init()` outside package
-main. The files that still break the rule are listed in `init-allowlist.txt`,
-which only shrinks, and each one is marked `// VIOLATION: init chaining`.
-
-No interface chaining. An interface does not embed another interface, so
-`type ReadCloser interface { io.Reader; Close() error }` is not allowed. List
-the methods instead. `make check-ifaces` runs `t0-ifacecheck` and fails on an
-embedded interface. The ones that still break the rule are listed in
-`iface-allowlist.txt`, which only shrinks.
-
-Two classes of error, no recovery. A failure of a path, a file, the network
-or anything else outside the program returns its module's error struct
-pointer, nil on success, never the Go `error` interface. Every other failure,
-a precondition, invariant or postcondition violation, a mathematical
-violation or an impossible state, is a strict assert from `t0-cx-core-assert`
-that crashes the process. No code calls `recover`. `make check-recovers`
-fails on a `recover(` call outside `vendor/`, and the sites that still break
-the rule are listed in `recover-allowlist.txt`, which only shrinks. See
-[docs/ErrorHandling.md](docs/ErrorHandling.md).
-
-State lives in one place. One `CxIrState` holds a manager for each IR
-object type, and no state lives anywhere else, so there are no mutable
-package level variables. Each object type has a Def file, an `<Obj>Mng`
-manager that holds the array of objects, and an `<Obj>Gid` 64 bit
-generational index. Objects are allocated and released only through their
-manager, and a pointer kept at rest is a Gid instead. See
-[docs/ObjectModel.md](docs/ObjectModel.md). Code that still breaks the rule
-is marked `// OBJMODEL:` with its target and issue, or `// VIOLATION: state
-outside State` for package state that is not an IR object, and the marks
-only go away.
-
+The language is described in [LanguageGuide.md](LanguageGuide.md) and the
+changes in [CHANGELOG.md](CHANGELOG.md). The rules of this repository are in
+[AGENTS.md](AGENTS.md) and [docs/Conventions.md](docs/Conventions.md).
 
 ## Install
 
@@ -71,56 +25,13 @@ cd skycoin-cx
 make build
 ```
 
-This puts the `cx` binary and the `cx build` core `cx-core` in `bin/`. Add that directory to your `PATH` if you
-want to run `cx` from anywhere. To update, `git pull` and `make build` again.
+This puts `cx` and the `cx build` cores (`cx-core`, `cx-core-file` and the
+rest) in `bin/`. Add that directory to your `PATH` to run `cx` from anywhere.
+To update, `git pull` and `make build` again.
 
-## Build
-
-`make build` builds cx with the cipher, os and regexp packages. Leave any of
-them out with `TAGS=nocipher`, `TAGS=nocxos` or `TAGS=noregexp`, and
-`TAGS=ptr64` switches the VM to 64 bit pointers.
-
-`make build-gui` adds the `gl`, `glfw` and `al` packages (cxfx). It needs cgo
-and the GL, X11 and OpenAL headers. On Debian or Ubuntu:
-
-```
-sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev
-make build-gui
-```
-
-## cx build
-
-`cx build` turns a program into one executable file.
-
-```
-make build
-./bin/cx build hello.cx -o hello
-./hello
-```
-
-The file is a core binary from `bin/`, which `make build` builds next to
-`cx`, with the compiled program and a trailer appended. The core reads the
-program from the end of its own file at start up and runs it, passing its
-command line arguments to the program as `os.Args`. Give another core with
-`--core path`, a core or a directory of cores. On Windows name the output `hello.exe`. The trailer is
-described in "Built programs" in [docs/IR.md](docs/IR.md#built-programs).
-
-The core is a minimum interpreter. It holds the deserializer, the executors,
-the memory manager, the opcodes that need no module outside the Go standard
-library and the `LibraryCall` dispatcher. It links a system library, file,
-net or process, only when the program calls it and `--enable` enables it,
-so `make build` builds one core per set of libraries, `cx-core` for none,
-`cx-core-file`, `cx-core-file-net` and so on, and `cx build --enable=file
-program.cx -o program` picks `cx-core-file`. See System libraries in
-[LanguageGuide.md](LanguageGuide.md#system-libraries). It has no parser and
-loads no source, and `TestCoreImports` in `t7-cx-core-run` fails when it
-imports anything else. `cx build` refuses a program that uses an opcode the
-core leaves out, such as `cipher` or `gl`, and lists those opcodes.
-The run time flags of cx, such as `--executor` and `-heap-max`, are not
-recorded and take their defaults.
-
-Whether the core may use a module outside the Go standard library is still
-pending with the project lead. Until it is decided it uses none.
+`go install github.com/skycoin/skycoin-cx/t11-cx@latest` also works, but it
+installs the binary as `t11-cx` and builds no cores, so `cx build` needs the
+cores from `make build`.
 
 ## Hello world
 
@@ -135,73 +46,287 @@ func main() {
 ```
 
 Save it as `hello.cx` and run `./bin/cx hello.cx`. More programs are in
-`tests/examples`, and the OpenGL ones in `tests/examples/opengl` need
-`make build-gui`.
+`tests/examples`. `cx --help` lists the flags.
 
-## Tests
+## Build options
 
-- `make check` runs the tier, init, interface, recover and object model
-  checks, `go vet`, the Go tests and the stable CX program tests. CI runs it
+`make build` builds cx with the cipher, os and regexp packages. Leave any of
+them out with `TAGS=nocipher`, `TAGS=nocxos` or `TAGS=noregexp`, and
+`TAGS=ptr64` switches CX to 64 bit pointers.
+
+`make build-gui` adds the `gl`, `glfw` and `al` packages (cxfx). It needs cgo
+and the GL, X11 and OpenAL headers. On Debian or Ubuntu:
+
+```
+sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev
+make build-gui
+```
+
+The OpenGL programs in `tests/examples/opengl` need this build.
+
+## The language today
+
+The language has versions. The current one is
+`constants.LanguageVersionCurrent` in `t1-constants/constants.go`,
+2611230002, an integer of the form `yymmddnnnn`. It is stored in every
+serialized program, and a program serialized under another version must be
+compiled again. Each version is described in
+[Language versions](LanguageGuide.md#language-versions). The main changes
+since skycoin/cx are these.
+
+- Built-in libraries live under `sys/` and need an explicit import, as
+  `import "sys/string"` and `import "sys/os"`. Their functions have verbose
+  names such as `string.Concatenation`.
+- Strings have no operators. `==`, `<`, `+` and the others on `str` are
+  compile errors that name the function to use instead.
+- A function declares the globals it uses in a `global` statement at the
+  top of its body, `global counter, config.Limit`, and reaches a global of
+  another package only as `package.name`.
+- Shadowing is a compile error. A local with the name of a global, a
+  package, a function, a type or a variable of an enclosing block is
+  reported.
+- A package is imported by its path and its members are used as
+  `package.name`. See [Packages](LanguageGuide.md#packages).
+- Every independent compile error is reported once, as `file:line:column`,
+  sorted by position. The compiler does not stop at the first error.
+
+```
+error: err.cx:6:2 function 'f' uses global 'g' without declaring it, add global g at the top of its body
+error: err.cx:10:6 'g' shadows global declared at err.cx:3:5
+error: err.cx:11:7 identifier 'undefinedthing' does not exist
+```
+
+Affordances are part of the original design of CX, a way for a program to
+ask at run time what it can do with one of its own objects. They do not work
+in this version. The `aff` package is not a built-in package, so the
+programs in `tests/examples/affordances` fail to load. See
+[Affordances](LanguageGuide.md#affordances) and
+[#208](https://github.com/skycoin/skycoin-cx/issues/208).
+
+## System libraries
+
+File access, networking and `os.Run` are system libraries, `file`, `net` and
+`process`. They are disabled unless `--enable` names them, decision D17 of
+[#492](https://github.com/skycoin/skycoin-cx/issues/492). A call into a
+library that is not enabled is the runtime error
+`CX_RUNTIME_LIBRARY_DISABLED`.
+
+```
+cx --enable=file,net program.cx
+```
+
+File paths are relative and confined to the working directory, or to the
+directory `--sandbox` names. See
+[System libraries](LanguageGuide.md#system-libraries).
+
+## How a program runs
+
+cx parses and compiles the source into the CX IR, then lowers it to a flat
+image. There are two loops that run a program.
+
+- The old loop walks the CX IR. It runs every program.
+- The vm (`t3-cx-runtime-vm`) runs the lowered image in one switch loop. It
+  makes no Go allocation while it runs, which `TestRunVmAllocs` checks. It
+  runs a program only when every function lowers, and the lowering does not
+  yet cover slices, the heap or most library calls.
+
+`cx --executor=auto`, the default, runs a program on the vm when it lowers
+and on the old loop otherwise. `--executor=old` and `--executor=vm` force
+one loop, and vm fails on a program that does not lower. `TestLowerCompare`
+runs every program that lowers on both loops and compares the results. See
+"The runtime image" in [docs/IR.md](docs/IR.md#the-runtime-image).
+
+The garbage collector runs as a tick of the old loop, between steps, never
+inside an opcode. The vm and the IR base do not reach it, which
+`make check-gcreach` checks. See
+[docs/GarbageCollector.md](docs/GarbageCollector.md).
+
+A compiled program can be serialized and loaded again.
+`TestSerializeRoundTrip` runs the test programs directly and after a
+round trip, on both loops, and compares them. The format is in
+[docs/IR.md](docs/IR.md).
+
+## cx build
+
+`cx build` turns a program into one executable file.
+
+```
+./bin/cx build hello.cx -o hello
+./hello
+```
+
+The file is a core binary from `bin/` with the serialized program and a
+trailer appended. At start up the core reads the program from the end of its
+own file and runs it, on the vm when it lowers and on the old loop otherwise,
+and passes its command line arguments to the program as `os.Args`. On
+Windows name the output `hello.exe`. `--core path` gives another core or a
+directory of cores.
+
+The core has no parser and loads no source. It links a system library only
+when the program calls it and `--enable` enables it, so `make build` builds
+one core per set of libraries, `cx-core` for none, `cx-core-file`,
+`cx-core-file-net` and so on. `cx build --enable=file program.cx -o program`
+picks `cx-core-file`, and the built program runs with exactly the libraries
+it was built with. `cx build` refuses a program that uses an opcode the core
+leaves out, such as `cipher` or `gl`. Whether the core may use a Go module
+outside the standard library is an open decision, and until then it uses
+none. See [Building an executable](LanguageGuide.md#building-an-executable).
+
+## Performance
+
+`t0-benchmarks/compare` holds six long benchmarks, each in CX, C, Python 3
+and Bash with the same algorithm, and each prints a hash of its results that
+`TestCompareExpected` derives from the math. `make bench-compare` times them
+and needs clang, python3 and taskset. It is not part of `make check`. The
+numbers below are from
+[#470](https://github.com/skycoin/skycoin-cx/pull/470), in milliseconds with
+the start up time taken off, the median of 5 runs pinned to one core.
+
+| benchmark | cx old loop | cx vm | C -O2 | Python 3.14 |
+|---|---:|---:|---:|---:|
+| count | 18417 | 842 | 0 (folded) | 2624 |
+| fib | 13143 | 1138 | 24.9 | 1124 |
+| array | 10205 | 846 | 3.6 | 577 |
+| struct | 9695 | 924 | 3.4 | 594 |
+| memtest | 22956 | 1443 | 12.6 | 2057 |
+| primes | 11550 | 762 | 63.0 | 1421 |
+
+See [t0-benchmarks/README.md](t0-benchmarks/README.md).
+
+## Tests and checks
+
+- `make check` runs every check below, `go vet` and gofmt, the Go tests, and
+  the stable CX program tests with a default and a `ptr64` build. CI runs it
   on Linux, macOS and Windows.
-- `make test` runs only the stable CX program tests, and compiles every
-  complete `cx` code block in `LanguageGuide.md`.
-- `make test-all` also runs the tests for known issues. These are expected to
-  fail, and each one names its issue in `t1-cxtest/main.go`.
-- `make vet-gui` vets the cxfx build.
+  - `check-tiers`, a package imports only packages of lower tiers.
+  - `check-inits`, no `func init()` outside package main.
+  - `check-ifaces`, no interface embeds another interface.
+  - `check-recovers`, no `recover(` outside `vendor/`.
+  - `check-objmodel`, the object model rules and up to date generated
+    managers.
+  - `check-gcreach`, the vm and the IR base stay free of the garbage
+    collector.
+- `make test` runs the stable CX program tests and compiles every complete
+  `cx` code block in `LanguageGuide.md`, 768 tests in all.
+- `make test-all` also runs the tests marked as known issues, 776 tests.
+- `make vet-gui` vets the cxfx build. CI runs it.
 - `make build-wasm` compiles `cx` for js/wasm as the playground does, and
   `make test-wasm` runs the hello world example under Node. CI runs both.
+- `make names-csv` writes every declared Go and CX name with its file, line
+  and kind to `bin/names.csv`, for naming review. It is not a check.
 
 ## Status
 
-Works:
-
-- `make check` passes on Linux, macOS and Windows.
-- 231 stable CX program tests pass, and the 97 complete examples in
-  `LanguageGuide.md` compile. `make test-all` passes 238 program tests and
-  the 97 examples, and fails the 19 known issue tests.
-- The cxfx build compiles and `tests/examples/opengl/triangle.cx` draws its
-  triangle under Xvfb on Linux. Other GUI programs have not been checked.
-
-Known broken:
-
-- 19 CX program tests fail, among them `for true {}`
-  ([#20](https://github.com/skycoin/skycoin-cx/issues/20)) and
-  `-heap-max` not enforced
-  ([#17](https://github.com/skycoin/skycoin-cx/issues/17)). Issues #13 to #29
-  cover them all.
+- `make check` passes on Linux, macOS and Windows, and `make test-all`
+  passes every test it runs.
 - The GUI tests `issue-208`, `issue-216` and `issue-252` only work against a
   cxfx build and are commented out
   ([#30](https://github.com/skycoin/skycoin-cx/issues/30),
   [#31](https://github.com/skycoin/skycoin-cx/issues/31),
   [#32](https://github.com/skycoin/skycoin-cx/issues/32)).
-- `t7-cxmobile` does not compile
+- `t7-cxmobile` does not compile and no target builds it
   ([#35](https://github.com/skycoin/skycoin-cx/issues/35)).
-- Older language bugs carried over from skycoin/cx are tracked from
-  [#38](https://github.com/skycoin/skycoin-cx/issues/38) on, for example
-  `break` leaving every loop
-  ([#39](https://github.com/skycoin/skycoin-cx/issues/39)).
+- Affordances do not work, see above.
 
 See the [open issues](https://github.com/skycoin/skycoin-cx/issues) for the
-full list.
+rest, much of it the move to the object model, string pool and error types
+that [docs/ObjectModel.md](docs/ObjectModel.md) and
+[docs/ErrorHandling.md](docs/ErrorHandling.md) describe.
+
+## Repository layout
+
+Every Go package, binaries included, sits one level below the root as
+`t<N>-<name>`, where N is its tier in the import graph. A tier N package
+imports only packages of lower tiers. `t11-cx` is the cx binary,
+`t7-cx-core-run` the `cx build` core and `t1-cxtest` the CX program test
+runner. `tests/` holds the CX test programs, `lib/` CX libraries and
+`t0-benchmarks/` the benchmarks. `CLEANUP.md` lists every file of the former
+CX repositories with a keep, merge or delete recommendation.
+
+The code follows these rules, each listed in
+[docs/Conventions.md](docs/Conventions.md).
+
+- No Go `func init()` outside package main. Setup is an explicit Init
+  function that `t11-cx` main calls in order.
+- No interface embeds another interface.
+- Two classes of error and no `recover`. A failure outside the program
+  returns its module's error struct, and anything else is an assert that
+  crashes. See [docs/ErrorHandling.md](docs/ErrorHandling.md).
+- State lives in one `CxIrState` with a manager per IR object type. See
+  [docs/ObjectModel.md](docs/ObjectModel.md).
+- Names describe themselves and are hierarchical, see [AGENTS.md](AGENTS.md).
+
+Code that still breaks a rule is listed in `init-allowlist.txt`,
+`iface-allowlist.txt` or `recover-allowlist.txt`, or marked in the source,
+and these lists only shrink.
+
+## Related repositories
+
+- [skycoin-cx-playground](https://github.com/skycoin/skycoin-cx-playground),
+  the web playground. It runs cx compiled to js/wasm.
+- [skycoin-cx-playground-android](https://github.com/skycoin/skycoin-cx-playground-android),
+  an Android app that lists CX programs and runs them, with a headless
+  emulator test rig, a benchmark app for the `t0-benchmarks/compare`
+  programs and a CX port of the femtoclaw agent.
+- [skycoin-cx-forth](https://github.com/skycoin/skycoin-cx-forth), a small
+  Forth VM that runs a subset of the CX IR, for the host and for ESP32 with
+  TinyGo.
 
 ## History
 
-This repository merges [skycoin/cx](https://github.com/skycoin/cx), which saw
-its last activity in 2023, with the CX playground repositories, in November
-2026. Development continues here. Open issues from skycoin/cx that still apply
-were filed again here with a link to the original.
+This repository merged [skycoin/cx](https://github.com/skycoin/cx), which
+saw its last activity in 2023, with the CX playground repositories in
+November 2026. Development continues here. Open issues from skycoin/cx that
+still apply were filed again here with a link to the original.
 
-## Resources and libraries
+## Further reading
 
-If you are interested in learning more about CX, please refer to the [resources documentation](docs/cx-resources.md). 
+- [LanguageGuide.md](LanguageGuide.md), the language and its built-in
+  functions
+- [docs/IR.md](docs/IR.md), the compiler IR, the serialized form and the
+  runtime image
+- [docs/CompilerDevelopment.md](docs/CompilerDevelopment.md)
+- [docs/Wrappinggolanglibraries.md](docs/Wrappinggolanglibraries.md), how to
+  wrap a Go library for CX
+- [docs/cx-tutorials.md](docs/cx-tutorials.md) and
+  [docs/cx-resources.md](docs/cx-resources.md), older tutorials and links
 
-If you want to get started with some basic example programs and tutorials check out the [tutorials section](docs/cx-tutorials.md). 
+## Dependency graph
 
-The docs also provide a high level [overview](docs/overview.md) of the language.
+Made with [goda](https://github.com/loov/goda):
 
-Guide for CX compiler development:
-* [Compiler Development](docs/CompilerDevelopment.md)
-* [The compiler IR and serialized form](docs/IR.md)
+```
+go run github.com/loov/goda@latest graph github.com/skycoin/skycoin-cx/... | dot -Tsvg -o docs/skycoin-cx-goda-graph.svg
+```
 
-How to write a CX library that wraps a Go library:
-* [Wrapping Go libraries](docs/Wrappinggolanglibraries.md)
+![Dependency Graph](docs/skycoin-cx-goda-graph.svg "github.com/skycoin/skycoin-cx Dependency Graph")
+
+## Lines of code
+
+Made with [gocloc](https://github.com/hhatto/gocloc) (excludes `vendor/`, `node_modules/`, `.git/`):
+
+```
+gocloc --not-match-d='(vendor|node_modules|\.git)' .
+```
+
+```
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                             388           7699          10388          58617
+Markdown                        39           2003              0           8415
+Yacc                             2            276            188           2309
+BASH                             7             28             19            325
+JSON                             4              2              0            323
+Python                           6             81              0            284
+C                                6             27              0            260
+YAML                             3             46            150            200
+Batch                            1             78             38            175
+Bourne Shell                     7              2             21            149
+Makefile                         3             33              5             88
+Plain Text                       3              0              0             19
+C Header                         1              3              0              9
+-------------------------------------------------------------------------------
+TOTAL                          470          10278          10809          71173
+-------------------------------------------------------------------------------
+```
