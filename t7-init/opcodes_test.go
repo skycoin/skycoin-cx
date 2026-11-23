@@ -19,6 +19,9 @@ func TestRegisteredOpcodesMatchLifecycleTable(t *testing.T) {
 	RegisterPackages(prgrm)
 
 	for code, name := range ast.OpNames {
+		if code < 0 {
+			continue
+		}
 		row, found := constants.OpcodeLifecycleLiveByNumber(code)
 		if !found || row.Name != name || ast.OpCodes[name] != code {
 			t.Errorf("opcode %d %q is not its live table row", code, name)
@@ -34,8 +37,8 @@ func TestRegisteredOpcodesMatchLifecycleTable(t *testing.T) {
 		if row.Number < len(ast.OpcodeHandlers) && ast.OpcodeHandlers[row.Number] != nil {
 			t.Errorf("deprecated opcode %d %q has a handler", row.Number, row.Name)
 		}
-		if _, found := ast.OpCodes[row.Name]; found {
-			t.Errorf("deprecated opcode name %q is registered", row.Name)
+		if code, found := ast.OpCodes[row.Name]; found && code >= 0 {
+			t.Errorf("deprecated opcode name %q is registered as opcode %d", row.Name, code)
 		}
 	}
 	if got := ast.OpCodes["string.EqualityByByteValue"]; got != 586 {
@@ -43,5 +46,38 @@ func TestRegisteredOpcodesMatchLifecycleTable(t *testing.T) {
 	}
 	if got := ast.OpCodes["ptr.uneq"]; got != 590 {
 		t.Errorf("ptr.uneq is %d, want 590", got)
+	}
+}
+
+// Every live library function is registered under its key with a handler,
+// and every registered library key is a live library function.
+func TestRegisteredLibraryFunctionsMatchLifecycleTable(t *testing.T) {
+	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
+	// Now a constructor call, as in TestRegisteredOpcodesMatchLifecycleTable.
+	prgrm := MakeProgram()
+	RegisterPackages(prgrm)
+	opcodes.RegisterOpcodes(prgrm)
+
+	for _, row := range constants.LibraryFunctionLifecycleTable {
+		key := ast.LibraryFunctionKey(row.LibraryNumber, row.Number)
+		live := row.VersionDeprecated == 0
+		handlers := ast.LibraryFunctionHandlers[row.LibraryNumber]
+		handled := row.Number < len(handlers) && handlers[row.Number] != nil
+		if live != (ast.OpCodes[row.Name] == key && ast.OpNames[key] == row.Name && handled) {
+			t.Errorf("library %d function %d %q: live %v, registered %v", row.LibraryNumber, row.Number, row.Name, live, !live)
+		}
+		native := ast.Natives[key]
+		if live && (native == nil || native.AtomicOPCode != constants.OP_LIBRARY_CALL || native.LibraryNumber != row.LibraryNumber || native.LibraryFunctionNumber != row.Number) {
+			t.Errorf("library %d function %d %q: native %+v", row.LibraryNumber, row.Number, row.Name, native)
+		}
+	}
+	for code, name := range ast.OpNames {
+		if code >= 0 {
+			continue
+		}
+		library, function := -code>>16, -code&0xffff
+		if row, found := constants.LibraryFunctionLiveByNumber(library, function); !found || row.Name != name {
+			t.Errorf("key %d %q is not a live library function", code, name)
+		}
 	}
 }

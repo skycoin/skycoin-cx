@@ -317,6 +317,10 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	ProcessGoTos(prgrm, exprs)
 	ProcessLoopJumpsOutsideLoop(prgrm, exprs)
 	AddExprsToFunction(prgrm, fnIdx, exprs)
+	// The steps above may grow prgrm.CXFunctions, which moves fn.
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, as at site S0735.
+	fn = prgrm.GetFunctionFromArray(fnIdx)
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetInputs(prgrm))
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetOutputs(prgrm))
 
@@ -375,6 +379,9 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		symbolsScopeClose(symbolsData, expr)
 	}
 
+	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
+	// Now an arena getter, as at site S0735.
+	fn = prgrm.GetFunctionFromArray(fnIdx)
 	for _, slot := range symbolsData.escapedSlots {
 		gcRootAddEscapeSlot(fn, slot.escapeSlotOffset)
 	}
@@ -1454,7 +1461,7 @@ func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, exprs [
 // expressionOperatorName is the name of a built-in operator or a function.
 func expressionOperatorName(prgrm *ast.CXProgram, operator *ast.CXFunction) string {
 	if operator.IsBuiltIn() {
-		return ast.OpNames[operator.AtomicOPCode]
+		return operator.BuiltInName()
 	}
 	return prgrm.CXProgramNameText(operator.Name)
 }

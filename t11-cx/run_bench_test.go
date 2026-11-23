@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-globals"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
@@ -305,5 +306,50 @@ func TestRunVmAllocs(t *testing.T) {
 	}
 	if lowered < 2 {
 		t.Errorf("%d of the run programs lower, count and fib at least should", lowered)
+	}
+}
+
+const runLibraryCallSource = `package main
+
+import "sys/os"
+import "sys/tcp"
+
+func main() {
+	var i i32
+	var closed bool
+	for i = 0; i < 1000; i++ {
+		closed = os.Close(-1)
+		tcp.Close()
+	}
+}
+`
+
+// TestRunVmLibraryCallAllocs fails when a LibraryCall on vm, enabled or
+// stopped as disabled, allocates or does not lower (#407, #492).
+func TestRunVmLibraryCallAllocs(t *testing.T) {
+	defer debug.SetGCPercent(debug.SetGCPercent(-1))
+	initProgram()
+	for _, enabled := range []bool{true, false} {
+		compileRunProgram(t, runBenchProgram{name: "library", source: runLibraryCallSource})
+		actions.AST.ProgramLibrariesEnabled[constants.LibraryNumberFile] = enabled
+		actions.AST.ProgramLibrariesEnabled[constants.LibraryNumberNet] = enabled
+		image, _, outside := core.ExecutorLower(actions.AST)
+		if outside != "" {
+			t.Fatalf("does not lower: %s", outside)
+		}
+		machine := vm.MachineNew(&image, core.ExecutorOutputSize)
+		want := vm.StopReturn
+		if !enabled {
+			want = vm.StopLibraryDisabled
+		}
+		allocs := testing.AllocsPerRun(3, func() {
+			machine.Reset()
+			if stop, _ := machine.Run(image.ImageEntryMain, 0); stop != want {
+				t.Fatalf("enabled %v: stop %d, want %d", enabled, stop, want)
+			}
+		})
+		if allocs != 0 {
+			t.Errorf("enabled %v: %.0f allocations per run, want 0", enabled, allocs)
+		}
 	}
 }

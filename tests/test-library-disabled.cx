@@ -1,0 +1,12 @@
+// A call into a system library the run did not enable is the runtime error
+// CX_RUNTIME_LIBRARY_DISABLED naming the library, see skycoin-cx#492.
+
+package main
+
+import "sys/os"
+
+func main() {
+	i32.print(1)
+	test(os.Close(-1), false, "os.Close of a handle that is not open")
+	i32.print(2)
+}

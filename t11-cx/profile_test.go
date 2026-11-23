@@ -17,7 +17,7 @@ func TestStartCPUProfileWritesTheGivenPath(t *testing.T) {
 	if err := os.WriteFile(file, []byte(src), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(os.Args[0], "--sandbox", dir, file)
+	cmd := exec.Command(os.Args[0], "--enable=file", "--sandbox", dir, file)
 	cmd.Env = append(os.Environ(), "CX_TEST_RUN_MAIN=1")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("cx: %v\n%s", err, out)

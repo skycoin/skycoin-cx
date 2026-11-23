@@ -147,7 +147,7 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 			if cxAtomicOpOperator != nil {
 				if cxAtomicOpOperator.IsBuiltIn() {
 
-					opName1 = OpNames[cxAtomicOpOperator.AtomicOPCode]
+					opName1 = cxAtomicOpOperator.BuiltInName()
 				} else {
 					opName1 = prgrm.CXProgramNameText(cxAtomicOpOperator.Name)
 				}

@@ -106,17 +106,19 @@ command line arguments to the program as `os.Args`. Give another core with
 described in "Built programs" in [docs/IR.md](docs/IR.md#built-programs).
 
 The core is a minimum interpreter. It holds the deserializer, the executors,
-the memory manager and the opcodes that need no file system and no module
-outside the Go standard library. It has no parser and loads no source, and
+the memory manager, the opcodes that need no module outside the Go standard
+library and the `LibraryCall` dispatcher, but no system library, so no file,
+network or process access. It has no parser and loads no source, and
 `TestCoreImports` in `t7-cx-core-run` fails when it imports anything else.
 `cx build` refuses a program that uses an opcode the core leaves out, such
-as the `os` file calls, `json`, `cipher` or `gl`, and lists those opcodes.
+as `cipher` or `gl`, and lists those opcodes. It also refuses a program built
+with `--enable` for a system library it calls, see System libraries in
+[LanguageGuide.md](LanguageGuide.md#system-libraries).
 The run time flags of cx, such as `--executor` and `-heap-max`, are not
 recorded and take their defaults.
 
-Two decisions about the core are still pending with the project lead. Until
-they are made, the core may use the Go standard library but no other module,
-and it has no file system access at all.
+Whether the core may use a module outside the Go standard library is still
+pending with the project lead. Until it is decided it uses none.
 
 ## Hello world
 

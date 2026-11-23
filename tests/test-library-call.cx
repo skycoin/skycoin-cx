@@ -1,0 +1,19 @@
+// System library calls with scalar operands, which run on vm and on the old
+// loop. Run with --enable=file,net, see skycoin-cx#492.
+
+package main
+
+import "sys/os"
+import "sys/tcp"
+
+func main() {
+	var offset i64
+	var position i64
+	position = os.Seek(-1, offset, 0)
+	var failed i64
+	failed = offset - i32.i64(1)
+	test(position, failed, "os.Seek of a handle that is not open")
+	test(os.Close(-1), false, "os.Close of a handle that is not open")
+	tcp.Close()
+	i32.print(7)
+}

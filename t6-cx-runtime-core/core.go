@@ -17,19 +17,17 @@ import (
 	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
 	cxoscore "github.com/skycoin/skycoin-cx/t5-cxos-core"
 	"github.com/skycoin/skycoin-cx/t5-regexp"
-	"github.com/skycoin/skycoin-cx/t5-tcp"
 )
 
 // CoreRegister adds the native packages of the core to prgrm and their
-// opcodes to the global tables. It leaves out every opcode that needs the
-// file system (t5-cxos) or a module outside the standard library (t5-cipher,
-// t6-cxfx). The built-in opcodes come last, as in cx.
+// opcodes to the global tables. It leaves out every system library (t5-cxos,
+// t5-tcp) and every opcode that needs a module outside the standard library
+// (t5-cipher, t6-cxfx). The built-in opcodes come last, as in cx.
 func CoreRegister(prgrm *ast.CXProgram) {
 	cxoscore.RegisterPackage(prgrm)
 	printer.PrinterOpcodesRegister(prgrm)
 	printer.PrinterCompileErrorsRegister(prgrm)
 	regexp.RegisterPackage(prgrm)
-	tcp.RegisterPackage(prgrm)
 	opcodes.RegisterOpcodes(prgrm)
 }
 
@@ -100,4 +98,39 @@ func CoreOpcodeName(code int) string {
 	row, found := constants.OpcodeLifecycleLiveByNumber(code)
 	assert.AssertPreconditionTrue(found, "opcode number without a live row")
 	return row.Name
+}
+
+// CoreLibrariesEnabledResolve applies constants.LibraryPolicyEnabledWhenImported
+// to prgrm: when it is true, every library the program calls is enabled.
+func CoreLibrariesEnabledResolve(prgrm *ast.CXProgram) {
+	if !constants.LibraryPolicyEnabledWhenImported {
+		return
+	}
+	for library, used := range prgrm.ProgramLibrariesUsed {
+		if used {
+			prgrm.ProgramLibrariesEnabled[library] = true
+		}
+	}
+}
+
+// CoreLibrariesMissing returns the names of the libraries enabled for prgrm
+// that this binary does not link, in number order.
+func CoreLibrariesMissing(prgrm *ast.CXProgram) []string {
+	var missing [constants.LibraryCount]bool
+	for library, enabled := range prgrm.ProgramLibrariesEnabled {
+		missing[library] = enabled && !ast.LibraryLinked(library)
+	}
+	return CoreLibraryNames(missing)
+}
+
+// CoreLibraryNames returns the names of the libraries libraries marks, in
+// number order.
+func CoreLibraryNames(libraries [constants.LibraryCount]bool) []string {
+	var names []string
+	for library, marked := range libraries {
+		if marked {
+			names = append(names, constants.LibraryNameOf(library))
+		}
+	}
+	return names
 }

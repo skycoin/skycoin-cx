@@ -32,6 +32,7 @@ func RegisterOpcodes(prgrm *ast.CXProgram) {
 	RegisterOpCode(prgrm, constants.OP_BREAK, "break", opBreak, nil, nil)
 	RegisterOpCode(prgrm, constants.OP_CONTINUE, "continue", opContinue, nil, nil)
 	RegisterOpCode(prgrm, constants.OP_NOP, "nop", opNop, nil, nil)
+	registerLibraryCall()
 
 	RegisterOpCode(prgrm, constants.OP_JMP, "jmp", opJmp, In(ast.ConstCxArg_BOOL), nil)
 	RegisterOpCode(prgrm, constants.OP_ABS_JMP, "absjmp", opAbsJmp, In(ast.ConstCxArg_BOOL), nil)

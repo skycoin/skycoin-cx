@@ -899,6 +899,11 @@ func (machine *Machine) slow() Stop {
 			return machine.slowStop(StopAddressInvalid)
 		}
 		return machine.printBytes(str, ir.PrintStrMode(in.InstrN))
+	case ir.OpcodeLibraryCall:
+		if !machine.MachineImage.ImageLibraryEnabled[in.InstrM] {
+			return machine.slowStop(StopLibraryDisabled)
+		}
+		LibraryFunctionVmHandlers[in.InstrM][in.InstrN](mem, machine.MachineStackPointer)
 	case ir.OpcodePrintValue:
 		machine.MachineOutput = printValue(machine.MachineOutput, mem, a, types.Code(in.InstrM), byte(in.InstrN))
 	case ir.OpcodeTestEqual:

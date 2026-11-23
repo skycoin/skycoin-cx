@@ -82,7 +82,14 @@ func buildRun(args []string) int {
 		}
 	}
 	if len(missing) > 0 {
-		return buildFail(fmt.Sprintf("the core has no file system access and no module outside the Go standard library, and the program uses opcodes it does not include: %s", strings.Join(missing, ", ")))
+		return buildFail(fmt.Sprintf("the core has no module outside the Go standard library, and the program uses opcodes it does not include: %s", strings.Join(missing, ", ")))
+	}
+	core.CoreLibrariesEnabledResolve(actions.AST)
+	for library, enabled := range actions.AST.ProgramLibrariesEnabled {
+		actions.AST.ProgramLibrariesEnabled[library] = enabled && actions.AST.ProgramLibrariesUsed[library]
+	}
+	if enabled := core.CoreLibraryNames(actions.AST.ProgramLibrariesEnabled); len(enabled) > 0 {
+		return buildFail(fmt.Sprintf("the core links no system library, and the program calls the enabled libraries: %s", strings.Join(enabled, ", ")))
 	}
 
 	program, err := ast.SerializeCXProgram(actions.AST, true, nil)
@@ -185,8 +192,10 @@ and passes its own command line arguments to it as os.Args.
 -o, --output path   The executable file to write.
 --core path         The core binary, by default %s next to cx.
 
-The core has no parser, no file system access and no module outside the Go
-standard library. A program that uses an opcode the core does not include,
-such as the os file calls, is refused with the list of those opcodes.
+The core has no parser, no system library and no module outside the Go
+standard library. A program that uses an opcode the core does not include is
+refused with the list of those opcodes, and so is a program that enables a
+system library it calls, see --enable. A library that is not enabled stays
+out of the built program, and a call into it is a runtime error.
 `, buildCoreName)
 }

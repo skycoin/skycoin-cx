@@ -79,7 +79,7 @@ func TestProgramFileOpcodesStayInSandbox(t *testing.T) {
 	if err := os.WriteFile(program, []byte(src.String()), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(os.Args[0], "--sandbox", sandbox, program)
+	cmd := exec.Command(os.Args[0], "--enable=file", "--sandbox", sandbox, program)
 	cmd.Env = append(os.Environ(), "CX_TEST_RUN_MAIN=1")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("cx: %v\n%s", err, out)

@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorAuto; no depth gain
 )
 
@@ -29,6 +30,7 @@ type cxCmdFlags struct {
 	cxpath           string
 	sandbox          string
 	executor         string
+	enable           string
 
 	// Debug flags for the CX developers
 	debugFileAccess bool
@@ -93,6 +95,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.StringVar(&options.cxpath, "cxpath", options.cxpath, "Workspace directory, used instead of the CXPATH environment variable")
 	commandLine.StringVar(&options.sandbox, "sandbox", options.sandbox, "Directory a running program's file opcodes are confined to. Program paths must be relative and stay inside it. Defaults to the working directory.")
 	commandLine.StringVar(&options.executor, "executor", options.executor, "Loop that runs the program: auto runs it on the flat vm when every function lowers and on the old loop otherwise, old and vm force one loop. vm fails on a program that does not lower.")
+	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries the program may call, a comma separated list of file, net and process. A call into a library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
 
 	// Debug flags
 	commandLine.BoolVar(&options.debugFileAccess, "debug-file-access", options.debugFileAccess, "Print each file the compiler opens, creates or stats")
@@ -174,4 +177,25 @@ func printEnv() {
 // dashes, so a file path containing the name is not taken for it.
 func command(arg, name string) bool {
 	return strings.TrimLeft(arg, "-") == name
+}
+
+// librariesEnabledParse returns the set of system libraries the --enable
+// value list names, or the problem with it.
+func librariesEnabledParse(list string) (enabled [constants.LibraryCount]bool, problem string) {
+	for _, name := range strings.Split(list, ",") {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		library, found := constants.LibraryByName(name)
+		if !found {
+			var names []string
+			for _, known := range constants.LibraryTable {
+				names = append(names, known.LibraryName)
+			}
+			return enabled, fmt.Sprintf("unknown library %q in --enable, the libraries are %s", name, strings.Join(names, ", "))
+		}
+		enabled[library.LibraryNumber] = true
+	}
+	return enabled, ""
 }

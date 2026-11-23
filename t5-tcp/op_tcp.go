@@ -3,7 +3,6 @@ package tcp
 import (
 	"context"
 	"net"
-	"net/rpc"
 	"time"
 
 	"github.com/skycoin/skycoin-cx/t3-ast"
@@ -17,11 +16,6 @@ var lc net.ListenConfig
 
 // VIOLATION: state outside State. Owner: t5-tcp; moves to TCPConnMng in phase 1.
 var conn net.Conn
-
-// VIOLATION: init chaining. Init 3: the tcp package RPC server, called from Go
-// package init.
-// VIOLATION: state outside State. Owner: t5-tcp; moves to RPCServerMng in phase 1.
-var DefaultServer = rpc.NewServer()
 
 func errString(err error) string {
 	if err == nil {
@@ -42,6 +36,16 @@ func opTCPDial(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue
 }
 
 func opTCPClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	tcpClose()
+}
+
+// libraryNetCloseVm is tcp.Close on vm, which has no inputs or outputs.
+func libraryNetCloseVm(memory []byte, block uint32) {
+	tcpClose()
+}
+
+// tcpClose closes the listener and the connection.
+func tcpClose() {
 	if ln != nil {
 		ln.Close()
 		ln = nil

@@ -261,7 +261,7 @@ func QueryExpressions(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpr
 		opNameOffset := types.Pointer(0)
 		if exCXAtomicOpOperator.IsBuiltIn() {
 			// opNameB = encoder.Serialize(OpNames[ex.Operator.OpCode])
-			opNameOffset = ast.AllocateStr(prgrm, ast.OpNames[exCXAtomicOpOperator.AtomicOPCode])
+			opNameOffset = ast.AllocateStr(prgrm, exCXAtomicOpOperator.BuiltInName())
 		} else {
 			// opNameB = encoder.Serialize(ex.Operator.Name)
 			opNameOffset = ast.AllocateStr(prgrm, prgrm.CXProgramNameText(exCXAtomicOpOperator.Name))
@@ -426,7 +426,7 @@ func QueryFunction(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpress
 		opNameOffset := types.Pointer(0)
 		if f.IsBuiltIn() {
 			// opNameB = encoder.Serialize(OpNames[f.OpCode])
-			opNameOffset = ast.AllocateStr(prgrm, ast.OpNames[f.AtomicOPCode])
+			opNameOffset = ast.AllocateStr(prgrm, f.BuiltInName())
 		} else {
 			// opNameB = encoder.Serialize(f.Name)
 			opNameOffset = ast.AllocateStr(prgrm, prgrm.CXProgramNameText(f.Name))
@@ -472,7 +472,7 @@ func QueryCaller(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressio
 	opNameOffset := types.Pointer(0)
 	if call.Operator.IsBuiltIn() {
 		// opNameB = encoder.Serialize(OpNames[call.Operator.OpCode])
-		opNameOffset = ast.AllocateStr(prgrm, ast.OpNames[call.Operator.AtomicOPCode])
+		opNameOffset = ast.AllocateStr(prgrm, call.Operator.BuiltInName())
 	} else {
 		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
 		// Now an arena getter, site S1276.
@@ -521,7 +521,7 @@ func QueryProgram(prgrm *ast.CXProgram, fn *ast.CXFunction, expr *ast.CXExpressi
 		opNameOffset := types.Pointer(0)
 		if call.Operator.IsBuiltIn() {
 			// opNameB = encoder.Serialize(OpNames[call.Operator.OpCode])
-			opNameOffset = ast.AllocateStr(prgrm, ast.OpNames[call.Operator.AtomicOPCode])
+			opNameOffset = ast.AllocateStr(prgrm, call.Operator.BuiltInName())
 		} else {
 			// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
 			// Now an arena getter, site S1277.

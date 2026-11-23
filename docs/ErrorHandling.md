@@ -294,6 +294,14 @@ the matching `CX_RUNTIME_*` exit code. The CX `assert`, `test` and `panic`
 builtins do the same with `CX_ASSERT` or `CX_PANIC`. This holds under the REPL
 and any embedding host too.
 
+A call into a system library that the run did not enable ends the program in
+the same way. It prints `CX_RUNTIME_LIBRARY_DISABLED` with the message
+`library <name> is not enabled, enable it with --enable=<name>` and exits with
+`CX_RUNTIME_LIBRARY_DISABLED` (12). On the old loop the sandbox check panics
+with an `ast.RuntimeLibraryDisabled`, which `RuntimeError` records. On vm it
+is the stop `vm.StopLibraryDisabled`. See the System libraries section of
+[LanguageGuide.md](../LanguageGuide.md#system-libraries).
+
 A compile error is data too. The compiler appends a `CompileErrorRecord`, a
 `CompileErrorCode`, a `SourceFileGid`, a line, a column and up to four
 `StringGid` or integer operands, to `CxIrState.CompileErrorList` without

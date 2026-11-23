@@ -92,9 +92,13 @@ func opOsCreate(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 }
 
 func opOsClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	success := false
+	outputs[0].Set_bool(prgrm, fileClose(inputs[0].Get_i32(prgrm)))
+}
 
-	handle := inputs[0].Get_i32(prgrm)
+// fileClose closes the file of handle and frees the handle. It returns
+// false for a handle that is not open or a failed close.
+func fileClose(handle int32) bool {
+	success := false
 	if file := ValidFile(handle); file != nil {
 		if err := file.Close(); err == nil {
 			success = true
@@ -103,19 +107,38 @@ func opOsClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue
 		openFiles[handle] = nil
 		freeFiles = append(freeFiles, handle)
 	}
+	return success
+}
 
-	outputs[0].Set_bool(prgrm, success)
+// libraryFileCloseVm is os.Close on vm, an i32 at block and the bool after it.
+func libraryFileCloseVm(memory []byte, block uint32) {
+	closed := fileClose(types.Read_i32(memory, types.Pointer(block)))
+	types.Write_bool(memory, types.Pointer(block+4), closed)
 }
 
 func opOsSeek(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	offset := int64(-1)
-	if file := ValidFile(inputs[0].Get_i32(prgrm)); file != nil {
-		var err error
-		if offset, err = file.Seek(inputs[1].Get_i64(prgrm), int(inputs[2].Get_i32(prgrm))); err != nil {
-			offset = -1
-		}
+	outputs[0].Set_i64(prgrm, fileSeek(inputs[0].Get_i32(prgrm), inputs[1].Get_i64(prgrm), inputs[2].Get_i32(prgrm)))
+}
+
+// fileSeek moves the file of handle to offset from whence and returns the
+// new offset, -1 for a handle that is not open or a failed seek.
+func fileSeek(handle int32, offset int64, whence int32) int64 {
+	file := ValidFile(handle)
+	if file == nil {
+		return -1
 	}
-	outputs[0].Set_i64(prgrm, offset)
+	position, err := file.Seek(offset, int(whence))
+	if err != nil {
+		return -1
+	}
+	return position
+}
+
+// libraryFileSeekVm is os.Seek on vm, an i32, an i64 and an i32 from block
+// and the i64 after them.
+func libraryFileSeekVm(memory []byte, block uint32) {
+	position := fileSeek(types.Read_i32(memory, types.Pointer(block)), types.Read_i64(memory, types.Pointer(block+4)), types.Read_i32(memory, types.Pointer(block+12)))
+	types.Write_i64(memory, types.Pointer(block+16), position)
 }
 
 func opOsReadStr(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

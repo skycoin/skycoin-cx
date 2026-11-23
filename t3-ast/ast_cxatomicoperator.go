@@ -10,7 +10,7 @@ func (op *CXAtomicOperator) GetOperatorName(prgrm *CXProgram) string {
 	// Now an arena getter, site S0089.
 	opOperator := prgrm.GetFunctionFromArray(op.Operator)
 	if opOperator.IsBuiltIn() {
-		return OpNames[opOperator.AtomicOPCode]
+		return opOperator.BuiltInName()
 	}
 	return prgrm.CXProgramNameText(opOperator.Name)
 

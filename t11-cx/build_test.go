@@ -160,7 +160,7 @@ func TestBuildPrograms(t *testing.T) {
 		switch {
 		case result.direct.exitCode == types.CX_COMPILATION_ERROR:
 			compileFailed++
-		case result.buildCode != types.CX_SUCCESS && bytes.Contains(result.buildStderr, []byte("opcodes it does not include")):
+		case result.buildCode != types.CX_SUCCESS && (bytes.Contains(result.buildStderr, []byte("opcodes it does not include")) || bytes.Contains(result.buildStderr, []byte("links no system library"))):
 			refused++
 			skipped[program] = "needs " + strings.TrimSpace(string(result.buildStderr[bytes.LastIndex(result.buildStderr, []byte(": "))+2:]))
 		case result.buildCode != types.CX_SUCCESS:
@@ -233,8 +233,8 @@ func TestBuildCoreRefuses(t *testing.T) {
 		t.Errorf("damaged program: exit code %d, stderr %q", run.exitCode, stderr)
 	}
 
-	build, stderr = buildTestProcess(t, executable, []string{"CX_TEST_RUN_MAIN=1"}, tests, buildCommand, "test-os-read-slice-grow.cx", "-o", output, "--core", corePath)
-	if build.exitCode != types.CX_COMPILATION_ERROR || !bytes.Contains(stderr, []byte("os.Open")) {
+	build, stderr = buildTestProcess(t, executable, []string{"CX_TEST_RUN_MAIN=1"}, tests, buildCommand, "--enable=file", "test-os-read-slice-grow.cx", "-o", output, "--core", corePath)
+	if build.exitCode != types.CX_COMPILATION_ERROR || !bytes.Contains(stderr, []byte("libraries: file")) {
 		t.Errorf("file program: exit code %d, stderr %q", build.exitCode, stderr)
 	}
 }

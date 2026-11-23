@@ -184,11 +184,21 @@ func runTestCases(t *runner.TestRunner) {
 		"test-pointer-ordering-removed.cx:17 pointer >= pointer is not allowed, pointers support only == and !=",
 	)
 	t.Run("test-pointer-equality.cx", types.CX_SUCCESS, "pointer == and != compare addresses (skycoin-cx#183)")
-	t.Run("test-os-getwd.cx", types.CX_SUCCESS, "os.GetWorkingDirectory (skycoin-cx#117)")
-	t.Run("test-os-sandbox.cx", types.CX_SUCCESS, "program paths stay inside the sandbox (skycoin-cx#433)")
-	t.Run("test-os-run-empty.cx", types.CX_SUCCESS, "os.Run with an empty command returns OS_RUN_EMPTY_CMD")
+	t.Run("--enable=file test-os-getwd.cx", types.CX_SUCCESS, "os.GetWorkingDirectory (skycoin-cx#117)")
+	t.Run("--enable=file test-os-sandbox.cx", types.CX_SUCCESS, "program paths stay inside the sandbox (skycoin-cx#433)")
+	t.Run("--enable=process test-os-run-empty.cx", types.CX_SUCCESS, "os.Run with an empty command returns OS_RUN_EMPTY_CMD")
 	t.Run("test-cx-constants.cx", types.CX_SUCCESS, "cx package constants (skycoin-cx#84)")
-	t.Run("test-tcp.cx", types.CX_SUCCESS, "tcp package (skycoin-cx#115)")
+	t.Run("--enable=net test-tcp.cx", types.CX_SUCCESS, "tcp package (skycoin-cx#115)")
+	t.RunWant("--enable=file,net --executor=vm test-library-call.cx", types.CX_SUCCESS, "system library calls with scalar operands run on vm (skycoin-cx#492)", "7\n")
+	t.RunWant("--enable=file,net --executor=old test-library-call.cx", types.CX_SUCCESS, "system library calls run on the old loop (skycoin-cx#492)", "7\n")
+	t.RunWant("--executor=vm test-library-disabled.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a call into a library that is not enabled stops vm (skycoin-cx#492)", "1\n", "test-library-disabled.cx:10, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file")
+	t.RunWant("--executor=old test-library-disabled.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a call into a library that is not enabled stops the old loop (skycoin-cx#492)", "1\n", "test-library-disabled.cx:10, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file")
+	t.RunWant("--enable=net,process test-library-disabled.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "enabling other libraries leaves file disabled (skycoin-cx#492)", "library file is not enabled")
+	t.RunWant("--enable=file test-library-disabled.cx", types.CX_SUCCESS, "an enabled library runs (skycoin-cx#492)", "1\n2\n")
+	t.RunWant("test-os-getwd.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a str library call that is not enabled stops the old loop (skycoin-cx#492)", "library file is not enabled, enable it with --enable=file")
+	t.RunWant("test-tcp.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/tcp is the net library (skycoin-cx#492)", "library net is not enabled, enable it with --enable=net")
+	t.RunWant("test-os-run-empty.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "os.Run is the process library (skycoin-cx#492)", "library process is not enabled, enable it with --enable=process")
+	t.RunWant("--enable=file,nosuch test-library-call.cx", types.CX_COMPILATION_ERROR, "an unknown library in --enable (skycoin-cx#492)", `unknown library "nosuch" in --enable, the libraries are file, net, process`)
 	t.Run("test-utils.cx test-pointers.cx", types.CX_SUCCESS, "pointers")
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
@@ -248,7 +258,7 @@ func runTestCases(t *runner.TestRunner) {
 		"64 1111 2222 2\n[100, 101, 102, 103, 104, 105, 106, 107, 108, 109] [5, 5, 5, 5, 5, 5]\n100 2 3\n")
 	t.RunWant("test-slice-resize-huge.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "a slice too large for the heap is a heap exhausted error (audit A-05)",
 		"test-slice-resize-huge.cx:5, CX_RUNTIME_HEAP_EXHAUSTED_ERROR")
-	t.RunWant("test-os-read-slice-grow.cx", types.CX_SUCCESS, "os.ReadI32Slice allocates the whole slice and returns false for a count past the heap (audit B-01, B-12)",
+	t.RunWant("--enable=file test-os-read-slice-grow.cx", types.CX_SUCCESS, "os.ReadI32Slice allocates the whole slice and returns false for a count past the heap (audit B-01, B-12)",
 		"read true len 10 same true\nhuge false len 0\n")
 	t.RunWant("test-test-line.cx", types.CX_ASSERT, "a failing test() reports its own line (skycoin-cx#254)",
 		"test-test-line.cx: 4: result was not equal to the expected value; first statement",
@@ -538,7 +548,7 @@ func runTestCases(t *runner.TestRunner) {
 		"2\n10\n4\n11\n6\n12\n14\n2\n21\n")
 	t.RunWant("--executor=old test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on the old loop", "5\n6\n5\n12\n")
 	t.RunWant("--executor=vm test-array-struct-pointer-field-frame.cx", types.CX_SUCCESS, "a[i].p = &x keeps each element apart, on vm", "5\n6\n5\n12\n")
-	t.RunWant("test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
+	t.RunWant("--enable=file test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
 	t.RunMissing("test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "a runtime error prints no Go stack by default", "goroutine")
 	t.RunWant("--debug-go-stack test-debug-go-stack.cx", types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, "--debug-go-stack prints the Go stack of a runtime error", "goroutine")
 	t.RunWant("test-pointer-array-2d.cx", types.CX_SUCCESS, "p[i][j] indexes a *[N][M]T and a *[N][M]*T",
@@ -736,7 +746,7 @@ func runTestCases(t *runner.TestRunner) {
 		"error: test-slice-literal-call-errors.cx:21:20 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:22:3 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:23:12 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:25:18 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:26:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-slice-literal-call-errors.cx", types.CX_COMPILATION_ERROR, "a call element of the wrong type in a struct slice literal is 7051 at the element",
 		"receiving variable", ":21:11")
-	t.Run("testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
+	t.Run("--enable=file testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")
 	t.Run("test-regexp-compile-fail.cx", types.CX_SUCCESS, "ProgramError in regexp lib - error thrown by regexp.Compile does not matches expected error.")
@@ -746,7 +756,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-regexp-find-failed-compile.cx", types.CX_RUNTIME_ERROR, "Find on a Regexp that did not compile")
 	t.Run("test-regexp-find-loop.cx", types.CX_SUCCESS, "Find in a loop")
 	t.Run("test-unknown-package-function.cx", types.CX_COMPILATION_ERROR, "unknown function in a built in package")
-	t.Run("test-sys-import.cx", types.CX_SUCCESS, "built-in packages imported by their sys/ path (skycoin-cx#380)")
+	t.Run("--enable=file test-sys-import.cx", types.CX_SUCCESS, "built-in packages imported by their sys/ path (skycoin-cx#380)")
 	t.RunWant("test-sys-import-unknown.cx", types.CX_COMPILATION_ERROR, "unknown sys/ import path (skycoin-cx#380)",
 		`test-sys-import-unknown.cx:3 unknown built-in package "sys/nosuchpackage"`)
 	t.RunWant("test-sys-import-missing.cx", types.CX_COMPILATION_ERROR, "built-in package used without its import (skycoin-cx#380)",

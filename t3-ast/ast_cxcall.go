@@ -178,7 +178,11 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, cxAtomicOp *C
 		argIndex++
 	}
 
-	OpcodeHandlers[cxAtomicOpOperator.AtomicOPCode](prgrm, inputValues, outputValues)
+	if cxAtomicOpOperator.AtomicOPCode == constants.OP_LIBRARY_CALL {
+		libraryCall(prgrm, cxAtomicOpOperator, inputValues, outputValues)
+	} else {
+		OpcodeHandlers[cxAtomicOpOperator.AtomicOPCode](prgrm, inputValues, outputValues)
+	}
 
 	// Expr points into fn.Expressions and is valid for this step only.
 	for i := range inputValues {

@@ -13,6 +13,11 @@ type CXFunction struct {
 	Package      CXPackageIndex       // The package it's a member of
 	AtomicOPCode int
 
+	// LibraryNumber and LibraryFunctionNumber name the system library function
+	// an AtomicOPCode of constants.OP_LIBRARY_CALL calls, and are 0 otherwise.
+	LibraryNumber         int
+	LibraryFunctionNumber int
+
 	// Contents
 	// OBJMODEL: CXStructGid, phase 5 #337.
 	// Now a pointer at rest, site S0127.

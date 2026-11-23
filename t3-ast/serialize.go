@@ -417,6 +417,8 @@ func serializeProgramFields(prgrm *CXProgram, encoder *serializeEncoder) error {
 		encoder.serializeEncoderPointer(call.FramePointer)
 	}
 	encoder.serializeEncoderBool(prgrm.Terminated)
+	serializeLibraries(encoder, &prgrm.ProgramLibrariesUsed)
+	serializeLibraries(encoder, &prgrm.ProgramLibrariesEnabled)
 
 	encoder.serializeEncoderLength(len(prgrm.SysInitExprs), prgrm.SysInitExprs == nil)
 	for i := range prgrm.SysInitExprs {
@@ -471,6 +473,8 @@ func deserializeProgramFields(prgrm *CXProgram, decoder *serializeDecoder) []ser
 		calls[i].serializeCallReferenceFramePointer = decoder.serializeDecoderPointer()
 	}
 	prgrm.Terminated = decoder.serializeDecoderBool()
+	deserializeLibraries(decoder, &prgrm.ProgramLibrariesUsed)
+	deserializeLibraries(decoder, &prgrm.ProgramLibrariesEnabled)
 
 	if length := decoder.serializeDecoderLength(5); length >= 0 {
 		prgrm.SysInitExprs = make([]CXExpression, length)
@@ -718,6 +722,8 @@ func serializeFunction(prgrm *CXProgram, encoder *serializeEncoder, fn *CXFuncti
 	encoder.serializeEncoderInt(int64(fn.Name))
 	encoder.serializeEncoderInt(int64(fn.Package))
 	encoder.serializeEncoderInt(int64(fn.AtomicOPCode))
+	encoder.serializeEncoderInt(int64(fn.LibraryNumber))
+	encoder.serializeEncoderInt(int64(fn.LibraryFunctionNumber))
 	serializeOwnedStruct(encoder, fn.Inputs)
 	serializeOwnedStruct(encoder, fn.Outputs)
 	encoder.serializeEncoderLength(len(fn.Expressions), fn.Expressions == nil)
@@ -782,6 +788,11 @@ func deserializeFunction(prgrm *CXProgram, decoder *serializeDecoder, fn *CXFunc
 	fn.Name = stringpool.StringGid(decoder.serializeDecoderInt())
 	fn.Package = CXPackageIndex(decoder.serializeDecoderIntValue())
 	fn.AtomicOPCode = decoder.serializeDecoderIntValue()
+	fn.LibraryNumber = decoder.serializeDecoderIntValue()
+	fn.LibraryFunctionNumber = decoder.serializeDecoderIntValue()
+	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL && (fn.LibraryNumber <= 0 || fn.LibraryNumber >= constants.LibraryCount || fn.LibraryFunctionNumber <= 0) {
+		decoder.serializeDecoderFailf("function %d calls library %d function %d, which does not exist", fn.Index, fn.LibraryNumber, fn.LibraryFunctionNumber)
+	}
 	fn.Inputs = deserializeOwnedStruct(decoder)
 	fn.Outputs = deserializeOwnedStruct(decoder)
 	if length := decoder.serializeDecoderLength(5); length >= 0 {
@@ -1179,4 +1190,25 @@ func deserializeMemory(prgrm *CXProgram, decoder *serializeDecoder) {
 		return
 	}
 	copy(prgrm.Memory[first:], stored)
+}
+
+// serializeLibraries writes a set of system libraries as its length and one
+// bool per library number.
+func serializeLibraries(encoder *serializeEncoder, libraries *[constants.LibraryCount]bool) {
+	encoder.serializeEncoderUint(uint64(len(libraries)))
+	for _, marked := range libraries {
+		encoder.serializeEncoderBool(marked)
+	}
+}
+
+// deserializeLibraries reads a set that serializeLibraries wrote. A program
+// with another number of libraries fails.
+func deserializeLibraries(decoder *serializeDecoder, libraries *[constants.LibraryCount]bool) {
+	if count := decoder.serializeDecoderUint(); decoder.serializeDecoderError == nil && count != uint64(len(libraries)) {
+		decoder.serializeDecoderFailf("%d system libraries, this cx has %d", count, len(libraries))
+		return
+	}
+	for library := range libraries {
+		libraries[library] = decoder.serializeDecoderBool()
+	}
 }

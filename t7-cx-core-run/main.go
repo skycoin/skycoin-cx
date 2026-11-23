@@ -51,6 +51,11 @@ func coreRun(args []string) int32 {
 		fmt.Fprintf(os.Stderr, "cx-core: the program uses opcodes this core does not include: %s\n", strings.Join(missing, ", "))
 		return types.CX_COMPILATION_ERROR
 	}
+	core.CoreLibrariesEnabledResolve(prgrm)
+	if missing := core.CoreLibrariesMissing(prgrm); len(missing) > 0 {
+		fmt.Fprintf(os.Stderr, "cx-core: the program enables system libraries this core does not link: %s\n", strings.Join(missing, ", "))
+		return types.CX_COMPILATION_ERROR
+	}
 	printer.PrinterCompileErrorsRegister(prgrm)
 	prgrm.ProgramStdinInit(os.Stdin)
 	return core.ExecutorRun(prgrm, core.ExecutorAuto, args)

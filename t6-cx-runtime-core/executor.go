@@ -131,6 +131,7 @@ func ExecutorMemoryLimitsClamp() {
 // ExecutorAuto, ExecutorOld and ExecutorVm, and cxArgs as os.Args. It
 // returns the exit code, after printing any runtime error.
 func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
+	CoreLibrariesEnabledResolve(prgrm)
 	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
 	prgrm.CxIrState.StringPool.StringPoolFreeze()
 

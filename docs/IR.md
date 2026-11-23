@@ -102,6 +102,8 @@ A function is finished by `actions.FunctionHeader`, which adds the
 | `CallCounter` | `types.Pointer` | Index of the running frame in `CallStack` |
 | `Terminated` | `bool` | Set by `popStack` when `main` returns |
 | `Version` | `int64` | `constants.LanguageVersionCurrent`, see [Serialized form](#serialized-form) |
+| `ProgramLibrariesUsed` | `[constants.LibraryCount]bool` | System libraries the program calls, by library number |
+| `ProgramLibrariesEnabled` | `[constants.LibraryCount]bool` | System libraries the run may call, from `--enable` |
 | `CurrentPackage` | `CXPackageIndex` | Package being parsed, or the REPL's package |
 | `SysInitExprs` | `[]CXExpression` | Global initializers, the body of `*init` |
 
@@ -144,6 +146,9 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 * `Index`, `Name` and `Package`,
 * `AtomicOPCode`, the opcode number, 0 for a user function.
   `CXFunction.IsBuiltIn` is `AtomicOPCode != 0`,
+* `LibraryNumber` and `LibraryFunctionNumber`, the system library function
+  that an `AtomicOPCode` of `constants.OP_LIBRARY_CALL` (795) calls, 0
+  otherwise,
 * `Inputs` and `Outputs`, each a `*CXStruct` whose `Fields` are
   `CXTypeSignatureIndex` values for the parameters,
 * `Expressions []CXExpression`, the body,
@@ -159,7 +164,11 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 calls a native operator gets its own copy of the native, made by
 `CXProgram.AddNativeFunctionInArray` from the `ast.CXNativeFunction` in
 `ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
-`Expressions`.
+`Expressions`. A system library function is the native in
+`ast.Natives[ast.LibraryFunctionKey(library, function)]`, a negative key that
+also indexes `ast.OpCodes` and `ast.OpNames`. Its copy has `AtomicOPCode`
+`OP_LIBRARY_CALL` and the two library numbers, and adding it marks the
+library in `CXProgram.ProgramLibrariesUsed`.
 
 `ast.CXStruct` (`t3-ast/cxstruct_def.go`) has `Index`, `Name`, `Package`,
 `Fields []CXTypeSignatureIndex`, and `FileName`, `FileLine` and
@@ -215,6 +224,10 @@ A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
   zeroes the output's bytes (`wipeDeclarationMemory`).
 * A `CXFunction` with `AtomicOPCode != 0`. The expression is a native
   operation and the opcode selects `ast.OpcodeHandlers[AtomicOPCode]`.
+  For `OP_LIBRARY_CALL` the loop first checks
+  `CXProgram.ProgramLibrariesEnabled[LibraryNumber]`, one indexed load and
+  compare, then calls
+  `ast.LibraryFunctionHandlers[LibraryNumber][LibraryFunctionNumber]`.
 * A `CXFunction` with `AtomicOPCode == 0`. The expression calls that user
   function.
 
@@ -533,7 +546,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 5 |
+| 8 to 11 | format | `serializeFormatVersion`, now 6 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 
@@ -546,11 +559,11 @@ serializations of the same program are byte for byte equal
 
 | Section | Contents |
 | --- | --- |
-| program | stack, data and heap bounds, `Packages`, `CurrentPackage`, `ProgramInput`, the call stack length, `CallCounter` and the entries in use, `Terminated`, `SysInitExprs` |
+| program | stack, data and heap bounds, `Packages`, `CurrentPackage`, `ProgramInput`, the call stack length, `CallCounter` and the entries in use, `Terminated`, `ProgramLibrariesUsed` and `ProgramLibrariesEnabled` as a count and one bool per library, `SysInitExprs` |
 | strings | every string pool slot in order, whether the pool is frozen, the four `CxIrStateName*` Gids and `SourceFileMng` |
 | packages | `CXPackages`, with imports, functions, structs and methods by name Gid, and the globals struct |
 | structs | `CXStructs` |
-| functions | `CXFunctions`, with inputs, outputs, expressions, local variables, `ListOfPointers`, `EscapeInputs` and `ListOfSlots` |
+| functions | `CXFunctions`, with `AtomicOPCode`, `LibraryNumber`, `LibraryFunctionNumber`, inputs, outputs, expressions, local variables, `ListOfPointers`, `EscapeInputs` and `ListOfSlots` |
 | expressions | `CXAtomicOps` and `CXLineMng` |
 | arguments | `CXArgumentMng` and `CXArgumentDebugMng` |
 | type signatures | `CXTypeSignatureMng`, `CXTypeSignature_ArrayMng` and `CXTypeSignature_StructMng` |
@@ -625,10 +638,13 @@ core starts. A file without the magic is no built program, and the core
 prints a message and exits with `CX_COMPILATION_ERROR`. A trailer that does
 not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
 
-`core.CoreRegister` registers the opcodes of the core, the built-in ones and
-those of `sys/regexp`, `sys/tcp`, `sys/time` and `os.Exit` (`t5-cxos-core`).
-`cx build` refuses a program that uses any other opcode and lists them,
-since build tags are not recorded. The core runs the program on vm when it
+`core.CoreRegister` registers the opcodes of the core, the built-in ones,
+`LibraryCall` and those of `sys/regexp`, `sys/time` and `os.Exit`
+(`t5-cxos-core`), and no system library. `cx build` refuses a program that
+uses any other opcode and lists them, since build tags are not recorded, and
+a program whose enabled libraries include one it calls. The serialized
+program records the enabled libraries, and the core refuses one that enables
+a library it does not link. The core runs the program on vm when it
 lowers and on the old loop otherwise, as `cx --executor=auto` does, and
 passes its command line arguments to the program as `os.Args`. It has no
 flags, so the run time flags of cx, `--executor`, `-heap-max`,
@@ -658,6 +674,11 @@ This document does not list the opcodes. The list is
 * `opcodes.RegisterOpCode` asserts that the number is a live row with that
   name, then fills `ast.OpcodeHandlers`, `ast.OpNames`, `ast.OpCodes` and
   `ast.Natives`. A deprecated row gets no handler and leaves a gap.
+* `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has a handler slot but
+  no name, so no program calls it by name. The system library functions are
+  registered through `opcodes.RegisterLibraryFunction`, with their own
+  numbers in `constants.LibraryFunctionLifecycleTable`, and compile to
+  `LibraryCall`. See item 16 of [Conventions.md](Conventions.md).
 * A renamed opcode is registered under its new name only.
   `constants.OpcodeRenameTable` keeps the old names, and the compiler
   turns a call by an old name into a compile error that names the new one.
@@ -703,6 +724,17 @@ one loop, and vm fails on a program that does not lower.
   pointer), one `OpcodeCallArg` per input, `OpcodeCall`, then one
   `OpcodeCallResult` per output the caller receives, the same copies
   `processNonAtomicOperators` and `popStack` make.
+* A system library call lowers when its function has a vm form in
+  `vm.LibraryFunctionVmHandlers`, which today are `os.Close`, `os.Seek` and
+  `tcp.Close`, the ones with scalar operands only. It becomes
+  `OpcodeCallFrame` for a block of the inputs then the outputs, packed as
+  `opcodes.MakeNativeFunction` lays them out, one `OpcodeCallArg` per input,
+  `OpcodeLibraryCall` with the library in M and the function in N, then
+  `OpcodeCallResult` per output. `OpcodeLibraryCall` runs in the slow path.
+  It checks `ImageLibraryEnabled[M]`, which `lower.Program` copies from
+  `ProgramLibrariesEnabled`, and stops with `StopLibraryDisabled` when the
+  library is not enabled. Any other library function is
+  `ReasonLibraryFunctionOutsideSubset`.
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,

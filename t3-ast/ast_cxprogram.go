@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	gc "github.com/skycoin/skycoin-cx/t2-cx-runtime-gc"
@@ -134,11 +135,16 @@ func nativeArgCopy(arg *CXArgument) *CXArgument {
 }
 
 func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFunctionIndex {
+	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
+		cxprogram.ProgramLibrariesUsed[fn.LibraryNumber] = true
+	}
 	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 	// Now a heap literal, site S0194.
 	fnNative := &CXFunction{
-		Index:        len(cxprogram.CXFunctions),
-		AtomicOPCode: fn.AtomicOPCode,
+		Index:                 len(cxprogram.CXFunctions),
+		AtomicOPCode:          fn.AtomicOPCode,
+		LibraryNumber:         fn.LibraryNumber,
+		LibraryFunctionNumber: fn.LibraryFunctionNumber,
 		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
 		// Now a heap literal, site S0195.
 		Inputs: &CXStruct{},

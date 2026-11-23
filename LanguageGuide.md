@@ -16,6 +16,7 @@
     * [Custom Types](#custom-types)
     * [Methods](#methods)
     * [Packages](#packages)
+    * [System libraries](#system-libraries)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
     * [Else if](#else-if)
@@ -791,6 +792,48 @@ packages are `sys/string`, `sys/os`, `sys/time`, `sys/json`, `sys/tcp`,
 `sys/glfw`, `sys/al` and `sys/gltext`. Their functions have verbose
 camel case names, and none of them is an operator. See
 [docs/Conventions.md](docs/Conventions.md) rule 14.
+
+### [System libraries](#table-of-contents)
+
+A system library is a group of built-in functions that reach the
+operating system. A program calls them as any other built-in function,
+`os.Open("data.txt")` after `import "sys/os"`, but a call only runs when
+the library is enabled for the run. A library is enabled with `--enable`.
+
+```
+cx --enable=file,net program.cx
+```
+
+| library | functions |
+|---|---|
+| `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), every function of `sys/json`, `StartCPUProfile` and `StopCPUProfile` |
+| `net` | every function of `sys/tcp` |
+| `process` | `os.Run` |
+
+`os.Exit`, `sys/time`, `sys/regexp`, `sys/cipher` and `sys/string` are
+not system libraries. They end the program, read the clock or compute,
+and always run.
+
+A call into a library that is not enabled is the runtime error
+`CX_RUNTIME_LIBRARY_DISABLED` (12), on the old loop and on vm, and the
+message names the library.
+
+```
+error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
+```
+
+Libraries are disabled unless `--enable` names them. The setting
+`constants.LibraryPolicyEnabledWhenImported` in
+`t1-constants/libraries.go` holds this default. Set to `true`, it
+enables every library the program calls. See
+[skycoin-cx#492](https://github.com/skycoin/skycoin-cx/issues/492),
+decision D17.
+
+The compiler turns every call of a library function into one opcode,
+`LibraryCall` (795), which carries the library number and the function
+number. The numbers are in `constants.LibraryTable` and
+`constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
+numbers, see [Language versions](#language-versions).
 
 ## [Statements](#table-of-contents)
 
@@ -3414,6 +3457,11 @@ in too and are imported with `import "sys/json"`.
 The `os` package provides functions that serve as an interface to CX's
 underlaying operating system.
 
+The file functions, `os.GetWorkingDirectory`, `os.LogFile`, `json` and the
+CPU profile belong to the system library `file` and `os.Run` to `process`,
+so a program calls them with `cx --enable=file` or `--enable=process`. See
+[System libraries](#system-libraries).
+
 File paths passed to `os`, `json`, `gl`, `al` and `StartCPUProfile` are
 confined to the sandbox directory, the working directory unless `cx
 --sandbox <dir>` names another. A path must be relative, use `/` as the
@@ -3614,22 +3662,23 @@ reach the program unchanged as `os.Args`, so `./hello ++a` sees what
 `-heap-max`, are not recorded and take their defaults.
 
 The core includes the built-in functions, `sys/string`, `sys/regexp`,
-`sys/tcp`, `sys/time` and `os.Exit` of `sys/os`. It has no file system
-access, so a program that calls `os.Open`, `os.ReadStr`,
-`os.GetWorkingDirectory`, `os.Run`, `json`, `cipher`, `gl` or another opcode
-outside the core is refused.
+`sys/time`, `os.Exit` of `sys/os` and the `LibraryCall` opcode, but no
+[system library](#system-libraries). A program that calls `cipher`, `gl`
+or another opcode outside the core is refused, and so is one built with
+`--enable` for a library it calls. A library that is not enabled stays out
+of the built program, and a call into it is the runtime error
+`CX_RUNTIME_LIBRARY_DISABLED`, as under cx.
 
 ```
-cx build: the core has no file system access and no module outside the Go standard library, and the program uses opcodes it does not include: os.Open, os.Close, os.ReadI32Slice
+cx build: the core links no system library, and the program calls the enabled libraries: file
 ```
 
 Every `cx build` failure exits with `CX_COMPILATION_ERROR` (1). A core with
 no program appended, or one whose trailer is damaged, prints a message and
 exits with the same code.
 
-Whether the core may use modules outside the Go standard library and
-whether it may use the file system are open decisions. Until they are made
-it uses neither.
+Whether the core may use modules outside the Go standard library is an
+open decision. Until it is made it uses none.
 
 # [Language versions](#table-of-contents)
 
@@ -3729,3 +3778,18 @@ on strings. Calling an old name is a compile error that names the new
 one. Serialized programs from before this version must be recompiled.
 See [skycoin-cx#380](https://github.com/skycoin/skycoin-cx/issues/380)
 and [skycoin-cx#382](https://github.com/skycoin/skycoin-cx/issues/382).
+
+## Version 2611230001, 2026-11-23
+
+File access, networking and `os.Run` are
+[system libraries](#system-libraries), called through the one opcode
+`LibraryCall` (795) instead of an opcode each. The source does not change,
+`import "sys/os"` and `os.Open(...)` work as before, but the library must
+be enabled with `--enable`, for example `cx --enable=file program.cx`.
+
+The opcodes `os.GetWorkingDirectory` to `os.Run` (138 to 189), `json.Open`
+to `json.Str` (191 to 200), `StartCPUProfile` and `StopCPUProfile` (201,
+202) and `tcp.Dial` to `tcp.Close` (206 to 209) are deprecated and
+reassignable from version `2711230001`. `os.Exit` keeps opcode 190.
+Serialized programs from before this version must be recompiled. See
+[skycoin-cx#492](https://github.com/skycoin/skycoin-cx/issues/492).
