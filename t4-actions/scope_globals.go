@@ -31,8 +31,11 @@ type scopeGlobalsState struct {
 	active        bool
 	checking      bool
 	statementSeen bool
-	declarations  []scopeGlobalDeclaration
-	reported      map[SymbolsDataKey]bool
+	// maskingWarning is set by //cx:masking warning on the line before the
+	// function, see #487.
+	maskingWarning bool
+	declarations   []scopeGlobalDeclaration
+	reported       map[SymbolsDataKey]bool
 }
 
 var scopeGlobals scopeGlobalsState
@@ -44,7 +47,9 @@ var ScopeGlobalsInitializer bool
 // ScopeGlobalsBegin starts the global statements of the function fnIdx,
 // whose header the parser just read.
 func ScopeGlobalsBegin(fnIdx ast.CXFunctionIndex) {
-	scopeGlobals = scopeGlobalsState{function: fnIdx, active: !ScopeGlobalsInitializer}
+	fn := AST.GetFunctionFromArray(fnIdx)
+	scopeGlobals = scopeGlobalsState{function: fnIdx, active: !ScopeGlobalsInitializer, maskingWarning: importScopedDirectiveMasking(fn.FileName, fn.FileLine)}
+	importScopedBegin()
 }
 
 // ScopeGlobalsStatementSeen records that the function body has a statement,
@@ -77,6 +82,12 @@ func ScopeGlobalsDeclare(prgrm *ast.CXProgram, names []ScopeGlobalName, braceDep
 			target = imported
 		}
 		nameGid := prgrm.CXProgramNameIntern(name.Name)
+		// A global an import into scope brings in is declared by its name alone.
+		if name.Package == "" {
+			if source := importScopedGlobalPackage(prgrm, pkg, nameGid); source != nil {
+				target = source
+			}
+		}
 		if _, err := target.GetGlobal(prgrm, nameGid); err != nil {
 			if !prgrm.CXProgramImportFailed(target.Name) {
 				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationMissing, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(text), int64(target.Name)})
@@ -148,6 +159,7 @@ func scopeGlobalsEnd(prgrm *ast.CXProgram) {
 		}
 		scopeGlobals = scopeGlobalsState{}
 	}
+	importScopedBegin()
 }
 
 // scopeShadowCheck reports a local, parameter or result named like a global,
@@ -189,4 +201,5 @@ func scopeShadowCheck(prgrm *ast.CXProgram, symbolsData *SymbolsData, pkg *ast.C
 			return
 		}
 	}
+	importScopedMaskCheck(prgrm, pkg, typeSig, name)
 }

@@ -1,0 +1,7 @@
+package main
+
+import file (CircleArea) "math/measure"
+
+func main() {
+	f32.print(CircleArea(1.0))
+}

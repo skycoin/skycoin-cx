@@ -82,4 +82,8 @@ type CXProgram struct {
 	// ImportPositions is where each package imports another, for the shadowing
 	// errors of #486. Compiler only, never serialized.
 	ImportPositions map[CXProgramImportKey]CXProgramImportPosition
+
+	// ImportScoped holds the imports into scope, import . "pkg" and the
+	// others of #487. Compiler only, never serialized.
+	ImportScoped []CXProgramImportScoped
 }

@@ -17,6 +17,7 @@
     * [Custom Types](#custom-types)
     * [Methods](#methods)
     * [Packages](#packages)
+    * [Imports into scope](#imports-into-scope)
     * [System libraries](#system-libraries)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -364,7 +365,8 @@ a name a `:=` declares may not have the name of
 The error names the declaration it would hide, for example `'x' shadows
 variable declared at main.cx:4:2` or `'counter' shadows global declared
 at main.cx:3:5`. A `:=` that assigns a name its own block declares hides
-nothing.
+nothing. A name that an import brings into scope may not be masked
+either, see [Imports into scope](#imports-into-scope).
 
 ```cx compile-error
 package main
@@ -833,9 +835,10 @@ We can then see how the `main` package `import`s both the `foo` and
 `bar` packages, to later call each of these functions.
 
 A global of an imported package is reached the same way, as
-`foo.Count`, never by its name alone, and a function that uses it
-declares it as `global foo.Count`, see
-[Global variables](#global-variables).
+`foo.Count`, and a function that uses it declares it as
+`global foo.Count`, see [Global variables](#global-variables). A member
+of an imported package is never found by its name alone, unless an
+import brings it into scope, see [Imports into scope](#imports-into-scope).
 
 Built-in packages are implemented inside the compiler and runtime. Each
 lives under `sys/` and is marked as built in where it is documented. A
@@ -859,6 +862,94 @@ packages are `sys/string`, `sys/os`, `sys/time`, `sys/json`, `sys/tcp`,
 `sys/glfw`, `sys/al` and `sys/gltext`. Their functions have verbose
 camel case names, and none of them is an operator. See
 [docs/Conventions.md](docs/Conventions.md) rule 14.
+
+### [Imports into scope](#table-of-contents)
+
+`import "geometry"` lets a file use the members of `geometry` only as
+`geometry.Point`, `geometry.Distance(a, b)` or `geometry.Count`. An
+import into scope also lets it use a member by its name alone, as a
+shorthand. The compiler still reads `Point` as `geometry.Point`, and the
+qualified name keeps working. There are two scopes, each with its own
+form.
+
+| Import | Brings in | Where |
+|---|---|---|
+| `import "geometry"` | nothing, members are `geometry.name` | |
+| `import . "geometry"` | every global, function and type | the package |
+| `import file . "geometry"` | every global, function and type | this file |
+| `import (Point, Distance) "geometry"` | the names listed | the package |
+| `import file (Point, Distance) "geometry"` | the names listed | this file |
+
+`import . "pkg"` is the form of Go. The package scope covers every file
+of the package, and the file scope only the file that holds the import,
+so another file of the package reaches the names as `geometry.Point`. A
+listed name may be a type, a function or a global, and the names of a
+built-in package work too, `import (PrintLine) "sys/string"`. A function
+that uses a global brought in this way declares it by its short name,
+`global Count`, or by its qualified one.
+
+```cx
+package geometry
+
+type Point struct {
+	X i32
+	Y i32
+}
+
+func Distance(a Point, b Point) i32 {
+	return b.X - a.X + b.Y - a.Y
+}
+
+package main
+
+import (Point, Distance) "geometry"
+import (PrintLine) "sys/string"
+
+func main() {
+	var a Point
+	b := Point{X: 3, Y: 4}
+	i32.print(Distance(a, b)) // prints 7
+	PrintLine("done")
+}
+```
+
+A name brought into scope may not mask another name. Masking is a
+compile error, `'Distance' masks the name imported at main.cx:3:16`,
+when the name is also
+
+* a local, a parameter or a result of a function in that scope,
+* a global, a function or a type of the package,
+* a package the package imports,
+* a name another import brings into the same scope from another
+  package.
+
+The error is at the other name and gives the position of the import. A
+name a scoped import lists that the package does not have, a name listed
+twice and a word other than `file` before the import are compile errors
+as well.
+
+A comment `//cx:masking warning` on the line before a function, written
+like a Go compiler directive, makes masking by its locals, parameters and
+results a warning. The warning prints and the program still builds. In
+that function the local hides the imported name from its declaration to
+the end of the function. Masking by a declaration of the package is
+always an error.
+
+```cx
+package geometry
+
+var Count i32 = 7
+
+package main
+
+import (Count) "geometry"
+
+//cx:masking warning
+func main() {
+	Count := 1 // warning: 'Count' masks the name imported at main.cx:7:9
+	i32.print(Count) // prints 1
+}
+```
 
 ### [System libraries](#table-of-contents)
 
@@ -3885,3 +3976,21 @@ Programs from before this version add the `global` statements and rename
 the variables that shadow another name. No opcode changes. Serialized
 programs from before this version must be recompiled. See
 [skycoin-cx#486](https://github.com/skycoin/skycoin-cx/issues/486).
+
+## Version 2611230003, 2026-11-23
+
+An import brings names into scope with `import . "pkg"`,
+`import file . "pkg"`, `import (a, b) "pkg"` and `import file (a, b)
+"pkg"`, see [Imports into scope](#imports-into-scope). A name brought into
+scope that has the name of a local, a parameter, a global, a function, a
+type, an imported package or a name of another import is a compile error,
+and a warning in a function under `//cx:masking warning`.
+
+`import "pkg"` alone no longer lets a file use a function or a type of
+`pkg` by its name alone. It did so without a rule, taking the first
+package with the name. Such a use is now `function 'f' not found in
+package 'main'` or `struct 'T' not found in package 'main'`, and is
+written `pkg.f` or brought in with an import into scope. Two programs of
+the repository used it. No opcode changes. Serialized programs from
+before this version must be recompiled. See
+[skycoin-cx#487](https://github.com/skycoin/skycoin-cx/issues/487).

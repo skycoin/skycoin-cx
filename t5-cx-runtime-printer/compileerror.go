@@ -16,10 +16,12 @@ import (
 // the next three operands as file:line:column, without a column of 0. %+ is
 // "s" when the last integer is above 1, and %~ is " was" when it is 1 and
 // "s were" otherwise.
-// Stdout sends the text to stdout instead of stderr.
+// Stdout sends the text to stdout instead of stderr. Warning makes %H
+// "warning: " for a record that does not fail the build.
 type printerCompileErrorFormat struct {
-	Format string
-	Stdout bool
+	Format  string
+	Stdout  bool
+	Warning bool
 }
 
 var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCodeNil]printerCompileErrorFormat{
@@ -98,6 +100,10 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeShadowFunction - ast.CompileErrorCodeNil:                  {Format: "%H '%s' shadows function declared at %P\n"},
 	ast.CompileErrorCodeShadowType - ast.CompileErrorCodeNil:                      {Format: "%H '%s' shadows type declared at %P\n"},
 	ast.CompileErrorCodeShadowVariable - ast.CompileErrorCodeNil:                  {Format: "%H '%s' shadows variable declared at %P\n"},
+	ast.CompileErrorCodeImportMasking - ast.CompileErrorCodeNil:                   {Format: "%H '%s' masks the name imported at %P\n"},
+	ast.CompileErrorCodeImportMaskingWarning - ast.CompileErrorCodeNil:            {Format: "%H '%s' masks the name imported at %P\n", Warning: true},
+	ast.CompileErrorCodeImportFormInvalid - ast.CompileErrorCodeNil:               {Format: "%H invalid import: %s\n"},
+	ast.CompileErrorCodeImportNameUnknown - ast.CompileErrorCodeNil:               {Format: "%H '%s' is not a global, function or type of package '%s'\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through
@@ -129,7 +135,8 @@ func PrinterCompileErrorsPrint(prgrm *ast.CXProgram) {
 
 // PrinterCompileErrorAppend appends the text of record to text.
 func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.CompileErrorRecord) []byte {
-	format := printerCompileErrorFormats[record.CompileErrorRecordCode-ast.CompileErrorCodeNil].Format
+	entry := printerCompileErrorFormats[record.CompileErrorRecordCode-ast.CompileErrorCodeNil]
+	format := entry.Format
 	operand := 0
 	var lastInteger int64
 	for index := 0; index < len(format); index++ {
@@ -140,7 +147,11 @@ func PrinterCompileErrorAppend(text []byte, prgrm *ast.CXProgram, record *ast.Co
 		index++
 		switch format[index] {
 		case 'H':
-			text = append(text, "error: "...)
+			if entry.Warning {
+				text = append(text, "warning: "...)
+			} else {
+				text = append(text, "error: "...)
+			}
 			text = printerCompileErrorPositionAppend(text, prgrm, record.CompileErrorRecordFile, int64(record.CompileErrorRecordLine), int64(record.CompileErrorRecordColumn))
 		case 'P':
 			operands := &record.CompileErrorRecordOperands

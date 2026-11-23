@@ -278,6 +278,36 @@ import_declaration:
                 {
 			actions.DeclareImportAt(Program,$2, CurrentFile, lineNo, $<column>2)
                 }
+        // The imports into scope of #487: import . "p", import file . "p",
+        // import (a, b) "p" and import file (a, b) "p".
+        |       IMPORT PERIOD STRING_LITERAL SEMICOLON
+                {
+			actions.DeclareImportScoped(Program, $3, "", 0, 0, nil, CurrentFile, $<line>3, $<column>3)
+                }
+        |       IMPORT IDENTIFIER PERIOD STRING_LITERAL SEMICOLON
+                {
+			actions.DeclareImportScoped(Program, $4, $2, $<line>2, $<column>2, nil, CurrentFile, $<line>4, $<column>4)
+                }
+        |       IMPORT LPAREN import_names RPAREN STRING_LITERAL SEMICOLON
+                {
+			actions.DeclareImportScoped(Program, $5, "", 0, 0, actions.ImportScopedNamesTake(), CurrentFile, $<line>5, $<column>5)
+                }
+        |       IMPORT IDENTIFIER LPAREN import_names RPAREN STRING_LITERAL SEMICOLON
+                {
+			actions.DeclareImportScoped(Program, $6, $2, $<line>2, $<column>2, actions.ImportScopedNamesTake(), CurrentFile, $<line>6, $<column>6)
+                }
+                ;
+
+import_names:
+                IDENTIFIER
+                {
+			actions.ImportScopedNamesTake()
+			actions.ImportScopedNamesAdd($1, $<line>1, $<column>1)
+                }
+        |       import_names COMMA IDENTIFIER
+                {
+			actions.ImportScopedNamesAdd($3, $<line>3, $<column>3)
+                }
                 ;
 
 function_header:

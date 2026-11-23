@@ -108,8 +108,13 @@ func DeclarationSpecifiersStruct(prgrm *ast.CXProgram, ident string, pkgName str
 			return declarationSpecifiersMissing(prgrm, currentFile, lineNo)
 		}
 	} else {
-		// custom type in the current package
+		// custom type in the current package, or one an import into scope brings in
 		strct, err = prgrm.GetStruct(identGid, pkg.Name)
+		if err != nil {
+			if scopedStruct := importScopedStruct(prgrm, pkg, currentFile, identGid); scopedStruct != nil {
+				strct, err = scopedStruct, nil
+			}
+		}
 		if err != nil {
 			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeMessage, currentFile, lineNo, column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
 

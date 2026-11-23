@@ -26,6 +26,12 @@ func TestImports(t *testing.T) {
 		{"unterminated comment", "import \"os\"\n/* import \"a\"\n", []string{"os"}, false},
 		{"unterminated string", "import \"os\"\nvar s str = \"import \\\"a\\\"\n", []string{"os"}, false},
 		{"unterminated path", "import \"os\n", nil, true},
+		{"into module scope", "import . \"a\"\n", []string{"a"}, false},
+		{"into file scope", "import file . \"a\"\n", []string{"a"}, false},
+		{"names into module scope", "import (Point, Distance) \"geometry\"\n", []string{"geometry"}, false},
+		{"names into file scope", "import file (Point) \"geometry\"\nimport \"os\"\n", []string{"geometry", "os"}, false},
+		{"scope word and no path", "import file os\n", nil, true},
+		{"path in the names", "import (\"a\") \"b\"\n", nil, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.Scenario, func(t *testing.T) {

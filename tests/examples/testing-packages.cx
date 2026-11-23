@@ -55,7 +55,7 @@ func main () {
 // we are defining a variable p of type Point
 //This is how we can define a variable from another package, by considering it as a type. 
 //
-	var p Point
+	var p foo1.Point
 
 // we are assigning the values to the p variable
 // Tis is how we can assign the values to a variable of type structure from an other package

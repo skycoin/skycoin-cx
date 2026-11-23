@@ -1,0 +1,41 @@
+package geometry
+
+type Point struct {
+	X i32
+}
+
+var Count i32
+var Size i32
+var physics i32
+
+func Distance() {}
+func Area() {}
+
+package physics
+
+var Count i32
+
+package main
+
+import "physics"
+import . "geometry"
+import (Count) "physics"
+import (Missing, Distance, Distance) "geometry"
+import module . "geometry"
+
+var Size i32
+
+func Area() {}
+
+type Point struct {
+	Y i32
+}
+
+func run(Distance i32) {
+	Count := 2
+	i32.print(Distance + Count)
+}
+
+func main() {
+	run(1)
+}

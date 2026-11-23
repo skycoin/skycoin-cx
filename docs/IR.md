@@ -612,6 +612,8 @@ after one, so a program only loads in a build with its pointer size
   while it types globals and orders their initializers.
 * `CXProgram.ImportPositions`, where each package imports each other
   package, which only the shadowing errors of #486 read.
+* `CXProgram.ImportScoped`, the imports into scope of #487, which only
+  the compiler reads. Every shorthand is compiled as `pkg.name`.
 * The build tags. A program that calls an opcode from a package the
   reading build leaves out, such as `sys/os` under `nocxos`, finds no
   handler for it.

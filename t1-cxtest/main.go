@@ -645,7 +645,7 @@ func runTestCases(t *runner.TestRunner) {
 		"test-error-call-count-continue.cx:14 operator 'g' expects to return 2 output/s, but 1 receiving argument/s were provided",
 		"test-error-call-count-continue.cx:16 cannot assign value of type 'str' to identifier 'late' of type 'i32'")
 	t.RunWant("test-error-function-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing function leaves the later errors reported",
-		"test-error-function-missing-continue.cx:8:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:9:7 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:12:4 function 'foo' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:13:12 function 'bar' not found in package 'main' or its imports\nerror: test-error-function-missing-continue.cx:14:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+		"test-error-function-missing-continue.cx:8:2 function 'foo' not found in package 'main'\nerror: test-error-function-missing-continue.cx:9:7 function 'foo' not found in package 'main'\nerror: test-error-function-missing-continue.cx:12:4 function 'foo' not found in package 'main'\nerror: test-error-function-missing-continue.cx:13:12 function 'bar' not found in package 'main'\nerror: test-error-function-missing-continue.cx:14:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-error-function-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing function leaves the later errors reported",
 		"expects", "invalid type", "does not exist", ":11 ")
 	t.RunWant("test-error-native-missing-continue.cx", types.CX_COMPILATION_ERROR, "a call of a missing or renamed native leaves the later errors reported",
@@ -665,13 +665,13 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunMissing("test-error-loop-indirection-continue.cx", types.CX_COMPILATION_ERROR, "a loop condition without a value and an invalid indirection leave the later errors reported",
 		"outputless", "expects", ":11 ", ":9 ")
 	t.RunWant("test-error-preliminary-continue.cx", types.CX_COMPILATION_ERROR, "a missing type in a declaration leaves the errors in the bodies reported once",
-		"test-error-preliminary-continue.cx:4:4 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:10 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:8 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main' or its imports\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+		"test-error-preliminary-continue.cx:4:4 struct 'Missing2' not found in package 'main'\nerror: test-error-preliminary-continue.cx:7:10 struct 'Missing3' not found in package 'main'\nerror: test-error-preliminary-continue.cx:11:8 struct 'Missing' not found in package 'main'\nerror: test-error-preliminary-continue.cx:12:2 function 'foo' not found in package 'main'\nerror: test-error-preliminary-continue.cx:13:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunWant("test-error-syntax-a.cx test-error-syntax-b.cx", types.CX_COMPILATION_ERROR, "a syntax error is a record, sorted with the errors of the other files",
 		"error: test-error-syntax-a.cx:4:4 struct 'Missing' not found in package 'main'\nerror: test-error-syntax-b.cx:5:4 syntax error: unexpected name y, expected } or semicolon or newline\n")
 	t.RunWant("test-error-syntax-body.cx", types.CX_COMPILATION_ERROR, "a syntax error names the unexpected and the expected token",
 		"error: test-error-syntax-body.cx:6:5 syntax error: unexpected comma, expected ]\n")
 	t.RunWant("test-error-column.cx", types.CX_COMPILATION_ERROR, "compile errors print file:line:column, in column order on one line",
-		"error: test-error-column.cx:4:7 function 'foo' not found in package 'main' or its imports\nerror: test-error-column.cx:4:16 function 'bar' not found in package 'main' or its imports\nerror: test-error-column.cx:5:14 cannot assign value of type 'str' to identifier 'y' of type 'i32'\n")
+		"error: test-error-column.cx:4:7 function 'foo' not found in package 'main'\nerror: test-error-column.cx:4:16 function 'bar' not found in package 'main'\nerror: test-error-column.cx:5:14 cannot assign value of type 'str' to identifier 'y' of type 'i32'\n")
 	t.RunWant("test-dereference-non-pointer.cx", types.CX_COMPILATION_ERROR, "dereferencing a non-pointer is one error that names the type (skycoin-cx#15)",
 		"test-dereference-non-pointer.cx:9:8 cannot dereference non-pointer 'x' of type 'i32'\nerror: test-dereference-non-pointer.cx:11:15 cannot dereference non-pointer 'x' of type 'i32'\nerror: test-dereference-non-pointer.cx:13:8 cannot dereference non-pointer 'p' of type 'P'\nerror: test-dereference-non-pointer.cx:17:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-dereference-non-pointer.cx", types.CX_COMPILATION_ERROR, "dereferencing a non-pointer is one error that names the type (skycoin-cx#15)",
@@ -715,7 +715,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunMissing("test-error-import-missing.cx", types.CX_COMPILATION_ERROR, "a package that cannot be loaded is one error at its import, and its members report nothing more",
 		"panic", "'nope.", "struct 'T'", "'ident'", ":6:", ":9:", ":10:", ":11:", ":12:", ":13:", ":14:")
 	t.RunWant("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
-		"error: test-error-invalid-field-continue.cx:7:2 trying to use an outputless operator in an assignment\nerror: test-error-invalid-field-continue.cx:10:14 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:11:6 function 'foo' not found in package 'main' or its imports\nerror: test-error-invalid-field-continue.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
+		"error: test-error-invalid-field-continue.cx:7:2 trying to use an outputless operator in an assignment\nerror: test-error-invalid-field-continue.cx:10:14 function 'foo' not found in package 'main'\nerror: test-error-invalid-field-continue.cx:11:6 function 'foo' not found in package 'main'\nerror: test-error-invalid-field-continue.cx:12:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-error-invalid-field-continue.cx", types.CX_COMPILATION_ERROR, "a field of a value of no valid type reports nothing more",
 		"'ident'", ":0 ", ":8:", ":9:")
 	t.RunWant("--cxpath test-import-errors test-error-import-compile.cx", types.CX_COMPILATION_ERROR, "a package with compile errors prints them with the errors of the program, and its members report nothing more",
@@ -802,7 +802,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-function-missing-in-expression.cx", types.CX_COMPILATION_ERROR, "an unknown native inside an operator",
 		`test-function-missing-in-expression.cx:4 function 'i32.nope' does not exist`)
 	t.RunWant("test-function-missing-in-condition.cx", types.CX_COMPILATION_ERROR, "an unknown function in a loop condition",
-		`test-function-missing-in-condition.cx:4 function 'nope' not found in package 'main' or its imports`)
+		`test-function-missing-in-condition.cx:4 function 'nope' not found in package 'main'`)
 	t.RunWant("test-append-missing-value.cx", types.CX_COMPILATION_ERROR, "append without a value",
 		`test-append-missing-value.cx:5 operator 'append' expects 2 input/s, but 1 input argument`)
 	t.RunWant("test-operator-argument-types.cx", types.CX_COMPILATION_ERROR, "a type inferred operator on a type it does not support",
@@ -966,6 +966,33 @@ func runTestCases(t *runner.TestRunner) {
 		"test-shadow-errors.cx:20:2 'Point' shadows type declared at test-shadow-errors.cx:7:6",
 		"test-shadow-errors.cx:23:3 'x' shadows variable declared at test-shadow-errors.cx:21:2",
 		"test-shadow-errors.cx:26:6 'counter' shadows global declared at test-shadow-errors.cx:5:5")
+	t.RunWant("test-import-scoped-module.cx", types.CX_SUCCESS, "import . brings every name of a package into the package, as types, calls, literals and globals (#487)",
+		"7 7 7 5 8 0\n")
+	t.RunWant("test-import-scoped-names.cx", types.CX_SUCCESS, "import (names) into the package and the file, of a package and of a built-in package, with a shorthand global statement (#487)",
+		"6 9 9\ndone\n")
+	t.RunWant("test-import-scoped-file-a.cx test-import-scoped-file-b.cx", types.CX_SUCCESS, "import file . brings the names into its file, and another file of the package reaches them qualified (#487)",
+		"3\n8\n")
+	t.RunWant("test-import-scoped-file-a.cx test-import-scoped-file-c.cx", types.CX_COMPILATION_ERROR, "import file . does not bring the names into another file of the package (#487)",
+		"test-import-scoped-file-c.cx:4:12 function 'Distance' not found in package 'main'",
+		"test-import-scoped-file-c.cx:4:21 struct 'Point' not found in package 'main'")
+	t.RunWant("test-import-scoped-file-b.cx", types.CX_COMPILATION_ERROR, "a struct literal of a package the file does not import is a compile error, where it panicked",
+		"test-import-scoped-file-b.cx:4:39 package 'geometry' not imported")
+	t.RunWant("--cxpath test-workspace test-import-scoped-workspace.cx", types.CX_SUCCESS, "import file (name) of a workspace package (#487)", "3.14159\n")
+	t.RunWant("test-import-masking-errors.cx", types.CX_COMPILATION_ERROR, "a name that masks a name an import brings into scope, and the invalid import forms (#487)",
+		"test-import-masking-errors.cx:20:8 'physics' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:22:9 'Count' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:23:9 'Missing' is not a global, function or type of package 'geometry'",
+		"test-import-masking-errors.cx:23:28 invalid import: 'Distance' is listed twice",
+		"test-import-masking-errors.cx:24:8 invalid import: 'module' cannot stand before an import, only file can",
+		"test-import-masking-errors.cx:26:5 'Size' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:28:6 'Area' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:30:6 'Point' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:34:10 'Distance' masks the name imported at test-import-masking-errors.cx:21:10",
+		"test-import-masking-errors.cx:35:2 'Count' masks the name imported at test-import-masking-errors.cx:21:10")
+	t.RunWant("test-import-masking-warning.cx", types.CX_SUCCESS, "//cx:masking warning makes masking in its function a warning, and the local hides the import there (#487)",
+		"warning: test-import-masking-warning.cx:14:12 'Distance' masks the name imported at test-import-masking-warning.cx:11:16",
+		"warning: test-import-masking-warning.cx:15:6 'Count' masks the name imported at test-import-masking-warning.cx:11:9",
+		"10 11 7 3\n")
 	t.RunWant("test-error-single-value.cx", types.CX_COMPILATION_ERROR, "a call of several results or of none used as one value",
 		"test-error-single-value.cx:12 multiple-value two() (value of type (a i32, b i32)) in single-value context",
 		"test-error-single-value.cx:13 function 'none' returns no value",

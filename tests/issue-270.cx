@@ -24,7 +24,7 @@ package main
 import "graphical2d"
 
 func main() {
-	var pb ProgressBar
+	var pb graphical2d.ProgressBar
 	pb = graphical2d.newProgressBar(100.0);
 
 	a := pb.getValue()

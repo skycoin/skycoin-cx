@@ -1,0 +1,19 @@
+package geometry
+
+type Point struct {
+	X i32
+	Y i32
+}
+
+func Distance(a Point, b Point) i32 {
+	return b.X - a.X + b.Y - a.Y
+}
+
+package main
+
+import file . "geometry"
+
+func main() {
+	i32.print(Distance(Point{X: 1, Y: 1}, Point{X: 2, Y: 3}))
+	other()
+}

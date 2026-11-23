@@ -102,6 +102,10 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeShadowFunction, ast.CompileErrorOperands{text("f"), int64(file), 9, 6}, header + " 'f' shadows function declared at a.cx:9:6\n"},
 		{ast.CompileErrorCodeShadowType, ast.CompileErrorOperands{text("T"), int64(file), 5, 6}, header + " 'T' shadows type declared at a.cx:5:6\n"},
 		{ast.CompileErrorCodeShadowVariable, ast.CompileErrorOperands{text("x"), int64(file), 4, 2}, header + " 'x' shadows variable declared at a.cx:4:2\n"},
+		{ast.CompileErrorCodeImportMasking, ast.CompileErrorOperands{text("Point"), int64(file), 3, 10}, header + " 'Point' masks the name imported at a.cx:3:10\n"},
+		{ast.CompileErrorCodeImportMaskingWarning, ast.CompileErrorOperands{text("Point"), int64(file), 3, 10}, "warning: a.cx:7 'Point' masks the name imported at a.cx:3:10\n"},
+		{ast.CompileErrorCodeImportFormInvalid, ast.CompileErrorOperands{text("'a' is listed twice")}, header + " invalid import: 'a' is listed twice\n"},
+		{ast.CompileErrorCodeImportNameUnknown, ast.CompileErrorOperands{text("Missing"), text("geometry")}, header + " 'Missing' is not a global, function or type of package 'geometry'\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

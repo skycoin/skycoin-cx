@@ -389,6 +389,18 @@ func sliceLiteralStructElement(prgrm *ast.CXProgram, strct *ast.CXStruct, elemen
 // missing struct is an error at line and column, where its name is, or at the
 // token the parser is at for a column of 0.
 func PrimaryStructLiteral(prgrm *ast.CXProgram, structName string, line int, column int, structFields []ast.CXExpression) []ast.CXExpression {
+	if len(prgrm.ImportScoped) > 0 {
+		pkg, err := prgrm.GetCurrentPackage()
+		if err != nil {
+			panic(err)
+		}
+		structNameGid := prgrm.CXProgramNameIntern(structName)
+		if source := importScopedSource(prgrm, pkg, CurrentFile, structNameGid); source != nil {
+			if _, found := source.Structs[structNameGid]; found {
+				return PrimaryStructLiteralExternal(prgrm, prgrm.CXProgramNameText(source.Name), structName, line, column, structFields)
+			}
+		}
+	}
 	name := generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 	writes, strct := primaryStructLiteralWrites(prgrm, structName, line, column, name, structFields)
 	if strct == nil {
@@ -640,7 +652,8 @@ func primaryStructLiteralExternalWrites(prgrm *ast.CXProgram, importName string,
 				structLiteralMissing(prgrm, line, column, err)
 			}
 		} else {
-			panic(err)
+			// A struct literal of a package the file does not import.
+			structLiteralMissing(prgrm, line, column, err)
 		}
 	} else {
 		panic(err)

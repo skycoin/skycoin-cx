@@ -1,0 +1,36 @@
+package geometry
+
+type Point struct {
+	X i32
+	Y i32
+}
+
+var Count i32 = 7
+
+func Distance(a Point, b Point) i32 {
+	return b.X - a.X + b.Y - a.Y
+}
+
+func Scale(p Point) Point {
+	return Point{X: p.X * 2, Y: p.Y * 2}
+}
+
+package main
+
+import (Point, Distance, Count) "geometry"
+import file (Scale) "geometry"
+import (PrintLine) "sys/string"
+
+func bump() {
+	global Count
+	Count = Count + 2
+}
+
+func main() {
+	global Count
+	bump()
+	var p Point
+	p = Scale(Point{X: 1, Y: 2})
+	printf("%d %d %d\n", Distance(Point{}, p), Count, geometry.Count)
+	PrintLine("done")
+}

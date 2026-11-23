@@ -134,13 +134,9 @@ S0153,CXExpression,ctor-def,t3-ast/ast_cxfunction.go,315,MakeCXLineExpression,fu
 S0156,CXExpression,alloc-literal-heap,t3-ast/ast_cxfunction.go,325,MakeCXLineExpression,"&CXExpression{ Index: index, Type: CX_LINE, }",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0157,CXStruct,ptr-field,t3-ast/cxpackage_def.go,15,type CXPackage,CXPackage.Globals *CXStruct,CXStructGid,5-gid,337,CXStruct phase 4-alloc
 S0158,CXFunction,get-call,t3-ast/ast_cxpackage.go,15,CXPackage.GetFunction,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S0159,CXPackage,get-call,t3-ast/ast_cxpackage.go,24,CXPackage.GetFunction,prgrm.GetPackageFromArray(impIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0160,CXFunction,get-call,t3-ast/ast_cxpackage.go,32,CXPackage.GetFunction,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0161,CXPackage,get-call,t3-ast/ast_cxpackage.go,49,CXPackage.GetImport,prgrm.GetPackageFromArray(pkg.Imports[impName]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0167,CXFunction,arena-add,t3-ast/ast_cxpackage.go,98,CXPackage.GetMethod,prgrm.AddNativeFunctionInArray(Natives[opCode]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0168,CXStruct,get-addr-arena,t3-ast/ast_cxpackage.go,110,CXPackage.GetStruct,&prgrm.CXStructs[strctIdx],state.CXStructMng.CXStructGet(gid),5-gid,337,CXStruct phase 4-alloc
-S0169,CXPackage,get-call,t3-ast/ast_cxpackage.go,117,CXPackage.GetStruct,prgrm.GetPackageFromArray(impIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0170,CXStruct,get-addr-arena,t3-ast/ast_cxpackage.go,124,CXPackage.GetStruct,&prgrm.CXStructs[strctIdx],state.CXStructMng.CXStructGet(gid),5-gid,337,CXStruct phase 4-alloc
 S0171,CXTypeSignature,get-call,t3-ast/ast_cxpackage.go,137,CXPackage.GetGlobal,prgrm.GetCXTypeSignatureFromArray(fieldIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0172,CXFunction,get-call,t3-ast/ast_cxpackage.go,154,CXPackage.GetCurrentFunction,prgrm.GetFunctionFromArray(pkg.CurrentFunction),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0173,CXFunction,get-call,t3-ast/ast_cxpackage.go,171,CXPackage.SelectFunction,prgrm.GetFunctionFromArray(idx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc

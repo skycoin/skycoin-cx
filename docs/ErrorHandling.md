@@ -185,6 +185,18 @@ Three error records exist.
   imported package, 7073 `CompileErrorCodeShadowFunction`, 7074
   `CompileErrorCodeShadowType` and 7075 `CompileErrorCodeShadowVariable`, a
   variable of an enclosing block.
+  7076 to 7079 are the imports into scope of #487. 7076
+  `CompileErrorCodeImportMasking`, `'Distance' masks the name imported at
+  main.cx:3:16`, is a local, parameter, result, global, function, type,
+  imported package or name of another import that has a name an import
+  brings into scope. It is at that name, and its operands are the name and
+  the position of the import. 7077 `CompileErrorCodeImportMaskingWarning`
+  is the same in a function under `//cx:masking warning`. It prints as
+  `warning:` and does not fail the build, `CompileErrorCodeWarning` names
+  it and `CXProgramCompileErrorCount` leaves it out. 7078
+  `CompileErrorCodeImportFormInvalid` is a name listed twice or a word other
+  than `file` before an import, and 7079 `CompileErrorCodeImportNameUnknown`
+  a listed name that is not a global, function or type of the package.
   A package that loads but has compile errors
   prints them with the errors of the program and fails like an import
   that cannot be loaded, without an error at the import. 7000 is

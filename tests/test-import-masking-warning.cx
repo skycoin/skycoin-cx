@@ -1,0 +1,24 @@
+package geometry
+
+var Count i32 = 7
+
+func Distance(a i32, b i32) i32 {
+	return b - a
+}
+
+package main
+
+import (Count, Distance) "geometry"
+
+//cx:masking warning
+func local(Distance i32) {
+	for Count := 0; Count < 2; Count++ {
+		printf("%d ", Count+Distance)
+	}
+}
+
+func main() {
+	global Count
+	local(10)
+	printf("%d %d\n", Count, Distance(1, 4))
+}

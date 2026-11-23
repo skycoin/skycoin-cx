@@ -10,6 +10,9 @@ import (
 // ParserActionAssignmentExpression is the action of an assignment, shared by
 // assignment_expression and the for clauses.
 func ParserActionAssignmentExpression(left []ast.CXExpression, operator string, right []ast.CXExpression) []ast.CXExpression {
+	if operator == ":=" {
+		left = actions.ImportScopedShortDeclaration(actions.AST, left)
+	}
 	result := left
 
 	if right == nil {
@@ -168,6 +171,11 @@ func ParserActionLabeledStatement(label string, exprs []ast.CXExpression) []ast.
 // ParserActionMultipleAssignment is the action of a, b = x, y and a, b := x, y.
 // Every value is held in a variable before any target is assigned, as in Go.
 func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator string, values [][]ast.CXExpression) []ast.CXExpression {
+	if operator == ":=" {
+		for index := range targets {
+			targets[index] = actions.ImportScopedShortDeclaration(actions.AST, targets[index])
+		}
+	}
 	for _, exprs := range append(append([][]ast.CXExpression(nil), targets...), values...) {
 		if len(exprs) == 0 {
 			return nil
@@ -209,6 +217,7 @@ func ParserActionMultipleAssignment(targets [][]ast.CXExpression, operator strin
 // x, y, which evaluates every value before it assigns any, as in Go. A spec
 // without a type, var a, b = x, y, is a, b := x, y.
 func ParserActionDeclareLocals(names []*ast.CXArgument, spec *ast.CXArgument, values [][]ast.CXExpression, initialized bool) []ast.CXExpression {
+	actions.ImportScopedLocalsDeclare(actions.AST, names)
 	if spec != nil && (!initialized || len(names) == 1 && len(values) == 1) {
 		var result []ast.CXExpression
 		for i, name := range names {

@@ -222,7 +222,11 @@ func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile ast
 
 // PrimaryIdentifier creates an identifier expression with an output name of 'ident'.
 func PrimaryIdentifier(prgrm *ast.CXProgram, ident string) []ast.CXExpression {
-	return primaryIdentifierExpressions(prgrm, prgrm.CXProgramNameIntern(ident))
+	identGid := prgrm.CXProgramNameIntern(ident)
+	if exprs := importScopedIdentifier(prgrm, identGid); exprs != nil {
+		return exprs
+	}
+	return primaryIdentifierExpressions(prgrm, identGid)
 }
 
 // primaryIdentifierExpressions is PrimaryIdentifier for an interned name.

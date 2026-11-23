@@ -234,6 +234,7 @@ build-parser: ## Generate lexer and parser for CX grammar
 
 %type   <ints>          indexing_literal
 %type   <ints>          indexing_slice_literal
+%type   <tok>           import_names
                         
                         
 /* %start                  translation_unit */
@@ -353,6 +354,16 @@ import_declaration:
                 {
 			// DeclareImport($2)
                 }
+        // The imports into scope of #487, which pass one declares.
+        |       IMPORT PERIOD STRING_LITERAL SEMICOLON
+        |       IMPORT IDENTIFIER PERIOD STRING_LITERAL SEMICOLON
+        |       IMPORT LPAREN import_names RPAREN STRING_LITERAL SEMICOLON
+        |       IMPORT IDENTIFIER LPAREN import_names RPAREN STRING_LITERAL SEMICOLON
+        ;
+
+import_names:
+                IDENTIFIER
+        |       import_names COMMA IDENTIFIER
         ;
 
 function_header:
@@ -366,6 +377,7 @@ function_header:
                 {
 			$$ = actions.FunctionHeader(actions.AST,$5, $3, true, $<line>5, $<column>5)
 			actions.ScopeGlobalsBegin($$)
+			actions.ImportScopedLocalsDeclare(actions.AST, $3)
                 }
         ;
 
@@ -373,7 +385,7 @@ function_parameters:
                 LPAREN RPAREN
                 { $$ = nil }
         |       LPAREN parameter_type_list RPAREN
-                { $$ = $2 }
+                { $$ = $2; actions.ImportScopedLocalsDeclare(actions.AST, $2) }
                 ;
 
 // A result list holds names and types, (r i32, s str), or only types,

@@ -23,6 +23,11 @@ import (
 	cxpartialparsing "github.com/skycoin/skycoin-cx/t5-cxpartialparsing" // thin: only CurrentFile, Parse, Program; no depth gain
 )
 
+// preliminaryImportName matches an import and its path. The forms of #487,
+// import . "p" and import file (a, b) "p", end in the path too. It is
+// compiled once, as Preliminarystage runs for every package.
+var preliminaryImportName = regexp.MustCompile(`(^|[\s])import\s+(?:[_a-zA-Z][_a-zA-Z0-9]*\s*)?(?:\.\s*|\([^)"]*\)\s*)?"([_a-zA-Z][_a-zA-Z0-9/-]*)"`)
+
 // preliminarystage performs a first pass for the CX cxgo. Globals, packages and
 // custom types are added to `cxpartialparsing.Program`.
 // It returns the number of syntax errors and the packages the files declare.
@@ -47,7 +52,6 @@ func Preliminarystage(srcStrs, srcNames []string) (int, []*ast.CXPackage) {
 	reBodyClose := regexp.MustCompile("}")
 
 	reImp := regexp.MustCompile("import")
-	reImpName := regexp.MustCompile(`(^|[\s])import\s+"([_a-zA-Z][_a-zA-Z0-9/-]*)"`)
 
 	profiling.StartProfile("1. packages/structs")
 	// 1. Identify all the packages and structs
@@ -185,7 +189,7 @@ func Preliminarystage(srcStrs, srcNames []string) (int, []*ast.CXPackage) {
 					continue
 				}
 
-				if match := reImpName.FindSubmatchIndex(line); match != nil {
+				if match := preliminaryImportName.FindSubmatchIndex(line); match != nil {
 					pkgName := string(line[match[len(match)-2]:match[len(match)-1]])
 					// Checking if `pkgName` already exists and if it's not a standard library package.
 					if _, err := cxpartialparsing.Program.GetPackage(preliminaryImportIdent(cxpartialparsing.Program, pkgName)); err != nil && !cxpackages.IsBuiltinImport(pkgName) && !cxpartialparsing.Program.CXProgramImportFailed(preliminaryImportIdent(cxpartialparsing.Program, pkgName)) {
@@ -387,10 +391,10 @@ func preliminaryImport(prgrm *ast.CXProgram, path string, sourceCode []*os.File,
 	for index := range fileNames {
 		fileNames[index] = preliminaryImportPath(fileNames[index])
 	}
-	records := len(prgrm.CxIrState.CompileErrorList.CompileErrorListRecords)
+	records := prgrm.CXProgramCompileErrorCount()
 	// The error return also counts the errors recorded before the import.
 	parseSourceStrings(sources, fileNames)
-	if len(prgrm.CxIrState.CompileErrorList.CompileErrorListRecords) == records {
+	if prgrm.CXProgramCompileErrorCount() == records {
 		return
 	}
 	ident := preliminaryImportIdent(prgrm, path)

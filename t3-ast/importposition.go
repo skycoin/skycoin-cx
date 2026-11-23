@@ -29,3 +29,24 @@ func (prgrm *CXProgram) CXProgramImportPositionAdd(pkg stringpool.StringGid, nam
 	}
 	prgrm.ImportPositions[key] = position
 }
+
+// CXProgramImportScoped is an import into scope of #487. Package
+// ImportScopedPackage may name the members of package ImportScopedSource
+// without the package name, in the file ImportScopedFile only when
+// ImportScopedFileScope is set. ImportScopedNames lists the members it
+// imports, and nil imports every member.
+type CXProgramImportScoped struct {
+	ImportScopedPackage   stringpool.StringGid
+	ImportScopedSource    stringpool.StringGid
+	ImportScopedFile      SourceFileGid
+	ImportScopedFileScope bool
+	ImportScopedNames     []CXProgramImportScopedName
+	ImportScopedPosition  CXProgramImportPosition
+}
+
+// CXProgramImportScopedName is one name an import into scope lists, at its
+// position.
+type CXProgramImportScopedName struct {
+	ImportScopedNameText     stringpool.StringGid
+	ImportScopedNamePosition CXProgramImportPosition
+}

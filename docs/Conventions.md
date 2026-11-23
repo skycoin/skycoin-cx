@@ -97,13 +97,26 @@ document or check script.
     parameter or result, or a global the function declares, and nothing
     else. Every function lists the globals it uses in a `global`
     statement at the top of its body, its own package's included, and
-    reaches a global of another package only as `package.name`. No name
-    may shadow another: a local, parameter, result, loop variable or `:=`
-    name never has the name of a global, an imported package, a function
-    or a type of its package, or a variable of an enclosing block. The
-    compiler keeps the statements in `t4-actions/scope_globals.go`, checks
-    each use where a body resolves a global (`GetGlobalSymbol`) and each
-    declaration where it enters the symbol table (`UpdateSymbolsTable`).
-    The rules of imports themselves, a package name hidden by another
-    import, follow in #487. See the Global variables and Scopes and
-    shadowing sections of [LanguageGuide.md](../LanguageGuide.md) and #486.
+    reaches a global of another package as `package.name` or through an
+    import into scope. No name may shadow another: a local, parameter,
+    result, loop variable or `:=` name never has the name of a global, an
+    imported package, a function or a type of its package, or a variable
+    of an enclosing block. The compiler keeps the statements in
+    `t4-actions/scope_globals.go`, checks each use where a body resolves
+    a global (`GetGlobalSymbol`) and each declaration where it enters the
+    symbol table (`UpdateSymbolsTable`).
+    `import "pkg"` reaches the members of `pkg` only as `pkg.name`. An
+    import into scope, `import . "pkg"` or `import (a, b) "pkg"` for the
+    package and `import file . "pkg"` or `import file (a, b) "pkg"` for
+    its file, adds the names as shorthands that compile to `pkg.name`. A
+    name brought into scope never masks a local, parameter, result,
+    global, function, type, imported package or name of another import.
+    Masking is a compile error, and a warning in a function under a
+    `//cx:masking warning` directive on the line before it. The compiler
+    keeps the imports in `t4-actions/scope_imports.go`, resolves a
+    shorthand where a body names an identifier (`PrimaryIdentifier`) or
+    a type (`DeclarationSpecifiersStruct`), and checks masking once the
+    declarations of a package are known (`ImportScopedCheck`) and where a
+    local enters the symbol table. See the Global variables, Scopes and
+    shadowing and Imports into scope sections of
+    [LanguageGuide.md](../LanguageGuide.md), #486 and #487.

@@ -136,6 +136,19 @@ const (
 	CompileErrorCodeShadowFunction
 	CompileErrorCodeShadowType
 	CompileErrorCodeShadowVariable
+	// CompileErrorCodeImportMasking is a name that has the name an import into
+	// scope brings in, with the position of that import as operands 2 to 4.
+	// CompileErrorCodeImportMaskingWarning is the same inside a function
+	// under //cx:masking warning, a warning that does not fail the build.
+	CompileErrorCodeImportMasking
+	CompileErrorCodeImportMaskingWarning
+	// CompileErrorCodeImportFormInvalid is an import into scope the compiler
+	// does not accept. Its operand says why.
+	CompileErrorCodeImportFormInvalid
+	// CompileErrorCodeImportNameUnknown is a name an import lists that is not
+	// a global, function or type of the package. Its operands are the name and
+	// the package.
+	CompileErrorCodeImportNameUnknown
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )
@@ -211,7 +224,9 @@ func (prgrm *CXProgram) CXProgramCompileErrorAdd(code CompileErrorCode, file Sou
 // CXProgramCompileErrorAddPosition records a compile error at file, line and
 // column, and records that the program has a compile error.
 func (prgrm *CXProgram) CXProgramCompileErrorAddPosition(code CompileErrorCode, file SourceFileGid, line int, column int, operands CompileErrorOperands) {
-	globals.FoundCompileErrors = true
+	if !CompileErrorCodeWarning(code) {
+		globals.FoundCompileErrors = true
+	}
 	list := &prgrm.CxIrState.CompileErrorList
 	for index := range list.CompileErrorListRecords[:list.CompileErrorListPreliminary] {
 		record := &list.CompileErrorListRecords[index]
@@ -288,4 +303,21 @@ func (prgrm *CXProgram) CXProgramImportFailed(name stringpool.StringGid) bool {
 // parser is at is past the function.
 func (prgrm *CXProgram) CXProgramCompileErrorAddLine(code CompileErrorCode, file SourceFileGid, line int, operands CompileErrorOperands) {
 	prgrm.CXProgramCompileErrorAddPosition(code, file, line, 0, operands)
+}
+
+// CompileErrorCodeWarning reports whether code is a warning, which prints
+// but does not fail the build.
+func CompileErrorCodeWarning(code CompileErrorCode) bool {
+	return code == CompileErrorCodeImportMaskingWarning
+}
+
+// CXProgramCompileErrorCount counts the recorded errors, without warnings.
+func (prgrm *CXProgram) CXProgramCompileErrorCount() int {
+	count := 0
+	for _, record := range prgrm.CxIrState.CompileErrorList.CompileErrorListRecords {
+		if !CompileErrorCodeWarning(record.CompileErrorRecordCode) {
+			count++
+		}
+	}
+	return count
 }

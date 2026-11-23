@@ -16,7 +16,8 @@ type CXPackageMethodKey struct {
 	CXPackageMethodKeyMethod stringpool.StringGid
 }
 
-// Only Used by Affordances in op_aff.go
+// GetFunction returns the function fnName of pkg. A function of an import
+// is reached as pkg.name or through an import into scope, see #487.
 func (pkg *CXPackage) GetFunction(prgrm *CXProgram, fnName stringpool.StringGid) (*CXFunction, error) {
 	if fnIdx, ok := pkg.Functions[fnName]; ok {
 		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
@@ -26,25 +27,7 @@ func (pkg *CXPackage) GetFunction(prgrm *CXProgram, fnName stringpool.StringGid)
 		return fn, nil
 	}
 
-	// now checking in imported packages
-	for _, impIdx := range pkg.Imports {
-		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
-		// Now an arena getter, site S0159.
-		imp, err := prgrm.GetPackageFromArray(impIdx)
-		if err != nil {
-			panic(err)
-		}
-
-		if fnIdx, ok := imp.Functions[fnName]; ok {
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now an arena getter, site S0160.
-			fn := prgrm.GetFunctionFromArray(fnIdx)
-
-			return fn, nil
-		}
-	}
-
-	return nil, fmt.Errorf("function '%s' not found in package '%s' or its imports", prgrm.CXProgramNameText(fnName), prgrm.CXProgramNameText(pkg.Name))
+	return nil, fmt.Errorf("function '%s' not found in package '%s'", prgrm.CXProgramNameText(fnName), prgrm.CXProgramNameText(pkg.Name))
 }
 
 // GetImport ...
@@ -81,27 +64,12 @@ func (pkg *CXPackage) GetMethod(prgrm *CXProgram, receiverName stringpool.String
 	return -1, fmt.Errorf("method '%s.%s' not found in package '%s'", prgrm.CXProgramNameText(receiverName), prgrm.CXProgramNameText(methodName), prgrm.CXProgramNameText(pkg.Name))
 }
 
-// GetStruct ...
+// GetStruct returns the struct strctName of pkg, not one of its imports.
 func (pkg *CXPackage) GetStruct(prgrm *CXProgram, strctName stringpool.StringGid) (*CXStruct, error) {
 	if strctIdx, ok := pkg.Structs[strctName]; ok {
 		// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
 		// Now a pointer into an arena, site S0168.
 		return &prgrm.CXStructs[strctIdx], nil
-	}
-
-	// looking in imports
-	for _, impIdx := range pkg.Imports {
-		// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
-		// Now an arena getter, site S0169.
-		imp, err := prgrm.GetPackageFromArray(impIdx)
-		if err != nil {
-			panic(err)
-		}
-		if strctIdx, ok := imp.Structs[strctName]; ok {
-			// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
-			// Now a pointer into an arena, site S0170.
-			return &prgrm.CXStructs[strctIdx], nil
-		}
 	}
 
 	return nil, fmt.Errorf("struct '%s' not found in package '%s'", prgrm.CXProgramNameText(strctName), prgrm.CXProgramNameText(pkg.Name))

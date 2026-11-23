@@ -1,0 +1,5 @@
+package main
+
+func other() {
+	i32.print(geometry.Distance(geometry.Point{}, geometry.Point{X: 4, Y: 4}))
+}
