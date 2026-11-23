@@ -640,11 +640,16 @@ not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
 
 `core.CoreRegister` registers the opcodes of the core, the built-in ones,
 `LibraryCall` and those of `sys/regexp`, `sys/time` and `os.Exit`
-(`t5-cxos-core`), and no system library. `cx build` refuses a program that
-uses any other opcode and lists them, since build tags are not recorded, and
-a program whose enabled libraries include one it calls. The serialized
-program records the enabled libraries, and the core refuses one that enables
-a library it does not link. The core runs the program on vm when it
+(`t5-cxos-core`), and the system libraries the core links. A library is
+linked by the build tag `cxcorelibraryfile`, `cxcorelibrarynet` or
+`cxcorelibraryprocess`, whose file in `t7-cx-core-run` adds its register
+function. `make build` builds a core for every set, named by
+`buildCoreFileName`, `cx-core-file-net` for file and net. `cx build` keeps
+the enabled libraries the program calls, records them in the serialized
+program and appends it to the core of that set. It refuses a program that
+uses any other opcode and lists them, since build tags are not recorded. The
+core refuses a program that enables a library it does not link, and opens
+the working directory as the sandbox when the file library is enabled. The core runs the program on vm when it
 lowers and on the old loop otherwise, as `cx --executor=auto` does, and
 passes its command line arguments to the program as `os.Args`. It has no
 flags, so the run time flags of cx, `--executor`, `-heap-max`,

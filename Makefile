@@ -13,13 +13,22 @@ endif
 TAGS ?=
 GUI_TAGS := cxfx
 
+# CORE_LIBRARY_SETS are the system library sets of the cx build cores, one
+# core each, cx-core for none and cx-core-file-net for file,net.
+CORE_LIBRARY_SETS := none file net process file,net file,process net,process file,net,process
+
 # names-csv output file and extra repository paths to scan.
 NAMES_CSV ?= bin/names.csv
 REPOS ?=
 
-build: ## Build cx and the cx build core cx-core into ./bin
+build: ## Build cx and the cx build cores, cx-core and one per system library set, into ./bin
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
-	go build -tags="$(TAGS)" -o ./bin/cx-core$(EXE) ./t7-cx-core-run
+	@for set in $(CORE_LIBRARY_SETS); do \
+		suffix=$$(echo "-$$set" | sed "s/^-none$$//; s/,/-/g"); \
+		tags=$$(echo "$$set" | sed "s/^none$$//; s/[a-z][a-z]*/cxcorelibrary&/g; s/,/ /g"); \
+		echo go build -tags=\"$(TAGS) $$tags\" -o ./bin/cx-core$$suffix$(EXE) ./t7-cx-core-run; \
+		go build -tags="$(TAGS) $$tags" -o ./bin/cx-core$$suffix$(EXE) ./t7-cx-core-run || exit 1; \
+	done
 
 build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/GL headers)
 	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/$(CXEXE) ./t11-cx

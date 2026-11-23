@@ -10,10 +10,17 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t0-util"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer" // thin: only PrinterCompileErrorsRegister; no depth gain
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
 )
+
+// coreLibraryRegisters register the system libraries linked into this core.
+// The library_*.go files add them by build tag, cxcorelibraryfile,
+// cxcorelibrarynet and cxcorelibraryprocess.
+var coreLibraryRegisters []func(prgrm *ast.CXProgram)
 
 func main() {
 	os.Exit(int(coreRun(os.Args[1:])))
@@ -41,7 +48,7 @@ func coreRun(args []string) int32 {
 		return types.CX_COMPILATION_ERROR
 	}
 
-	core.CoreRegister(core.CoreProgramMake())
+	core.CoreRegister(core.CoreProgramMake(), coreLibraryRegisters...)
 	prgrm, err := ast.Deserialize(program, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cx-core: %s\n", err)
@@ -55,6 +62,17 @@ func coreRun(args []string) int32 {
 	if missing := core.CoreLibrariesMissing(prgrm); len(missing) > 0 {
 		fmt.Fprintf(os.Stderr, "cx-core: the program enables system libraries this core does not link: %s\n", strings.Join(missing, ", "))
 		return types.CX_COMPILATION_ERROR
+	}
+	if prgrm.ProgramLibrariesEnabled[constants.LibraryNumberFile] {
+		// The file library resolves paths in the working directory, as cx
+		// does without --sandbox. The core has no flags to name another.
+		root, fileError := util.ProgramSandboxRootOpen("")
+		if fileError != nil {
+			fmt.Fprintf(os.Stderr, "cx-core: cannot open the sandbox: %s\n", fileError.FileErrorMessage)
+			return types.CX_COMPILATION_ERROR
+		}
+		defer root.Close()
+		prgrm.ProgramSandboxRoot = root
 	}
 	printer.PrinterCompileErrorsRegister(prgrm)
 	prgrm.ProgramStdinInit(os.Stdin)

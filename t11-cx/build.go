@@ -18,8 +18,8 @@ import (
 // "cx build" in README.md.
 const buildCommand = "build"
 
-// buildCoreName is the file name of the core binary that cx build looks for
-// next to cx when --core is not given.
+// buildCoreName starts the file name of every core binary, see
+// buildCoreFileName.
 const buildCoreName = "cx-core"
 
 // buildOptions holds the flags of cx build. buildOptionsCompile are the
@@ -43,23 +43,6 @@ func buildRun(args []string) int {
 	if problem != "" {
 		return buildFail(problem + ", see cx build --help")
 	}
-	corePath, problem := buildCorePath(options.buildOptionsCore)
-	if problem != "" {
-		return buildFail(problem)
-	}
-	if buildPathSame(corePath, options.buildOptionsOutput) {
-		return buildFail(fmt.Sprintf("the output %s is the core binary", options.buildOptionsOutput))
-	}
-	coreBinary, err := os.ReadFile(corePath)
-	if err != nil {
-		return buildFileFail(util.FileErrorWrap(util.FileOperationRead, corePath, err))
-	}
-	if len(coreBinary) >= core.CoreTrailerSize {
-		if _, found, _ := core.CoreTrailerDecode(coreBinary[len(coreBinary)-core.CoreTrailerSize:], uint64(len(coreBinary))); found {
-			return buildFail(fmt.Sprintf("%s is a built program, not a core binary", corePath))
-		}
-	}
-
 	coreOpcodes := core.CoreOpcodeSet()
 	compileOptions, cxArgs, sourceCode, fileNames, start := runStart(options.buildOptionsCompile)
 	if !start {
@@ -88,8 +71,22 @@ func buildRun(args []string) int {
 	for library, enabled := range actions.AST.ProgramLibrariesEnabled {
 		actions.AST.ProgramLibrariesEnabled[library] = enabled && actions.AST.ProgramLibrariesUsed[library]
 	}
-	if enabled := core.CoreLibraryNames(actions.AST.ProgramLibrariesEnabled); len(enabled) > 0 {
-		return buildFail(fmt.Sprintf("the core links no system library, and the program calls the enabled libraries: %s", strings.Join(enabled, ", ")))
+	libraries := core.CoreLibraryNames(actions.AST.ProgramLibrariesEnabled)
+	corePath, problem := buildCorePath(options.buildOptionsCore, libraries)
+	if problem != "" {
+		return buildFail(problem)
+	}
+	if buildPathSame(corePath, options.buildOptionsOutput) {
+		return buildFail(fmt.Sprintf("the output %s is the core binary", options.buildOptionsOutput))
+	}
+	coreBinary, err := os.ReadFile(corePath)
+	if err != nil {
+		return buildFileFail(util.FileErrorWrap(util.FileOperationRead, corePath, err))
+	}
+	if len(coreBinary) >= core.CoreTrailerSize {
+		if _, found, _ := core.CoreTrailerDecode(coreBinary[len(coreBinary)-core.CoreTrailerSize:], uint64(len(coreBinary))); found {
+			return buildFail(fmt.Sprintf("%s is a built program, not a core binary", corePath))
+		}
 	}
 
 	program, err := ast.SerializeCXProgram(actions.AST, true, nil)
@@ -149,21 +146,38 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 	return options, ""
 }
 
-// buildCorePath returns the core binary to use: path, or cx-core next to the
-// running cx when path is empty.
-func buildCorePath(path string) (string, string) {
-	if path != "" {
-		return path, ""
-	}
-	executable, err := os.Executable()
-	if err != nil {
-		return "", fmt.Sprintf("cannot find the cx executable to look for %s next to it, give the core with --core: %s", buildCoreName, err)
-	}
-	name := buildCoreName
+// buildCoreFileName returns the file name of the core that links exactly
+// libraries, in number order: cx-core, then -<library> for each, so
+// cx-core-file-net links file and net. make build builds every one.
+func buildCoreFileName(libraries []string) string {
+	name := strings.Join(append([]string{buildCoreName}, libraries...), "-")
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	return filepath.Join(filepath.Dir(executable), name), ""
+	return name
+}
+
+// buildCorePath returns the core binary to use for a program that enables
+// libraries. A path that names a file is the core. A directory, or the
+// directory of the running cx when path is empty, holds the cores by
+// buildCoreFileName.
+func buildCorePath(path string, libraries []string) (string, string) {
+	if info, err := os.Stat(path); path != "" && (err != nil || !info.IsDir()) {
+		return path, ""
+	}
+	directory := path
+	if directory == "" {
+		executable, err := os.Executable()
+		if err != nil {
+			return "", fmt.Sprintf("cannot find the cx executable to look for %s next to it, give the core with --core: %s", buildCoreFileName(libraries), err)
+		}
+		directory = filepath.Dir(executable)
+	}
+	corePath := filepath.Join(directory, buildCoreFileName(libraries))
+	if _, err := os.Stat(corePath); err != nil {
+		return "", fmt.Sprintf("no core %s, which links the enabled libraries the program calls, build the cores with make build or give one with --core", corePath)
+	}
+	return corePath, ""
 }
 
 // buildPathSame reports whether first and second name the same file.
@@ -190,12 +204,16 @@ core binary, the serialized program and a trailer. The core runs the program
 and passes its own command line arguments to it as os.Args.
 
 -o, --output path   The executable file to write.
---core path         The core binary, by default %s next to cx.
+--core path         The core binary, or a directory of cores. By default the
+                    core next to cx that links the libraries the program
+                    calls and --enable enables, %s for none,
+                    %s-file-net for file and net.
 
-The core has no parser, no system library and no module outside the Go
-standard library. A program that uses an opcode the core does not include is
-refused with the list of those opcodes, and so is a program that enables a
-system library it calls, see --enable. A library that is not enabled stays
-out of the built program, and a call into it is a runtime error.
-`, buildCoreName)
+The core has no parser and no module outside the Go standard library. It
+links a system library only when the program calls it and --enable enables
+it, and the built program records the libraries it was built with. A call
+into a library that was not enabled is a runtime error. A program that uses
+an opcode the core does not include is refused with the list of those
+opcodes.
+`, buildCoreName, buildCoreName)
 }

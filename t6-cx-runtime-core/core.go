@@ -20,14 +20,18 @@ import (
 )
 
 // CoreRegister adds the native packages of the core to prgrm and their
-// opcodes to the global tables. It leaves out every system library (t5-cxos,
+// opcodes to the global tables, and the system libraries that
+// libraryRegisters register. It leaves out every other library (t5-cxos,
 // t5-tcp) and every opcode that needs a module outside the standard library
 // (t5-cipher, t6-cxfx). The built-in opcodes come last, as in cx.
-func CoreRegister(prgrm *ast.CXProgram) {
+func CoreRegister(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgram)) {
 	cxoscore.RegisterPackage(prgrm)
 	printer.PrinterOpcodesRegister(prgrm)
 	printer.PrinterCompileErrorsRegister(prgrm)
 	regexp.RegisterPackage(prgrm)
+	for _, register := range libraryRegisters {
+		register(prgrm)
+	}
 	opcodes.RegisterOpcodes(prgrm)
 }
 

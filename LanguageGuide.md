@@ -3650,8 +3650,8 @@ cx build hello.cx -o hello
 
 Several files and the compile flags of cx are given as they are to cx,
 `cx build --cxpath ws main.cx util.cx -o app`. `-o` names the output, on
-Windows with `.exe`, and `--core path` the core binary, by default `cx-core`
-next to cx, which `make build` builds.
+Windows with `.exe`, and `--core path` the core binary or a directory of
+cores, by default the directory of cx, where `make build` builds them.
 
 The output is the core binary with the serialized program and a trailer
 appended. The core is a minimum interpreter with no parser. At start up it
@@ -3662,17 +3662,22 @@ reach the program unchanged as `os.Args`, so `./hello ++a` sees what
 `-heap-max`, are not recorded and take their defaults.
 
 The core includes the built-in functions, `sys/string`, `sys/regexp`,
-`sys/time`, `os.Exit` of `sys/os` and the `LibraryCall` opcode, but no
-[system library](#system-libraries). A program that calls `cipher`, `gl`
-or another opcode outside the core is refused, and so is one built with
-`--enable` for a library it calls. A library that is not enabled stays out
-of the built program, and a call into it is the runtime error
-`CX_RUNTIME_LIBRARY_DISABLED`, as under cx.
+`sys/time`, `os.Exit` of `sys/os` and the `LibraryCall` opcode. A
+[system library](#system-libraries) is linked only when the program calls
+it and `--enable` enables it, so there is one core per set of libraries,
+`cx-core` for none, `cx-core-file`, `cx-core-file-net` and so on, and
+`cx build` picks the one for the program.
 
 ```
-cx build: the core links no system library, and the program calls the enabled libraries: file
+cx build --enable=file,net client.cx -o client
 ```
 
+The built program records the libraries it was built with and runs with
+exactly those. A library that is not enabled stays out of it, and a call
+into it is the runtime error `CX_RUNTIME_LIBRARY_DISABLED`, as under cx.
+The file library resolves paths in the working directory, as `cx` does
+without `--sandbox`. A program that calls `cipher`, `gl` or another opcode
+outside the core is refused.
 Every `cx build` failure exits with `CX_COMPILATION_ERROR` (1). A core with
 no program appended, or one whose trailer is damaged, prints a message and
 exits with the same code.

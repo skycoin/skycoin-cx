@@ -98,22 +98,24 @@ make build
 ./hello
 ```
 
-The file is the core binary `bin/cx-core`, which `make build` builds next to
+The file is a core binary from `bin/`, which `make build` builds next to
 `cx`, with the compiled program and a trailer appended. The core reads the
 program from the end of its own file at start up and runs it, passing its
 command line arguments to the program as `os.Args`. Give another core with
-`--core path`. On Windows name the output `hello.exe`. The trailer is
+`--core path`, a core or a directory of cores. On Windows name the output `hello.exe`. The trailer is
 described in "Built programs" in [docs/IR.md](docs/IR.md#built-programs).
 
 The core is a minimum interpreter. It holds the deserializer, the executors,
 the memory manager, the opcodes that need no module outside the Go standard
-library and the `LibraryCall` dispatcher, but no system library, so no file,
-network or process access. It has no parser and loads no source, and
-`TestCoreImports` in `t7-cx-core-run` fails when it imports anything else.
-`cx build` refuses a program that uses an opcode the core leaves out, such
-as `cipher` or `gl`, and lists those opcodes. It also refuses a program built
-with `--enable` for a system library it calls, see System libraries in
-[LanguageGuide.md](LanguageGuide.md#system-libraries).
+library and the `LibraryCall` dispatcher. It links a system library, file,
+net or process, only when the program calls it and `--enable` enables it,
+so `make build` builds one core per set of libraries, `cx-core` for none,
+`cx-core-file`, `cx-core-file-net` and so on, and `cx build --enable=file
+program.cx -o program` picks `cx-core-file`. See System libraries in
+[LanguageGuide.md](LanguageGuide.md#system-libraries). It has no parser and
+loads no source, and `TestCoreImports` in `t7-cx-core-run` fails when it
+imports anything else. `cx build` refuses a program that uses an opcode the
+core leaves out, such as `cipher` or `gl`, and lists those opcodes.
 The run time flags of cx, such as `--executor` and `-heap-max`, are not
 recorded and take their defaults.
 

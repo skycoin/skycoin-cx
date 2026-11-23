@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-// coreImportsAllowed are the packages of this module the core may import.
-// Every other import must be of the Go standard library, so no parser, no
-// file system opcodes and no outside module can enter the core.
+// coreImportsAllowed are the packages of this module the core without a
+// system library may import. Every other import must be of the Go standard
+// library, so no parser, no system library and no outside module can enter
+// the core.
 var coreImportsAllowed = map[string]bool{
 	"t0-cx-core-assert":     true,
 	"t0-packages":           true,
@@ -37,12 +38,29 @@ var coreImportsAllowed = map[string]bool{
 // brings them in.
 var coreStandardDenied = map[string]bool{"net": true, "os/exec": true, "net/http": true, "net/rpc": true, "crypto/tls": true}
 
-// TestCoreImports fails when the core's transitive imports, with the default
-// and the ptr64 tags, include a package outside the Go standard library and
-// coreImportsAllowed, or a package of coreStandardDenied.
+// coreLibraryImports are the packages of this module each system library
+// adds to the core, by its build tag.
+var coreLibraryImports = map[string][]string{
+	"cxcorelibraryfile":    {"t1-profiling", "t5-cxos"},
+	"cxcorelibrarynet":     {"t5-tcp"},
+	"cxcorelibraryprocess": {"t1-profiling", "t5-cxos"},
+}
+
+// TestCoreImports fails when the transitive imports of the core, with the
+// default and the ptr64 tags, include a package outside the Go standard
+// library and coreImportsAllowed, or a package of coreStandardDenied. With the
+// tag of a system library the core may import its coreLibraryImports and
+// the standard library it needs.
 func TestCoreImports(t *testing.T) {
 	const module = "github.com/skycoin/skycoin-cx/"
-	for _, tags := range []string{"", "ptr64"} {
+	for _, tags := range []string{"", "ptr64", "cxcorelibraryfile", "cxcorelibrarynet", "cxcorelibraryprocess ptr64", "cxcorelibraryfile cxcorelibrarynet cxcorelibraryprocess"} {
+		allowed := map[string]bool{}
+		library := false
+		for _, tag := range strings.Fields(tags) {
+			for _, name := range coreLibraryImports[tag] {
+				allowed[name], library = true, true
+			}
+		}
 		out, err := exec.Command("go", "list", "-deps", "-tags", tags, "-f", "{{.Standard}} {{.ImportPath}}", ".").CombinedOutput()
 		if err != nil {
 			t.Fatalf("go list -tags %q: %v\n%s", tags, err, out)
@@ -50,12 +68,12 @@ func TestCoreImports(t *testing.T) {
 		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 			standard, path, _ := strings.Cut(line, " ")
 			if standard == "true" {
-				if coreStandardDenied[path] {
+				if coreStandardDenied[path] && !library {
 					t.Errorf("tags %q: the core imports %s, which only a system library may bring in", tags, path)
 				}
 				continue
 			}
-			if name, found := strings.CutPrefix(path, module); !found || !coreImportsAllowed[name] {
+			if name, found := strings.CutPrefix(path, module); !found || !coreImportsAllowed[name] && !allowed[name] {
 				t.Errorf("tags %q: the core imports %s, which is outside the standard library and the allowed packages", tags, path)
 			}
 		}

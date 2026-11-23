@@ -233,7 +233,7 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 	// Init 4: cx.* constants in actions.ConstCodes
 	actions.InitConstants()
 	// Init 5: os.* constants (empty with nocxos)
-	cxos.InitConstants()
+	cxos.InitConstants(actions.AddConstI32)
 	// Init 6: gl, glfw and al constants (empty without cxfx)
 	cxfx.InitConstants()
 	// Init 7: actions.AST, the program state

@@ -18,7 +18,7 @@ const hello = "package main\nimport \"sys/string\"\nfunc main() {\n\tstring.Prin
 
 func TestMain(m *testing.M) {
 	actions.InitConstants()
-	cxos.InitConstants()
+	cxos.InitConstants(actions.AddConstI32)
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0011 S0012.
 	actions.AST = cxinit.MakeProgram()
