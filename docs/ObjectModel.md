@@ -475,9 +475,16 @@ compiling between statements, so it does not freeze. `CxIrStateInit`
 interns `main` and `*init`, so the compiler compares with them
 after the freeze too.
 
-`CXPackage.Name`, `CXFunction.Name` and `CXStruct.Name` are `StringGid`.
-The other name fields, and the string keyed maps of packages, functions
-and structs, are still strings until the later steps of #413.
+Every name field of the IR is a `StringGid`: the names of packages,
+functions, structs, arguments, type signatures, labels and local
+variables, the line text, and the names of imports, imports into scope
+and global statements. The maps of packages, imports, functions, structs
+and methods are keyed by name Gids. The compiler finds a built-in opcode,
+library function or constant by the name Gids of its parts with
+`CXProgramNativeFind`, which compares the bytes once against the sorted
+names of `ast.NativeNames` or `actions.ConstNames` and caches the result
+by Gids. No map of the IR is keyed by text. The lexer's keyword tables and
+the pool's own index, which `StringPoolFreeze` drops, read text.
 
 ### Source files
 

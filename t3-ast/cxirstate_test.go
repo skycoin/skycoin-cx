@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
 const objmodelTestCaseEnv = "CX_OBJMODEL_TEST_CASE"
@@ -49,12 +50,12 @@ func TestCxIrState(t *testing.T) {
 	if len(lens) != 14 {
 		t.Fatalf("%d managers, want 14", len(lens))
 	}
-	seen := map[string]bool{}
+	seen := map[objmodel.TypeTag]bool{}
 	for _, managerLen := range lens {
-		if seen[managerLen.Name] || managerLen.Len != 0 {
-			t.Fatalf("manager %s repeated or not empty", managerLen.Name)
+		if seen[managerLen.TypeTag] || managerLen.Len != 0 || objmodel.GidTypeTagNameTable[managerLen.TypeTag] == "" {
+			t.Fatalf("manager of tag %#x repeated, not empty or unnamed", managerLen.TypeTag)
 		}
-		seen[managerLen.Name] = true
+		seen[managerLen.TypeTag] = true
 	}
 
 	program := state.CXProgramMng.CXProgramAlloc()
@@ -69,7 +70,7 @@ func TestCxIrState(t *testing.T) {
 	state.CxIrStateTeardown2()
 	for _, managerLen := range state.CxIrStateManagerLens() {
 		if managerLen.Len != 0 {
-			t.Fatalf("manager %s has Len %d after teardown", managerLen.Name, managerLen.Len)
+			t.Fatalf("manager %s has Len %d after teardown", objmodel.GidTypeTagNameTable[managerLen.TypeTag], managerLen.Len)
 		}
 	}
 	if state.CXProgramMng.CXProgramCap() != 0 || state.CXCallMng.CXCallCap() != 0 {

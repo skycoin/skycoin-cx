@@ -6,22 +6,29 @@ import (
 )
 
 // ScopeGlobalName is one name of a global statement, `counter` or
-// `config.Limit`, at its position. Package is empty for the own package.
+// `config.Limit`, at its position. Package is StringGidNil for the own
+// package.
 type ScopeGlobalName struct {
-	Package string
-	Name    string
+	Package stringpool.StringGid
+	Name    stringpool.StringGid
 	Line    int
 	Column  int
 }
 
-// scopeGlobalDeclaration is a global a function declared, with the
-// position of its name and whether the body used it.
+// scopeGlobalDeclaration is a global a function declared, the name as
+// written with its position, and whether the body used it.
 type scopeGlobalDeclaration struct {
-	key    SymbolsDataKey
-	text   string
-	line   int
-	column int
-	used   bool
+	key  SymbolsDataKey
+	name ScopeGlobalName
+	used bool
+}
+
+// scopeGlobalNameText returns the name as written, for an error.
+func scopeGlobalNameText(prgrm *ast.CXProgram, name ScopeGlobalName) string {
+	if name.Package == stringpool.StringGidNil {
+		return prgrm.CXProgramNameText(name.Name)
+	}
+	return prgrm.CXProgramNameText(name.Package) + "." + prgrm.CXProgramNameText(name.Name)
 }
 
 // scopeGlobalsState holds the global statements of the function being
@@ -70,36 +77,33 @@ func ScopeGlobalsDeclare(prgrm *ast.CXProgram, names []ScopeGlobalName, braceDep
 		panic(err)
 	}
 	for _, name := range names {
-		text := name.Name
 		target := pkg
-		if name.Package != "" {
-			text = name.Package + "." + name.Name
-			imported, err := pkg.GetImport(prgrm, prgrm.CXProgramNameIntern(name.Package))
+		if name.Package != stringpool.StringGidNil {
+			imported, err := pkg.GetImport(prgrm, name.Package)
 			if err != nil {
-				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationPackageMissing, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(name.Package), prgrm.CXProgramCompileErrorText(text)})
+				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationPackageMissing, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{int64(name.Package), prgrm.CXProgramCompileErrorText(scopeGlobalNameText(prgrm, name))})
 				continue
 			}
 			target = imported
 		}
-		nameGid := prgrm.CXProgramNameIntern(name.Name)
 		// A global an import into scope brings in is declared by its name alone.
-		if name.Package == "" {
-			if source := importScopedGlobalPackage(prgrm, pkg, nameGid); source != nil {
+		if name.Package == stringpool.StringGidNil {
+			if source := importScopedGlobalPackage(prgrm, pkg, name.Name); source != nil {
 				target = source
 			}
 		}
-		if _, err := target.GetGlobal(prgrm, nameGid); err != nil {
+		if _, err := target.GetGlobal(prgrm, name.Name); err != nil {
 			if !prgrm.CXProgramImportFailed(target.Name) {
-				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationMissing, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(text), int64(target.Name)})
+				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationMissing, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(scopeGlobalNameText(prgrm, name)), int64(target.Name)})
 			}
 			continue
 		}
-		key := SymbolsDataKey{SymbolsDataKeyPackage: target.Name, SymbolsDataKeyName: nameGid}
+		key := SymbolsDataKey{SymbolsDataKeyPackage: target.Name, SymbolsDataKeyName: name.Name}
 		if scopeGlobalsDeclared(key) != nil {
-			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationRepeated, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(text)})
+			prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclarationRepeated, CurrentFile, name.Line, name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(scopeGlobalNameText(prgrm, name))})
 			continue
 		}
-		scopeGlobals.declarations = append(scopeGlobals.declarations, scopeGlobalDeclaration{key: key, text: text, line: name.Line, column: name.Column})
+		scopeGlobals.declarations = append(scopeGlobals.declarations, scopeGlobalDeclaration{key: key, name: name})
 	}
 }
 
@@ -154,7 +158,7 @@ func scopeGlobalsEnd(prgrm *ast.CXProgram) {
 		fn := prgrm.GetFunctionFromArray(scopeGlobals.function)
 		for _, declaration := range scopeGlobals.declarations {
 			if !declaration.used {
-				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclaredUnused, fn.FileName, declaration.line, declaration.column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(declaration.text), int64(fn.Name)})
+				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclaredUnused, fn.FileName, declaration.name.Line, declaration.name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(scopeGlobalNameText(prgrm, declaration.name)), int64(fn.Name)})
 			}
 		}
 		scopeGlobals = scopeGlobalsState{}

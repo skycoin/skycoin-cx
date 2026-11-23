@@ -2700,13 +2700,13 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:1517
 		{
-			yyVAL.scopeGlobalNames = []actions.ScopeGlobalName{{Name: yyDollar[1].tok, Line: yyDollar[1].line, Column: yyDollar[1].column}}
+			yyVAL.scopeGlobalNames = []actions.ScopeGlobalName{{Name: actions.AST.CXProgramNameIntern(yyDollar[1].tok), Line: yyDollar[1].line, Column: yyDollar[1].column}}
 		}
 	case 287:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line t8-cxparsingcompletor/parsingcompletor.y:1521
 		{
-			yyVAL.scopeGlobalNames = []actions.ScopeGlobalName{{Package: yyDollar[1].tok, Name: yyDollar[3].tok, Line: yyDollar[1].line, Column: yyDollar[1].column}}
+			yyVAL.scopeGlobalNames = []actions.ScopeGlobalName{{Package: actions.AST.CXProgramNameIntern(yyDollar[1].tok), Name: actions.AST.CXProgramNameIntern(yyDollar[3].tok), Line: yyDollar[1].line, Column: yyDollar[1].column}}
 		}
 	case 288:
 		yyDollar = yyS[yypt-1 : yypt+1]

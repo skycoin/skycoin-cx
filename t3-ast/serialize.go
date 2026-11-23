@@ -148,21 +148,21 @@ func encodeCXProgram(prgrm *CXProgram, includeMemory bool) ([]byte, SerializedDa
 // fills yet holds an object, since the serialized form does not carry it.
 func serializeUnusedManagersCheck(state *CxIrState) error {
 	unused := []struct {
-		name string
-		used bool
+		typeTag objmodel.TypeTag
+		used    bool
 	}{
-		{"CXProgramMng", state.CXProgramMng.CXProgramMngNext != 0},
-		{"CXPackageMng", state.CXPackageMng.CXPackageMngNext != 0},
-		{"CXFunctionMng", state.CXFunctionMng.CXFunctionMngNext != 0},
-		{"CXNativeFunctionMng", state.CXNativeFunctionMng.CXNativeFunctionMngNext != 0},
-		{"CXStructMng", state.CXStructMng.CXStructMngNext != 0},
-		{"CXExpressionMng", state.CXExpressionMng.CXExpressionMngNext != 0},
-		{"CXAtomicOperatorMng", state.CXAtomicOperatorMng.CXAtomicOperatorMngNext != 0},
-		{"CXCallMng", state.CXCallMng.CXCallMngNext != 0},
+		{CXProgramGidTypeTag, state.CXProgramMng.CXProgramMngNext != 0},
+		{CXPackageGidTypeTag, state.CXPackageMng.CXPackageMngNext != 0},
+		{CXFunctionGidTypeTag, state.CXFunctionMng.CXFunctionMngNext != 0},
+		{CXNativeFunctionGidTypeTag, state.CXNativeFunctionMng.CXNativeFunctionMngNext != 0},
+		{CXStructGidTypeTag, state.CXStructMng.CXStructMngNext != 0},
+		{CXExpressionGidTypeTag, state.CXExpressionMng.CXExpressionMngNext != 0},
+		{CXAtomicOperatorGidTypeTag, state.CXAtomicOperatorMng.CXAtomicOperatorMngNext != 0},
+		{CXCallGidTypeTag, state.CXCallMng.CXCallMngNext != 0},
 	}
 	for _, manager := range unused {
 		if manager.used {
-			return fmt.Errorf("cannot serialize the program: %s holds objects and the serialized form does not carry them yet", manager.name)
+			return fmt.Errorf("cannot serialize the program: %sMng holds objects and the serialized form does not carry them yet", objmodel.GidTypeTagNameTable[manager.typeTag])
 		}
 	}
 	return nil

@@ -1515,11 +1515,11 @@ global_names:
 global_name:
                 IDENTIFIER
                 {
-			$$ = []actions.ScopeGlobalName{{Name: $1, Line: $<line>1, Column: $<column>1}}
+			$$ = []actions.ScopeGlobalName{{Name: actions.AST.CXProgramNameIntern($1), Line: $<line>1, Column: $<column>1}}
                 }
         |       IDENTIFIER PERIOD IDENTIFIER
                 {
-			$$ = []actions.ScopeGlobalName{{Package: $1, Name: $3, Line: $<line>1, Column: $<column>1}}
+			$$ = []actions.ScopeGlobalName{{Package: actions.AST.CXProgramNameIntern($1), Name: actions.AST.CXProgramNameIntern($3), Line: $<line>1, Column: $<column>1}}
                 }
                 ;
 
