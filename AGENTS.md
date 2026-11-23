@@ -20,6 +20,9 @@ prefixed, and they use Java type name style (UpperCamelCase).
 - Abbreviations are allowed only where they are the usual name, such as `ID`,
   `UDP` or `JSON`.
 
+`make names-csv` lists every declared Go and CX name with its file, line and
+kind, for review. Add `REPOS="../skycoin-cx-forth"` to scan more repositories.
+
 ## Changes
 
 - `make check` passes before every push.

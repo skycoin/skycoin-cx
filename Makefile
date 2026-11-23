@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel check build-parser bench-compare clean help
+.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -12,6 +12,10 @@ endif
 # nocxos, noregexp. ptr64 switches the VM to 64 bit pointers.
 TAGS ?=
 GUI_TAGS := cxfx
+
+# names-csv output file and extra repository paths to scan.
+NAMES_CSV ?= bin/names.csv
+REPOS ?=
 
 build: ## Build cx and the cx build core cx-core into ./bin
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
@@ -72,6 +76,10 @@ check-objmodel: ## Check the object model rules of docs/ObjectModel.md and that 
 
 check-gcreach: ## Check that the vm and IR base stay GC free and every other GC reach has a GCREACH comment, see docs/GarbageCollector.md
 	./check-gcreach.sh
+
+names-csv: ## Write one CSV row per declared Go and CX name to NAMES_CSV, for skycoin-cx and the repositories in REPOS
+	mkdir -p $(dir $(NAMES_CSV))
+	go run ./t0-cx-tools-names -out $(NAMES_CSV) . $(REPOS)
 
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
