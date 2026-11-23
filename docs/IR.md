@@ -606,8 +606,8 @@ after one, so a program only loads in a build with its pointer size
 ### What is not included
 
 * The run time fields `RuntimeError`, `CompileErrorPrint`,
-  `ProgramSandboxRoot`, `ProgramStdin`, `ProgramFormatBuffer` and
-  `ProgramError`, and the
+  `ProgramSandboxRoot`, `ProgramStdin`, `ProgramFormatBuffer`,
+  `ProgramInputValues`, `ProgramOutputValues` and `ProgramError`, and the
   collector state `Heap.Pressure`, `Heap.PressureLimit`, `Heap.Types`,
   `Heap.Roots` and `Heap.Collector`, see [GarbageCollector.md](GarbageCollector.md).
 * `CxIrState.CompileErrorList`. A program with compile errors does not

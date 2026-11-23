@@ -97,6 +97,7 @@ func opStrToF64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 	outputs[0].Set_f64(prgrm, float64(outV0))
 }
 
+// VIOLATION VMALLOC-022: appending grows the format buffer past its size, once, #407.
 func opStrPrint(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	printFormattedLine(prgrm, append(formatBuffer(prgrm), inputs[0].Get_str_bytes(prgrm)...))
 }

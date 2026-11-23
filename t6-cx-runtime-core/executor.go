@@ -146,6 +146,7 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 		}
 	}
 
+	execute.RunPrepare(prgrm)
 	if err := execute.RunCompiled(prgrm, 0, cxArgs); err != nil {
 		panic(err)
 	}

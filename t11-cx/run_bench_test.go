@@ -3,7 +3,9 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
+	"strings"
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
@@ -125,26 +127,19 @@ func main() {
 `
 
 // runBenchPrograms are count, fib, bubble sort, the fixed array sort and the
-// struct walk plus the BenchmarkCompile programs.
-// The ceilings are the counts measured when the test was added. The target
-// is 0, see #407.
+// struct walk plus the BenchmarkCompile programs. A run allocates nothing
+// (#407), except test-gc.cx, whose collections grow the Go scratch of the CX
+// collector and build its root table (VMALLOC-011).
 func runBenchPrograms(tb testing.TB) []runBenchProgram {
 	programs := []runBenchProgram{
-		{"count", runCountSource, 7},
-		{"fib", runFibSource, 6},
-		{"bubble", runBubbleSource, 7},
-		{"array", runArraySource, 7},
-		{"struct", runStructSource, 7},
+		{"count", runCountSource, 0},
+		{"fib", runFibSource, 0},
+		{"bubble", runBubbleSource, 0},
+		{"array", runArraySource, 0},
+		{"struct", runStructSource, 0},
 	}
 	ceilings := map[string]float64{
-		"examples/hello-world.cx":         6,
-		"examples/bubble-sort.cx":         9,
-		"examples/fibonacci-recursive.cx": 8,
-		"test-array.cx":                   7,
-		"test-slices.cx":                  7,
-		// One more than before, the first growth of the format buffer.
-		"examples/testing-pointers-to-arrays-of-structs.cx": 7,
-		"test-gc.cx": 98,
+		"test-gc.cx": 90,
 	}
 	for _, programPath := range compileBenchmarkPrograms {
 		source, err := os.ReadFile(filepath.Join("..", "tests", programPath))
@@ -207,6 +202,7 @@ func BenchmarkRun(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
 				compileRunProgram(b, p)
+				execute.RunPrepare(actions.AST)
 				b.StartTimer()
 				if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
 					b.Fatal(err)
@@ -217,21 +213,22 @@ func BenchmarkRun(b *testing.B) {
 }
 
 // TestRunAllocs fails when the allocations of execute.RunCompiled go above
-// the recorded ceiling. Each run gets its own compile, made before
-// AllocsPerRun starts, so it is a first run as cx makes it. The target is 0
-// allocations per run (#407).
+// the ceiling, 0 but for test-gc.cx (#407). Each run gets its own compile and
+// RunPrepare, made before AllocsPerRun starts, so it is a first run as cx
+// makes it.
 func TestRunAllocs(t *testing.T) {
 	const runs = 3
 	// A collection during a run adds allocations that vary with timing, for
-	// example by emptying sync.Pool caches. #407 asks for no GC during a run.
+	// example by emptying sync.Pool caches. TestRunNoGC checks there is none.
 	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 	initProgram()
-	for _, p := range runBenchPrograms(t) {
+	for _, p := range append(runBenchPrograms(t), runComparePrograms(t)...) {
 		t.Run(p.name, func(t *testing.T) {
 			discardStdout(t)
 			var compiled []*ast.CXProgram
 			for i := 0; i <= runs; i++ {
 				compileRunProgram(t, p)
+				execute.RunPrepare(actions.AST)
 				compiled = append(compiled, actions.AST)
 			}
 			next := 0
@@ -351,5 +348,66 @@ func TestRunVmLibraryCallAllocs(t *testing.T) {
 		if allocs != 0 {
 			t.Errorf("enabled %v: %.0f allocations per run, want 0", enabled, allocs)
 		}
+	}
+}
+
+// runCompareScale shrinks each t0-benchmarks/compare program to a size that
+// runs in milliseconds on the old loop. The code paths, prints included, stay
+// those of the full size, only the pass line prints FAIL.
+var runCompareScale = map[string][][2]string{
+	"count":   {{"i < 30000000", "i < 30000"}},
+	"fib":     {{"r = fib(34)", "r = fib(12)"}},
+	"array":   {{"round < 400", "round < 2"}},
+	"struct":  {{"round < 80000", "round < 20"}},
+	"memtest": {{"n = 1048576", "n = 4096"}, {"walk = 65536", "walk = 256"}},
+	"primes":  {{"n = 2000000", "n = 2000"}, {"k < 300000UL", "k < 300UL"}, {"round < 20", "round < 1"}},
+}
+
+// runComparePrograms are the t0-benchmarks/compare programs at the scale of
+// runCompareScale. They allocate nothing during a run (#407).
+func runComparePrograms(tb testing.TB) []runBenchProgram {
+	var programs []runBenchProgram
+	for _, name := range []string{"count", "fib", "array", "struct", "memtest", "primes"} {
+		source, err := os.ReadFile(filepath.Join("..", "t0-benchmarks", "compare", "cx", name+".cx"))
+		if err != nil {
+			tb.Fatal(err)
+		}
+		text := string(source)
+		for _, replace := range runCompareScale[name] {
+			if strings.Count(text, replace[0]) != 1 {
+				tb.Fatalf("compare/%s.cx: %q is not there once, update runCompareScale", name, replace[0])
+			}
+			text = strings.Replace(text, replace[0], replace[1], 1)
+		}
+		programs = append(programs, runBenchProgram{"compare-" + name, text, 0})
+	}
+	return programs
+}
+
+// TestRunNoGC fails when a Go garbage collection runs while execute.RunCompiled
+// runs a program that allocates nothing (#407). It collects first, so a cycle
+// could only come from the run's own allocations. test-gc.cx grows program
+// memory, which may start one (VMALLOC-010).
+func TestRunNoGC(t *testing.T) {
+	initProgram()
+	for _, p := range append(runBenchPrograms(t), runComparePrograms(t)...) {
+		if p.maxAllocs != 0 {
+			continue
+		}
+		t.Run(p.name, func(t *testing.T) {
+			discardStdout(t)
+			compileRunProgram(t, p)
+			execute.RunPrepare(actions.AST)
+			var before, after runtime.MemStats
+			runtime.GC()
+			runtime.ReadMemStats(&before)
+			if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
+				t.Fatal(err)
+			}
+			runtime.ReadMemStats(&after)
+			if after.NumGC != before.NumGC {
+				t.Errorf("%s: %d Go GC cycles during the run, want 0", p.name, after.NumGC-before.NumGC)
+			}
+		})
 	}
 }

@@ -26,6 +26,7 @@ func errString(err error) string {
 }
 
 // VIOLATION STRHOT-146: B, hands a path or text to Go or the OS, #412.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func opTCPDial(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	c, err := net.Dial(inputs[0].Get_str(prgrm), inputs[1].Get_str(prgrm))
 	if err == nil {
@@ -75,6 +76,7 @@ func opTCPAccept(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 }
 
 // VIOLATION STRHOT-148: B, hands a path or text to Go or the OS, #412.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func opTCPListen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

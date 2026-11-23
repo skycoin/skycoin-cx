@@ -22,6 +22,7 @@ func formatBufferKeep(prgrm *ast.CXProgram, formatted []byte) {
 
 // printFormattedLine writes formatted and a new line to standard output in one
 // write, as fmt.Println did.
+// VIOLATION VMALLOC-022: appending grows the format buffer past its size, once, #407.
 func printFormattedLine(prgrm *ast.CXProgram, formatted []byte) {
 	line := append(formatted, '\n')
 	os.Stdout.Write(line)

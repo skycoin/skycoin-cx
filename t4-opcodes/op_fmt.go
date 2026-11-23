@@ -15,6 +15,8 @@ import (
 // returns it. Only %v and the extra arguments of a short format go through
 // Go strings, the printed values of GetPrintableValue.
 // VIOLATION STRHOT-086: P, %v and extra arguments append the text of a printed value, #412.
+// VIOLATION VMALLOC-022: appending grows the format buffer past its size, once, #407.
+// VIOLATION VMALLOC-015: %v and extra arguments build the Go string of a printed value, #407.
 func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, res []byte) []byte {
 	fmtStr := inputs[0].Get_str_bytes(prgrm)
 

@@ -26,6 +26,7 @@ func MinHeapSize() types.Pointer {
 // allocated after the data segment, and starts the GC pressure from 0.
 // GCREACH: sets the GC pressure and its limit,
 // see docs/GarbageCollector.md.
+// VIOLATION VMALLOC-009: sizes the heap once, in RunPrepare before the run, #407.
 func (cxprogram *CXProgram) EnsureMinimumHeapSize() {
 	currHeapSize := types.Cast_int_to_ptr(len(cxprogram.Memory)) - cxprogram.Heap.StartsAt
 	minHeapSize := MinHeapSize()
@@ -38,6 +39,7 @@ func (cxprogram *CXProgram) EnsureMinimumHeapSize() {
 }
 
 // ResizeMemory ...
+// VIOLATION VMALLOC-010: grows program memory when the heap outgrows it, the cap is an owner decision, #407.
 func ResizeMemory(prgrm *CXProgram, newMemSize types.Pointer, isExpand bool) {
 	// We can't expand memory to a value greater than `memLimit`.
 	if newMemSize > constants.MAX_HEAP_SIZE {

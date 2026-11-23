@@ -132,7 +132,12 @@ directory `--sandbox` names. See
 cx parses and compiles the source into the CX IR, then lowers it to a flat
 image. There are two loops that run a program.
 
-- The old loop walks the CX IR. It runs every program.
+- The old loop walks the CX IR. It runs every program. Once
+  `execute.RunPrepare` has sized its buffers it makes no Go allocation while
+  it runs, outside printing composite values, the system libraries, the
+  growth of the heap and the CX collector, which `TestRunAllocs` and
+  `TestRunNoGC` check. See
+  [docs/RunPathAllocations.md](docs/RunPathAllocations.md).
 - The vm (`t3-cx-runtime-vm`) runs the lowered image in one switch loop. It
   makes no Go allocation while it runs, which `TestRunVmAllocs` checks. It
   runs a program only when every function lowers, and the lowering does not

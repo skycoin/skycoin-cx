@@ -70,6 +70,7 @@ func (value *CXValue) Get_bytes(prgrm *CXProgram) []byte {
 }
 
 // VIOLATION STRHOT-029: B, only the boundary opcodes use Go strings, #412.
+// VIOLATION VMALLOC-003: a Go string copy of a str, for the boundary opcodes only, #407.
 func (value *CXValue) Get_str(prgrm *CXProgram) string {
 	return types.Read_str(prgrm.Memory, value.Offset)
 }

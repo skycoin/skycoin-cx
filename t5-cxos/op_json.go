@@ -48,6 +48,7 @@ var jsons []JSONFile
 var freeJsons []int32
 
 // Open the named json file for reading, returns an i32 identifying the json cxgo.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func opJsonOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
 
@@ -81,6 +82,7 @@ func opJsonOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 }
 
 // Close json cxgo (and all underlying resources) idendified by it's i32 handle.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func opJsonClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	success := false
 	handle := inputs[0].Get_i32(prgrm)

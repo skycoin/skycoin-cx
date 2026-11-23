@@ -14,7 +14,7 @@ func TestSerializeFieldCounts(t *testing.T) {
 		value  interface{}
 		fields int
 	}{
-		{CXProgram{}, 27},
+		{CXProgram{}, 29},
 		{StackSegmentStruct{}, 3},
 		{DataSegmentStruct{}, 2},
 		{HeapSegmentStruct{}, 8},

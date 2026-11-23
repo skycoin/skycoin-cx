@@ -9,12 +9,14 @@ func Write_str_data(memory []byte, offset Pointer, value string) {
 }
 
 // VIOLATION STRHOT-009: B, reads a str for the affordance opcodes, #412.
+// VIOLATION VMALLOC-003: a Go string copy of a str, for the boundary opcodes only, #407.
 func Read_str_data(memory []byte, offset Pointer) string {
 	str := Read_obj_data(memory, offset)
 	return string(str)
 }
 
 // VIOLATION STRHOT-011: B, only the boundary opcodes use Go strings, #412.
+// VIOLATION VMALLOC-003: a Go string copy of a str, for the boundary opcodes only, #407.
 func Read_str(memory []byte, offset Pointer) string {
 	str := string(Read_obj(memory, offset))
 	return str

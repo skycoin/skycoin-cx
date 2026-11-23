@@ -59,6 +59,8 @@ type function struct {
 	sites   []site
 	handler bool
 	parent  string // the caller it was first reached from
+	// position is file:first line-last line of the declaration.
+	position string
 }
 
 var codePattern = regexp.MustCompile(`VIOLATION (STRHOT-[0-9]{3}): ([A-Z]?)`)
@@ -67,6 +69,7 @@ func main() {
 	tags := flag.String("tags", "", "build tags")
 	list := flag.Bool("l", false, "list every site with its code")
 	inventory := flag.Bool("inventory", false, "list every site without a code, with a suggested class")
+	listFunctions := flag.Bool("functions", false, "list every function on the run path with its lines")
 	codesPath := flag.String("codes", "strhot-codes.txt", "the STRHOT code table")
 	why := flag.Bool("why", false, "with -inventory, add the call chain from a root to each function")
 	flag.Parse()
@@ -82,6 +85,8 @@ func main() {
 	}
 	mode := reportCheck
 	switch {
+	case *listFunctions:
+		mode = reportFunctions
 	case *inventory && *why:
 		mode = reportInventoryWhy
 	case *inventory:
@@ -200,7 +205,8 @@ func scanFile(fset *token.FileSet, info *types.Info, f *ast.File, rel string, fu
 		if !ok {
 			continue
 		}
-		fn := &function{name: obj.FullName(), handler: handlerSignature(obj.Type().(*types.Signature))}
+		fn := &function{name: obj.FullName(), handler: handlerSignature(obj.Type().(*types.Signature)),
+			position: fmt.Sprintf("%s:%d-%d", rel, fset.Position(fd.Pos()).Line, fset.Position(fd.End()).Line)}
 		functions[fn.name] = fn
 		funcCode, funcClass := "", ""
 		if fd.Doc != nil {
@@ -502,9 +508,16 @@ const (
 	reportList
 	reportInventory
 	reportInventoryWhy
+	reportFunctions
 )
 
 func report(w io.Writer, functions map[string]*function, codes map[string]codeEntry, mode reportMode) int {
+	if mode == reportFunctions {
+		for _, fn := range reachable(functions) {
+			fmt.Fprintf(w, "%s\t%s\n", fn.position, fn.name)
+		}
+		return 0
+	}
 	var sites []site
 	for _, fn := range reachable(functions) {
 		sites = append(sites, fn.sites...)
