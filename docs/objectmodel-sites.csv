@@ -722,7 +722,6 @@ S1244,CXExpression,make-slice,t4-actions/variables.go,451,DeclareLocal,"[]ast.CX
 S1245,CXExpression,ctor-call,t4-actions/variables.go,456,DeclareLocal,"ast.MakeAtomicOperatorExpression(prgrm, nil)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1246,CXExpression,make-slice,t4-actions/variables.go,464,DeclareLocal,"[]ast.CXExpression{*declCXLine, *expr}",state.CXExpressionMng (manager storage) or []CXExpressionGid,4-alloc,346,CXExpression phase 2-mng
 S1247,CXTypeSignature,get-call,t4-execute/callback.go,37,Callback,cxprogram.GetCXTypeSignatureFromArray(newCallOperatorInputs[i]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1248,CXTypeSignature,get-call,t4-execute/callback.go,56,Callback,cxprogram.GetCXTypeSignatureFromArray(outputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S1249,CXCall,ctor-call,t4-execute/execute.go,49,runSysInitFunc,"MakeCall(cxprogram, fn)",state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng
 S1250,CXCall,ctor-call,t4-execute/execute.go,122,RunCompiled,"MakeCall(cxprogram, fn)",state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng
 S1251,CXCall,ctor-def,t4-execute/execute.go,159,MakeCall,func MakeCall,state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng

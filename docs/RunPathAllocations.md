@@ -12,9 +12,10 @@ that keep the run free of the others.
 ## Before the run
 
 `execute.RunPrepare`, which `ExecutorRun` calls before `RunCompiled`, sizes
-the heap of program memory (`EnsureMinimumHeapSize`), the operand buffers to
-the largest arity of an expression and the format buffer that print, printf,
-sprintf and the str conversions append to (`RunBuffersPrepare`).
+the heap of program memory (`EnsureMinimumHeapSize`), the operand buffers of
+the run and of a `Callback` loop to the largest arity of an expression and
+the format buffer that print, printf, sprintf and the str conversions append
+to (`RunBuffersPrepare`).
 `RunCompiled` calls it as well, and it allocates nothing once the program is
 prepared.
 
@@ -38,6 +39,8 @@ prepared.
 - `TestRunNetAllocs` and `TestRunVmNetAllocs` require 0 for a run of
   `net.Update`, `net.ReadyNext`, `net.Read` and `net.Write` with data on
   four loopback sockets, see [Networking.md](Networking.md).
+- `TestRunCallbackAllocs` requires 0 for a `Callback`, the nested loop
+  t6-cxfx runs for an event.
 
 ## Codes
 
@@ -49,7 +52,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | Code | Status | Where |
 | --- | --- | --- |
 | VMALLOC-001 | fixed in #422 | the expression copy in `CXCall.Call` |
-| VMALLOC-002 | fixed for the run | operand buffers, sized by `RunBuffersPrepare`. A `Callback` loop of t6-cxfx still grows its own |
+| VMALLOC-002 | fixed | operand buffers, sized by `RunBuffersPrepare`, those of a `Callback` loop included |
 | VMALLOC-003 | open, boundary | `Read_str`, `Read_str_data`, `CXValue.Get_str`, Go string copies the system library and affordance opcodes use. The str opcodes read views |
 | VMALLOC-004 | fixed | `fmt.Println` in the print opcodes |
 | VMALLOC-005 | fixed | printf and sprintf append to the format buffer, `%v` and extra arguments included |
@@ -68,7 +71,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-018 | open, boundary | the file, process, profile and read opcodes, and the net functions that open a socket. The net update, ready reads, reads and writes allocate nothing, see [Networking.md](Networking.md) |
 | VMALLOC-019 | open, boundary | the affordance opcodes run compiler code |
 | VMALLOC-020 | not heap | CXArgument stack temporaries, #408 |
-| VMALLOC-021 | open, t6-cxfx | `Callback` runs a nested loop with its own buffers |
+| VMALLOC-021 | fixed but nesting | `Callback` runs its nested loop on operand buffers `RunBuffersPrepare` sizes. A callback made inside a callback sizes a set for its depth once |
 | VMALLOC-022 | open, once | a print longer than `ProgramFormatBufferSize` grows the format buffer once |
 | VMALLOC-023 | open, boundary | the serialize opcodes run the serializer |
 | VMALLOC-024 | open, boundary | `cipher.SignatureVerify`, `SignatureRecoverPubKey`, `SignatureSign` and `KeyPairGenerate`, whose `secp256k1-go2` of Skycoin computes with `math/big`. The hash functions of the library allocate nothing, see [CipherLibrary.md](CipherLibrary.md) |
