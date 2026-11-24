@@ -146,18 +146,24 @@ image. There are two loops that run a program.
 `cx --executor=auto`, the default, runs a program on the vm when it lowers
 and on the old loop otherwise. `--executor=old` and `--executor=vm` force
 one loop, and vm fails on a program that does not lower. `TestLowerCompare`
-runs every program that lowers on both loops and compares the results. See
-"The runtime image" in [docs/IR.md](docs/IR.md#the-runtime-image).
+runs every program that lowers on both loops and compares the memory after
+them. See "The runtime image" in [docs/IR.md](docs/IR.md#the-runtime-image).
 
 The garbage collector runs as a tick of the old loop, between steps, never
 inside an opcode. The vm and the IR base do not reach it, which
 `make check-gcreach` checks. See
 [docs/GarbageCollector.md](docs/GarbageCollector.md).
 
-A compiled program can be serialized and loaded again.
-`TestSerializeRoundTrip` runs the test programs directly and after a
-round trip, on both loops, and compares them. The format is in
+A compiled program can be serialized and loaded again. The format is in
 [docs/IR.md](docs/IR.md).
+
+Each test program has an execution record, the hashes of the program, its
+input and its output and the exit code, in
+[tests/execution-records.txt](tests/execution-records.txt).
+`TestExecutionRecords` runs every record on the old loop, on vm, after a
+round trip through the serialized program on both loops, and as an
+executable from `cx build`, and each must give the recorded result. See
+[docs/ExecutionRecords.md](docs/ExecutionRecords.md).
 
 ## cx build
 
@@ -230,6 +236,9 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
   against it, under `xvfb-run` when `DISPLAY` is unset. CI runs all three.
 - `make build-wasm` compiles `cx` for js/wasm as the playground does, and
   `make test-wasm` runs the hello world example under Node. CI runs both.
+- `make records` writes `tests/execution-records.txt` from the old loop
+  after a test program is added or changed. It is not a check, and its diff
+  is reviewed before it is committed.
 - `make names-csv` writes every declared Go and CX name with its file, line
   and kind to `bin/names.csv`, for naming review. It is not a check.
 
@@ -305,6 +314,8 @@ still apply were filed again here with a link to the original.
   functions
 - [docs/IR.md](docs/IR.md), the compiler IR, the serialized form and the
   runtime image
+- [docs/ExecutionRecords.md](docs/ExecutionRecords.md), the execution
+  records every form of running a program is checked against
 - [docs/CompilerDevelopment.md](docs/CompilerDevelopment.md)
 - [docs/Wrappinggolanglibraries.md](docs/Wrappinggolanglibraries.md), how to
   wrap a Go library for CX

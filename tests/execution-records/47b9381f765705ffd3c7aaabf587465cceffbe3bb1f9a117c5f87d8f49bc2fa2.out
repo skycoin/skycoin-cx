@@ -1,0 +1,8 @@
+error: test-regexp-find-failed-compile.cx:13, CX_RUNTIME_ERROR, 5
+===Callstack===
+>>> main()
+Expressions
+ 	test-regexp-find-failed-compile.cx:8 : regexp.Compile() : error parsing regexp: missing closing ): `a(`
+	test-regexp-find-failed-compile.cx:13 : regexp.Regexp.Find() : {exp: a(}
+	test-regexp-find-failed-compile.cx:13 : regexp.Regexp.Find() : 
+

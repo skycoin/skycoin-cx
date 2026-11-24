@@ -1,0 +1,12 @@
+error: test-runtime-error-neg-argument.cx:8, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> g()
+ProgramInput
+	test-runtime-error-neg-argument.cx:6 : g() : -1
+Expressions
+ 	test-runtime-error-neg-argument.cx:8 : identity() : <index out of range>
+
+>>> main()
+Expressions
+ 	test-runtime-error-neg-argument.cx:12 : i32.neg() : -1
+

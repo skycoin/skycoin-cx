@@ -1,0 +1,3 @@
+test-test-line.cx: 4: result was not equal to the expected value; first statement
+test-test-line.cx: 6: result was not equal to the expected value; after a declaration
+test-test-line.cx: 8: result was not equal to the expected value; after an assignment

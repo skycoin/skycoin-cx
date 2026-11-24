@@ -1,0 +1,15 @@
+break 0 0 0
+break 0 1 0
+break 1 0 0
+break 1 1 0
+continue 0 0 0
+continue 0 0 2
+continue 0 1 0
+continue 0 1 2
+after c 0 1
+continue 1 0 0
+continue 1 0 2
+continue 1 1 0
+continue 1 1 2
+after c 1 1
+after b 1

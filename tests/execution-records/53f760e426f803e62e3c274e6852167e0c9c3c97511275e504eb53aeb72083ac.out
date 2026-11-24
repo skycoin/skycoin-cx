@@ -1,0 +1,5 @@
+1
+test-vm-test-callee.cx: 8: result was not equal to the expected value; local message
+test-vm-test-callee.cx: 9: result was not equal to the expected value
+test-vm-test-callee.cx: 10: result was not equal to the expected value; literal message
+2

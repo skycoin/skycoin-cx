@@ -1,0 +1,19 @@
+T0 T1 = true
+F3 T4 = true
+F5 = false
+T7 F8 = false
+F9 F10 T11 = true
+T13 T14 F15 = false
+T17 F18 T19 = true
+F20 = false
+F23 T25 T26 = true
+F27 = true
+T29 F30 T31 = false
+T32 = false
+= true
+= false
+F36 = true
+= true
+= false
+early true
+26

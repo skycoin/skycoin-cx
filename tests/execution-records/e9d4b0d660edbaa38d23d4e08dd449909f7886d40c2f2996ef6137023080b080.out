@@ -1,0 +1,10 @@
+error: test-runtime-error-input-copy.cx:12, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> main()
+Expressions
+ 	test-runtime-error-input-copy.cx:4 : i32.add() : 0
+	test-runtime-error-input-copy.cx:4 : i32.add() : 0
+	test-runtime-error-input-copy.cx:10 : i32.neg() : -1
+	test-runtime-error-input-copy.cx:12 : f() : <index out of range>
+	test-runtime-error-input-copy.cx:12 : f() : 0
+

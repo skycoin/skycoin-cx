@@ -518,8 +518,9 @@ per-expression native copies.
 
 * A serialized program is a snapshot of the arenas and managers of a
   compiled program. `Deserialize` gives back a program that lowers and runs
-  as the original does, on vm and on the old loop. `TestSerializeRoundTrip`
-  in `t11-cx` checks this for every program in `tests/` that compiles.
+  as the original does, on vm and on the old loop. The image-old and
+  image-vm forms of `TestExecutionRecords` in `t11-cx` check this for every
+  recorded program, see [ExecutionRecords.md](ExecutionRecords.md).
 * With `includeMemory` the memory goes in too, from its first to its last
   nonzero byte. Without it `Deserialize` makes zeroed memory of the same
   size, so literals in the data segment read as zero.
@@ -775,8 +776,9 @@ the jumps, `test` on non-string values and calls. Anything else gives a
   `OpcodePrintValue` or `OpcodePrintStr`. `%v` on a whole array, struct or
   pointer stays outside. `TestLowerCompare` lowers every program
 in `tests/` and, for each one that lowers completely, compares the memory
-after the old loop and vm, and stdout and the exit code of `cx
---executor=old` and `cx --executor=vm`.
+after the old loop and vm. `TestExecutionRecords` checks stdout and the exit
+code of both against the execution records, see
+[ExecutionRecords.md](ExecutionRecords.md).
 
 `vm.Machine` holds the memory (stack, data segment, then scratch), a fixed array
 of `ir.ImageCallDepthMax` frames and an output buffer, all sized before the

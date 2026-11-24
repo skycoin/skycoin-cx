@@ -1,0 +1,8 @@
+error: test-slices-index-out-of-range-b.cx:6, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> main()
+Expressions
+ 	test-slices-index-out-of-range-b.cx:5 : append() : [0, 1, 2, 3, 4, 5, 6]
+	test-slices-index-out-of-range-b.cx:5 : identity() : [0, 1, 2, 3, 4, 5, 6]
+	test-slices-index-out-of-range-b.cx:6 : identity() : 0
+

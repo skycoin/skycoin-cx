@@ -1,0 +1,21 @@
+error: test-os-read-slice-grow.cx:8, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
+===Callstack===
+>>> main()
+Expressions
+ 	test-os-read-slice-grow.cx:8 : os.Open() : 0
+	test-os-read-slice-grow.cx:10 : append() : []
+	test-os-read-slice-grow.cx:10 : identity() : []
+	test-os-read-slice-grow.cx:11 : os.ReadI32Slice() : false
+	test-os-read-slice-grow.cx:13 : identity() : 0
+	:-1 : i32.lt() : false
+	test-os-read-slice-grow.cx:14 : identity() : 0
+	test-os-read-slice-grow.cx:17 : append() : []
+	test-os-read-slice-grow.cx:17 : identity() : []
+	test-os-read-slice-grow.cx:18 : identity() : false
+	test-os-read-slice-grow.cx:19 : identity() : 0
+	:-1 : i32.lt() : false
+	test-os-read-slice-grow.cx:22 : i32.uneq() : false
+	:-1 : len() : 0
+	test-os-read-slice-grow.cx:27 : os.ReadI32Slice() : []
+	:-1 : len() : 0
+

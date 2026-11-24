@@ -1,0 +1,13 @@
+10
+error: issue-297a.cx:11, CX_RUNTIME_STACK_OVERFLOW_ERROR, stack overflow
+===Callstack===
+>>> recur()
+ProgramInput
+	issue-297a.cx:5 : recur() : 10
+Expressions
+ 	issue-297a.cx:7 : identity() : 1
+	issue-297a.cx:7 : identity() : [1, 2]
+	issue-297a.cx:12 : i32.gt() : true
+	issue-297a.cx:11 : i32.sub() : 9
+
+>>> main()

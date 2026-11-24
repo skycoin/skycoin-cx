@@ -1,0 +1,2 @@
+deref {x: 1, y: 2}
+local {x: 3, y: 4}

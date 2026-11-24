@@ -1,0 +1,2 @@
+this should print address of i (&i) but prints 777 : pi == 0
+this should print 888 but prints 777 : i == 888

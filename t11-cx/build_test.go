@@ -4,15 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slices"
-	"sort"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -80,143 +76,6 @@ func buildTestProcess(t *testing.T, executable string, env []string, dir string,
 		t.Error(err)
 	}
 	return run, stderr.Bytes()
-}
-
-// TestBuildPrograms builds every program of TestSerializeRoundTrip that the
-// core supports with cx build and runs the built file. Its stdout and exit
-// code must be those of cx running the source. It logs the core size and the
-// sizes of the appended programs.
-func TestBuildPrograms(t *testing.T) {
-	if testing.Short() {
-		t.Skip("builds and runs every test program")
-	}
-	tests, err := filepath.Abs(filepath.Join("..", "tests"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	executable, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		t.Fatal(err)
-	}
-	dir := t.TempDir()
-	cores := buildTestCores(t, dir)
-	var coreSizes []string
-	for _, name := range slices.Sorted(maps.Keys(cores)) {
-		info, err := os.Stat(cores[name])
-		if err != nil {
-			t.Fatal(err)
-		}
-		coreSizes = append(coreSizes, fmt.Sprintf("%s %d", name, info.Size()))
-	}
-
-	skipped := map[string]string{}
-	var programs []string
-	for _, program := range serializeRoundTripPrograms(t, tests) {
-		reason := ""
-		for _, arg := range strings.Fields(program) {
-			if name, _, _ := strings.Cut(strings.TrimLeft(arg, "-"), "="); strings.HasPrefix(arg, "-") && buildTestRunFlags[name] {
-				reason = "passes the run time flag -" + name
-			}
-			if reason != "" || !strings.HasSuffix(arg, ".cx") {
-				continue
-			}
-			source, err := os.ReadFile(filepath.Join(tests, arg))
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, skip := range serializeRoundTripSkip {
-				if reason == "" && skip.pattern.Match(source) {
-					reason = skip.reason
-				}
-			}
-		}
-		if reason != "" {
-			skipped[program] = reason
-			continue
-		}
-		programs = append(programs, program)
-	}
-
-	type outcome struct {
-		direct, built lowerCompareRun
-		buildCode     int
-		buildStderr   []byte
-		payload       int64
-	}
-	outcomes := make([]outcome, len(programs))
-	limit := make(chan struct{}, runtime.NumCPU())
-	var wait sync.WaitGroup
-	for i, program := range programs {
-		wait.Add(1)
-		limit <- struct{}{}
-		go func() {
-			defer wait.Done()
-			defer func() { <-limit }()
-			args := strings.Fields(program)
-			outcomes[i].direct = lowerCompareProcess(t, []string{"CX_TEST_RUN_MAIN=1"}, tests, args...)
-			if outcomes[i].direct.exitCode == types.CX_COMPILATION_ERROR {
-				return
-			}
-			output := filepath.Join(dir, fmt.Sprintf("program-%d", i))
-			if runtime.GOOS == "windows" {
-				output += ".exe"
-			}
-			buildArgs := append([]string{buildCommand}, args...)
-			buildArgs = append(buildArgs, "-o", output, "--core", dir)
-			build, stderr := buildTestProcess(t, executable, []string{"CX_TEST_RUN_MAIN=1"}, tests, buildArgs...)
-			outcomes[i].buildCode, outcomes[i].buildStderr = build.exitCode, stderr
-			if build.exitCode != types.CX_SUCCESS {
-				return
-			}
-			defer os.Remove(output)
-			if program, fileError := core.CoreTrailerRead(output); fileError == nil {
-				outcomes[i].payload = int64(len(program))
-			}
-			outcomes[i].built, _ = buildTestProcess(t, output, nil, tests)
-		}()
-	}
-	wait.Wait()
-
-	var compileFailed, refused, matched, mismatched int
-	var payloads []int64
-	for i, program := range programs {
-		result := outcomes[i]
-		switch {
-		case result.direct.exitCode == types.CX_COMPILATION_ERROR:
-			compileFailed++
-		case result.buildCode != types.CX_SUCCESS && bytes.Contains(result.buildStderr, []byte("opcodes it does not include")):
-			refused++
-			skipped[program] = "needs " + strings.TrimSpace(string(result.buildStderr[bytes.LastIndex(result.buildStderr, []byte(": "))+2:]))
-		case result.buildCode != types.CX_SUCCESS:
-			mismatched++
-			t.Errorf("%s: cx build exit code %d, stderr %q", program, result.buildCode, lowerCompareClip(result.buildStderr))
-		case result.direct.timedOut || result.built.timedOut:
-			mismatched++
-			t.Errorf("%s: timed out, direct %v, built %v", program, result.direct.timedOut, result.built.timedOut)
-		case result.direct.exitCode != result.built.exitCode:
-			mismatched++
-			t.Errorf("%s: exit code %d direct, %d built, stdout %q", program, result.direct.exitCode, result.built.exitCode, lowerCompareClip(result.built.stdout))
-		case !bytes.Equal(result.direct.stdout, result.built.stdout):
-			mismatched++
-			t.Errorf("%s: stdout differs, direct %q, built %q", program, lowerCompareClip(result.direct.stdout), lowerCompareClip(result.built.stdout))
-		default:
-			matched++
-			payloads = append(payloads, result.payload)
-		}
-	}
-	names := make([]string, 0, len(skipped))
-	for program, reason := range skipped {
-		names = append(names, program+" ("+reason+")")
-	}
-	sort.Strings(names)
-	sort.Slice(payloads, func(i, j int) bool { return payloads[i] < payloads[j] })
-	t.Logf("cores in bytes: %s", strings.Join(coreSizes, ", "))
-	t.Logf("%d programs: %d did not compile, %d refused for opcodes outside the core, %d built and match, %d mismatch, %d skipped before building",
-		len(programs)+len(skipped)-refused, compileFailed, refused, matched, mismatched, len(skipped)-refused)
-	if len(payloads) > 0 {
-		t.Logf("appended program bytes: min %d, median %d, max %d", payloads[0], payloads[len(payloads)/2], payloads[len(payloads)-1])
-	}
-	t.Logf("skipped: %s", strings.Join(names, ", "))
 }
 
 // A core binary with no program appended, and a built program whose

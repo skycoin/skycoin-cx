@@ -1,0 +1,6 @@
+error: test-serialize-invalid.cx:9, CX_RUNTIME_INVALID_ARGUMENT, 8
+===Callstack===
+>>> main()
+Expressions
+ 	test-serialize-invalid.cx:7 : append() : [1, 2]
+

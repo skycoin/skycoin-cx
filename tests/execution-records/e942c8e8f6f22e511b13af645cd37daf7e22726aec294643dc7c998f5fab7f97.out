@@ -1,0 +1,15 @@
+error: test-runtime-error-return-line-index.cx:5, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> g()
+ProgramInput
+	test-runtime-error-return-line-index.cx:3 : g() : -1
+ProgramOutput
+	test-runtime-error-return-line-index.cx:3 : g() : 0
+Expressions
+ 	test-runtime-error-return-line-index.cx:5 : identity() : <index out of range>
+
+>>> main()
+Expressions
+ 	test-runtime-error-return-line-index.cx:9 : i32.neg() : -1
+	test-runtime-error-return-line-index.cx:3 : g() : 0
+

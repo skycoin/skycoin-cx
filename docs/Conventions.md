@@ -127,3 +127,11 @@ document or check script.
     [strhot-codes.txt](../strhot-codes.txt). `make check-strhot` runs
     [check-strhot.sh](../check-strhot.sh). See
     [StringsHotPath.md](StringsHotPath.md) and #412.
+19. **Execution records.** Every program of `tests/` is either an execution
+    record in [tests/execution-records.txt](../tests/execution-records.txt),
+    its program, input and output hashes and exit code, or excluded there
+    with a reason. `TestExecutionRecords`, part of `make check`, runs each
+    record on the old loop, vm, the round trip through the image and the
+    built executable and fails on any other result. `make records` writes
+    the file from the old loop and is never part of `make check`. See
+    [ExecutionRecords.md](ExecutionRecords.md) and #507.

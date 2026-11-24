@@ -1,0 +1,7 @@
+error: test-slice-resize-huge.cx:5, CX_RUNTIME_HEAP_EXHAUSTED_ERROR, heap exhausted
+===Callstack===
+>>> main()
+Expressions
+ 	test-slice-resize-huge.cx:5 : resize() : []
+	:-1 : len() : 0
+

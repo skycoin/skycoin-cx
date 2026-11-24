@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -110,6 +110,9 @@ bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
 	go build -tags="$(TAGS) cxopcount" -o ./bin/cx-opcount$(EXE) ./t11-cx
 	./t0-benchmarks/compare/run.sh
+
+records: ## Write tests/execution-records.txt from the old loop, see docs/ExecutionRecords.md. Review the diff before committing it
+	CX_EXECUTION_RECORDS_WRITE=1 go test -count=1 -run '^TestExecutionRecords$$' ./t11-cx
 
 build-parser: ## Regenerate the CX parsers from the .y grammars
 	go tool goyacc -o t5-cxpartialparsing/cxpartialparsing.go -v /dev/null t5-cxpartialparsing/cxpartialparsing.y

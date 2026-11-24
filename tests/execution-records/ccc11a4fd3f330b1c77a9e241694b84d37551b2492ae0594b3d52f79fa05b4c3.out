@@ -1,0 +1,6 @@
+error: test-debug-go-stack.cx:7, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> main()
+Expressions
+ 	test-debug-go-stack.cx:7 : i32.print() : <index out of range>
+

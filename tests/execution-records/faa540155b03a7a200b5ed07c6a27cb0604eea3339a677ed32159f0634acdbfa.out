@@ -1,0 +1,25 @@
+5
+error: test-vm-divide-callee.cx:8, CX_RUNTIME_ERROR, runtime error: integer divide by zero
+===Callstack===
+>>> divide()
+ProgramInput
+	test-vm-divide-callee.cx:5 : divide() : 10
+ProgramInput
+	test-vm-divide-callee.cx:5 : divide() : 0
+ProgramOutput
+	test-vm-divide-callee.cx:5 : divide() : 0
+Expressions
+ 	test-vm-divide-callee.cx:7 : identity() : 7
+
+>>> middle()
+ProgramInput
+	test-vm-divide-callee.cx:11 : middle() : 0
+ProgramOutput
+	test-vm-divide-callee.cx:11 : middle() : 0
+>>> main()
+Expressions
+ 	test-vm-divide-callee.cx:8 : i32.div() : 0
+	test-vm-divide-callee.cx:8 : i32.div() : 0
+	test-vm-divide-callee.cx:8 : i32.div() : 0
+	test-vm-divide-callee.cx:18 : middle() : 0
+

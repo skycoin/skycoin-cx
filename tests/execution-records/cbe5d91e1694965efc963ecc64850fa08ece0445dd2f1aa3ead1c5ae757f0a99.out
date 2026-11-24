@@ -1,0 +1,8 @@
+len 1
+len 1 hmmmm
+4 [{x: 3, y: 1.5}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 0, y: 0}]
+loop 1 2
+many 7 28
+decl 1 8
+global 2 [{x: 1, y: 0}, {x: 2, y: 2.5}]
+empty 0 0

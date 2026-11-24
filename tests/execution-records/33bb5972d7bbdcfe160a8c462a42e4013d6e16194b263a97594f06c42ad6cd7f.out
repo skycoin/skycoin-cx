@@ -1,0 +1,10 @@
+3
+2
+3
+3
+len 2 sum 8
+bump [3, 15]
+var 15 plus 4
+f64 1.5 2.5 2
+ui8 [7] 7
+struct 5 40 2

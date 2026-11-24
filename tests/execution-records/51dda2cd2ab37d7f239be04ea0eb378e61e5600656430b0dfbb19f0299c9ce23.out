@@ -1,0 +1,36 @@
+error: test-os-sandbox.cx:12, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
+===Callstack===
+>>> rejected()
+ProgramInput
+	test-os-sandbox.cx:9 : rejected() : ../README.md
+ProgramInput
+	test-os-sandbox.cx:9 : rejected() : ../x
+Expressions
+ 	test-os-sandbox.cx:12 : os.Open() : ../README.md
+	:-1 : os.Open() : 0
+	test-os-sandbox.cx:12 : i32.neg() : 0
+	test-os-sandbox.cx:12 : test() : ../x
+	test-os-sandbox.cx:13 : os.ReadAllText() : 
+	test-os-sandbox.cx:13 : os.ReadAllText() : false
+	:-1 : json.Open() : 0
+	test-os-sandbox.cx:15 : i32.neg() : 0
+
+>>> main()
+Expressions
+ 	test-os-sandbox.cx:12 : i32.neg() : 0
+	test-os-sandbox.cx:13 : os.ReadAllText() : 
+	test-os-sandbox.cx:13 : os.ReadAllText() : 
+	test-os-sandbox.cx:13 : os.ReadAllText() : false
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:27 : i32.neg() : 0
+	test-os-sandbox.cx:14 : test() : 
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:28 : i32.neg() : 0
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:29 : i32.neg() : 0
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:30 : i32.neg() : 0
+	:-1 : test() : 0
+	test-os-sandbox.cx:15 : test() : 0
+	test-os-sandbox.cx:34 : os.ReadAllText() : false
+

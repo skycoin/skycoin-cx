@@ -67,9 +67,9 @@ func buildRun(args []string) int {
 	if len(missing) > 0 {
 		return buildFail(fmt.Sprintf("the core has no module outside the Go standard library, and the program uses opcodes it does not include: %s", strings.Join(missing, ", ")))
 	}
-	core.CoreLibrariesEnabledResolve(actions.AST)
-	for library, enabled := range actions.AST.ProgramLibrariesEnabled {
-		actions.AST.ProgramLibrariesEnabled[library] = enabled && actions.AST.ProgramLibrariesUsed[library]
+	program, err := buildProgramImage()
+	if err != nil {
+		return buildFail(err.Error())
 	}
 	libraries := core.CoreLibraryNames(actions.AST.ProgramLibrariesEnabled)
 	corePath, problem := buildCorePath(options.buildOptionsCore, libraries)
@@ -89,10 +89,6 @@ func buildRun(args []string) int {
 		}
 	}
 
-	program, err := ast.SerializeCXProgram(actions.AST, true, nil)
-	if err != nil {
-		return buildFail(err.Error())
-	}
 	output := options.buildOptionsOutput
 	if err := os.WriteFile(output, core.CoreTrailerAppend(coreBinary, program), 0o755); err != nil {
 		return buildFileFail(util.FileErrorWrap(util.FileOperationWrite, output, err))
@@ -102,6 +98,17 @@ func buildRun(args []string) int {
 		return buildFileFail(util.FileErrorWrap(util.FileOperationWrite, output, err))
 	}
 	return types.CX_SUCCESS
+}
+
+// buildProgramImage keeps the enabled libraries the compiled program calls
+// and returns the program as cx build appends it to the core. Its hash is
+// the program hash of an execution record, see docs/ExecutionRecords.md.
+func buildProgramImage() ([]byte, error) {
+	core.CoreLibrariesEnabledResolve(actions.AST)
+	for library, enabled := range actions.AST.ProgramLibrariesEnabled {
+		actions.AST.ProgramLibrariesEnabled[library] = enabled && actions.AST.ProgramLibrariesUsed[library]
+	}
+	return ast.SerializeCXProgram(actions.AST, true, nil)
 }
 
 // buildOptionsParse splits args into the flags of cx build and the rest. It

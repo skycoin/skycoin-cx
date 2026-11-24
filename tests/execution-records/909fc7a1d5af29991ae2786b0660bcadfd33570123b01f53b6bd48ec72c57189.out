@@ -1,0 +1,11 @@
+T1 F3 show true false
+F5 T100 show true true
+T200 show false true
+T301 pair true true
+T300 pair true false
+T6 F7 T8 F9 T10 F11 show true false
+F0 T0 show false true
+show true false
+F2 T2 show false true
+T12 T13 = true
+F14 T15 = false

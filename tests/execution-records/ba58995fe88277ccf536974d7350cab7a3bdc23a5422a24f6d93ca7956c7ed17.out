@@ -1,0 +1,8 @@
+error: test-str-substr-out-of-range-c.cx:7, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> main()
+Expressions
+ 	test-str-substr-out-of-range-c.cx:6 : identity() : hello
+	test-str-substr-out-of-range-c.cx:7 : string.SubstringByByteRange() : hello
+	test-str-substr-out-of-range-c.cx:7 : string.SubstringByByteRange() : 
+

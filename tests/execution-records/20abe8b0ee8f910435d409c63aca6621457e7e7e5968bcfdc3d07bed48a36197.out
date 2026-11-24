@@ -1,0 +1,7 @@
+t [4]
+deref [4]
+grown [4, 5]
+assigned [9]
+filled [9, 7, 7]
+set [4, 5]
+global [1]

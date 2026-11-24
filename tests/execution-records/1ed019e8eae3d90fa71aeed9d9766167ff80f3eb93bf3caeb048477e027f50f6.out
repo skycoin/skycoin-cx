@@ -1,0 +1,12 @@
+error: test-library-call.cx:12, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
+===Callstack===
+>>> main()
+Expressions
+ 	test-library-call.cx:12 : i32.neg() : -1
+	test-library-call.cx:12 : os.Seek() : 0
+	test-library-call.cx:12 : os.Seek() : 0
+	test-library-call.cx:14 : i32.i64() : 0
+	test-library-call.cx:14 : i64.sub() : 0
+	test-library-call.cx:16 : i32.neg() : 0
+	:-1 : os.Close() : false
+

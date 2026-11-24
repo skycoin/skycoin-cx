@@ -1,0 +1,3 @@
+error: test-regexp-must-compile-fail.cx:8, CX_RUNTIME_ERROR, 5
+===Callstack===
+>>> main()

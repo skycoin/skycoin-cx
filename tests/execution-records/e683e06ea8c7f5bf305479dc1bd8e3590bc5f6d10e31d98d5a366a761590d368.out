@@ -1,0 +1,13 @@
+error: test-os-getwd.cx:12, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
+===Callstack===
+>>> main()
+Expressions
+ 	test-os-getwd.cx:12 : os.GetWorkingDirectory() : 
+	:-1 : string.EqualityByByteValue() : false
+	test-os-getwd.cx:16 : os.Open() : 0
+	:-1 : i32.gteq() : false
+	:-1 : os.Close() : false
+	test-os-getwd.cx:21 : string.Concatenation() : 
+	:-1 : os.Open() : 0
+	test-os-getwd.cx:22 : i32.neg() : 0
+

@@ -3,3 +3,6 @@
 *.txt text eol=lf
 *.cx text eol=lf
 *.go text eol=lf
+
+# Recorded stdout is compared byte for byte, see docs/ExecutionRecords.md.
+tests/execution-records/*.out -text

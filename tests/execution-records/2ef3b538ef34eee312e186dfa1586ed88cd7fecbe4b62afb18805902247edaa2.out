@@ -1,0 +1,14 @@
+hello
+from a global
+from a field
+
+-12 1234567890123 200
+1.5000000 2.2500000000000000
+-12 1.5 2.25 true from a field
+from a field has 3
+true false
+100% done, a \n escape
+missing -12 and %!d(MISSING)
+-12 on a float is empty: []
+element 77
+through a pointer 77 77

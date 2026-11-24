@@ -1,0 +1,8 @@
+error: test-slices-remove-out-of-range-a.cx:6, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> main()
+Expressions
+ 	test-slices-remove-out-of-range-a.cx:5 : append() : [0, 1, 2]
+	test-slices-remove-out-of-range-a.cx:5 : identity() : [0, 1, 2]
+	test-slices-remove-out-of-range-a.cx:6 : i32.neg() : -1
+

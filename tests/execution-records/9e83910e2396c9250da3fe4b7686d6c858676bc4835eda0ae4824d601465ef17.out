@@ -1,0 +1,12 @@
+error: test-runtime-error-return-line.cx:4, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> g()
+ProgramInput
+	test-runtime-error-return-line.cx:3 : g() : []
+ProgramOutput
+	test-runtime-error-return-line.cx:3 : g() : 0
+>>> main()
+Expressions
+ 	test-runtime-error-return-line.cx:9 : g() : []
+	test-runtime-error-return-line.cx:3 : g() : 0
+

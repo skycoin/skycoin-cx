@@ -1,0 +1,6 @@
+error: test-slices-remove-out-of-range-c.cx:5, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> main()
+Expressions
+ 	test-slices-remove-out-of-range-c.cx:5 : remove() : []
+

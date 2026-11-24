@@ -1,0 +1,7 @@
+error: test-slices-resize-out-of-range-b.cx:5, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> main()
+Expressions
+ 	test-slices-resize-out-of-range-b.cx:5 : i32.neg() : -1
+	test-slices-resize-out-of-range-b.cx:5 : resize() : []
+

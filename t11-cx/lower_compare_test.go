@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -37,13 +36,6 @@ const lowerCompareProgramEnv = "CX_LOWER_COMPARE_PROGRAM"
 
 // lowerCompareMarker starts each result line a child prints.
 const lowerCompareMarker = "LOWERCOMPARE "
-
-// lowerCompareExcluded lists programs inside the subset whose results differ
-// for a reason other than a lowering or vm bug, with that reason.
-var lowerCompareExcluded = map[string]string{
-	"test-vm-call-depth.cx":  "the old loop crashes with an index out of range in ast.RuntimeError at the call depth limit",
-	"test-vm-init-divide.cx": "the old loop has no recover around *init and crashes on a runtime error there",
-}
 
 // lowerCompareStage is how far a child got with its program.
 type lowerCompareStage string
@@ -79,10 +71,9 @@ type lowerCompareRun struct {
 }
 
 // TestLowerCompare lowers every CX program in tests/ and, for each program
-// whose functions all lower, compares the old loop with vm, steps 4 and 5 of
-// #408. A child compares the memory after both loops. Then cx runs the
-// program with --executor=old and with --executor=vm, and stdout and the exit
-// code must be the same, runtime errors and failed tests included.
+// whose functions all lower, compares the memory after the old loop and
+// after vm, steps 4 and 5 of #408. TestExecutionRecords compares their
+// stdout and exit codes, runtime errors and failed tests included.
 func TestLowerCompare(t *testing.T) {
 	if program := os.Getenv(lowerCompareProgramEnv); program != "" {
 		lowerCompareChild(t, program)
@@ -95,7 +86,6 @@ func TestLowerCompare(t *testing.T) {
 		results  []lowerCompareResult
 		exitCode int
 		timedOut bool
-		old, vm  lowerCompareRun
 	}
 	outcomes := make([]outcome, len(programs))
 	limit := make(chan struct{}, runtime.NumCPU())
@@ -123,18 +113,11 @@ func TestLowerCompare(t *testing.T) {
 				}
 				outcomes[i].results = append(outcomes[i].results, result)
 			}
-			results := outcomes[i].results
-			if len(results) == 0 || results[len(results)-1].Stage == lowerCompareStageOutside {
-				return
-			}
-			files := strings.Fields(program)
-			outcomes[i].old = lowerCompareProcess(t, []string{"CX_TEST_RUN_MAIN=1"}, filepath.Join("..", "tests"), append([]string{"--executor=old"}, files...)...)
-			outcomes[i].vm = lowerCompareProcess(t, []string{"CX_TEST_RUN_MAIN=1"}, filepath.Join("..", "tests"), append([]string{"--executor=vm"}, files...)...)
 		}()
 	}
 	wait.Wait()
 
-	var compileFailed, outside, inside, matched, mismatched, excluded, stopped int
+	var compileFailed, outside, inside, matched, mismatched, stopped int
 	var matchedNames []string
 	firstReasons := map[string]int{}
 	opcodes := map[string]int{}
@@ -168,43 +151,27 @@ func TestLowerCompare(t *testing.T) {
 		switch {
 		case last.Stage == lowerCompareStageMismatch:
 			mismatch = last.Mismatch
-		case o.old.timedOut || o.vm.timedOut:
-			mismatch = fmt.Sprintf("cx timed out, old %v, vm %v", o.old.timedOut, o.vm.timedOut)
-		case o.old.exitCode != o.vm.exitCode:
-			mismatch = fmt.Sprintf("cx exited with %d on the old loop, %d on vm", o.old.exitCode, o.vm.exitCode)
-		case !bytes.Equal(o.old.stdout, o.vm.stdout):
-			mismatch = fmt.Sprintf("stdout differs, old %q, vm %q", lowerCompareClip(o.old.stdout), lowerCompareClip(o.vm.stdout))
 		case last.Stage == lowerCompareStageLowered && last.VmCode == types.CX_SUCCESS && o.timedOut:
 			mismatch = "the child timed out"
 		}
-		if mismatch == "" {
-			matched++
-			matchedNames = append(matchedNames, name)
-			if o.vm.exitCode != types.CX_SUCCESS {
-				stopped++
-				t.Logf("%s: both loops exit with code %d", name, o.vm.exitCode)
-			}
+		if mismatch != "" {
+			mismatched++
+			t.Errorf("%s: %s", name, mismatch)
 			continue
 		}
-		if reason, found := lowerCompareExcluded[name]; found {
-			excluded++
-			t.Logf("%s: excluded, %s: %s", name, reason, mismatch)
-			continue
+		matched++
+		matchedNames = append(matchedNames, name)
+		if last.VmCode != types.CX_SUCCESS {
+			stopped++
+			t.Logf("%s: vm exits with code %d", name, last.VmCode)
 		}
-		mismatched++
-		t.Errorf("%s: %s", name, mismatch)
 	}
 
-	t.Logf("%d programs, %d did not compile, %d outside the subset, %d inside, %d match (%d of them exit with an error code), %d mismatch, %d excluded",
-		len(programs), compileFailed, outside, inside, matched, stopped, mismatched, excluded)
+	t.Logf("%d programs, %d did not compile, %d outside the subset, %d inside, %d match (%d of them exit with an error code on vm), %d mismatch",
+		len(programs), compileFailed, outside, inside, matched, stopped, mismatched)
 	t.Logf("matching programs: %s", strings.Join(matchedNames, ", "))
 	t.Logf("first reason a program is outside: %s", lowerCompareTop(firstReasons, 12))
 	t.Logf("opcodes outside the subset, by functions using them: %s", lowerCompareTop(opcodes, 20))
-	for name, reason := range lowerCompareExcluded {
-		if !slices.Contains(programs, name) {
-			t.Errorf("excluded program %s is not in tests/ (%s)", name, reason)
-		}
-	}
 }
 
 // lowerCompareProcess runs the test binary with args and env added, in dir
