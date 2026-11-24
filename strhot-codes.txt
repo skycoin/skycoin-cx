@@ -117,8 +117,8 @@ STRHOT-103 O removed t4-opcodes/op_str.go opStrToUI8 fixed, byte views of CX mem
 STRHOT-104 O removed t4-opcodes/op_str.go opStrToUI16 fixed, byte views of CX memory and the format buffer
 STRHOT-105 O removed t4-opcodes/op_str.go opStrToUI32 fixed, byte views of CX memory and the format buffer
 STRHOT-106 O removed t4-opcodes/op_str.go opStrToUI64 fixed, byte views of CX memory and the format buffer
-STRHOT-107 O open t4-opcodes/op_str.go opStrToF32
-STRHOT-108 O open t4-opcodes/op_str.go opStrToF64
+STRHOT-107 O removed t4-opcodes/op_str.go opStrToF32 fixed, floatparse.FloatParseBytes reads the bytes, D92
+STRHOT-108 O removed t4-opcodes/op_str.go opStrToF64 fixed, floatparse.FloatParseBytes reads the bytes, D92
 STRHOT-109 O removed t4-opcodes/op_str.go opStrPrint fixed, byte views of CX memory and the format buffer
 STRHOT-110 O removed t4-opcodes/op_str.go opStrConcat fixed, byte views of CX memory and the format buffer
 STRHOT-111 O removed t4-opcodes/op_str.go opStrSubstr fixed, byte views of CX memory and the format buffer
@@ -332,7 +332,7 @@ STRHOT-318 O removed t4-opcodes/op_str.go opStrBytesOfString fixed, byte views o
 STRHOT-319 O removed t4-opcodes/op_str.go opStrStringOfBytes fixed, byte views of CX memory and the format buffer
 STRHOT-320 P removed t5-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412
 STRHOT-321 E open t5-regexp/op_regexp.go opRegexpMustCompile
-STRHOT-322 O open t0-util/program_text.go ProgramTextStringView
+STRHOT-322 B cxfx t0-util/program_text.go ProgramTextStringView O fixed, only the t6-cxfx GLFW, gltext and file boundaries call it, D92
 STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure
 STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure
 STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg

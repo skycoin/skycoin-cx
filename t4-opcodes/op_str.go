@@ -2,10 +2,9 @@ package opcodes
 
 import (
 	"bytes"
-	"strconv"
 
+	"github.com/skycoin/skycoin-cx/t0-cx-core-floatparse"
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	// GCREACH: t3-ast owns the heap and the GC roots. This file allocates strs, which
 	// adds to the GC pressure, see docs/GarbageCollector.md.
@@ -79,19 +78,17 @@ func opStrToUI64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 	outputs[0].Set_ui64(prgrm, outV0)
 }
 
-// VIOLATION STRHOT-107: O, ParseFloat reads a string view of the str, with no copy, #412.
 func opStrToF32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0, err := strconv.ParseFloat(util.ProgramTextStringView(inputs[0].Get_str_bytes(prgrm)), 32)
-	if err != nil {
+	outV0, result := floatparse.FloatParseBytes(inputs[0].Get_str_bytes(prgrm), 32)
+	if result != floatparse.FloatParseResultOK {
 		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_f32(prgrm, float32(outV0))
 }
 
-// VIOLATION STRHOT-108: O, ParseFloat reads a string view of the str, with no copy, #412.
 func opStrToF64(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outV0, err := strconv.ParseFloat(util.ProgramTextStringView(inputs[0].Get_str_bytes(prgrm)), 64)
-	if err != nil {
+	outV0, result := floatparse.FloatParseBytes(inputs[0].Get_str_bytes(prgrm), 64)
+	if result != floatparse.FloatParseResultOK {
 		panic(types.CX_RUNTIME_ERROR)
 	}
 	outputs[0].Set_f64(prgrm, float64(outV0))

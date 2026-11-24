@@ -38,10 +38,13 @@ free number, and a fixed one is marked removed, never deleted.
   opcode runs: file and process opcodes, regexp, tcp, the CPU
   profile, read, serialize and the affordance queries.
 
-I and O are what #412 removes. P, E and B may stay with their comment. No P
-code is open. Printing appends to the format buffer of the program, names
-viewed from the string pool and the byte tables of the type, built-in and
-library function names, and numbers with `strconv.Append*`.
+I and O are what #412 removes. P, E and B may stay with their comment. No I,
+O or P code is open. The str to f32 and f64 opcodes parse with
+t0-cx-core-floatparse, a port of strconv.ParseFloat that reads bytes and
+returns the same bits and errors (D92). Printing appends to the format buffer
+of the program, names viewed from the string pool and the byte tables of the
+type, built-in and library function names, and numbers with
+`strconv.Append*`.
 
 Each site has a comment naming its code and class, either directly above
 its statement or above its function, which then covers every site in it.

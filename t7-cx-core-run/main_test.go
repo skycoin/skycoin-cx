@@ -12,6 +12,7 @@ import (
 // the core.
 var coreImportsAllowed = map[string]bool{
 	"t0-cx-core-assert":     true,
+	"t0-cx-core-floatparse": true,
 	"t0-packages":           true,
 	"t0-types":              true,
 	"t0-util":               true,
