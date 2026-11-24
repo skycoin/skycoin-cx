@@ -152,6 +152,10 @@ var executionRecordSourcePatterns = []struct {
 var executionRecordExcludedByHand = map[string]string{
 	"--debug-go-stack test-debug-go-stack.cx": "gostack",
 	"examples/errors.cx":                      "path",
+	// Run without --enable=cipher, they stop with a runtime error that
+	// names the file.
+	"deprecated/test-cipher.cx": "path",
+	"examples/cipher.cx":        "path",
 }
 
 // executionRecordRun is one run of a process.
