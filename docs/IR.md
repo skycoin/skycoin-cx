@@ -686,7 +686,7 @@ This document does not list the opcodes. The list is
   `opcodes.RegisterFunction` or `opcodes.RegisterOperator`, in
   [t4-opcodes/opcodes_init.go](../t4-opcodes/opcodes_init.go) and the
   `RegisterPackage` functions of `t5-cipher`, `t5-cxos`, `t5-cxos-core`,
-  `t5-regexp`, `t5-tcp` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
+  `t5-regexp`, `t5-cxnet` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
   `constants.OpcodeLifecycleLiveByName`.
 * `opcodes.RegisterOpCode` asserts that the number is a live row with that
   name, then fills `ast.OpcodeHandlers`, `ast.NativeNames` and `ast.Natives`. A deprecated row gets no handler and leaves a gap.
@@ -741,8 +741,12 @@ one loop, and vm fails on a program that does not lower.
   `OpcodeCallResult` per output the caller receives, the same copies
   `processNonAtomicOperators` and `popStack` make.
 * A system library call lowers when its function has a vm form in
-  `vm.LibraryFunctionVmHandlers`, which today are `os.Close`, `os.Seek` and
-  `tcp.Close`, the ones with scalar operands only. It becomes
+  `vm.LibraryFunctionVmHandlers`, which today are `os.Close`, `os.Seek`,
+  `cipher.HashStateNew`, `cipher.HashStateRelease` and every function of
+  `sys/net`. A `str` input is a pointer the vm form reads from the data
+  segment, and an input of undefined type is a byte buffer, a `ui8` array
+  lowered as its address and its byte size, two pointers that
+  `OpcodeAddressOf` writes, see [Networking.md](Networking.md). It becomes
   `OpcodeCallFrame` for a block of the inputs then the outputs, packed as
   `opcodes.MakeNativeFunction` lays them out, one `OpcodeCallArg` per input,
   `OpcodeLibraryCall` with the library in M and the function in N, then

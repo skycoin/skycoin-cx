@@ -4,7 +4,7 @@
 package main
 
 import "sys/os"
-import "sys/tcp"
+import "sys/net"
 
 func main() {
 	var offset i64
@@ -14,6 +14,6 @@ func main() {
 	failed = offset - i32.i64(1)
 	test(position, failed, "os.Seek of a handle that is not open")
 	test(os.Close(-1), false, "os.Close of a handle that is not open")
-	tcp.Close()
+	test(net.Close(-1), false, "net.Close of a handle that is not open")
 	i32.print(7)
 }

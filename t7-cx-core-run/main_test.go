@@ -42,7 +42,7 @@ var coreStandardDenied = map[string]bool{"net": true, "os/exec": true, "net/http
 // adds to the core, by its build tag.
 var coreLibraryImports = map[string][]string{
 	"cxcorelibraryfile":    {"t1-profiling", "t5-cxos"},
-	"cxcorelibrarynet":     {"t5-tcp"},
+	"cxcorelibrarynet":     {"t0-textsections", "t1-netbatch", "t5-cxnet"},
 	"cxcorelibraryprocess": {"t1-profiling", "t5-cxos"},
 }
 

@@ -9,4 +9,6 @@ Expressions
 	test-library-call.cx:14 : i64.sub() : 0
 	test-library-call.cx:16 : i32.neg() : 0
 	:-1 : os.Close() : false
+	test-library-call.cx:17 : i32.neg() : 0
+	:-1 : net.Close() : false
 

@@ -20,6 +20,7 @@
     * [Imports into scope](#imports-into-scope)
     * [System libraries](#system-libraries)
     * [The cipher library](#the-cipher-library)
+    * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
     * [Else if](#else-if)
@@ -858,7 +859,7 @@ func main () {
 
 Using a built-in package without its import is a compile error, and so
 is importing one without `sys/` (`import "string"`). The built-in
-packages are `sys/string`, `sys/os`, `sys/time`, `sys/tcp`,
+packages are `sys/string`, `sys/os`, `sys/time`, `sys/net`,
 `sys/regexp`, `sys/cipher` and `sys/cx`, and in a cxfx build `sys/gl`,
 `sys/glfw`, `sys/al` and `sys/gltext`. Their functions have verbose
 camel case names, and none of them is an operator. See
@@ -966,7 +967,7 @@ cx --enable=file,net program.cx
 | library | functions |
 |---|---|
 | `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), `StartCPUProfile` and `StopCPUProfile` |
-| `net` | every function of `sys/tcp` |
+| `net` | every function of `sys/net`, see [The net library](#the-net-library) |
 | `process` | `os.Run` |
 | `cipher` | every function of `sys/cipher`, see [The cipher library](#the-cipher-library) |
 
@@ -1039,6 +1040,79 @@ func main() {
 At most 64 hash states are held at once, and a state that was released or
 never returned is an assert. The function numbers, allocations and vm
 support are in [docs/CipherLibrary.md](docs/CipherLibrary.md).
+
+### [The net library](#table-of-contents)
+
+`sys/net` is the system library `net`, so a run enables it with
+`--enable=net`. A program never reads a socket and never waits on one.
+The runtime reads every socket in the background, and `net.Update` makes
+everything that arrived since the last update one batch, which does not
+change until the next update. The program then takes the entries of the
+batch with `net.ReadyNext`, each a socket handle, a trigger, a message id
+and a detail, and reads a payload with `net.Read` into a `ui8` array it
+owns. Writes are queued and sent at the next update.
+
+| function | does |
+|---|---|
+| `net.Update(waitMilliseconds i32)` | makes the new batch and returns its entry count, waiting up to `waitMilliseconds` when nothing has arrived |
+| `net.ReadyCount()` | the entries not taken yet |
+| `net.ReadyNext()` | the next entry: `handle, trigger, messageId, detail` |
+| `net.Clock()` | the `i64` milliseconds of the last update since the run started |
+| `net.Read(handle, messageId i32, buffer [N]ui8, offset i32)` | copies the payload into `buffer` and returns its length |
+| `net.Write(handle i32, buffer [N]ui8, length i32)` | queues `length` bytes and returns how many fit |
+| `net.Close(handle i32)` | closes the socket, `bool` |
+| `net.TimeoutSet(handle, milliseconds i32)` | a timeout entry after `milliseconds`, 0 stops it, `bool` |
+| `net.TCPListen(host str, port i32)`, `net.TCPDial(host str, port i32)` | a TCP listener or connection handle |
+| `net.UDPListen(host str, port i32)`, `net.UDPDial(host str, port i32)` | a UDP socket handle |
+| `net.UDPReadFrom(handle, messageId i32, buffer [N]ui8, offset i32)` | `net.Read`, and the peer of the datagram |
+| `net.UDPWriteTo(handle, peer i32, buffer [N]ui8, length i32)` | queues one datagram to the peer |
+| `net.UDPPeerResolve(host str, port i32)` | the peer of an address |
+
+The triggers are the constants `net.TriggerData` (detail: length),
+`net.TriggerAccepted` (detail: the new connection's handle),
+`net.TriggerConnected`, `net.TriggerListening` (detail: port),
+`net.TriggerClosed`, `net.TriggerError` (detail: a `net.Error*` constant),
+`net.TriggerTimeout` and `net.TriggerDropped` (detail: UDP datagrams
+dropped), and `net.TriggerNone` after the last entry. The entries are in
+the order of the socket handles, and in arrival order within a socket.
+Opening a socket returns its handle at once, and the result is a
+listening, connected or error entry of a later update.
+
+```cx
+package main
+
+import "sys/net"
+
+var buffer [1024]ui8
+
+func main() { global buffer
+	var listener i32 = net.TCPListen("127.0.0.1", 9000)
+	var count i32
+	var handle i32
+	var trigger i32
+	var message i32
+	var detail i32
+	var length i32
+	var queued i32
+	var i i32
+	for true {
+		count = net.Update(1000)
+		for i = 0; i < count; i++ {
+			handle, trigger, message, detail = net.ReadyNext()
+			if trigger == net.TriggerData {
+				length = net.Read(handle, message, buffer, 0)
+				queued = net.Write(handle, buffer, length) // echo
+			}
+		}
+	}
+}
+```
+
+Every function runs on the old loop and on vm, and the update, the reads
+and the writes make no Go allocation. See
+[docs/Networking.md](docs/Networking.md) and
+[skycoin-cx#508](https://github.com/skycoin/skycoin-cx/issues/508).
+
 
 ## [Statements](#table-of-contents)
 
@@ -4117,3 +4191,27 @@ from version `2711240001`, and the structs `cipher.PubKey` and
 cipher library. Serialized programs from before this version must be
 recompiled. See
 [skycoin-cx#510](https://github.com/skycoin/skycoin-cx/issues/510).
+
+## Version 2611240004, 2026-11-24
+
+`sys/tcp` is replaced by `sys/net`, the batched net library of
+[skycoin-cx#508](https://github.com/skycoin/skycoin-cx/issues/508), see
+[The net library](#the-net-library). A program reads every socket through
+`net.Update` and the ready entries, and nothing blocks the run as
+`tcp.Accept` did. TCP connections are many, not one, and UDP is
+new.
+
+| before | from 2611240004 |
+|---|---|
+| `import "sys/tcp"` | `import "sys/net"` |
+| `err = tcp.Listen("tcp", "127.0.0.1:9000")` | `listener = net.TCPListen("127.0.0.1", 9000)`, then a listening or error entry |
+| `err = tcp.Dial("tcp", "127.0.0.1:9000")` | `connection = net.TCPDial("127.0.0.1", 9000)`, then a connected or error entry |
+| `err = tcp.Accept("", "")` | an accepted entry of the listener, whose detail is the connection |
+| `tcp.Close()` | `net.Close(handle)` |
+
+Functions 1 to 4 of the net library, `tcp.Dial`, `tcp.Listen`,
+`tcp.Accept` and `tcp.Close`, are deprecated and reassignable from version
+`2711240001`, and the `tcp.Dialer` struct is removed. The new functions are
+numbers 5 to 19. A library function input of undefined type is a byte
+buffer, a `ui8` array the vm form gets as its address and size. Serialized
+programs from before this version must be recompiled.

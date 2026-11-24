@@ -155,10 +155,10 @@ STRHOT-141 O removed t5-regexp/op_regexp.go expOffset not on the run path at dfc
 STRHOT-142 B open t5-regexp/op_regexp.go regexpCompile
 STRHOT-143 B open t5-regexp/op_regexp.go opRegexpCompile
 STRHOT-144 B open t5-regexp/op_regexp.go opRegexpFind
-STRHOT-145 B open t5-tcp/op_tcp.go errString
-STRHOT-146 B open t5-tcp/op_tcp.go opTCPDial
-STRHOT-147 B open t5-tcp/op_tcp.go opTCPAccept
-STRHOT-148 B open t5-tcp/op_tcp.go opTCPListen
+STRHOT-145 B removed t5-tcp/op_tcp.go errString deleted with the blocking tcp functions, #508
+STRHOT-146 B removed t5-tcp/op_tcp.go opTCPDial deleted with the blocking tcp functions, #508
+STRHOT-147 B removed t5-tcp/op_tcp.go opTCPAccept deleted with the blocking tcp functions, #508
+STRHOT-148 B removed t5-tcp/op_tcp.go opTCPListen deleted with the blocking tcp functions, #508
 STRHOT-149 O removed t6-cxfx/cxgl_desktop.go getCString handles and byte views, #432
 STRHOT-150 O removed t6-cxfx/cxgl_desktop.go freeCString handles and byte views, #432
 STRHOT-151 O removed t6-cxfx/cxgl_desktop.go opGlDestroy handles and byte views, #432
@@ -338,3 +338,24 @@ STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure
 STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg
 STRHOT-326 E open t5-cipher/op_cipher.go cipherHashStateAssertFailure
 STRHOT-327 E open t5-cipher/op_cipher.go cipherHashStateFullAssertFailure
+STRHOT-328 E open t5-cxnet/op_net.go netReplayEndAssertFailure
+STRHOT-329 B open t5-cxnet/op_net.go opNetTCPListen
+STRHOT-330 B open t5-cxnet/op_net.go opNetTCPDial
+STRHOT-331 B open t5-cxnet/op_net.go opNetUDPListen
+STRHOT-332 B open t5-cxnet/op_net.go opNetUDPDial
+STRHOT-333 B open t5-cxnet/op_net.go opNetUDPPeerResolve
+STRHOT-334 B removed t5-cxnet/op_net.go blockStr a vm form, not on the run path of the old loop
+STRHOT-335 B open t1-netbatch/socket.go netUDPReadLoop
+STRHOT-336 E open t5-cxnet/op_net.go netBufferAssertFailure
+STRHOT-337 B open t5-cxnet/op_net.go netAddress
+STRHOT-338 B open t1-netbatch/socket.go netTCPReadLoop
+STRHOT-339 B open t1-netbatch/socket.go NetTCPListen
+STRHOT-340 B open t1-netbatch/socket.go NetTCPDial
+STRHOT-341 B open t1-netbatch/socket.go NetUDPListen
+STRHOT-342 B open t1-netbatch/socket.go NetUDPDial
+STRHOT-343 B open t1-netbatch/socket.go netUDPOpen
+STRHOT-344 B open t1-netbatch/socket.go NetUDPPeerResolve
+STRHOT-345 B open t1-netbatch/socket.go netErrorOf
+STRHOT-346 B open t1-netbatch/errno_unix.go netErrorOfSystem
+STRHOT-347 B open t1-netbatch/socket.go netTCPDialRun
+STRHOT-348 B open t1-netbatch/replay.go netPayloadQuote

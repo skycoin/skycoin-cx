@@ -893,10 +893,8 @@ S1423,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,53,TestRege
 S1424,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,73,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1425,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,76,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1426,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,93,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1427,CXPackage,ctor-call,t5-tcp/init.go,12,RegisterPackage,"ast.MakePackage(""tcp"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1428,CXPackage,arena-add,t5-tcp/init.go,15,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1429,CXPackage,get-call,t5-tcp/init.go,18,RegisterPackage,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1430,CXStruct,ctor-call,t5-tcp/init.go,22,RegisterPackage,"ast.MakeStruct(""Dialer"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
+S1427,CXPackage,ctor-call,t5-cxnet/init.go,19,RegisterPackage,"ast.MakePackage(""net"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1428,CXPackage,arena-add,t5-cxnet/init.go,22,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1431,CXArgument,ctor-call,t6-cxfx/init.go,28,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1432,CXArgument,ctor-call,t6-cxfx/init.go,31,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1433,CXArgument,ctor-call,t6-cxfx/init.go,34,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng

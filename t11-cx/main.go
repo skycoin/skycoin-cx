@@ -14,6 +14,7 @@ import (
 	repl "github.com/skycoin/skycoin-cx/t10-cxrepl" // thin: only Repl, ReplTargetFn; only user of cxrepl, could merge it here, max tier 11 to 10
 	"github.com/skycoin/skycoin-cx/t2-globals"      // thin: only DBG_GOLANG_STACK_TRACE; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-actions"
+	"github.com/skycoin/skycoin-cx/t5-cxnet"                // thin: only InitConstants and LibraryNetRunStart; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cxos"                 // thin: only InitConstants; no depth gain
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
 	"github.com/skycoin/skycoin-cx/t6-cxfx"                 // thin: only InitConstants; no depth gain
@@ -234,6 +235,7 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 	actions.InitConstants()
 	// Init 5: os.* constants (empty with nocxos)
 	cxos.InitConstants(actions.AddConstI32)
+	cxnet.InitConstants(actions.AddConstI32)
 	// Init 6: gl, glfw and al constants (empty without cxfx)
 	cxfx.InitConstants()
 	// Init 7: actions.AST, the program state

@@ -190,7 +190,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("--enable=file test-os-sandbox.cx", types.CX_SUCCESS, "program paths stay inside the sandbox (skycoin-cx#433)")
 	t.Run("--enable=process test-os-run-empty.cx", types.CX_SUCCESS, "os.Run with an empty command returns OS_RUN_EMPTY_CMD")
 	t.Run("test-cx-constants.cx", types.CX_SUCCESS, "cx package constants (skycoin-cx#84)")
-	t.Run("--enable=net test-tcp.cx", types.CX_SUCCESS, "tcp package (skycoin-cx#115)")
+	t.RunWant("--enable=net --executor=old test-net-tcp.cx", types.CX_SUCCESS, "TCP through the batched net library on the old loop (skycoin-cx#508)", "server read 2 bytes, first 104\nclient read 3 bytes, last 33\nclosed\n")
+	t.RunWant("--enable=net --executor=vm test-net-tcp.cx", types.CX_SUCCESS, "TCP through the batched net library on vm (skycoin-cx#508)", "server read 2 bytes, first 104\nclient read 3 bytes, last 33\nclosed\n")
+	t.RunWant("--enable=net --executor=old test-net-udp.cx", types.CX_SUCCESS, "UDP through the batched net library on the old loop (skycoin-cx#508)", "4\nserver got 4 bytes from peer 1, first 112\n1\nclient got 1 bytes, first 113\n")
+	t.RunWant("--enable=net --executor=vm test-net-udp.cx", types.CX_SUCCESS, "UDP through the batched net library on vm (skycoin-cx#508)", "4\nserver got 4 bytes from peer 1, first 112\n1\nclient got 1 bytes, first 113\n")
 	t.RunWant("--enable=file,net --executor=vm test-library-call.cx", types.CX_SUCCESS, "system library calls with scalar operands run on vm (skycoin-cx#492)", "7\n")
 	t.RunWant("--enable=file,net --executor=old test-library-call.cx", types.CX_SUCCESS, "system library calls run on the old loop (skycoin-cx#492)", "7\n")
 	t.RunWant("--executor=vm test-library-disabled.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a call into a library that is not enabled stops vm (skycoin-cx#492)", "1\n", "test-library-disabled.cx:10, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file")
@@ -198,7 +201,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("--enable=net,process test-library-disabled.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "enabling other libraries leaves file disabled (skycoin-cx#492)", "library file is not enabled")
 	t.RunWant("--enable=file test-library-disabled.cx", types.CX_SUCCESS, "an enabled library runs (skycoin-cx#492)", "1\n2\n")
 	t.RunWant("test-os-getwd.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a str library call that is not enabled stops the old loop (skycoin-cx#492)", "library file is not enabled, enable it with --enable=file")
-	t.RunWant("test-tcp.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/tcp is the net library (skycoin-cx#492)", "library net is not enabled, enable it with --enable=net")
+	t.RunWant("test-net-tcp.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/net is the net library (skycoin-cx#492)", "library net is not enabled, enable it with --enable=net")
 	t.RunWant("test-os-run-empty.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "os.Run is the process library (skycoin-cx#492)", "library process is not enabled, enable it with --enable=process")
 	t.RunWant("--enable=cipher test-cipher-library.cx", types.CX_SUCCESS, "the cipher library hashes with the published vectors and verifies, recovers and makes Skycoin signatures (skycoin-cx#510)",
 		"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1\ncf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1\n"+

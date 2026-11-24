@@ -305,14 +305,14 @@ func TestRunVmAllocs(t *testing.T) {
 const runLibraryCallSource = `package main
 
 import "sys/os"
-import "sys/tcp"
+import "sys/net"
 
 func main() {
 	var i i32
 	var closed bool
 	for i = 0; i < 1000; i++ {
 		closed = os.Close(-1)
-		tcp.Close()
+		closed = net.Close(-1)
 	}
 }
 `

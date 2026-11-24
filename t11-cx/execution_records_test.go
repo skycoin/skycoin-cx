@@ -141,7 +141,7 @@ var executionRecordSourcePatterns = []struct {
 	reason  string
 }{
 	{regexp.MustCompile(`"sys/(gl|glfw|gltext|al|cxfx)"`), "gui"},
-	{regexp.MustCompile(`\btcp\.(Dial|Listen|Accept)\b|"http"|\bhttp\.`), "network"},
+	{regexp.MustCompile(`\bnet\.(TCP|UDP)(Listen|Dial)\b|"http"|\bhttp\.`), "network"},
 	{regexp.MustCompile(`\.rand\b`), "random"},
 	{regexp.MustCompile(`\btime\.(Unix|Now)`), "clock"},
 	{regexp.MustCompile(`\bos\.Run\b`), "process"},

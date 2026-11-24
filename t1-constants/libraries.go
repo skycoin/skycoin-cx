@@ -83,7 +83,9 @@ type LibraryFunctionLifecycle struct {
 // system library, by library and then number. The name is the CX name the
 // program calls. The file, net and process functions were opcodes before
 // 2611230001, and cipher.KeyPairGenerate was cipher.GenerateKeyPair before
-// 2611240003, see the deprecated rows of OpcodeLifecycleTable. Read only.
+// 2611240003, see the deprecated rows of OpcodeLifecycleTable. The blocking
+// tcp functions 1 to 4 gave way to the batched net functions in 2611240004.
+// Read only.
 var LibraryFunctionLifecycleTable = [...]LibraryFunctionLifecycle{
 	// library, number, name, version added, version deprecated, version reassignable
 	{LibraryNumberFile, 1, "os.GetWorkingDirectory", 2611230001, 0, 0},
@@ -149,10 +151,25 @@ var LibraryFunctionLifecycleTable = [...]LibraryFunctionLifecycle{
 	{LibraryNumberFile, 61, "json.Str", 2611230001, 2611240002, 2711240001},
 	{LibraryNumberFile, 62, "StartCPUProfile", 2611230001, 0, 0},
 	{LibraryNumberFile, 63, "StopCPUProfile", 2611230001, 0, 0},
-	{LibraryNumberNet, 1, "tcp.Dial", 2611230001, 0, 0},
-	{LibraryNumberNet, 2, "tcp.Listen", 2611230001, 0, 0},
-	{LibraryNumberNet, 3, "tcp.Accept", 2611230001, 0, 0},
-	{LibraryNumberNet, 4, "tcp.Close", 2611230001, 0, 0},
+	{LibraryNumberNet, 1, "tcp.Dial", 2611230001, 2611240004, 2711240001},
+	{LibraryNumberNet, 2, "tcp.Listen", 2611230001, 2611240004, 2711240001},
+	{LibraryNumberNet, 3, "tcp.Accept", 2611230001, 2611240004, 2711240001},
+	{LibraryNumberNet, 4, "tcp.Close", 2611230001, 2611240004, 2711240001},
+	{LibraryNumberNet, 5, "net.Update", 2611240004, 0, 0},
+	{LibraryNumberNet, 6, "net.ReadyCount", 2611240004, 0, 0},
+	{LibraryNumberNet, 7, "net.ReadyNext", 2611240004, 0, 0},
+	{LibraryNumberNet, 8, "net.Clock", 2611240004, 0, 0},
+	{LibraryNumberNet, 9, "net.Read", 2611240004, 0, 0},
+	{LibraryNumberNet, 10, "net.Write", 2611240004, 0, 0},
+	{LibraryNumberNet, 11, "net.Close", 2611240004, 0, 0},
+	{LibraryNumberNet, 12, "net.TimeoutSet", 2611240004, 0, 0},
+	{LibraryNumberNet, 13, "net.TCPListen", 2611240004, 0, 0},
+	{LibraryNumberNet, 14, "net.TCPDial", 2611240004, 0, 0},
+	{LibraryNumberNet, 15, "net.UDPListen", 2611240004, 0, 0},
+	{LibraryNumberNet, 16, "net.UDPDial", 2611240004, 0, 0},
+	{LibraryNumberNet, 17, "net.UDPReadFrom", 2611240004, 0, 0},
+	{LibraryNumberNet, 18, "net.UDPWriteTo", 2611240004, 0, 0},
+	{LibraryNumberNet, 19, "net.UDPPeerResolve", 2611240004, 0, 0},
 	{LibraryNumberProcess, 1, "os.Run", 2611230001, 0, 0},
 	{LibraryNumberCipher, 1, "cipher.HashOfBytes", 2611240003, 0, 0},
 	{LibraryNumberCipher, 2, "cipher.HashStateNew", 2611240003, 0, 0},

@@ -65,7 +65,7 @@ Counts are files, not rows.
 | cx | `cx/packages/cxfx/` | 15 | keep | `t6-cxfx` | GL, GLFW, OpenAL and gltext bindings behind the cxfx tag (cgo) |
 | cx | `cx/packages/cxos/` | 7 | keep | `t5-cxos` | CX os, json, time and profile packages, on by default now |
 | cx | `cx/packages/regexp/` | 3 | keep | `t5-regexp` | CX regexp package, on by default now |
-| cx | `cx/packages/tcp/` | 2 | keep | `t5-tcp` | CX tcp package |
+| cx | `cx/packages/tcp/` | 2 | keep | `t5-cxnet` | CX net library, batched since skycoin-cx 508 |
 | cx-games | `libs/utest/` | 4 | merge | `skycoin-cx/lib/utest` | CX unit test library, runs on the current compiler |
 
 ## New compiler (WIP)
