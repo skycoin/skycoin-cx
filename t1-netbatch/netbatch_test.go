@@ -384,25 +384,38 @@ func testPairs(t testing.TB, count int) map[int32]net.Conn {
 	address := listener.Addr().String()
 	// The dials go out 64 at a time, inside the listen backlog of every
 	// system, Windows included.
+	// A dial the loopback refuses under load, as on the Windows runners, is
+	// closed and made again.
 	const dialBatch = 64
+	const dialRetries = 64
 	handles := make([]int32, 0, count)
-	connected := 0
+	connected, dialing, retries := 0, 0, 0
 	deadline := time.Now().Add(20 * time.Second)
 	for connected < count && time.Now().Before(deadline) {
-		for len(handles) < min(count, connected+dialBatch) {
-			handles = append(handles, NetTCPDial(address))
+		for dialing < min(count-connected, dialBatch) {
+			NetTCPDial(address)
+			dialing++
 		}
 		NetUpdate(20)
 		for {
-			_, trigger, _, _ := NetReadyNext()
+			handle, trigger, _, detail := NetReadyNext()
 			if trigger == NetTriggerNone {
 				break
 			}
-			if trigger == NetTriggerConnected {
+			switch trigger {
+			case NetTriggerConnected:
 				connected++
-			}
-			if trigger == NetTriggerError {
-				t.Fatalf("a dial failed after %d connected", connected)
+				dialing--
+				handles = append(handles, handle)
+			case NetTriggerError:
+				retries++
+				if retries > dialRetries {
+					t.Fatalf("%d dials failed, the last with error %d, after %d connected", retries, detail, connected)
+				}
+				t.Logf("a dial failed with error %d after %d connected, dialing again", detail, connected)
+				NetClose(handle)
+				dialing--
+				time.Sleep(10 * time.Millisecond)
 			}
 		}
 	}
