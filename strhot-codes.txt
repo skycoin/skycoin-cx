@@ -96,7 +96,7 @@ STRHOT-082 O removed t4-opcodes/op_f32.go opF32ToStr fixed, byte views of CX mem
 STRHOT-083 O removed t4-opcodes/op_f32.go opF32Print fixed, byte views of CX memory and the format buffer
 STRHOT-084 O removed t4-opcodes/op_f64.go opF64ToStr fixed, byte views of CX memory and the format buffer
 STRHOT-085 O removed t4-opcodes/op_f64.go opF64Print fixed, byte views of CX memory and the format buffer
-STRHOT-086 P open t4-opcodes/op_fmt.go buildString O fixed, %v and extra arguments remain
+STRHOT-086 P open t4-opcodes/op_fmt.go buildString O fixed, the type name of an extra argument remains
 STRHOT-087 O removed t4-opcodes/op_fmt.go opSprintf fixed, byte views of CX memory and the format buffer
 STRHOT-088 O removed t4-opcodes/op_fmt.go opPrintf fixed, byte views of CX memory and the format buffer
 STRHOT-089 O removed t4-opcodes/op_fmt.go CheckForEscapedChars not on the run path at dfcc46ab
@@ -225,14 +225,14 @@ STRHOT-211 O removed t6-cxfx/op_opengl.go opGlGetUniformLocation handles and byt
 STRHOT-212 O removed t6-cxfx/op_opengl.go opGlShaderSource handles and byte views, #432
 STRHOT-213 O removed t6-cxfx/utils.go opGlfwFuncI32I32 handles and byte views, #432
 STRHOT-214 P removed t0-types/types.go Code.Name not on the run path at dfcc46ab
-STRHOT-215 P open t3-ast/tostring.go valueAt
-STRHOT-216 P open t3-ast/tostring.go elementsAt
-STRHOT-217 P open t3-ast/tostring.go structAt
-STRHOT-218 P open t3-ast/tostring.go typeSignatureAt
+STRHOT-215 P removed t3-ast/tostring.go valueAt appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-216 P removed t3-ast/tostring.go elementsAt appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-217 P removed t3-ast/tostring.go structAt appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-218 P removed t3-ast/tostring.go typeSignatureAt appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-219 P removed t3-ast/tostring.go printSeparator not on the run path at dfcc46ab
-STRHOT-220 P open t3-ast/tostring.go readAtomic
-STRHOT-221 P open t3-ast/tostring.go argValueAt
-STRHOT-222 P open t3-ast/tostring.go GetPrintableValue
+STRHOT-220 P removed t3-ast/tostring.go readAtomic appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-221 P removed t3-ast/tostring.go argValueAt appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-222 P removed t3-ast/tostring.go GetPrintableValue appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-223 E open t0-cx-core-assert/assert.go AssertPreconditionTrue
 STRHOT-224 E open t0-cx-core-assert/assert.go AssertInvariantTrue
 STRHOT-225 E open t0-cx-core-assert/assert.go assertCrash
@@ -276,7 +276,7 @@ STRHOT-262 E removed t3-ast/error.go ErrorHeader not on the run path at dfcc46ab
 STRHOT-263 E removed t3-ast/error.go ErrorString not on the run path at dfcc46ab
 STRHOT-264 E removed t3-ast/error.go RuntimeErrorInfo not on the run path at dfcc46ab
 STRHOT-265 B open t3-ast/serialize.go Deserialize
-STRHOT-266 P open t5-cx-runtime-printer/stack.go printerStackValueHeader
+STRHOT-266 P removed t5-cx-runtime-printer/stack.go printerStackValueHeader folded into printerStackValueLine, which appends bytes
 STRHOT-267 P open t5-cx-runtime-printer/stack.go PrinterStackPrint
 STRHOT-268 B open t0-util/file_error.go fileErrorFromFileSystemError
 STRHOT-269 B open t0-util/program_path.go ProgramFileSystemPathFromBytes
@@ -324,13 +324,13 @@ STRHOT-310 B open t3-ast/serialize.go SerializedHeaderCheck
 STRHOT-311 E open t3-ast/serialize.go serializeStructReference
 STRHOT-312 E open t3-ast/serialize.go serializeUnusedManagersCheck
 STRHOT-313 E open t3-ast/sourcefilemng.go *SourceFileMng.SourceFilePath
-STRHOT-314 P open t3-ast/tostring.go printPointer
-STRHOT-315 P open t3-ast/tostring.go printStructPointer
+STRHOT-314 P removed t3-ast/tostring.go printPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
+STRHOT-315 P removed t3-ast/tostring.go printStructPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-316 E open t4-opcodes/libraries.go opLibraryCall
 STRHOT-317 B open t4-opcodes/op_aff.go affFunction
 STRHOT-318 O removed t4-opcodes/op_str.go opStrBytesOfString fixed, byte views of CX memory and the format buffer
 STRHOT-319 O removed t4-opcodes/op_str.go opStrStringOfBytes fixed, byte views of CX memory and the format buffer
-STRHOT-320 P open t5-cx-runtime-printer/stack.go printerStackValuePrintable
+STRHOT-320 P open t5-cx-runtime-printer/stack.go printerStackValueLine
 STRHOT-321 E open t5-regexp/op_regexp.go opRegexpMustCompile
 STRHOT-322 O open t0-util/program_text.go ProgramTextStringView
 STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// printf %v of arrays and slices goes through ast.GetPrintableValue. See #238.
+// printf %v of arrays and slices goes through ast.AppendPrintableValue. See #238.
 func TestPrintfArraysAndSlices(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "p.cx")
 	src := `package main

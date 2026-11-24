@@ -27,6 +27,10 @@ prepared.
 - `TestRunNoGC` collects, runs each program that allocates nothing, and
   requires `runtime.MemStats.NumGC` unchanged, also with `GOGC=1`.
 - `TestRunVmAllocs` requires 0 for the vm.
+- `TestRunPrintAllocs` requires 0 for printf and sprintf of `%v` of atomic
+  values, arrays, slices, structs and pointers, of extra arguments, and for
+  the stack dump of the debug opcode. `TestRunVmPrintAllocs` requires 0 for
+  `%v` of atomic values on vm, the only `%v` that lowers.
 - `TestRunCipherAllocs` requires 0 for 100 calls of the hash functions of
   `sys/cipher`, and for `cipher.SignatureVerify` no more than the Skycoin
   call makes, VMALLOC-024. `TestRunVmCipherAllocs` requires 0 for its vm
@@ -48,7 +52,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-002 | fixed for the run | operand buffers, sized by `RunBuffersPrepare`. A `Callback` loop of t6-cxfx still grows its own |
 | VMALLOC-003 | open, boundary | `Read_str`, `Read_str_data`, `CXValue.Get_str`, Go string copies the system library and affordance opcodes use. The str opcodes read views |
 | VMALLOC-004 | fixed | `fmt.Println` in the print opcodes |
-| VMALLOC-005 | fixed but `%v` | printf and sprintf append to the format buffer. `%v` and extra arguments are VMALLOC-015 |
+| VMALLOC-005 | fixed | printf and sprintf append to the format buffer, `%v` and extra arguments included |
 | VMALLOC-006 | fixed | the number to str conversions |
 | VMALLOC-007 | fixed | `feedOSArgs` built an error when `os` is not imported |
 | VMALLOC-008 | fixed | `rand.Seed`, a no-op since Go 1.24, removed |
@@ -58,7 +62,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-012 | open, boundary | `ReadSlice_*`, used by the serialize and file opcodes |
 | VMALLOC-013 | not on the run path | `Make_obj` and `Write_str_data` run at compile time |
 | VMALLOC-014 | failure only | the getters build an error only on a miss |
-| VMALLOC-015 | open, printing | `GetPrintableValue` and the stack dump build Go strings |
+| VMALLOC-015 | fixed | `AppendPrintableValue` and the stack dump of the debug opcode and of a runtime error append to the format buffer |
 | VMALLOC-016 | fixed | assert builds its text only when it fails |
 | VMALLOC-017 | open, boundary | regexp compile and find |
 | VMALLOC-018 | open, boundary | the file, process, profile and read opcodes, and the net functions that open a socket. The net update, ready reads, reads and writes allocate nothing, see [Networking.md](Networking.md) |
