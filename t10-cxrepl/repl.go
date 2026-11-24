@@ -108,6 +108,14 @@ func unsafeEval(code string) (out string) {
 		restore()
 		return fmt.Sprintf("%s", err)
 	}
+	// AddInitFunction records initialization cycles and global type errors (#519).
+	if globals.FoundCompileErrors {
+		printer.PrinterCompileErrorsPrint(actions.AST)
+		restore()
+		actions.AST = cxinit.MakeProgram()
+		cxinit.RegisterPackages(actions.AST)
+		return cxparsering.ErrCompilation.Error()
+	}
 
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 	actions.AST.CxIrState.StringPool.StringPoolFreeze()

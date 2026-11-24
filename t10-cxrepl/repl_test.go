@@ -109,3 +109,25 @@ func TestEvalCompileErrorDoesNotRun(t *testing.T) {
 		t.Fatalf("Eval after a compile error: got %q, want %q", out, "hi\n")
 	}
 }
+
+// An initialization cycle is found by AddInitFunction, after parsing, and
+// used to run anyway. See #519.
+func TestEvalInitCycleDoesNotRun(t *testing.T) {
+	cycle := "package main\nvar a i32 = b\nvar b i32 = a + 1\nfunc main() { global a\n\ti32.print(a)\n}\n"
+	stderr := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stderr = w
+	out := eval(t, cycle)
+	os.Stderr = stderr
+	w.Close()
+	io.Copy(io.Discard, r)
+	if out != "compilation error" {
+		t.Fatalf("Eval(cycle): got %q, want %q", out, "compilation error")
+	}
+	if out := eval(t, hello); out != "hi\n" {
+		t.Fatalf("Eval after an init cycle: got %q, want %q", out, "hi\n")
+	}
+}
