@@ -581,7 +581,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWantEx("--enable=file test-cxfx-handles.cx", types.CX_SUCCESS, "cxfx handles and compile time callbacks (skycoin-cx#432)", runner.TestGui,
 		"window 64 48\n", "start callback 0 1\n", "callback sum 42\n", "pixel 1.0000000 0.8509804 0.2862745 1.0000000\n", "gif 3 2 4 2\n", "gif frame 20 2 error 0\n",
 		"metrics 152 45\n", "shader log length 0\n", "shader compiled 1\n", "program linked 1 attrib 3 uniform 0\n", "closing false error 0\n", "closing true\n")
-	t.RunWantEx("test-cxfx-events.cx", types.CX_SUCCESS, "cxfx window callbacks get the window handle (skycoin-cx#432)", runner.TestGui, "pos 0 30 40\n", "size 0 640 480\n", "framebuffer 0 640 480\n")
+	t.RunWantEx("test-cxfx-events.cx", types.CX_SUCCESS, "cxfx window callbacks get the window handle (skycoin-cx#432)", runner.TestGui, "pos 0 30 40\n", "size 0 matches\n", "framebuffer 0 matches\n")
 	t.RunWantEx("test-cxfx-callback-name.cx", types.CX_COMPILATION_ERROR, "a cxfx callback takes a function name (skycoin-cx#432)", runner.TestGui, "test-cxfx-callback-name.cx:10 function 'glfw.SetKeyboardCallback' expected a function name as input argument 2; 'str' was provided")
 	t.RunWant("-h", types.CX_SUCCESS, "cx -h names the real flags (skycoin/cx#567)", "alias for -lexer\n", "alias for -heap-initial\n", "alias for -heap-max\n", "-lexer-output string")
 	t.RunWant("test-append-struct-field.cx", types.CX_SUCCESS, "append and len on a slice field of a struct and of a struct pointer",
