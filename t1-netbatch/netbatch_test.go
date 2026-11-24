@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -451,7 +452,12 @@ func testReadyWait(ready int) {
 // of open sockets (#508).
 func TestNetUpdateWorkGrowsWithReady(t *testing.T) {
 	work := map[[2]int]int64{}
-	for _, count := range []int{16, 512} {
+	// The Windows runners refuse loopback dials past about 240 connections.
+	large := 512
+	if runtime.GOOS == "windows" {
+		large = 128
+	}
+	for _, count := range []int{16, large} {
 		testRunStart(t, NetModeLive, "")
 		peers := testPairs(t, count)
 		for _, ready := range []int{1, 4, 16} {
@@ -472,11 +478,11 @@ func TestNetUpdateWorkGrowsWithReady(t *testing.T) {
 		NetRunStop()
 	}
 	for _, ready := range []int{1, 4, 16} {
-		if work[[2]int{16, ready}] != work[[2]int{512, ready}] {
-			t.Errorf("ready %d: work %d with 16 sockets, %d with 512", ready, work[[2]int{16, ready}], work[[2]int{512, ready}])
+		if work[[2]int{16, ready}] != work[[2]int{large, ready}] {
+			t.Errorf("ready %d: work %d with 16 sockets, %d with %d", ready, work[[2]int{16, ready}], work[[2]int{large, ready}], large)
 		}
 	}
-	if work[[2]int{512, 16}] <= work[[2]int{512, 1}] {
+	if work[[2]int{large, 16}] <= work[[2]int{large, 1}] {
 		t.Errorf("work does not grow with the ready count: %v", work)
 	}
 	t.Logf("work by sockets and ready count: %v", work)
