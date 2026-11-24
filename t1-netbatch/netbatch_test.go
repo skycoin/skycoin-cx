@@ -249,18 +249,22 @@ func TestNetTCPBackpressure(t *testing.T) {
 		_, found := testFind(entries, listener, NetTriggerAccepted)
 		return found
 	}), listener, NetTriggerAccepted)
-	const total = 8 << 20
-	written := make(chan error, 1)
-	go func() {
-		_, err := peer.Write(bytes.Repeat([]byte{'x'}, total))
-		written <- err
-	}()
-	time.Sleep(100 * time.Millisecond)
-	select {
-	case <-written:
-		t.Fatal("8 MiB were written to a program that does not update")
-	default:
+	// The peer writes until a write stalls. Socket buffers differ by system,
+	// and Windows grows them to megabytes, so the stall point is not fixed.
+	chunk := bytes.Repeat([]byte{'x'}, 64<<10)
+	total := 0
+	for {
+		peer.SetWriteDeadline(time.Now().Add(200 * time.Millisecond))
+		written, err := peer.Write(chunk)
+		total += written
+		if err != nil {
+			break
+		}
+		if total > 512<<20 {
+			t.Fatal("512 MiB were written to a program that does not update")
+		}
 	}
+	t.Logf("the peer stalled after %d bytes", total)
 	received := 0
 	deadline := time.Now().Add(20 * time.Second)
 	for received < total && time.Now().Before(deadline) {
@@ -270,7 +274,7 @@ func TestNetTCPBackpressure(t *testing.T) {
 			}
 		}
 	}
-	if received != total || <-written != nil {
+	if received != total {
 		t.Fatalf("received %d of %d bytes", received, total)
 	}
 }
@@ -378,13 +382,16 @@ func testPairs(t testing.TB, count int) map[int32]net.Conn {
 		}
 	}()
 	address := listener.Addr().String()
-	handles := make([]int32, count)
-	for i := range handles {
-		handles[i] = NetTCPDial(address)
-	}
+	// The dials go out 64 at a time, inside the listen backlog of every
+	// system, Windows included.
+	const dialBatch = 64
+	handles := make([]int32, 0, count)
 	connected := 0
 	deadline := time.Now().Add(20 * time.Second)
 	for connected < count && time.Now().Before(deadline) {
+		for len(handles) < min(count, connected+dialBatch) {
+			handles = append(handles, NetTCPDial(address))
+		}
 		NetUpdate(20)
 		for {
 			_, trigger, _, _ := NetReadyNext()
@@ -393,6 +400,9 @@ func testPairs(t testing.TB, count int) map[int32]net.Conn {
 			}
 			if trigger == NetTriggerConnected {
 				connected++
+			}
+			if trigger == NetTriggerError {
+				t.Fatalf("a dial failed after %d connected", connected)
 			}
 		}
 	}
