@@ -149,9 +149,12 @@ func netErrorOf(err error) NetError {
 		return NetErrorTimeout
 	case errors.As(err, &addressError), errors.As(err, &dnsError), errors.As(err, &parseError):
 		return NetErrorAddress
-	}
-	if code := netErrorOfSystem(err); code != NetErrorNone {
-		return code
+	case errors.Is(err, netErrnoRefused):
+		return NetErrorRefused
+	case errors.Is(err, netErrnoReset), errors.Is(err, netErrnoBrokenPipe):
+		return NetErrorReset
+	case errors.Is(err, netErrnoAddressInUse):
+		return NetErrorAddressInUse
 	}
 	return NetErrorOther
 }

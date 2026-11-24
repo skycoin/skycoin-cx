@@ -202,6 +202,7 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("--enable=file test-library-disabled.cx", types.CX_SUCCESS, "an enabled library runs (skycoin-cx#492)", "1\n2\n")
 	t.RunWant("test-os-getwd.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a str library call that is not enabled stops the old loop (skycoin-cx#492)", "library file is not enabled, enable it with --enable=file")
 	t.RunWant("test-net-tcp.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/net is the net library (skycoin-cx#492)", "library net is not enabled, enable it with --enable=net")
+	t.RunWant("--net-record=a.netreplay --net-replay=b.netreplay test-net-tcp.cx", types.CX_COMPILATION_ERROR, "a run records or replays the net library, not both (skycoin-cx#508)", "--net-record and --net-replay cannot both be given")
 	t.RunWant("test-os-run-empty.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "os.Run is the process library (skycoin-cx#492)", "library process is not enabled, enable it with --enable=process")
 	t.RunWant("--enable=cipher test-cipher-library.cx", types.CX_SUCCESS, "the cipher library hashes with the published vectors and verifies, recovers and makes Skycoin signatures (skycoin-cx#510)",
 		"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1\ncf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1\n"+

@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t1-netbatch"
+	"github.com/skycoin/skycoin-cx/t5-cxnet"
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorAuto; no depth gain
 )
 
@@ -31,6 +33,8 @@ type cxCmdFlags struct {
 	sandbox          string
 	executor         string
 	enable           string
+	netRecord        string
+	netReplay        string
 
 	// Debug flags for the CX developers
 	debugFileAccess bool
@@ -96,6 +100,8 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.StringVar(&options.sandbox, "sandbox", options.sandbox, "Directory a running program's file opcodes are confined to. Program paths must be relative and stay inside it. Defaults to the working directory.")
 	commandLine.StringVar(&options.executor, "executor", options.executor, "Loop that runs the program: auto runs it on the flat vm when every function lowers and on the old loop otherwise, old and vm force one loop. vm fails on a program that does not lower.")
 	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries the program may call, a comma separated list of file, net, process and cipher. A call into a library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
+	commandLine.StringVar(&options.netRecord, "net-record", options.netRecord, "Write every batch of the net library to this replay record, see docs/Networking.md")
+	commandLine.StringVar(&options.netReplay, "net-replay", options.netReplay, "Run the net library from this replay record and open no socket, see docs/Networking.md")
 
 	// Debug flags
 	commandLine.BoolVar(&options.debugFileAccess, "debug-file-access", options.debugFileAccess, "Print each file the compiler opens, creates or stats")
@@ -198,4 +204,19 @@ func librariesEnabledParse(list string) (enabled [constants.LibraryCount]bool, p
 		enabled[library.LibraryNumber] = true
 	}
 	return enabled, ""
+}
+
+// netModeSet sets where the net library takes its batches from, by
+// --net-record and --net-replay, and returns a problem when both are given.
+func netModeSet(options cxCmdFlags) string {
+	cxnet.LibraryNetMode, cxnet.LibraryNetRecordPath = netbatch.NetModeLive, ""
+	switch {
+	case options.netRecord != "" && options.netReplay != "":
+		return "--net-record and --net-replay cannot both be given"
+	case options.netRecord != "":
+		cxnet.LibraryNetMode, cxnet.LibraryNetRecordPath = netbatch.NetModeRecord, options.netRecord
+	case options.netReplay != "":
+		cxnet.LibraryNetMode, cxnet.LibraryNetRecordPath = netbatch.NetModeReplay, options.netReplay
+	}
+	return ""
 }

@@ -12,11 +12,11 @@ See [skycoin-cx#507](https://github.com/skycoin/skycoin-cx/issues/507).
 | --- | --- |
 | program | the serialized program as `cx build` appends it to the core, from `buildProgramImage` in `t11-cx/build.go` (decision D44) |
 | source | the `.cx` files the program names on the command line, one after the other. It is kept beside the program hash for reference and is not part of the record hash |
-| input | the decimal number of arguments and a zero byte, each argument and a zero byte, then stdin |
+| input | the decimal number of arguments and a zero byte, each argument and a zero byte, then stdin, and for a program with a net replay record a zero byte, the decimal length of the record, a zero byte and the record (decision D53) |
 | output | stdout |
 | record | the program, input and output hashes as 32 bytes each, then the exit code as a little endian int32. It names the record |
 
-The input is what the program sees, `os.Args` and stdin. cx routes an
+The input is what the program sees, `os.Args` and stdin. A program that uses the net library may have a replay record beside its first `.cx` file, `test-net-tcp.netreplay` beside `test-net-tcp.cx`, which holds every batch of a live run, see [Networking.md](Networking.md). The harness then runs every form from the record and opens no socket: cx and the image forms with `--net-replay`, a built program with `CX_NET_REPLAY`. The record is part of the input. cx routes an
 argument that starts with `++` to the program, and a built program gets its
 arguments unchanged, so `./program ++a` sees what `cx program.cx ++a` sees.
 Most programs have no input.
@@ -66,7 +66,7 @@ record or excluded with a reason. The ones excluded now are these.
 | --- | --- |
 | compile | does not compile on its own: a compile error test, a file of a package, or a flag only test |
 | gui | opens a window, needs the cxfx build and a display |
-| network | uses the network. Out of scope until the networking design of #508 is built, whose replay record (decision D53) is meant to be part of the input |
+| network | uses the network and has no net replay record beside it |
 | random | prints random values |
 | clock | prints or depends on the clock |
 | process | runs other cx programs |

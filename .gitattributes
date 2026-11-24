@@ -6,3 +6,6 @@
 
 # Recorded stdout is compared byte for byte, see docs/ExecutionRecords.md.
 tests/execution-records/*.out -text
+
+# A replay record is part of the input hash of a record, see docs/Networking.md.
+*.netreplay -text

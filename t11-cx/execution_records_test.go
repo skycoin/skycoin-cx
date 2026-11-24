@@ -99,10 +99,13 @@ type executionRecord struct {
 	name        string
 }
 
-// executionRecordInput is the input of one program, its os.Args and stdin.
+// executionRecordInput is the input of one program, its os.Args, stdin and
+// the replay record of the net library beside its first .cx file, if any.
 type executionRecordInput struct {
-	stdin     string
-	arguments []string
+	stdin      string
+	arguments  []string
+	replayPath string
+	replay     []byte
 }
 
 // executionRecordExclusion is one line of the excluded section.
@@ -122,7 +125,7 @@ type executionRecordFile struct {
 var executionRecordReasons = map[string]string{
 	"compile": "does not compile on its own: a compile error test, a file of a package, or a flag only test",
 	"gui":     "opens a window (sys/gl, sys/glfw), needs the cxfx build and a display",
-	"network": "uses the network, out of scope until the networking design of #508 is built",
+	"network": "uses the network and has no net replay record beside it, see docs/Networking.md",
 	"random":  "prints random values",
 	"clock":   "prints or depends on the clock",
 	"process": "runs other cx programs",
@@ -167,7 +170,9 @@ type executionRecordRun struct {
 }
 
 // executionRecordInputHash hashes the input: the decimal argument count and
-// a zero byte, each argument and a zero byte, then stdin.
+// a zero byte, each argument and a zero byte, then stdin, and for a program
+// with a replay record a zero byte, its decimal length, a zero byte and the
+// record (decision D53).
 func executionRecordInputHash(input executionRecordInput) string {
 	var data bytes.Buffer
 	data.WriteString(strconv.Itoa(len(input.arguments)))
@@ -177,6 +182,12 @@ func executionRecordInputHash(input executionRecordInput) string {
 		data.WriteByte(0)
 	}
 	data.WriteString(input.stdin)
+	if input.replayPath != "" {
+		data.WriteByte(0)
+		data.WriteString(strconv.Itoa(len(input.replay)))
+		data.WriteByte(0)
+		data.Write(input.replay)
+	}
 	return executionRecordHash(data.Bytes())
 }
 
@@ -301,7 +312,32 @@ func executionRecordHarnessNew(t *testing.T) executionRecordHarness {
 // cxArguments returns the cx arguments of name with the program arguments
 // of input after them.
 func (harness executionRecordHarness) cxArguments(name string, input executionRecordInput) []string {
-	return append(strings.Fields(name), input.arguments...)
+	var args []string
+	if input.replayPath != "" {
+		args = append(args, "--net-replay="+input.replayPath)
+	}
+	return append(append(args, strings.Fields(name)...), input.arguments...)
+}
+
+// executionRecordReplaySuffix replaces .cx in the name of the replay record
+// of the net library beside a program, see docs/Networking.md.
+const executionRecordReplaySuffix = ".netreplay"
+
+// inputOf returns the input of name, with the replay record beside its first
+// .cx file when there is one.
+func (harness executionRecordHarness) inputOf(inputs map[string]executionRecordInput, name string) executionRecordInput {
+	input := inputs[name]
+	for _, arg := range strings.Fields(name) {
+		if !strings.HasSuffix(arg, ".cx") {
+			continue
+		}
+		replayPath := strings.TrimSuffix(arg, ".cx") + executionRecordReplaySuffix
+		if replay, err := os.ReadFile(filepath.Join(harness.tests, replayPath)); err == nil {
+			input.replayPath, input.replay = replayPath, replay
+		}
+		break
+	}
+	return input
 }
 
 // programHash compiles name in a child and returns the hash of the image cx
@@ -563,7 +599,7 @@ func TestExecutionRecords(t *testing.T) {
 		go func() {
 			defer wait.Done()
 			defer func() { <-limit }()
-			input := file.inputs[record.name]
+			input := harness.inputOf(file.inputs, record.name)
 			forms := map[executionRecordForm]formOutcome{}
 			outcomes[i].programHash, _ = harness.programHash(record.name)
 			forms[executionRecordFormOld] = formOutcome{run: harness.cx("old", record.name, input), applicable: true}
@@ -596,7 +632,11 @@ func TestExecutionRecords(t *testing.T) {
 					if program, fileError := core.CoreTrailerRead(output); fileError == nil {
 						outcomes[i].payload = len(program)
 					}
-					forms[executionRecordFormBuilt] = formOutcome{run: executionRecordProcess(t, output, nil, harness.tests, input.stdin, input.arguments...), applicable: true}
+					var env []string
+					if input.replayPath != "" {
+						env = append(env, "CX_NET_REPLAY="+input.replayPath)
+					}
+					forms[executionRecordFormBuilt] = formOutcome{run: executionRecordProcess(t, output, env, harness.tests, input.stdin, input.arguments...), applicable: true}
 					os.Remove(output)
 				}
 			}
@@ -611,7 +651,7 @@ func TestExecutionRecords(t *testing.T) {
 	var payloads []int
 	for i, record := range file.records {
 		result := outcomes[i]
-		input := file.inputs[record.name]
+		input := harness.inputOf(file.inputs, record.name)
 		if inputHash := executionRecordInputHash(input); inputHash != record.inputHash {
 			t.Errorf("record %s: input hash %s, the inputs section gives %s, run make records", record.name, record.inputHash, inputHash)
 		}
@@ -716,7 +756,7 @@ func executionRecordsWrite(t *testing.T, harness executionRecordHarness, path st
 		go func() {
 			defer wait.Done()
 			defer func() { <-limit }()
-			outcomes[i].reason = executionRecordReason(t, harness, program, file.inputs[program], &outcomes[i].record, &outcomes[i].stdout)
+			outcomes[i].reason = executionRecordReason(t, harness, program, harness.inputOf(file.inputs, program), &outcomes[i].record, &outcomes[i].stdout)
 		}()
 	}
 	wait.Wait()
@@ -773,6 +813,10 @@ func executionRecordReason(t *testing.T, harness executionRecordHarness, program
 			t.Fatal(err)
 		}
 		for _, exclusion := range executionRecordSourcePatterns {
+			// A network program with a replay record runs without the network.
+			if exclusion.reason == "network" && input.replayPath != "" {
+				continue
+			}
 			if exclusion.pattern.Match(source) {
 				return exclusion.reason
 			}

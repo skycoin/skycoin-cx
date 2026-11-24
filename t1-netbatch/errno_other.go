@@ -2,7 +2,6 @@
 
 package netbatch
 
-// netErrorOfSystem has no error numbers to read on js/wasm and wasip1.
-func netErrorOfSystem(err error) NetError {
-	return NetErrorNone
-}
+// js/wasm and wasip1 have no error numbers to read, and errors.Is never
+// matches a nil target.
+var netErrnoRefused, netErrnoReset, netErrnoBrokenPipe, netErrnoAddressInUse error

@@ -1,0 +1,34 @@
+error: test-net-udp.cx:10, CX_RUNTIME_LIBRARY_DISABLED, library net is not enabled, enable it with --enable=net
+===Callstack===
+>>> main()
+Expressions
+ 	test-net-udp.cx:10 : net.UDPListen() : 0
+	test-net-udp.cx:22 : bool.eq() : false
+	test-net-udp.cx:22 : bool.eq() : false
+	test-net-udp.cx:22 : i32.lt() : 0
+	test-net-udp.cx:22 : i32.lt() : false
+	:-1 : bool.and() : false
+	test-net-udp.cx:23 : net.Update() : 0
+	test-net-udp.cx:25 : identity() : 0
+	:-1 : i32.lt() : false
+	test-net-udp.cx:29 : jmp() : false
+	test-net-udp.cx:26 : net.ReadyNext() : 0
+	test-net-udp.cx:26 : net.ReadyNext() : 0
+	test-net-udp.cx:26 : net.ReadyNext() : 0
+	test-net-udp.cx:26 : net.ReadyNext() : 0
+	test-net-udp.cx:28 : net.UDPDial() : 0
+	test-net-udp.cx:33 : i32.eq() : false
+	test-net-udp.cx:31 : identity() : 0
+	:-1 : net.Write() : 0
+	test-net-udp.cx:46 : i32.eq() : false
+	test-net-udp.cx:40 : i32.eq() : false
+	test-net-udp.cx:36 : net.UDPReadFrom() : 0
+	test-net-udp.cx:36 : net.UDPReadFrom() : 0
+	:-1 : ui8.i32() : 0
+	:-1 : net.UDPWriteTo() : 0
+	test-net-udp.cx:45 : i32.eq() : false
+	:-1 : ui8.i32() : 0
+	:-1 : net.UDPPeerResolve() : 0
+	:-1 : net.Close() : false
+	:-1 : net.Close() : false
+

@@ -169,6 +169,48 @@ has seen. A UDP peer is numbered the first time the program meets its
 address, in a received datagram or `net.UDPPeerResolve`, so peers too depend
 only on the batches.
 
+## The replay record
+
+Every update is the only point where the network reaches a program, so the
+batches are the whole network input of a run. A live run writes them with
+`--net-record`, and a replay reads them with `--net-replay`, opens no socket
+and prints what the live run printed, on the old loop and on vm (decisions
+D48 and D53).
+
+```
+cx --enable=net --net-record=tests/test-net-tcp.netreplay tests/test-net-tcp.cx
+cx --enable=net --net-replay=tests/test-net-tcp.netreplay tests/test-net-tcp.cx
+```
+
+A program built with `cx build` takes no cx flags, so it replays the record
+the environment variable `CX_NET_REPLAY` names.
+
+The record is a text sections file. The `updates` section has one line per
+update, `u number clock`, with the clock reading the update gave (decision
+D51), and after it one line per entry of its batch,
+`e handle trigger detail peer payload`. The peer is the UDP address of a data
+entry or `-`, and the payload the quoted bytes of a data entry or `-`.
+
+```
+[format] version
+1
+
+[updates] kind fields
+u 1 1
+e 1 4 38221 - -
+u 2 2
+e 1 2 3 - -
+e 2 3 0 - -
+u 3 2
+e 3 1 2 - "hi"
+```
+
+A replay checks nothing the program sends, which is not output. A program
+that asks for an update past the end of the record, or whose record names a
+socket it did not open, ends with an assert, since it is not the program
+that was recorded. The execution records replay the record beside a program,
+see [ExecutionRecords.md](ExecutionRecords.md).
+
 ## Timeouts
 
 `net.TimeoutSet` keeps one timeout per handle in a hashed timer wheel of 256

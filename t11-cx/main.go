@@ -253,6 +253,10 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 	actions.AST.ProgramLibrariesEnabled = enabled
+	if problem := netModeSet(options); problem != "" {
+		fmt.Fprintln(os.Stderr, problem)
+		os.Exit(types.CX_COMPILATION_ERROR)
+	}
 
 	return options, cxArgs, sourceCode, fileNames, true
 }

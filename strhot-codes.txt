@@ -356,6 +356,6 @@ STRHOT-342 B open t1-netbatch/socket.go NetUDPDial
 STRHOT-343 B open t1-netbatch/socket.go netUDPOpen
 STRHOT-344 B open t1-netbatch/socket.go NetUDPPeerResolve
 STRHOT-345 B open t1-netbatch/socket.go netErrorOf
-STRHOT-346 B open t1-netbatch/errno_unix.go netErrorOfSystem
+STRHOT-346 B removed t1-netbatch/errno_unix.go netErrorOfSystem folded into netErrorOf, whose code covers it on every system
 STRHOT-347 B open t1-netbatch/socket.go netTCPDialRun
 STRHOT-348 B open t1-netbatch/replay.go netPayloadQuote

@@ -1108,6 +1108,11 @@ func main() { global buffer
 }
 ```
 
+A run records its batches with `cx --net-record=FILE` and replays them,
+without opening a socket, with `cx --net-replay=FILE`, or with
+`CX_NET_REPLAY=FILE` for a built program. A replay prints what the
+recorded run printed.
+
 Every function runs on the old loop and on vm, and the update, the reads
 and the writes make no Go allocation. See
 [docs/Networking.md](docs/Networking.md) and

@@ -2,21 +2,12 @@
 
 package netbatch
 
-import (
-	"errors"
-	"syscall"
-)
+import "syscall"
 
-// netErrorOfSystem returns the NetError of an errno, NetErrorNone for others.
-// VIOLATION STRHOT-346: B, reads the error Go returned, outside the update, #508.
-func netErrorOfSystem(err error) NetError {
-	switch {
-	case errors.Is(err, syscall.ECONNREFUSED):
-		return NetErrorRefused
-	case errors.Is(err, syscall.ECONNRESET), errors.Is(err, syscall.EPIPE):
-		return NetErrorReset
-	case errors.Is(err, syscall.EADDRINUSE):
-		return NetErrorAddressInUse
-	}
-	return NetErrorNone
-}
+// The errno values netErrorOf reads.
+var (
+	netErrnoRefused      error = syscall.ECONNREFUSED
+	netErrnoReset        error = syscall.ECONNRESET
+	netErrnoBrokenPipe   error = syscall.EPIPE
+	netErrnoAddressInUse error = syscall.EADDRINUSE
+)
