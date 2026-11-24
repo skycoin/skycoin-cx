@@ -54,7 +54,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-015 | open, printing | `GetPrintableValue` and the stack dump build Go strings |
 | VMALLOC-016 | fixed | assert builds its text only when it fails |
 | VMALLOC-017 | open, boundary | regexp compile and find |
-| VMALLOC-018 | open, boundary | the file, json, process, profile, tcp and read opcodes |
+| VMALLOC-018 | open, boundary | the file, process, profile, tcp and read opcodes |
 | VMALLOC-019 | open, boundary | the affordance opcodes run compiler code |
 | VMALLOC-020 | not heap | CXArgument stack temporaries, #408 |
 | VMALLOC-021 | open, t6-cxfx | `Callback` runs a nested loop with its own buffers |

@@ -38,7 +38,8 @@ another hash is refused, not misread.
 [tests/execution-records.txt](../tests/execution-records.txt) is text. Each
 section is a header line in brackets naming the section and its columns,
 then one entry per line, and a blank line before the next header. Lines
-starting with `#` are comments. A program is named by its cx arguments
+starting with `#` are comments. `t0-textsections` reads and writes this
+form, for the package loader too (#509). A program is named by its cx arguments
 relative to `tests/`, its flags and files, and the name is the last column
 because it may hold spaces.
 

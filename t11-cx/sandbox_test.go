@@ -18,7 +18,7 @@ func sandboxCxQuote(s string) string {
 }
 
 // Program paths stay inside the --sandbox directory for every file opcode in
-// sys/os and sys/json, and for StartCPUProfile. See #433.
+// sys/os, and for StartCPUProfile. See #433.
 func TestProgramFileOpcodesStayInSandbox(t *testing.T) {
 	dir := t.TempDir()
 	sandbox := filepath.Join(dir, "sandbox")
@@ -31,7 +31,6 @@ func TestProgramFileOpcodesStayInSandbox(t *testing.T) {
 	files := map[string]string{
 		filepath.Join(outside, "secret.txt"): "secret",
 		filepath.Join(sandbox, "in.txt"):     "hello",
-		filepath.Join(sandbox, "data.json"):  "{}",
 	}
 	for name, content := range files {
 		if err := os.WriteFile(name, []byte(content), 0o644); err != nil {
@@ -51,13 +50,12 @@ func TestProgramFileOpcodesStayInSandbox(t *testing.T) {
 	}
 
 	var src strings.Builder
-	src.WriteString("package main\n\nimport \"sys/os\"\nimport \"sys/json\"\n\nfunc main() {\n\tvar text str\n\tvar ok bool\n\tvar h i32\n")
+	src.WriteString("package main\n\nimport \"sys/os\"\n\nfunc main() {\n\tvar text str\n\tvar ok bool\n\tvar h i32\n")
 	for _, path := range rejected {
 		q := sandboxCxQuote(path)
 		src.WriteString("\ttest(os.Open(" + q + "), -1, " + sandboxCxQuote("os.Open "+path) + ")\n")
 		src.WriteString("\ttest(os.Create(" + q + "), -1, " + sandboxCxQuote("os.Create "+path) + ")\n")
 		src.WriteString("\ttext, ok = os.ReadAllText(" + q + ")\n\ttest(ok, false, " + sandboxCxQuote("os.ReadAllText "+path) + ")\n")
-		src.WriteString("\ttest(json.Open(" + q + "), -1, " + sandboxCxQuote("json.Open "+path) + ")\n")
 		src.WriteString("\tStartCPUProfile(" + q + ", 100)\n\tStopCPUProfile(" + q + ")\n")
 	}
 	src.WriteString(`	text, ok = os.ReadAllText("in.txt")
@@ -68,9 +66,6 @@ func TestProgramFileOpcodesStayInSandbox(t *testing.T) {
 	h = os.Create("made.txt")
 	test(h >= 0, true, "os.Create made.txt")
 	test(os.Close(h), true, "os.Close made.txt")
-	h = json.Open("data.json")
-	test(h >= 0, true, "json.Open data.json")
-	test(json.Close(h), true, "json.Close data.json")
 	StartCPUProfile("cpu.pprof", 100)
 	StopCPUProfile("cpu.pprof")
 }

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -82,6 +82,9 @@ check-inits: ## Check that no package outside main has func init(), see init-all
 check-ifaces: ## Check that no interface embeds another interface, see iface-allowlist.txt
 	./check-ifaces.sh
 
+check-json: ## Check that no core package imports encoding/json, every package but vendor and t0-cx-tools-*, see skycoin-cx#509
+	./check-json.sh
+
 check-recovers: ## Check that no non-vendor code calls recover(, see recover-allowlist.txt
 	./check-recovers.sh
 
@@ -104,7 +107,7 @@ names-csv: ## Write one CSV row per declared Go and CX name to NAMES_CSV, for sk
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
-check: check-tiers check-inits check-ifaces check-recovers check-objmodel check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, recover, object model, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
+check: check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, JSON, recover, object model, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
 
 bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx

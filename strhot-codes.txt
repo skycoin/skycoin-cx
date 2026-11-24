@@ -140,7 +140,7 @@ STRHOT-126 O removed t4-opcodes/op_ui64.go opUI64Print fixed, byte views of CX m
 STRHOT-127 O removed t4-opcodes/op_ui8.go opUI8ToStr fixed, byte views of CX memory and the format buffer
 STRHOT-128 O removed t4-opcodes/op_ui8.go opUI8Print fixed, byte views of CX memory and the format buffer
 STRHOT-129 O removed t5-cxos/op_json.go opJsonOpen not on the run path at dfcc46ab
-STRHOT-130 B open t5-cxos/op_json.go opJsonTokenStr
+STRHOT-130 B removed t5-cxos/op_json.go opJsonTokenStr deleted with the json functions, #509
 STRHOT-131 B open t5-cxos/op_os.go opOsReadAllText
 STRHOT-132 O removed t5-cxos/op_os.go opOsOpen not on the run path at dfcc46ab
 STRHOT-133 O removed t5-cxos/op_os.go opOsCreate not on the run path at dfcc46ab

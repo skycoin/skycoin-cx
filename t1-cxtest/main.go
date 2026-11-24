@@ -754,7 +754,6 @@ func runTestCases(t *runner.TestRunner) {
 		"error: test-slice-literal-call-errors.cx:21:20 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:22:3 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:23:12 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:25:18 cannot use value of type 'U' as type 'T' in slice literal\nerror: test-slice-literal-call-errors.cx:26:17 cannot assign value of type 'str' to identifier 'late' of type 'i32'\n")
 	t.RunMissing("test-slice-literal-call-errors.cx", types.CX_COMPILATION_ERROR, "a call element of the wrong type in a struct slice literal is 7051 at the element",
 		"receiving variable", ":21:11")
-	t.Run("--enable=file testlib/json.cx test-json.cx", types.CX_SUCCESS, "ProgramError in json lib.")
 	t.Run("testlib/args.cx test-args.cx", types.CX_SUCCESS, "ProgramError in args lib.")
 	t.Run("test-regexp-must-compile-fail.cx", types.CX_RUNTIME_ERROR, "ProgramError in regexp lib - MustCompile should have thrown an error.")
 	t.Run("test-regexp-compile-fail.cx", types.CX_SUCCESS, "ProgramError in regexp lib - error thrown by regexp.Compile does not matches expected error.")

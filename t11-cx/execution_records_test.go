@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/skycoin/skycoin-cx/t0-textsections"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
@@ -370,91 +371,85 @@ func executionRecordFirstDifference(got, want []byte) (int, string, string) {
 	return 0, "", ""
 }
 
-// executionRecordFileRead parses the record file.
+// executionRecordFileRead parses the record file, in the text form of
+// t0-textsections.
 func executionRecordFileRead(path string) (executionRecordFile, error) {
 	file := executionRecordFile{inputs: map[string]executionRecordInput{}}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return file, err
 	}
-	section := ""
-	for number, line := range strings.Split(string(content), "\n") {
-		fail := func(problem string) error {
-			return fmt.Errorf("%s:%d: %s: %q", path, number+1, problem, line)
-		}
-		switch {
-		case line == "":
-			section = ""
-			continue
-		case strings.HasPrefix(line, "#"):
-			continue
-		case strings.HasPrefix(line, "["):
-			if section != "" {
-				return file, fail("a header without a blank line before it")
+	sections, err := textsections.TextSectionsRead(content)
+	if err != nil {
+		return file, fmt.Errorf("%s: %w", path, err)
+	}
+	for _, section := range sections {
+		for _, entry := range section.TextSectionEntries {
+			line := entry.TextSectionEntryText
+			fail := func(problem string) error {
+				return fmt.Errorf("%s:%d: %s: %q", path, entry.TextSectionEntryLine, problem, line)
 			}
-			section, _, _ = strings.Cut(line[1:], "]")
-			continue
-		}
-		fields := strings.Fields(line)
-		switch section {
-		case "format":
-			if len(fields) != 2 || fields[0] != strconv.Itoa(executionRecordsFormatVersion) || fields[1] != executionRecordHashName {
-				return file, fail(fmt.Sprintf("want format %d and hash %s", executionRecordsFormatVersion, executionRecordHashName))
-			}
-		case "inputs":
-			var input executionRecordInput
-			rest := line
-			quoted := func() (string, bool) {
-				prefix, err := strconv.QuotedPrefix(rest)
-				if err != nil {
-					return "", false
+			fields := strings.Fields(line)
+			switch section.TextSectionName {
+			case "format":
+				if len(fields) != 2 || fields[0] != strconv.Itoa(executionRecordsFormatVersion) || fields[1] != executionRecordHashName {
+					return file, fail(fmt.Sprintf("want format %d and hash %s", executionRecordsFormatVersion, executionRecordHashName))
 				}
-				rest = strings.TrimLeft(rest[len(prefix):], " ")
-				value, err := strconv.Unquote(prefix)
-				return value, err == nil
-			}
-			stdin, ok := quoted()
-			if !ok {
-				return file, fail("stdin is not a quoted string")
-			}
-			input.stdin = stdin
-			countText, after, _ := strings.Cut(rest, " ")
-			count, err := strconv.Atoi(countText)
-			if err != nil {
-				return file, fail("no argument count")
-			}
-			rest = after
-			for range count {
-				argument, ok := quoted()
+			case "inputs":
+				var input executionRecordInput
+				rest := line
+				quoted := func() (string, bool) {
+					prefix, err := strconv.QuotedPrefix(rest)
+					if err != nil {
+						return "", false
+					}
+					rest = strings.TrimLeft(rest[len(prefix):], " ")
+					value, err := strconv.Unquote(prefix)
+					return value, err == nil
+				}
+				stdin, ok := quoted()
 				if !ok {
-					return file, fail("an argument is not a quoted string")
+					return file, fail("stdin is not a quoted string")
 				}
-				input.arguments = append(input.arguments, argument)
+				input.stdin = stdin
+				countText, after, _ := strings.Cut(rest, " ")
+				count, err := strconv.Atoi(countText)
+				if err != nil {
+					return file, fail("no argument count")
+				}
+				rest = after
+				for range count {
+					argument, ok := quoted()
+					if !ok {
+						return file, fail("an argument is not a quoted string")
+					}
+					input.arguments = append(input.arguments, argument)
+				}
+				if rest == "" {
+					return file, fail("no program name")
+				}
+				file.inputs[rest] = input
+			case "records":
+				if len(fields) < 7 {
+					return file, fail("want 7 columns")
+				}
+				exitCode, err := strconv.Atoi(fields[5])
+				if err != nil {
+					return file, fail("the exit code is not a number")
+				}
+				file.records = append(file.records, executionRecord{
+					recordHash: fields[0], programHash: fields[1], sourceHash: fields[2], inputHash: fields[3],
+					outputHash: fields[4], exitCode: exitCode, name: strings.Join(fields[6:], " "),
+				})
+			case "excluded":
+				if len(fields) < 2 {
+					return file, fail("want a reason and a name")
+				}
+				file.excluded = append(file.excluded, executionRecordExclusion{reason: fields[0], name: strings.Join(fields[1:], " ")})
+			case "reasons":
+			default:
+				return file, fail("a line outside a known section")
 			}
-			if rest == "" {
-				return file, fail("no program name")
-			}
-			file.inputs[rest] = input
-		case "records":
-			if len(fields) < 7 {
-				return file, fail("want 7 columns")
-			}
-			exitCode, err := strconv.Atoi(fields[5])
-			if err != nil {
-				return file, fail("the exit code is not a number")
-			}
-			file.records = append(file.records, executionRecord{
-				recordHash: fields[0], programHash: fields[1], sourceHash: fields[2], inputHash: fields[3],
-				outputHash: fields[4], exitCode: exitCode, name: strings.Join(fields[6:], " "),
-			})
-		case "excluded":
-			if len(fields) < 2 {
-				return file, fail("want a reason and a name")
-			}
-			file.excluded = append(file.excluded, executionRecordExclusion{reason: fields[0], name: strings.Join(fields[1:], " ")})
-		case "reasons":
-		default:
-			return file, fail("a line outside a known section")
 		}
 	}
 	return file, nil
@@ -462,33 +457,43 @@ func executionRecordFileRead(path string) (executionRecordFile, error) {
 
 // executionRecordFileWrite writes the record file.
 func executionRecordFileWrite(path string, file executionRecordFile) error {
-	var out bytes.Buffer
-	out.WriteString("# Execution records of the CX programs in tests/, see docs/ExecutionRecords.md.\n")
-	out.WriteString("# make records writes this file from the old loop and keeps the inputs\n")
-	out.WriteString("# section, which is edited by hand. Review the diff before committing it.\n")
-	fmt.Fprintf(&out, "[format] version hash\n%d %s\n", executionRecordsFormatVersion, executionRecordHashName)
-	out.WriteString("\n[inputs] stdin argument-count arguments name\n")
+	section := func(name string, columns string, lines []string) textsections.TextSection {
+		entries := make([]textsections.TextSectionEntry, len(lines))
+		for index, line := range lines {
+			entries[index].TextSectionEntryText = line
+		}
+		return textsections.TextSection{TextSectionName: name, TextSectionColumns: strings.Fields(columns), TextSectionEntries: entries}
+	}
+	var inputs, records, reasons, excluded []string
 	for _, name := range slices.Sorted(maps.Keys(file.inputs)) {
 		input := file.inputs[name]
-		out.WriteString(strconv.Quote(input.stdin) + " " + strconv.Itoa(len(input.arguments)))
+		line := strconv.Quote(input.stdin) + " " + strconv.Itoa(len(input.arguments))
 		for _, argument := range input.arguments {
-			out.WriteString(" " + strconv.Quote(argument))
+			line += " " + strconv.Quote(argument)
 		}
-		out.WriteString(" " + name + "\n")
+		inputs = append(inputs, line+" "+name)
 	}
-	out.WriteString("\n[records] record-hash program-hash source-hash input-hash output-hash exit-code name\n")
 	for _, record := range file.records {
-		fmt.Fprintf(&out, "%s %s %s %s %s %d %s\n", record.recordHash, record.programHash, record.sourceHash, record.inputHash, record.outputHash, record.exitCode, record.name)
+		records = append(records, fmt.Sprintf("%s %s %s %s %s %d %s", record.recordHash, record.programHash, record.sourceHash, record.inputHash, record.outputHash, record.exitCode, record.name))
 	}
-	out.WriteString("\n[reasons] key text\n")
 	for _, key := range slices.Sorted(maps.Keys(executionRecordReasons)) {
-		out.WriteString(key + " " + executionRecordReasons[key] + "\n")
+		reasons = append(reasons, key+" "+executionRecordReasons[key])
 	}
-	out.WriteString("\n[excluded] reason name\n")
 	for _, exclusion := range file.excluded {
-		out.WriteString(exclusion.reason + " " + exclusion.name + "\n")
+		excluded = append(excluded, exclusion.reason+" "+exclusion.name)
 	}
-	return os.WriteFile(path, out.Bytes(), 0o644)
+	content := textsections.TextSectionsWrite([]string{
+		"Execution records of the CX programs in tests/, see docs/ExecutionRecords.md.",
+		"make records writes this file from the old loop and keeps the inputs",
+		"section, which is edited by hand. Review the diff before committing it.",
+	}, []textsections.TextSection{
+		section("format", "version hash", []string{fmt.Sprintf("%d %s", executionRecordsFormatVersion, executionRecordHashName)}),
+		section("inputs", "stdin argument-count arguments name", inputs),
+		section("records", "record-hash program-hash source-hash input-hash output-hash exit-code name", records),
+		section("reasons", "key text", reasons),
+		section("excluded", "reason name", excluded),
+	})
+	return os.WriteFile(path, content, 0o644)
 }
 
 // TestExecutionRecords checks every execution record of

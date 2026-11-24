@@ -4,7 +4,6 @@
 package main
 
 import "sys/os"
-import "sys/json"
 
 func rejected(path str, message str) {
 	var text str
@@ -12,7 +11,6 @@ func rejected(path str, message str) {
 	test(os.Open(path), -1, message)
 	text, ok = os.ReadAllText(path)
 	test(ok, false, message)
-	test(json.Open(path), -1, message)
 }
 
 func main() {

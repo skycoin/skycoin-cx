@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -106,8 +106,8 @@ func TestLowerCompare(t *testing.T) {
 				if !found {
 					continue
 				}
-				var result lowerCompareResult
-				if err := json.Unmarshal([]byte(line), &result); err != nil {
+				result, err := lowerCompareParse(line)
+				if err != nil {
 					t.Errorf("%s: %v", program, err)
 					continue
 				}
@@ -270,13 +270,45 @@ func lowerCompareTop(counts map[string]int, n int) string {
 	return strings.Join(parts, ", ")
 }
 
-// lowerCompareEmit prints a result line for the parent.
+// lowerCompareEmit prints a result line for the parent: the stage, the vm
+// exit code, the quoted mismatch, then the function, reason and opcode of
+// each failure, quoted.
 func lowerCompareEmit(t *testing.T, result lowerCompareResult) {
-	line, err := json.Marshal(result)
-	if err != nil {
-		t.Fatal(err)
+	fields := []string{string(result.Stage), strconv.Itoa(int(result.VmCode)), strconv.Quote(result.Mismatch)}
+	for _, failure := range result.Failures {
+		fields = append(fields, strconv.Quote(failure.Function), strconv.Quote(failure.Reason), strconv.Quote(failure.Opcode))
 	}
-	fmt.Println(lowerCompareMarker + string(line))
+	fmt.Println(lowerCompareMarker + strings.Join(fields, " "))
+}
+
+// lowerCompareParse reads a result line lowerCompareEmit printed.
+func lowerCompareParse(line string) (lowerCompareResult, error) {
+	var result lowerCompareResult
+	stage, rest, _ := strings.Cut(line, " ")
+	codeText, rest, _ := strings.Cut(rest, " ")
+	code, err := strconv.ParseInt(codeText, 10, 32)
+	if err != nil {
+		return result, fmt.Errorf("vm exit code: %w", err)
+	}
+	result.Stage, result.VmCode = lowerCompareStage(stage), int32(code)
+	var quoted []string
+	for rest != "" {
+		prefix, err := strconv.QuotedPrefix(rest)
+		if err != nil {
+			return result, fmt.Errorf("not a quoted string: %q", rest)
+		}
+		value, _ := strconv.Unquote(prefix)
+		quoted = append(quoted, value)
+		rest = strings.TrimPrefix(rest[len(prefix):], " ")
+	}
+	if len(quoted)%3 != 1 {
+		return result, fmt.Errorf("want a mismatch and three fields a failure, got %d fields", len(quoted))
+	}
+	result.Mismatch = quoted[0]
+	for index := 1; index < len(quoted); index += 3 {
+		result.Failures = append(result.Failures, lowerCompareFailure{Function: quoted[index], Reason: quoted[index+1], Opcode: quoted[index+2]})
+	}
+	return result, nil
 }
 
 // lowerCompareChild compiles and lowers one program, runs it on vm and then

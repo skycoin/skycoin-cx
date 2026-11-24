@@ -35,7 +35,7 @@ free number, and a fixed one is marked removed, never deleted.
 - `P`, printing a value, the print and printf opcodes and the stack dump.
 - `E`, only on a failure branch: the text of a panic, an assert or an error.
 - `B`, a boundary. The string goes to Go, the OS or compiler code that an
-  opcode runs: file and process opcodes, json, regexp, tcp, the CPU
+  opcode runs: file and process opcodes, regexp, tcp, the CPU
   profile, read, serialize and the affordance queries.
 
 I and O are what #412 removes. P, E and B may stay with their comment.

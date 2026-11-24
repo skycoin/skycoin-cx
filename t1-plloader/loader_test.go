@@ -666,3 +666,41 @@ func TestReadProgram(t *testing.T) {
 		t.Error("ReadProgram of a missing program: want an error, got nil")
 	}
 }
+
+// The stored File, Package and PackageList are LZ4 blocks of the CX text
+// form, not JSON (#509), and read back to what was written.
+func TestStoredTextForm(t *testing.T) {
+	file := loader.File{FileName: "two words.cx", Length: 13, Content: []byte("package main\n"), Blake2Hash: "ab12"}
+	pkg := loader.Package{PackageName: "main", Blake2Hash: "", Files: []string{"k1", "k2"}}
+	list := loader.PackageList{Packages: []string{"p1"}}
+	cases := []struct {
+		value interface {
+			MarshalBinary() ([]byte, error)
+		}
+		decoded interface{ UnmarshalBinary([]byte) error }
+		text    string
+	}{
+		{file, &loader.File{}, "[file] length blake2-hash name\n13 \"ab12\" \"two words.cx\"\n\n[content] quoted\n\"package main\\n\"\n"},
+		{pkg, &loader.Package{}, "[package] blake2-hash name\n\"\" \"main\"\n\n[files] key\nk1\nk2\n"},
+		{list, &loader.PackageList{}, "[packages] key\np1\n"},
+	}
+	for _, testcase := range cases {
+		block, err := testcase.value.MarshalBinary()
+		if err != nil {
+			t.Fatal(err)
+		}
+		text, err := loader.TextFormText(block)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(text) != testcase.text {
+			t.Errorf("stored text %q, want %q", text, testcase.text)
+		}
+		if err := testcase.decoded.UnmarshalBinary(block); err != nil {
+			t.Fatal(err)
+		}
+		if got := reflect.ValueOf(testcase.decoded).Elem().Interface(); !reflect.DeepEqual(got, testcase.value) {
+			t.Errorf("read back %+v, want %+v", got, testcase.value)
+		}
+	}
+}

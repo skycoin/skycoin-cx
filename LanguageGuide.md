@@ -857,7 +857,7 @@ func main () {
 
 Using a built-in package without its import is a compile error, and so
 is importing one without `sys/` (`import "string"`). The built-in
-packages are `sys/string`, `sys/os`, `sys/time`, `sys/json`, `sys/tcp`,
+packages are `sys/string`, `sys/os`, `sys/time`, `sys/tcp`,
 `sys/regexp`, `sys/cipher` and `sys/cx`, and in a cxfx build `sys/gl`,
 `sys/glfw`, `sys/al` and `sys/gltext`. Their functions have verbose
 camel case names, and none of them is an operator. See
@@ -964,7 +964,7 @@ cx --enable=file,net program.cx
 
 | library | functions |
 |---|---|
-| `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), every function of `sys/json`, `StartCPUProfile` and `StopCPUProfile` |
+| `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), `StartCPUProfile` and `StopCPUProfile` |
 | `net` | every function of `sys/tcp` |
 | `process` | `os.Run` |
 
@@ -3610,18 +3610,17 @@ func main () {
 
 ## [`os` Package Functions](#table-of-contents)
 
-Built in, import with `import "sys/os"`. The `json` functions are built
-in too and are imported with `import "sys/json"`.
+Built in, import with `import "sys/os"`.
 
 The `os` package provides functions that serve as an interface to CX's
 underlaying operating system.
 
-The file functions, `os.GetWorkingDirectory`, `os.LogFile`, `json` and the
+The file functions, `os.GetWorkingDirectory`, `os.LogFile` and the
 CPU profile belong to the system library `file` and `os.Run` to `process`,
 so a program calls them with `cx --enable=file` or `--enable=process`. See
 [System libraries](#system-libraries).
 
-File paths passed to `os`, `json`, `gl`, `al` and `StartCPUProfile` are
+File paths passed to `os`, `gl`, `al` and `StartCPUProfile` are
 confined to the sandbox directory, the working directory unless `cx
 --sandbox <dir>` names another. A path must be relative, use `/` as the
 separator, contain no NUL byte, be at most 4096 bytes and not leave the
@@ -4038,3 +4037,15 @@ deprecated and reassignable from version `2711240001`. The other opcodes
 keep their numbers. Serialized programs from before this version must be
 recompiled. See
 [skycoin-cx#432](https://github.com/skycoin/skycoin-cx/issues/432).
+
+## Version 2611240002, 2026-11-24
+
+JSON is not part of the core (decision D46). The package `sys/json` and
+its functions `json.Open`, `json.Close`, `json.More`, `json.Next`,
+`json.Type`, `json.Delim`, `json.Bool`, `json.Float64`, `json.Int64` and
+`json.Str` are removed, with the constants `json.TOKEN_*` and
+`json.DELIM_*`. `import "sys/json"` is a compile error. They were
+functions 52 to 61 of the system library `file`, which are deprecated and
+reassignable from version `2711240001`. The other functions keep their
+numbers. Serialized programs from before this version must be recompiled.
+See [skycoin-cx#509](https://github.com/skycoin/skycoin-cx/issues/509).
