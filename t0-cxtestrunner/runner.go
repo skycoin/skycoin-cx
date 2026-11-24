@@ -51,6 +51,11 @@ func (t *TestRunner) RunMissing(args string, exitCode int, desc string, missing 
 	t.runEx(args, "", exitCode, desc, TestStable, t.cfg.DefaultTimeout, nil, missing)
 }
 
+// RunWantEx is RunWant for the test sets in filter.
+func (t *TestRunner) RunWantEx(args string, exitCode int, desc string, filter Bits, want ...string) {
+	t.runEx(args, "", exitCode, desc, filter, t.cfg.DefaultTimeout, want, nil)
+}
+
 func (t *TestRunner) RunEx(args string, exitCode int, desc string, filter Bits, timeout time.Duration) {
 	t.runEx(args, "", exitCode, desc, filter, timeout, nil, nil)
 }

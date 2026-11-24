@@ -52,7 +52,7 @@ func drawBall (ballParam Ball) () {
 	gl.End()
 }
 
-func ballJumpHeight (window str, key i32, action i32, mods i32) { global ball
+func ballJumpHeight (window i32, key i32, action i32, mods i32) { global ball
 	if i32.eq(key, glfw.MouseButtonLeft) {
 		if action == glfw.Press {
 			ball.vy = f32.add(ball.vy, -0.1)
@@ -65,7 +65,7 @@ func ballJumpHeight (window str, key i32, action i32, mods i32) { global ball
 	}
 }
 
-func ballDirection (window str, xpos f64, ypos f64) { global width, ball
+func ballDirection (window i32, xpos f64, ypos f64) { global width, ball
 	var proportion f64
 	proportion = f64.sub(f64.div(xpos, i32.f64(width)), 0.5D)
 
@@ -81,17 +81,18 @@ func ballDirection (window str, xpos f64, ypos f64) { global width, ball
 func main () { global width, height, ball
 	glfw.Init()
 
-	glfw.CreateWindow("window", width, height, "Bouncing Ball")
-	glfw.MakeContextCurrent("window")
+	var window i32
+	window = glfw.CreateWindow(width, height, "Bouncing Ball")
+	glfw.MakeContextCurrent(window)
 	
 	gl.Init()
 	var program i32
 	program = gl.CreateProgram()
 	gl.LinkProgram(program)
 
-	// glfw.SetKeyCallback("window", "ballDirection")
-	glfw.SetMouseButtonCallback("window", "ballJumpHeight")
-	glfw.SetCursorPosCallback("window", "ballDirection")
+	// glfw.SetKeyCallback(window, ballDirection)
+	glfw.SetMouseButtonCallback(window, ballJumpHeight)
+	glfw.SetCursorPosCallback(window, ballDirection)
 
 	ball = Ball{
 		radius: 0.05,
@@ -105,12 +106,12 @@ func main () { global width, height, ball
 
 	string.PrintLine("\nMove the ball to the right or the left using the arrow keys.")
 
-	for bool.not(glfw.ShouldClose("window")) {
+	for bool.not(glfw.ShouldClose(window)) {
 		updateTiming()
 
 		var bufferWidth i32
 		var bufferHeight i32
-		bufferWidth, bufferHeight = glfw.GetFramebufferSize("window")
+		bufferWidth, bufferHeight = glfw.GetFramebufferSize(window)
 		ratio = f32.div(i32.f32(bufferWidth), i32.f32(bufferHeight))
 
 		gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -137,6 +138,6 @@ func main () { global width, height, ball
 
 		
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(window)
 	}
 }

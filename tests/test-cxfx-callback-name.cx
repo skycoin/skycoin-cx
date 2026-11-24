@@ -1,0 +1,11 @@
+// A cxfx callback is a function name, not a str, skycoin-cx#432.
+package main
+
+import "sys/glfw"
+
+func onKey(window i32, key i32, scancode i32, action i32, mods i32) {}
+
+func main() {
+	var window i32
+	glfw.SetKeyboardCallback(window, "onKey")
+}

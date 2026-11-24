@@ -220,9 +220,7 @@ func changeState (cell Cell, cells *[900]Cell) (newCellResult Cell) {
 // func compileShader(source str, shaderType i32) (shader i32) {
 // 	shader = gl.CreateShader(shaderType)
 	
-// 	gl.Strs(source, "csources")
-// 	gl.ShaderSource(shader, 1, "csources")
-// 	gl.Free("csources")
+// 	gl.ShaderSource(shader, 1, source)
 // 	gl.CompileShader(shader)
 // }
 
@@ -306,14 +304,16 @@ func makeCells () (clls *[900]Cell) { global rows, columns
 	clls = &cells
 }
 
-func initGlfw (window str) () { global width, height
+var gameWindow i32
+
+func initGlfw () () { global gameWindow, width, height
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 
-	glfw.CreateWindow("window", width, height, "Conway's Game of Life")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Conway's Game of Life")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
 func initOpenGL () (program i32) {
@@ -327,26 +327,22 @@ func initOpenGL () (program i32) {
 	
 	vertexShader = gl.CreateShader(gl.VERTEX_SHADER)
 	
-	gl.Strs(`
+	gl.ShaderSource(vertexShader, 1, `
           #version 120
           void main() {
             gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
           }
-`, "csources")
-	gl.ShaderSource(vertexShader, 1, "csources")
-	gl.Free("csources")
+`)
 	gl.CompileShader(vertexShader)
 
 	fragmentShader = gl.CreateShader(gl.FRAGMENT_SHADER)
 
-	gl.Strs(`
+	gl.ShaderSource(fragmentShader, 1, `
           #version 120
           void main() {
             gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
           }
-`, "csources")
-	gl.ShaderSource(fragmentShader, 1, "csources")
-	gl.Free("csources")
+`)
 	gl.CompileShader(fragmentShader)
 
 	
@@ -378,7 +374,7 @@ func drawCell (cell Cell) {
 	}
 }
 
-func draw (cells *[900]Cell, window str, program i32) () {
+func draw (cells *[900]Cell, window i32, program i32) () {
 	gl.Clear(i32.bitor(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT))
 	gl.UseProgram(program)
 
@@ -394,10 +390,10 @@ func draw (cells *[900]Cell, window str, program i32) () {
 	// }
 
 	glfw.PollEvents()
-	glfw.SwapBuffers("window")
+	glfw.SwapBuffers(window)
 }
 
-func main () { global square
+func main () { global gameWindow, square
 	square = [18]f32{
 		-0.5, 0.5, 0.0,
 		-0.5, -0.5, 0.0,
@@ -407,7 +403,7 @@ func main () { global square
 		0.5, 0.5, 0.0,
 		0.5, -0.5, 0.0}
 
-	initGlfw("window")
+	initGlfw()
 	
 	var program i32
 	program = initOpenGL()
@@ -430,7 +426,7 @@ func main () { global square
 	nbFrames = 0
 	// End FPS
 
-	for bool.not(glfw.ShouldClose("window")) {
+	for bool.not(glfw.ShouldClose(gameWindow)) {
 		// Start FPS
 		currentTime = glfw.GetTime()
 		nbFrames = i32.add(nbFrames, 1)
@@ -457,6 +453,6 @@ func main () { global square
 			// changeState((*cells)[c], cells)
 		}
 		
-		draw(cells, "window", program)
+		draw(cells, gameWindow, program)
 	}
 }

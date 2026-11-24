@@ -4,11 +4,13 @@ import "sys/gl"
 import "sys/glfw"
 import "sys/string"
 
+var gameWindow i32
+
 var width i32 = 400
 var height i32 = 300
 
-func mouseButton (window str, key i32, action i32, mods i32) () {
-	x, y := glfw.GetCursorPos("window")
+func mouseButton (window i32, key i32, action i32, mods i32) () {
+	x, y := glfw.GetCursorPos(gameWindow)
 	if key == glfw.MouseButtonLeft {
 		if action == glfw.Press {
 			string.PrintLine("mouse button left pressed at:")
@@ -49,8 +51,8 @@ func mouseButton (window str, key i32, action i32, mods i32) () {
 	}
 }
 
-func mouseCursor (window str, xpos f64, ypos f64) () {
-	x, y := glfw.GetCursorPos("window")
+func mouseCursor (window i32, xpos f64, ypos f64) () {
+	x, y := glfw.GetCursorPos(gameWindow)
 	string.PrintLine("mouse cursor at:")
 	string.PrintLine(string.Concatenation("x: ", f64.str(x)))
 	string.PrintLine(string.Concatenation("y: ", f64.str(y)))
@@ -59,25 +61,25 @@ func mouseCursor (window str, xpos f64, ypos f64) () {
 func main () () { global width, height
 	glfw.Init()
 
-	glfw.CreateWindow("window", width, height, "Mouse Interaction")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Mouse Interaction")
+	glfw.MakeContextCurrent(gameWindow)
 	
 	gl.Init()
 	program := gl.CreateProgram()
 	gl.LinkProgram(program)
 
-	glfw.SetMouseButtonCallback("window", "mouseButton")
+	glfw.SetMouseButtonCallback(gameWindow, mouseButton)
 	
 	// Uncomment this like to print where is the cursor at any moment
-	//glfw.SetCursorPosCallback("window", "mouseCursor")
+	//glfw.SetCursorPosCallback(gameWindow, mouseCursor)
 
 	
-	//glfw.SetInputMode("window", glfw.Cursor, glfw.CursorDisabled)
-	//glfw.SetInputMode("window", glfw.Cursor, glfw.CursorHidden)
-	//glfw.SetInputMode("window", glfw.Cursor, glfw.CursorNormal)
+	//glfw.SetInputMode(gameWindow, glfw.Cursor, glfw.CursorDisabled)
+	//glfw.SetInputMode(gameWindow, glfw.Cursor, glfw.CursorHidden)
+	//glfw.SetInputMode(gameWindow, glfw.Cursor, glfw.CursorNormal)
 
-	for not(glfw.ShouldClose("window")) {
-		bufferWidth, bufferHeight := glfw.GetFramebufferSize("window")
+	for not(glfw.ShouldClose(gameWindow)) {
+		bufferWidth, bufferHeight := glfw.GetFramebufferSize(gameWindow)
 		ratio = f32.div(i32.f32(bufferWidth), i32.f32(bufferHeight))
 
 		gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -85,6 +87,6 @@ func main () () { global width, height
 		gl.UseProgram(program)
 		
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(gameWindow)
 	}
 }

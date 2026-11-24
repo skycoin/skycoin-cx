@@ -9,7 +9,8 @@
 # the string to Go, the OS or compiler code run by an opcode (I/O, system
 # libraries, serialize, affordances).
 # STATUS is open (a VIOLATION comment marks it), removed (no longer on the run
-# path) or cxfx (in t6-cxfx, tracked by #432, not checked).
+# path) or cxfx (open in t6-cxfx, which only the build with the cxfx tag has,
+# checked by ./check-strhot.sh -tags cxfx, #432).
 STRHOT-001 I removed t1-cx-core-objmodel/gid.go GidCheck not on the run path at dfcc46ab
 STRHOT-002 E open t3-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugGet
 STRHOT-003 E open t3-ast/cxargument_mng.go *CXArgumentMng.CXArgumentGet
@@ -158,71 +159,71 @@ STRHOT-145 B open t5-tcp/op_tcp.go errString
 STRHOT-146 B open t5-tcp/op_tcp.go opTCPDial
 STRHOT-147 B open t5-tcp/op_tcp.go opTCPAccept
 STRHOT-148 B open t5-tcp/op_tcp.go opTCPListen
-STRHOT-149 O cxfx t6-cxfx/cxgl_desktop.go getCString
-STRHOT-150 O cxfx t6-cxfx/cxgl_desktop.go freeCString
-STRHOT-151 O cxfx t6-cxfx/cxgl_desktop.go opGlDestroy
-STRHOT-152 O cxfx t6-cxfx/cxgl_desktop.go opGlStrs
-STRHOT-153 O cxfx t6-cxfx/cxgl_desktop.go opGlFree
-STRHOT-154 O cxfx t6-cxfx/cxgl_desktop.go cxglBindAttribLocation
-STRHOT-155 O cxfx t6-cxfx/cxgl_desktop.go cxglGetAttribLocation
-STRHOT-156 O cxfx t6-cxfx/cxgl_desktop.go cxglGetProgramInfoLog
-STRHOT-157 O cxfx t6-cxfx/cxgl_desktop.go cxglGetShaderInfoLog
-STRHOT-158 O cxfx t6-cxfx/cxgl_desktop.go cxglGetUniformLocation
-STRHOT-159 O cxfx t6-cxfx/cxgl_desktop.go cxglShaderSource
-STRHOT-160 O cxfx t6-cxfx/event.go *CXCallback.init
-STRHOT-161 O cxfx t6-cxfx/event.go *CXCallback.Init
-STRHOT-162 O cxfx t6-cxfx/event.go *CXCallback.InitEx
-STRHOT-163 O cxfx t6-cxfx/event.go *CXCallback.Call
-STRHOT-164 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwFullscreen
-STRHOT-165 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSwapBuffers
-STRHOT-166 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwMakeContextCurrent
-STRHOT-167 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetInputMode
-STRHOT-168 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetCursorPos
-STRHOT-169 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetKey
-STRHOT-170 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwCreateWindow
-STRHOT-171 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetWindowContentScale
-STRHOT-172 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetWindowPos
-STRHOT-173 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwShouldClose
-STRHOT-174 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetFramebufferSize
-STRHOT-175 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetWindowPos
-STRHOT-176 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwGetWindowSize
-STRHOT-177 O cxfx t6-cxfx/op_glfw_desktop.go glfwSetKeyCallback
-STRHOT-178 O cxfx t6-cxfx/op_glfw_desktop.go glfwSetCursorPosCallback
-STRHOT-179 O cxfx t6-cxfx/op_glfw_desktop.go glfwSetMouseButtonCallback
-STRHOT-180 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetFramebufferSizeCallback
-STRHOT-181 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetWindowSizeCallback
-STRHOT-182 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetWindowPosCallback
-STRHOT-183 O cxfx t6-cxfx/op_glfw_desktop.go opGlfwSetShouldClose
-STRHOT-184 O cxfx t6-cxfx/op_gltext.go loadTrueType
-STRHOT-185 O cxfx t6-cxfx/op_gltext.go opGltextPrintf
-STRHOT-186 O cxfx t6-cxfx/op_gltext.go opGltextMetrics
-STRHOT-187 O cxfx t6-cxfx/op_gltext.go opGltextTexture
-STRHOT-188 O cxfx t6-cxfx/op_gltext.go opGltextNextGlyph
-STRHOT-189 O cxfx t6-cxfx/op_gltext.go opGltextGlyphBounds
-STRHOT-190 O cxfx t6-cxfx/op_gltext.go opGltextGlyphMetrics
-STRHOT-191 O cxfx t6-cxfx/op_gltext.go opGltextGlyphInfo
-STRHOT-192 O cxfx t6-cxfx/op_openal_desktop.go opAlExtensions
-STRHOT-193 O cxfx t6-cxfx/op_openal_desktop.go opAlRenderer
-STRHOT-194 O cxfx t6-cxfx/op_openal_desktop.go opAlVendor
-STRHOT-195 O cxfx t6-cxfx/op_openal_desktop.go opAlVersion
-STRHOT-196 O cxfx t6-cxfx/op_openal.go opAlLoadWav
-STRHOT-197 O cxfx t6-cxfx/op_opengl.go decodeHdr
-STRHOT-198 O cxfx t6-cxfx/op_opengl.go uploadTexture
-STRHOT-199 O cxfx t6-cxfx/op_opengl.go opGlNewTexture
-STRHOT-200 O cxfx t6-cxfx/op_opengl.go opGlNewTextureCube
-STRHOT-201 O cxfx t6-cxfx/op_opengl.go opCxReleaseTexture
-STRHOT-202 O cxfx t6-cxfx/op_opengl.go opCxTextureGetPixel
-STRHOT-203 O cxfx t6-cxfx/op_opengl.go opGlUploadImageToTexture
-STRHOT-204 O cxfx t6-cxfx/op_opengl.go opGlNewGIF
-STRHOT-205 O cxfx t6-cxfx/op_opengl.go opGlFreeGIF
-STRHOT-206 O cxfx t6-cxfx/op_opengl.go opGlGIFFrameToTexture
-STRHOT-207 O cxfx t6-cxfx/op_opengl.go opGlBindAttribLocation
-STRHOT-208 O cxfx t6-cxfx/op_opengl.go opGlGetAttribLocation
-STRHOT-209 O cxfx t6-cxfx/op_opengl.go opGlGetProgramInfoLog
-STRHOT-210 O cxfx t6-cxfx/op_opengl.go opGlGetShaderInfoLog
-STRHOT-211 O cxfx t6-cxfx/op_opengl.go opGlGetUniformLocation
-STRHOT-212 O cxfx t6-cxfx/op_opengl.go opGlShaderSource
-STRHOT-213 O cxfx t6-cxfx/utils.go opGlfwFuncI32I32
+STRHOT-149 O removed t6-cxfx/cxgl_desktop.go getCString handles and byte views, #432
+STRHOT-150 O removed t6-cxfx/cxgl_desktop.go freeCString handles and byte views, #432
+STRHOT-151 O removed t6-cxfx/cxgl_desktop.go opGlDestroy handles and byte views, #432
+STRHOT-152 O removed t6-cxfx/cxgl_desktop.go opGlStrs handles and byte views, #432
+STRHOT-153 O removed t6-cxfx/cxgl_desktop.go opGlFree handles and byte views, #432
+STRHOT-154 O removed t6-cxfx/cxgl_desktop.go cxglBindAttribLocation handles and byte views, #432
+STRHOT-155 O removed t6-cxfx/cxgl_desktop.go cxglGetAttribLocation handles and byte views, #432
+STRHOT-156 O removed t6-cxfx/cxgl_desktop.go cxglGetProgramInfoLog handles and byte views, #432
+STRHOT-157 O removed t6-cxfx/cxgl_desktop.go cxglGetShaderInfoLog handles and byte views, #432
+STRHOT-158 O removed t6-cxfx/cxgl_desktop.go cxglGetUniformLocation handles and byte views, #432
+STRHOT-159 O removed t6-cxfx/cxgl_desktop.go cxglShaderSource handles and byte views, #432
+STRHOT-160 O removed t6-cxfx/event.go *CXCallback.init handles and byte views, #432
+STRHOT-161 O removed t6-cxfx/event.go *CXCallback.Init handles and byte views, #432
+STRHOT-162 O removed t6-cxfx/event.go *CXCallback.InitEx handles and byte views, #432
+STRHOT-163 O removed t6-cxfx/event.go *CXCallback.Call handles and byte views, #432
+STRHOT-164 O removed t6-cxfx/op_glfw_desktop.go opGlfwFullscreen handles and byte views, #432
+STRHOT-165 O removed t6-cxfx/op_glfw_desktop.go opGlfwSwapBuffers handles and byte views, #432
+STRHOT-166 O removed t6-cxfx/op_glfw_desktop.go opGlfwMakeContextCurrent handles and byte views, #432
+STRHOT-167 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetInputMode handles and byte views, #432
+STRHOT-168 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetCursorPos handles and byte views, #432
+STRHOT-169 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetKey handles and byte views, #432
+STRHOT-170 B cxfx t6-cxfx/op_glfw_desktop.go opGlfwCreateWindow O fixed, hands the window title to GLFW, #432
+STRHOT-171 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetWindowContentScale handles and byte views, #432
+STRHOT-172 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetWindowPos handles and byte views, #432
+STRHOT-173 O removed t6-cxfx/op_glfw_desktop.go opGlfwShouldClose handles and byte views, #432
+STRHOT-174 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetFramebufferSize handles and byte views, #432
+STRHOT-175 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetWindowPos handles and byte views, #432
+STRHOT-176 O removed t6-cxfx/op_glfw_desktop.go opGlfwGetWindowSize handles and byte views, #432
+STRHOT-177 O removed t6-cxfx/op_glfw_desktop.go glfwSetKeyCallback handles and byte views, #432
+STRHOT-178 O removed t6-cxfx/op_glfw_desktop.go glfwSetCursorPosCallback handles and byte views, #432
+STRHOT-179 O removed t6-cxfx/op_glfw_desktop.go glfwSetMouseButtonCallback handles and byte views, #432
+STRHOT-180 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetFramebufferSizeCallback handles and byte views, #432
+STRHOT-181 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetWindowSizeCallback handles and byte views, #432
+STRHOT-182 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetWindowPosCallback handles and byte views, #432
+STRHOT-183 O removed t6-cxfx/op_glfw_desktop.go opGlfwSetShouldClose handles and byte views, #432
+STRHOT-184 O removed t6-cxfx/op_gltext.go loadTrueType handles and byte views, #432
+STRHOT-185 B cxfx t6-cxfx/op_gltext.go opGltextPrintf O fixed, text to gltext as a view, #432
+STRHOT-186 B cxfx t6-cxfx/op_gltext.go opGltextMetrics O fixed, text to gltext as a view, #432
+STRHOT-187 O removed t6-cxfx/op_gltext.go opGltextTexture handles and byte views, #432
+STRHOT-188 O removed t6-cxfx/op_gltext.go opGltextNextGlyph handles and byte views, #432
+STRHOT-189 O removed t6-cxfx/op_gltext.go opGltextGlyphBounds handles and byte views, #432
+STRHOT-190 O removed t6-cxfx/op_gltext.go opGltextGlyphMetrics handles and byte views, #432
+STRHOT-191 O removed t6-cxfx/op_gltext.go opGltextGlyphInfo handles and byte views, #432
+STRHOT-192 B cxfx t6-cxfx/op_openal_desktop.go opAlExtensions O fixed, OpenAL returns text, #432
+STRHOT-193 B cxfx t6-cxfx/op_openal_desktop.go opAlRenderer O fixed, OpenAL returns text, #432
+STRHOT-194 B cxfx t6-cxfx/op_openal_desktop.go opAlVendor O fixed, OpenAL returns text, #432
+STRHOT-195 B cxfx t6-cxfx/op_openal_desktop.go opAlVersion O fixed, OpenAL returns text, #432
+STRHOT-196 B cxfx t6-cxfx/op_openal.go opAlLoadWav O fixed, reads the file at a program path, #432
+STRHOT-197 B cxfx t6-cxfx/op_opengl.go decodeHdr O fixed, parses an HDR file, #432
+STRHOT-198 B cxfx t6-cxfx/op_opengl.go uploadTexture O fixed, reads the file at a program path, #432
+STRHOT-199 O removed t6-cxfx/op_opengl.go opGlNewTexture handles and byte views, #432
+STRHOT-200 O removed t6-cxfx/op_opengl.go opGlNewTextureCube handles and byte views, #432
+STRHOT-201 O removed t6-cxfx/op_opengl.go opCxReleaseTexture handles and byte views, #432
+STRHOT-202 O removed t6-cxfx/op_opengl.go opCxTextureGetPixel handles and byte views, #432
+STRHOT-203 O removed t6-cxfx/op_opengl.go opGlUploadImageToTexture handles and byte views, #432
+STRHOT-204 B cxfx t6-cxfx/op_opengl.go opGlNewGIF O fixed, reads the file at a program path, #432
+STRHOT-205 O removed t6-cxfx/op_opengl.go opGlFreeGIF handles and byte views, #432
+STRHOT-206 O removed t6-cxfx/op_opengl.go opGlGIFFrameToTexture handles and byte views, #432
+STRHOT-207 O removed t6-cxfx/op_opengl.go opGlBindAttribLocation handles and byte views, #432
+STRHOT-208 O removed t6-cxfx/op_opengl.go opGlGetAttribLocation handles and byte views, #432
+STRHOT-209 O removed t6-cxfx/op_opengl.go opGlGetProgramInfoLog handles and byte views, #432
+STRHOT-210 O removed t6-cxfx/op_opengl.go opGlGetShaderInfoLog handles and byte views, #432
+STRHOT-211 O removed t6-cxfx/op_opengl.go opGlGetUniformLocation handles and byte views, #432
+STRHOT-212 O removed t6-cxfx/op_opengl.go opGlShaderSource handles and byte views, #432
+STRHOT-213 O removed t6-cxfx/utils.go opGlfwFuncI32I32 handles and byte views, #432
 STRHOT-214 P removed t0-types/types.go Code.Name not on the run path at dfcc46ab
 STRHOT-215 P open t3-ast/tostring.go valueAt
 STRHOT-216 P open t3-ast/tostring.go elementsAt
@@ -332,3 +333,6 @@ STRHOT-319 O removed t4-opcodes/op_str.go opStrStringOfBytes fixed, byte views o
 STRHOT-320 P open t5-cx-runtime-printer/stack.go printerStackValuePrintable
 STRHOT-321 E open t5-regexp/op_regexp.go opRegexpMustCompile
 STRHOT-322 O open t0-util/program_text.go ProgramTextStringView
+STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure
+STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure
+STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg

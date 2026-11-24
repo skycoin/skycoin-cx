@@ -9,8 +9,9 @@ var height i32 = 600
 func main () () { global width, height
     glfw.Init()
 
-    glfw.CreateWindow("window", width, height, "Triangle")
-    glfw.MakeContextCurrent("window")
+    var window i32
+    window = glfw.CreateWindow(width, height, "Triangle")
+    glfw.MakeContextCurrent(window)
     
     gl.Init()
     
@@ -19,7 +20,7 @@ func main () () { global width, height
     
     gl.LinkProgram(program)
 
-    for bool.not(glfw.ShouldClose("window")) {
+    for bool.not(glfw.ShouldClose(window)) {
         gl.Clear(gl.COLOR_BUFFER_BIT)
 
         gl.UseProgram(program)
@@ -38,6 +39,6 @@ func main () () { global width, height
         gl.End();
         
         glfw.PollEvents()
-        glfw.SwapBuffers("window")
+        glfw.SwapBuffers(window)
     }
 }

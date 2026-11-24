@@ -1,0 +1,109 @@
+// The cxfx handles and compile time callbacks of skycoin-cx#432. Needs a cx
+// built with make build-gui and a display, make test-gui runs it.
+
+package main
+
+import "sys/gl"
+import "sys/glfw"
+import "sys/gltext"
+import "sys/os"
+
+var started i32
+var summed i32
+
+func onStart(window i32) { global started
+	started = started + 1
+	printf("start callback %d %d\n", window, started)
+}
+
+func onSum(a i32, b i32) { global summed
+	summed = a + b
+}
+
+func main() { global summed
+	glfw.Init()
+	var window i32
+	window = glfw.CreateWindow(64, 48, "smoke")
+	glfw.MakeContextCurrent(window)
+	gl.Init()
+
+	var width i32
+	var height i32
+	width, height = glfw.GetWindowSize(window)
+	printf("window %d %d\n", width, height)
+	width, height = glfw.GetFramebufferSize(window)
+	printf("framebuffer %d %d\n", width, height)
+
+	glfw.SetStartCallback(window, onStart)
+	glfw.PollEvents()
+
+	var sum i32
+	sum = glfw.RegisterCallbackI32I32(onSum)
+	glfw.InvokeCallbackI32I32(sum, 40, 2)
+	printf("callback sum %d\n", summed)
+
+	var texture i32
+	texture = gl.NewTexture("examples/opengl/textures/coin.png")
+	printf("texture %d error %d\n", texture, gl.GetError())
+	var pixels i32
+	pixels = gl.UploadImageToTexture("examples/opengl/textures/coin.png", gl.TEXTURE_2D, 0, true)
+	var r f32
+	var g f32
+	var b f32
+	var a f32
+	r, g, b, a = gl.CxTextureGetPixel(pixels, 8, 8)
+	printf("pixel %f %f %f %f\n", r, g, b, a)
+	gl.CxReleaseTexture(pixels)
+
+	var animation i32
+	var frames i32
+	var loops i32
+	var gifWidth i32
+	var gifHeight i32
+	animation, frames, loops, gifWidth, gifHeight = gl.NewGIF("examples/opengl/textures/frames.gif")
+	printf("gif %d %d %d %d\n", frames, loops, gifWidth, gifHeight)
+	var delay i32
+	var disposal i32
+	delay, disposal = gl.GIFFrameToTexture(animation, 1, texture)
+	printf("gif frame %d %d error %d\n", delay, disposal, gl.GetError())
+	gl.FreeGIF(animation)
+
+	var file i32
+	file = os.Open("examples/opengl/fonts/roboto-light.ttf")
+	var font i32
+	font = gltext.LoadTrueType(file, 30, 32, 127, gltext.LeftToRight)
+	var closed bool
+	closed = os.Close(file)
+	printf("closed %v\n", closed)
+	width, height = gltext.Metrics(font, "Hello World")
+	printf("metrics %d %d\n", width, height)
+	var glyphWidth i32
+	var glyphHeight i32
+	glyphWidth, glyphHeight = gltext.GlyphMetrics(font, 65)
+	printf("glyph %d %d texture %d\n", glyphWidth, glyphHeight, gltext.Texture(font))
+
+	var shader i32
+	shader = gl.CreateShader(gl.VERTEX_SHADER)
+	gl.ShaderSource(shader, 1, "attribute vec4 position; uniform float scale; void main() { gl_Position = position * scale; }")
+	gl.CompileShader(shader)
+	printf("shader log length %d\n", len(gl.GetShaderInfoLog(shader, 200)))
+	printf("shader compiled %d\n", gl.GetShaderiv(shader, gl.COMPILE_STATUS))
+	var program i32
+	program = gl.CreateProgram()
+	gl.AttachShader(program, shader)
+	gl.BindAttribLocation(program, 3, "position")
+	gl.LinkProgram(program)
+	printf("program linked %d attrib %d uniform %d\n", gl.GetProgramiv(program, gl.LINK_STATUS), gl.GetAttribLocation(program, "position"), gl.GetUniformLocation(program, "scale"))
+
+	var frame i32
+	for frame = 0; frame < 30; frame++ {
+		gl.Clear(gl.COLOR_BUFFER_BIT)
+		gl.Color4f(0.5, 0.3, 0.8, 1.0)
+		gltext.Printf(font, 0.0, 0.0, "Hello World")
+		glfw.PollEvents()
+		glfw.SwapBuffers(window)
+	}
+	printf("closing %v error %d\n", glfw.ShouldClose(window), gl.GetError())
+	glfw.SetShouldClose(window, true)
+	printf("closing %v\n", glfw.ShouldClose(window))
+}

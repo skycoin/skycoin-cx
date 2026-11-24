@@ -578,6 +578,11 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWantInput("issue-110.cx", "abc\ndef\n", types.CX_SUCCESS, "a second read() on a piped stdin (skycoin/cx#110)", "Hello, abc!\ndef\n")
 	t.RunWantInput("test-read-eof.cx", "one\ntwo", types.CX_SUCCESS, "read() returns an unterminated last line, then \"\" at the end of input", "[one]\n[two]\n[]\n[]\n")
 	t.RunWant("issue-432.cx", types.CX_COMPILATION_ERROR, "sys/gl in a cx built without cxfx (skycoin/cx#432)", "issue-432.cx:6 package \"sys/gl\" needs a GUI build of cx, build it with make build-gui")
+	t.RunWantEx("--enable=file test-cxfx-handles.cx", types.CX_SUCCESS, "cxfx handles and compile time callbacks (skycoin-cx#432)", runner.TestGui,
+		"window 64 48\n", "start callback 0 1\n", "callback sum 42\n", "pixel 1.0000000 0.8509804 0.2862745 1.0000000\n", "gif 3 2 4 2\n", "gif frame 20 2 error 0\n",
+		"metrics 152 45\n", "shader log length 0\n", "shader compiled 1\n", "program linked 1 attrib 3 uniform 0\n", "closing false error 0\n", "closing true\n")
+	t.RunWantEx("test-cxfx-events.cx", types.CX_SUCCESS, "cxfx window callbacks get the window handle (skycoin-cx#432)", runner.TestGui, "pos 0 30 40\n", "size 0 640 480\n", "framebuffer 0 640 480\n")
+	t.RunWantEx("test-cxfx-callback-name.cx", types.CX_COMPILATION_ERROR, "a cxfx callback takes a function name (skycoin-cx#432)", runner.TestGui, "test-cxfx-callback-name.cx:10 function 'glfw.SetKeyboardCallback' expected a function name as input argument 2; 'str' was provided")
 	t.RunWant("-h", types.CX_SUCCESS, "cx -h names the real flags (skycoin/cx#567)", "alias for -lexer\n", "alias for -heap-initial\n", "alias for -heap-max\n", "-lexer-output string")
 	t.RunWant("test-append-struct-field.cx", types.CX_SUCCESS, "append and len on a slice field of a struct and of a struct pointer",
 		"1 7 9000000000 cee\n2 7 9000000000 cee\n2 2.5 3.5\none two\n4 5\n3 3 9000000000 cee\n2 9000000000 cee\n")
@@ -1016,7 +1021,8 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-215a.cx issue-215.cx", types.CX_SUCCESS, "Order of files matters for structs")
 	// FAILING: panics, gl and glfw only exist with -tags cxfx; see #31
 	// t.RunEx("issue-216.cx", types.CX_COMPILATION_ERROR, "Panic when calling gl.BindBuffer with only one argument.", runner.TestGui|runner.TestStable, 0)
-	t.RunEx("issue-217.cx", types.CX_SUCCESS, "Panic when giving []f32 argument to gl.BufferData", runner.TestGui, 0)
+	// FAILING: gl.BufferData takes []ui8, so a []f32 is a compile error.
+	t.RunEx("issue-217.cx", types.CX_SUCCESS, "Panic when giving []f32 argument to gl.BufferData", runner.TestGui|runner.TestIssue, 0)
 	t.Run("issue-218.cx", types.CX_SUCCESS, "Struct field crushed")
 	t.Run("issue-219.cx", types.CX_SUCCESS, "Failed to modify value in an array")
 	t.Run("issue-220.cx", types.CX_SUCCESS, "Panic when trying to index (using a var) an array, member of a struct passed as a function argument")

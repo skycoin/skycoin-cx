@@ -7,6 +7,8 @@ package main
 // import "sys/gl"
 // import "sys/glfw"
 
+var gameWindow i32
+
 var width i32 = 600
 var height i32 = 600
 
@@ -44,20 +46,18 @@ func addNull (source str) (s str) {
 func compileShader(source str, shaderType i32) (shader i32) {
 	shader := gl.CreateShader(shaderType)
 
-	gl.Strs(source, "csources")
-	gl.ShaderSource(shader, 1, "csources")
-	gl.Free("csources")
+	gl.ShaderSource(shader, 1, source)
 	gl.CompileShader(shader)
 }
 
-func initGlfw (window str) () {
+func initGlfw () () {
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 
-	glfw.CreateWindow("window", width, height, "Square")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Square")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
 func initOpenGL () (program i32) {
@@ -88,7 +88,7 @@ func makeVao (points []f32) (vao i32) {
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0)
 }
 
-func draw (vao i32, window str, program i32) () {
+func draw (vao i32, window i32, program i32) () {
 	gl.Clear(i32.bitor(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT))
 	gl.UseProgram(program)
 
@@ -96,7 +96,7 @@ func draw (vao i32, window str, program i32) () {
 	gl.DrawArrays(gl.TRIANGLES, 0, i32.div([]f32.len(square), 3))
 
 	glfw.PollEvents()
-	glfw.SwapBuffers("window")
+	glfw.SwapBuffers(gameWindow)
 }
 
 func main () () {
@@ -120,16 +120,16 @@ func main () () {
 	// square[16] = -0.5
 	// square[17] = 0.0
 	
-	initGlfw("window")
+	initGlfw()
 	program := initOpenGL()
 	vao := makeVao(square)
 
 	var ratio f32
 
-	for not(glfw.ShouldClose("window")) {
-		bufferWidth, bufferHeight := glfw.GetFramebufferSize("window")
+	for not(glfw.ShouldClose(gameWindow)) {
+		bufferWidth, bufferHeight := glfw.GetFramebufferSize(gameWindow)
 		ratio = f32.div(i32.f32(bufferWidth), i32.f32(bufferHeight))
 
-		draw(vao, "window", program)
+		draw(vao, gameWindow, program)
 	}
 }

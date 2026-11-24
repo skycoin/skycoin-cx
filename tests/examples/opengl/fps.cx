@@ -9,8 +9,9 @@ var height i32 = 600
 func main () () { global width, height
 	glfw.Init()
 
-	glfw.CreateWindow("window", width, height, "Triangle")
-	glfw.MakeContextCurrent("window")
+	var window i32
+	window = glfw.CreateWindow(width, height, "Triangle")
+	glfw.MakeContextCurrent(window)
 	
 	gl.Init()
 	
@@ -29,7 +30,7 @@ func main () () { global width, height
 	nbFrames = 0
 	// End FPS
 
-	for bool.not(glfw.ShouldClose("window")) {
+	for bool.not(glfw.ShouldClose(window)) {
 
 		// Start FPS
 		currentTime = glfw.GetTime()
@@ -42,7 +43,7 @@ func main () () { global width, height
 		// End FPS
 
 		// Drawing a triangle
-		// bufferWidth, bufferHeight := glfw.GetFramebufferSize("window")
+		// bufferWidth, bufferHeight := glfw.GetFramebufferSize(window)
 		// ratio = f32.div(i32.f32(bufferWidth), i32.f32(bufferHeight))
 
 		gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -64,6 +65,6 @@ func main () () { global width, height
 		gl.End()
 		
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(window)
 	}
 }

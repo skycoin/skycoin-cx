@@ -5,6 +5,8 @@ import "sys/glfw"
 import "sys/gltext"
 import "sys/string"
 
+var gameWindow i32
+
 var width i32 = 400
 var height i32 = 400
 
@@ -70,7 +72,7 @@ func (star Star) Draw () {
 	gl.End()
 }
 
-func keyPress (window str, key i32, scancode i32, action i32, mods i32) {
+func keyPress (window i32, key i32, scancode i32, action i32, mods i32) {
 	// 77 is the keycode corresponding to keyboard key "m"
 	if key == 77 && action == 1 {
 		for c := 0; c < len(coins); c++ {
@@ -136,8 +138,8 @@ func keyPress (window str, key i32, scancode i32, action i32, mods i32) {
 	}
 }
 
-func mouseButton (window str, key i32, action i32, mods i32) {
-	x, y := glfw.GetCursorPos("window")
+func mouseButton (window i32, key i32, action i32, mods i32) {
+	x, y := glfw.GetCursorPos(gameWindow)
 	if key == glfw.MouseButtonLeft {
 		if action == glfw.Press {
 			coins = append(coins, new Coin{
@@ -183,8 +185,8 @@ func init () {
 func main () {
 	glfw.Init()
 
-	glfw.CreateWindow("window", width, height, "Mouse Interaction")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Mouse Interaction")
+	glfw.MakeContextCurrent(gameWindow)
 	
 	gl.Init()
 	program := gl.CreateProgram()
@@ -193,14 +195,14 @@ func main () {
 	wd := os.GetWorkingDirectory()
 	fontFile := "fonts/roboto-light.ttf"
 
-	os.Open(fontFile)
-	gltext.LoadTrueType("Roboto50", fontFile, 50, 32, 127, gltext.LeftToRight)
-	os.Close(fontFile)
+	fontHandle := os.Open(fontFile)
+	roboto50 := gltext.LoadTrueType(fontHandle, 50, 32, 127, gltext.LeftToRight)
+	os.Close(fontHandle)
 
 	init()
 
-	glfw.SetKeyCallback("window", "keyPress")
-	glfw.SetMouseButtonCallback("window", "mouseButton")
+	glfw.SetKeyCallback(gameWindow, keyPress)
+	glfw.SetMouseButtonCallback(gameWindow, mouseButton)
 	
 	for c := 0; c < 10; c++ {
 		stars = []Star.append(stars, new Star{
@@ -213,7 +215,7 @@ func main () {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.DepthMask(true)
 
-	for not(glfw.ShouldClose("window")) {
+	for not(glfw.ShouldClose(gameWindow)) {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 		
@@ -231,6 +233,6 @@ func main () {
 		gl.UseProgram(program)
 		
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(gameWindow)
 	}
 }

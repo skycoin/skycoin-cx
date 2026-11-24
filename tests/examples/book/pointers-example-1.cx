@@ -13,7 +13,7 @@ func main () {
     var cells *[900]Cell
     cells = makeCells()
     
-    for bool.not(glfw.ShouldClose("window")) {
-        draw(cells, "window", program)
+    for bool.not(glfw.ShouldClose(window)) {
+        draw(cells, window, program)
     }
 }

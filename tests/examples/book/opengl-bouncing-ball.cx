@@ -42,8 +42,9 @@ func drawBall (ball Ball) () {
 func main () () { global width, height
     glfw.Init()
 
-    glfw.CreateWindow("window", width, height, "Bouncing Ball")
-    glfw.MakeContextCurrent("window")
+    var window i32
+    window = glfw.CreateWindow(width, height, "Bouncing Ball")
+    glfw.MakeContextCurrent(window)
     
     gl.Init()
     var program i32
@@ -62,7 +63,7 @@ func main () () { global width, height
     var temp f32
     temp = 0.0
 
-    for bool.not(glfw.ShouldClose("window")) {
+    for bool.not(glfw.ShouldClose(window)) {
         gl.Clear(gl.COLOR_BUFFER_BIT)
 
         gl.UseProgram(program)
@@ -102,6 +103,6 @@ func main () () { global width, height
         drawBall(ball)
         
         glfw.PollEvents()
-        glfw.SwapBuffers("window")
+        glfw.SwapBuffers(window)
     }
 }

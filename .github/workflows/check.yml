@@ -33,11 +33,13 @@ jobs:
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
-      - name: install GL, X11 and OpenAL headers
+      - name: install GL, X11 and OpenAL headers, Mesa and Xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev libopenal-dev
+          sudo apt-get install -y libgl1-mesa-dev libgl1-mesa-dri xorg-dev libopenal-dev xvfb
       - run: make vet-gui
+      - run: make check-strhot-gui
+      - run: make test-gui
 
   build-wasm:
     runs-on: ubuntu-latest

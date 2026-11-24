@@ -84,16 +84,18 @@ func moveMaybeTeleport (box Item, w Wall, color f32) (box Item) { global timeDel
 
 //Main Functions
 
-func settingsWindow (mw Window) () {
+var gameWindow i32
+
+func settingsWindow (mw Window) () { global gameWindow
 	glfw.Init()
 
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 
-	glfw.CreateWindow("window", mw.Width, mw.Height, "My Game")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(mw.Width, mw.Height, "My Game")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
-func startGame(mw Window) () {
+func startGame (mw Window) () { global gameWindow
 	settingsWindow(mw)
 	
 	gl.Init()
@@ -148,7 +150,7 @@ func startGame(mw Window) () {
 		z: -0.05}
 
 	//Main Loop
-	for bool.not(glfw.ShouldClose("window")) {
+	for bool.not(glfw.ShouldClose(gameWindow)) {
 		updateTiming()
 
 		gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -167,7 +169,7 @@ func startGame(mw Window) () {
 		obj1 = moveMaybeTeleport(obj1, w1, 0.5)
 
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(gameWindow)
 	}
 }
 

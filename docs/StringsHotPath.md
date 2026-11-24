@@ -15,7 +15,8 @@ function with the `OpcodeHandler` signature, followed through static calls
 into this module. `t0-cx-tools-strhot` type checks the packages of the `cx`
 build with the default tags and walks those calls. Interface calls and
 function values other than handlers are not followed. t6-cxfx is built only
-with `-tags cxfx` and is tracked by #432.
+with `-tags cxfx`, and its codes have the status `cxfx`, open in that build
+only. `./check-strhot.sh -tags cxfx` checks it (#432).
 
 A string operation is a comparison, concatenation, switch, index, slice or
 range on a string, a conversion between a string and bytes, a lookup in a
@@ -53,7 +54,10 @@ t0-cx-core-objmodelgen.
 ## Check
 
 `make check-strhot`, part of `make check`, runs
-[check-strhot.sh](../check-strhot.sh). It fails when a site on the run path
+[check-strhot.sh](../check-strhot.sh). It checks the default build, then the
+cxfx build when cgo and the GL, X11 and OpenAL headers are there, and
+`make check-strhot-gui`, which the vet-gui job of CI runs, fails when the
+cxfx build does not compile. It fails when a site on the run path
 has no code, when a comment names a code or class that differs from
 strhot-codes.txt, and when an open code has no site left. `./check-strhot.sh
 -l` lists every site with its code, and `-inventory -why` lists the sites

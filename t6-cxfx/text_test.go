@@ -1,4 +1,4 @@
-//go:build cxfx && !mobile
+//go:build cxfx
 
 package cxfx
 
@@ -20,35 +20,27 @@ func textTestProgram(text string) (*ast.CXProgram, ast.CXValue) {
 	return &ast.CXProgram{Memory: memory}, ast.CXValue{Offset: 0}
 }
 
-func TestCxglCStringFindKeepsCache(t *testing.T) {
+func TestCxfxTextNulTerminated(t *testing.T) {
 	prgrm, value := textTestProgram("projection")
-	defer freeCString("projection")
-	defer freeCString("csources")
-
-	first := cxglCStringFind(ast.ProgramStringBytesRead(prgrm, &value))
-	if cSources["projection"] != first {
-		t.Fatal("a miss is not cached under the text")
+	name := cxfxTextNulTerminated(ast.ProgramStringBytesRead(prgrm, &value))
+	if got := string(cxfxState.CxfxTextBuffer[:len("projection")+1]); got != "projection\x00" || name != &cxfxState.CxfxTextBuffer[0] {
+		t.Fatalf("the C string is %q", got)
 	}
-	if again := cxglCStringFind(ast.ProgramStringBytesRead(prgrm, &value)); again != first {
-		t.Fatal("a hit returned a different C string")
-	}
-
-	stored := getCString("csources", "void main() {}")
-	if found := cxglCStringFind([]byte("csources")); found != stored {
-		t.Fatal("a key stored by gl.Strs was not found")
+	long := make([]byte, 3*CxfxTextBufferSizeInitial)
+	cxfxTextNulTerminated(long)
+	if len(cxfxState.CxfxTextBuffer) < len(long)+1 || cxfxState.CxfxTextBuffer[len(long)] != 0 {
+		t.Fatal("a long name did not grow the scratch")
 	}
 }
 
-func TestCxglCStringFindHitAllocations(t *testing.T) {
+func TestCxfxTextNulTerminatedAllocations(t *testing.T) {
 	prgrm, value := textTestProgram("projection")
-	defer freeCString("projection")
-	cxglCStringFind(ast.ProgramStringBytesRead(prgrm, &value))
-
+	cxfxTextNulTerminated(ast.ProgramStringBytesRead(prgrm, &value))
 	allocations := testing.AllocsPerRun(100, func() {
-		cxglCStringFind(ast.ProgramStringBytesRead(prgrm, &value))
+		cxfxTextNulTerminated(ast.ProgramStringBytesRead(prgrm, &value))
 	})
 	if allocations != 0 {
-		t.Fatalf("a cached lookup allocates %v times", allocations)
+		t.Fatalf("a GL name allocates %v times", allocations)
 	}
 }
 
@@ -66,37 +58,43 @@ func TestCxfxTextViewAllocations(t *testing.T) {
 	}
 }
 
-func BenchmarkCxfxTextUniformName(b *testing.B) {
-	prgrm, value := textTestProgram("projection")
-	defer freeCString("projection")
-	b.Run("Get_str", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			name := value.Get_str(prgrm)
-			getCString(name, name)
-		}
-	})
-	b.Run("View", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			cxglCStringFind(ast.ProgramStringBytesRead(prgrm, &value))
-		}
-	})
+func TestCxfxHandleTables(t *testing.T) {
+	saved := cxfxState
+	defer func() { cxfxState = saved }()
+	cxfxState = CxfxState{}
+
+	first := cxfxTexturePixelsAdd(CxfxTexturePixels{CxfxTexturePixelsData: []float32{1}})
+	second := cxfxTexturePixelsAdd(CxfxTexturePixels{CxfxTexturePixelsData: []float32{2}})
+	if first != 0 || second != 1 || cxfxTexturePixelsGet(second).CxfxTexturePixelsData[0] != 2 {
+		t.Fatalf("handles %d and %d", first, second)
+	}
+	*cxfxTexturePixelsGet(first) = CxfxTexturePixels{}
+	if again := cxfxTexturePixelsAdd(CxfxTexturePixels{CxfxTexturePixelsData: []float32{3}}); again != first {
+		t.Fatalf("a freed slot was not reused, got %d", again)
+	}
+	if handle := cxfxCallbackI32I32Add(7); handle != 0 || cxfxCallbackI32I32Get(0) != 7 {
+		t.Fatalf("callback handle %d", handle)
+	}
 }
 
-func BenchmarkCxfxTextPrint(b *testing.B) {
-	prgrm, value := textTestProgram("Score: 1234567890, lives: 3, level: 12")
-	var sink int
-	b.Run("Get_str", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			sink += len(value.Get_str(prgrm))
-		}
+func TestCxfxCallbackInputsAllocations(t *testing.T) {
+	allocations := testing.AllocsPerRun(100, func() {
+		cxfxCallbackInputsI32(0, 3)
+		cxfxCallbackInputsI64(1, -1)
+		cxfxCallbackInputsF64(2, 0.5)
 	})
-	b.Run("View", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			sink += len(util.ProgramTextStringView(ast.ProgramStringBytesRead(prgrm, &value)))
-		}
-	})
+	if allocations != 0 {
+		t.Fatalf("writing callback inputs allocates %v times", allocations)
+	}
+	if types.Read_i32(cxfxState.CxfxCallbackInputs[0], 0) != 3 || types.Read_i64(cxfxState.CxfxCallbackInputs[1], 0) != -1 || types.Read_f64(cxfxState.CxfxCallbackInputs[2], 0) != 0.5 {
+		t.Fatal("callback inputs read back wrong")
+	}
+}
+
+func BenchmarkCxfxTextUniformName(b *testing.B) {
+	prgrm, value := textTestProgram("projection")
+	b.ReportAllocs()
+	for b.Loop() {
+		cxfxTextNulTerminated(ast.ProgramStringBytesRead(prgrm, &value))
+	}
 }

@@ -22,6 +22,8 @@ type Appearance struct {
 	class str
 }
 
+var gameWindow i32
+
 type World struct {
 	mask []i32
 	displacement []Displacement
@@ -124,13 +126,13 @@ func initOpenGL () (program i32) {
 	gl.LinkProgram(program)
 }
 
-func initGlfw (window str) () {
+func initGlfw () () {
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-	glfw.CreateWindow("window", width, height, "Testing")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Testing")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
 func scale (x i32, max i32) (out f32) {
@@ -295,7 +297,7 @@ func map1Dto2D (i i32, w i32) (c i32, r i32) {
 	c = i32.mod(i, w)
 }
 
-func charActions (window str, key i32, scancode i32, action i32, mods i32) () {
+func charActions (window i32, key i32, scancode i32, action i32, mods i32) () {
 	if and(i32.eq(key, 265), i32.or(i32.eq(action, 2), i32.eq(action, 1))) {
 		for entity = 0; i32.lt(entity, entityCount); entity = i32.add(entity, 1) {
 			mask := []i32.read(world.mask, entity)
@@ -489,12 +491,12 @@ func initWorld () () {
 }
 
 func main () () {
-	initGlfw("window")
+	initGlfw()
 	program := initOpenGL()
 
-	glfw.SetKeyCallback("window", "charActions")
+	glfw.SetKeyCallback(gameWindow, charActions)
 
-	stop := not(glfw.ShouldClose("window"))
+	stop := not(glfw.ShouldClose(gameWindow))
 
 	setupScene()
 
@@ -539,8 +541,8 @@ func main () () {
 		collisionFunction()
 
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(gameWindow)
 		
-		stop = not(glfw.ShouldClose("window"))
+		stop = not(glfw.ShouldClose(gameWindow))
 	}
 }

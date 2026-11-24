@@ -149,6 +149,11 @@ const (
 	// a global, function or type of the package. Its operands are the name and
 	// the package.
 	CompileErrorCodeImportNameUnknown
+	// CompileErrorCodeFunctionReferenceInput is an argument that does not name
+	// a function where an opcode takes a function reference, such as the
+	// callback of glfw.SetKeyboardCallback. Its operands are the opcode, the
+	// argument number and the type that was provided.
+	CompileErrorCodeFunctionReferenceInput
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

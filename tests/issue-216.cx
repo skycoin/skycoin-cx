@@ -11,8 +11,9 @@ func main()() {
 
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
-	glfw.CreateWindow(test, 800, 600, test)
-	glfw.MakeContextCurrent(test)
+	var window i32
+	window = glfw.CreateWindow(800, 600, test)
+	glfw.MakeContextCurrent(window)
 
 	gl.Init()
 

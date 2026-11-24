@@ -4,6 +4,8 @@ import "sys/gl"
 import "sys/glfw"
 import "sys/string"
 
+var gameWindow i32
+
 var width i32 = 600
 var height i32 = 600
 
@@ -106,9 +108,7 @@ var fragmentShaderSource str = "
 func compileShader(source str, shaderType i32) (shader i32) {
 	shader := gl.CreateShader(shaderType)
 
-	gl.Strs(source, "csources")
-	gl.ShaderSource(shader, 1, "csources")
-	gl.Free("csources")
+	gl.ShaderSource(shader, 1, source)
 	gl.CompileShader(shader)
 }
 
@@ -151,7 +151,7 @@ func initOpenGL () (program i32) {
 	gl.LinkProgram(program)
 }
 
-func initGlfw (window str) () {
+func initGlfw () () {
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
@@ -159,8 +159,8 @@ func initGlfw (window str) () {
 	// glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	//glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	glfw.CreateWindow("window", width, height, "Testing")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Testing")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
 func newObject (obj []f32, x i32, y i32, z i32) (points []f32) {
@@ -379,7 +379,7 @@ func map1Dto2D (i i32, w i32) (c i32, r i32) {
 	c = i32.mod(i, w)
 }
 
-func myCallback (window str, key i32, scancode i32, action i32, mods i32) () {
+func myCallback (window i32, key i32, scancode i32, action i32, mods i32) () {
 	if and(i32.eq(key, 265), i32.eq(action, 1)) {
 		if i32.gteq(p1y, i32.sub(size, 1)) {
 			p1y = i32.sub(size, 1)
@@ -444,12 +444,12 @@ func setSprite (s Sprite, x1 i32, x2 i32, y1 i32, y2 i32, W i32, H i32) () {
 }
 
 func main () () {
-	initGlfw("window")
+	initGlfw()
 	program := initOpenGL()
 
-	glfw.SetKeyCallback("window", "myCallback")
+	glfw.SetKeyCallback(gameWindow, myCallback)
 
-	stop := not(glfw.ShouldClose("window"))
+	stop := not(glfw.ShouldClose(gameWindow))
 
 	wd := os.GetWorkingDirectory()
 	
@@ -564,7 +564,7 @@ func main () () {
 
 		//drawSpace(4, 4, spriteSheet)
 		
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(gameWindow)
 		glfw.PollEvents()
 
 
@@ -641,11 +641,11 @@ func main () () {
 
 		// glfw.PollEvents()
 		
-		// glfw.SwapBuffers("window")
+		// glfw.SwapBuffers(gameWindow)
 
 		
 		
-		stop = not(glfw.ShouldClose("window"))
+		stop = not(glfw.ShouldClose(gameWindow))
 		//str.read()
 	}
 }

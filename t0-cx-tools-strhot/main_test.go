@@ -101,3 +101,16 @@ func TestReport(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildTagsCxfx(t *testing.T) {
+	for tags, want := range map[string]bool{"": false, "cxfx": true, "ptr64 cxfx": true, "ptr64,cxfx": true, "cxfxextra": false} {
+		if got := buildTagsCxfx(tags); got != want {
+			t.Errorf("buildTagsCxfx(%q) = %v, want %v", tags, got, want)
+		}
+	}
+	codes := map[string]codeEntry{"STRHOT-001": {class: "O", cxfx: true}}
+	codesCxfxOpen(codes)
+	if codes["STRHOT-001"].cxfx {
+		t.Error("a cxfx code stayed cxfx in the cxfx build")
+	}
+}

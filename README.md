@@ -58,7 +58,7 @@ them out with `TAGS=nocipher`, `TAGS=nocxos` or `TAGS=noregexp`, and
 and the GL, X11 and OpenAL headers. On Debian or Ubuntu:
 
 ```
-sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev
+sudo apt-get install libgl1-mesa-dev xorg-dev libopenal-dev xvfb
 make build-gui
 ```
 
@@ -223,9 +223,11 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
     has a STRHOT code, see [docs/StringsHotPath.md](docs/StringsHotPath.md).
 - `make test` runs the stable CX program tests and compiles every complete
   `cx` code block in `LanguageGuide.md`, 786 tests in all.
-- `make test-all` also runs the tests marked as known issues. None is
-  marked now, so it runs the same 786 tests.
-- `make vet-gui` vets the cxfx build. CI runs it.
+- `make test-all` also runs the tests marked as known issues. The only one
+  marked now, `issue-217`, is a GUI test, so it runs the same 786 tests.
+- `make vet-gui` vets the cxfx build, `make check-strhot-gui` runs the
+  STRHOT check on it and `make test-gui` runs the GUI CX program tests
+  against it, under `xvfb-run` when `DISPLAY` is unset. CI runs all three.
 - `make build-wasm` compiles `cx` for js/wasm as the playground does, and
   `make test-wasm` runs the hello world example under Node. CI runs both.
 - `make names-csv` writes every declared Go and CX name with its file, line
@@ -241,7 +243,8 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
   [#31](https://github.com/skycoin/skycoin-cx/issues/31),
   [#32](https://github.com/skycoin/skycoin-cx/issues/32)).
 - `t7-cxmobile` does not compile and no target builds it
-  ([#35](https://github.com/skycoin/skycoin-cx/issues/35)).
+  ([#35](https://github.com/skycoin/skycoin-cx/issues/35)). The mobile files of
+  t6-cxfx were removed in #432.
 - Affordances do not work, see above and
   [#500](https://github.com/skycoin/skycoin-cx/issues/500).
 

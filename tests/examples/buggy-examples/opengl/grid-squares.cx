@@ -7,6 +7,8 @@ package main
 import "sys/gl"
 import "sys/glfw"
 
+var gameWindow i32
+
 var width i32 = 600
 var height i32 = 600
 var rows i32 = 20
@@ -51,9 +53,7 @@ func addNull (source str) (s str) {
 func compileShader(source str, shaderType i32) (shader i32) {
 	shader := gl.CreateShader(shaderType)
 
-	gl.Strs(source, "csources")
-	gl.ShaderSource(shader, 1, "csources")
-	gl.Free("csources")
+	gl.ShaderSource(shader, 1, source)
 	gl.CompileShader(shader)
 }
 
@@ -113,14 +113,14 @@ func makeCells () (cells []Cell) {
 	}
 }
 
-func initGlfw (window str) () {
+func initGlfw () () {
 	glfw.Init()
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 
-	glfw.CreateWindow("window", width, height, "Square")
-	glfw.MakeContextCurrent("window")
+	gameWindow = glfw.CreateWindow(width, height, "Square")
+	glfw.MakeContextCurrent(gameWindow)
 }
 
 func initOpenGL () (program i32) {
@@ -141,7 +141,7 @@ func drawCell (cell Cell) () {
 	gl.DrawArrays(gl.TRIANGLES, 0, i32.div([]f32.len(square), 3))
 }
 
-func draw (cells []Cell, window str, program i32) () {
+func draw (cells []Cell, window i32, program i32) () {
 	gl.Clear(i32.bitor(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT))
 	gl.UseProgram(program)
 
@@ -150,16 +150,16 @@ func draw (cells []Cell, window str, program i32) () {
 	}
 
 	glfw.PollEvents()
-	glfw.SwapBuffers("window")
+	glfw.SwapBuffers(gameWindow)
 }
 
 func main () () {
-	initGlfw("window")
+	initGlfw()
 	program := initOpenGL()
 
 	cells := makeCells()
 
-	for not(glfw.ShouldClose("window")) {
-		draw(cells, "window", program)
+	for not(glfw.ShouldClose(gameWindow)) {
+		draw(cells, gameWindow, program)
 	}
 }

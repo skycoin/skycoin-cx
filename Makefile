@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel check-strhot generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -49,7 +49,7 @@ build-tests: build ## Build the cx program test runner
 test: build-tests ## Run the stable CX program tests
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
 
-test-all: build-tests ## Run all non-GUI CX program tests, including any marked as known issues (none now)
+test-all: build-tests ## Run all non-GUI CX program tests, including any marked as known issues (issue-217, a GUI test, so none runs)
 	./bin/cxtest --cxpath=$(CURDIR)/bin/$(CXEXE) --wdir=./tests --log=fail,stderr --disable-tests=gui
 
 test-ptr64: ## Run the stable CX program tests with a ptr64 build
@@ -67,6 +67,11 @@ vet: ## go vet with default and ptr64 tags, and gofmt
 
 vet-gui: ## go vet with the cxfx tag (needs cgo and X11/GL/OpenAL headers)
 	go vet -tags cxfx ./t6-cxfx ./t7-init ./t11-cx
+
+test-gui: ## Build cx with cxfx and run the gui CX program tests, under xvfb-run when DISPLAY is unset (needs cgo, X11/GL/OpenAL headers and a GL driver)
+	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/cx-gui$(EXE) ./t11-cx
+	go build -o ./bin/cxtest ./t1-cxtest
+	$(if $(DISPLAY),,xvfb-run -a) ./bin/cxtest --cxpath=$(CURDIR)/bin/cx-gui$(EXE) --wdir=./tests --log=fail,stderr --enable-tests=gui
 
 check-tiers: ## Check that packages only import lower tiers and sit at <dir>/<file>.go
 	./check-tiers.sh
@@ -86,8 +91,11 @@ check-objmodel: ## Check the object model rules of docs/ObjectModel.md and that 
 check-gcreach: ## Check that the vm and IR base stay GC free and every other GC reach has a GCREACH comment, see docs/GarbageCollector.md
 	./check-gcreach.sh
 
-check-strhot: ## Check that every string operation on the run path of the old loop has a STRHOT code, see docs/StringsHotPath.md
+check-strhot: ## Check that every string operation on the run path of the old loop has a STRHOT code, see docs/StringsHotPath.md. Checks t6-cxfx too when the cxfx build compiles
 	./check-strhot.sh
+
+check-strhot-gui: ## check-strhot, failing when the cxfx build of t6-cxfx does not compile (needs cgo and X11/GL/OpenAL headers)
+	CX_STRHOT_CXFX=1 ./check-strhot.sh
 
 names-csv: ## Write one CSV row per declared Go and CX name to NAMES_CSV, for skycoin-cx and the repositories in REPOS
 	mkdir -p $(dir $(NAMES_CSV))

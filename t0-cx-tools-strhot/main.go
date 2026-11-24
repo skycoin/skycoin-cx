@@ -83,6 +83,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
+	if buildTagsCxfx(*tags) {
+		codesCxfxOpen(codes)
+	}
 	mode := reportCheck
 	switch {
 	case *listFunctions:
@@ -97,6 +100,24 @@ func main() {
 	os.Exit(report(os.Stdout, functions, codes, mode))
 }
 
+// buildTagsCxfx reports a build with the cxfx tag, which adds t6-cxfx.
+func buildTagsCxfx(tags string) bool {
+	for _, tag := range strings.FieldsFunc(tags, func(r rune) bool { return r == ',' || r == ' ' }) {
+		if tag == "cxfx" {
+			return true
+		}
+	}
+	return false
+}
+
+// codesCxfxOpen makes the codes of t6-cxfx open, for a build that has it.
+func codesCxfxOpen(codes map[string]codeEntry) {
+	for code, entry := range codes {
+		entry.cxfx = false
+		codes[code] = entry
+	}
+}
+
 // codeEntry is one line of the code table.
 type codeEntry struct {
 	class   string
@@ -105,7 +126,8 @@ type codeEntry struct {
 }
 
 // readCodes reads the code table, one "STRHOT-nnn CLASS STATUS file function"
-// line per code. STATUS is open or removed. # starts a comment line.
+// line per code. STATUS is open, removed or cxfx, open in the build with the
+// cxfx tag only. # starts a comment line.
 func readCodes(path string) (map[string]codeEntry, error) {
 	f, err := os.Open(path)
 	if err != nil {

@@ -106,6 +106,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeImportMaskingWarning, ast.CompileErrorOperands{text("Point"), int64(file), 3, 10}, "warning: a.cx:7 'Point' masks the name imported at a.cx:3:10\n"},
 		{ast.CompileErrorCodeImportFormInvalid, ast.CompileErrorOperands{text("'a' is listed twice")}, header + " invalid import: 'a' is listed twice\n"},
 		{ast.CompileErrorCodeImportNameUnknown, ast.CompileErrorOperands{text("Missing"), text("geometry")}, header + " 'Missing' is not a global, function or type of package 'geometry'\n"},
+		{ast.CompileErrorCodeFunctionReferenceInput, ast.CompileErrorOperands{text("glfw.SetKeyboardCallback"), 2, text("str")}, header + " function 'glfw.SetKeyboardCallback' expected a function name as input argument 2; 'str' was provided\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

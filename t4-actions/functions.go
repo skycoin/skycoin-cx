@@ -372,6 +372,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 			continue
 		}
 
+		functionReferenceInputsResolve(prgrm, exprAtomicOp)
 		if !CheckTypes(prgrm, fn.Expressions, i) {
 			symbolsScopeClose(symbolsData, expr)
 			continue
@@ -1502,6 +1503,10 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			expectedPointer = expectedArg.IsPointer()
 			expectedUndefined = expectedArg.Type == types.UNDEFINED
 			expectedSlice = expectedUndefined && hasDeclSpec(expectedArg, constants.DECL_SLICE)
+			if expectedArg.Type == types.FUNC {
+				// functionReferenceInputsResolve checked it and made it an i32.
+				continue
+			}
 		}
 		expectedType = ast.GetFormattedType(prgrm, expectedTypeSig)
 

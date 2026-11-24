@@ -3707,7 +3707,6 @@ deployment." This description was extracted from OpenGL's website
 ### `gl.Enable`
 ### `gl.End`
 ### `gl.FramebufferTexture2D`
-### `gl.Free`
 ### `gl.Frustum`
 ### `gl.GenBuffers`
 ### `gl.GenFramebuffers`
@@ -3731,7 +3730,6 @@ deployment." This description was extracted from OpenGL's website
 ### `gl.Rotatef`
 ### `gl.Scalef`
 ### `gl.ShaderSource`
-### `gl.Strs`
 ### `gl.TexCoord2d`
 ### `gl.TexCoord2f`
 ### `gl.TexEnvi`
@@ -3757,6 +3755,12 @@ and Vulkan development on the desktop. It provides a simple API for
 creating windows, contexts and surfaces, receiving input and events."
 This description was extracted from GLFW's website (https://www.glfw.org/).
 
+A window is an `i32` handle. `glfw.CreateWindow(width, height, title)`
+returns it and every other window function takes it. A callback is the
+name of a function, written without quotes, and the compiler resolves it,
+so `glfw.SetKeyboardCallback(window, onKey)` calls `onKey` with the
+window handle as its first input. A name that is not a function is a
+compile error. A handle that was never returned is an assert at run time.
 
 ### `glfw.CreateWindow`
 ### `glfw.GetCursorPos`
@@ -3791,10 +3795,13 @@ gltext's website (https://github.com/go-gl/gltext).
 The `gltext` functions can be used to display character strings on
 windows. Different fonts can be used by loading font files using `gltext.LoadTrueType`.
 
-### `gltext.GlyphBounds () (i32, i32)`
-### `gltext.LoadTrueType (str, str, i32, i32, i32, i32) ()`
-### `gltext.Metrics (str, str) (i32, i32)`
-### `gltext.NextRune (str, str, i32) (i32, i32, i32, i32, i32, i32, i32)`
+A font is an `i32` handle that `gltext.LoadTrueType` returns, -1 when the
+file does not load.
+
+### `gltext.GlyphBounds (i32) (i32, i32)`
+### `gltext.LoadTrueType (i32, i32, i32, i32, i32) (i32)`
+### `gltext.Metrics (i32, str) (i32, i32)`
+### `gltext.NextGlyph (i32, str, i32) (i32, i32, i32, i32, i32, i32, i32)`
 ### `gltext.Printf`
 ### `gltext.Texture`
 # [Building an executable](#table-of-contents)
@@ -3995,3 +4002,39 @@ written `pkg.f` or brought in with an import into scope. Two programs of
 the repository used it. No opcode changes. Serialized programs from
 before this version must be recompiled. See
 [skycoin-cx#487](https://github.com/skycoin/skycoin-cx/issues/487).
+
+## Version 2611240001, 2026-11-24
+
+The cxfx packages `sys/glfw`, `sys/gltext` and `sys/gl` name windows,
+fonts, gifs and texture pixel copies by `i32` handles instead of `str`
+names, and take callbacks as function names the compiler resolves.
+
+| before | from 2611240001 |
+|---|---|
+| `glfw.CreateWindow("w", 800, 600, "Title")` | `window = glfw.CreateWindow(800, 600, "Title")` |
+| `glfw.SwapBuffers("w")` and every other window function | `glfw.SwapBuffers(window)` |
+| `glfw.SetKeyboardCallback("w", "onKey", "main")` | `glfw.SetKeyboardCallback(window, onKey)` |
+| `glfw.SetKeyCallback("w", "onKey")` | `glfw.SetKeyCallback(window, onKey)` |
+| `glfw.RegisterCallbackI32I32("main", "f")` | `glfw.RegisterCallbackI32I32(f)` |
+| `gltext.LoadTrueType(file, "name", size, low, high, direction)` | `font = gltext.LoadTrueType(file, size, low, high, direction)` |
+| `gltext.Printf("name", x, y, text)` and the other font functions | `gltext.Printf(font, x, y, text)` |
+| `gltext.GlyphBounds()` | `gltext.GlyphBounds(font)` |
+| `frames, loops, w, h = gl.NewGIF(path)` | `gif, frames, loops, w, h = gl.NewGIF(path)` |
+| `gl.FreeGIF(path)`, `gl.GIFFrameToTexture(path, frame, texture)` | `gl.FreeGIF(gif)`, `gl.GIFFrameToTexture(gif, frame, texture)` |
+| `gl.UploadImageToTexture(path, target, level, copy)` | `pixels = gl.UploadImageToTexture(path, target, level, copy)` |
+| `gl.CxTextureGetPixel(path, x, y)`, `gl.CxReleaseTexture(path)` | `gl.CxTextureGetPixel(pixels, x, y)`, `gl.CxReleaseTexture(pixels)` |
+| `gl.Strs(key, source)`, `gl.ShaderSource(shader, 1, key)`, `gl.Free(key)` | `gl.ShaderSource(shader, 1, source)` |
+
+A callback receives the window handle, an `i32`, where it received the
+window name. A callback argument that is not a function name is the
+compile error 7080, and a handle that was never returned, was freed or is
+out of range is an assert. `glfw.GetWindowContentScale` returns two `f32`
+as its handler always wrote. `gl.GetShaderInfoLog` and
+`gl.GetProgramInfoLog` return the log without the NUL padding up to the
+requested length.
+
+The opcodes `gl.Destroy` (592), `gl.Strs` (593) and `gl.Free` (594) are
+deprecated and reassignable from version `2711240001`. The other opcodes
+keep their numbers. Serialized programs from before this version must be
+recompiled. See
+[skycoin-cx#432](https://github.com/skycoin/skycoin-cx/issues/432).

@@ -3,7 +3,7 @@
 package main
 import "sys/glfw"
 
-func clickMouseEvents(window str, key i32, action i32, mods i32) () {
+func clickMouseEvents(window i32, key i32, action i32, mods i32) () {
 	if i32.eq(key, glfw.MouseButtonLeft) {
 		if action == glfw.Press {
 			printf("clicked")
@@ -16,5 +16,5 @@ func clickMouseEvents(window str, key i32, action i32, mods i32) () {
 }
 
 func main () {
-	clickMouseEvents("something", 10, 10, 10)
+	clickMouseEvents(0, 10, 10, 10)
 }

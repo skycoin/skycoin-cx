@@ -1,0 +1,28 @@
+// Window callbacks get the window handle, skycoin-cx#432. make test-gui runs
+// it, under the 640x480 screen of xvfb-run.
+package main
+
+import "sys/glfw"
+
+func onPos(window i32, x i32, y i32) { printf("pos %d %d %d\n", window, x, y) }
+func onSize(window i32, w i32, h i32) { printf("size %d %d %d\n", window, w, h) }
+func onFramebuffer(window i32, w i32, h i32) { printf("framebuffer %d %d %d\n", window, w, h) }
+func onStop(window i32) { printf("stop %d\n", window) }
+
+func main() {
+	glfw.Init()
+	var window i32
+	window = glfw.CreateWindow(64, 48, "events")
+	glfw.MakeContextCurrent(window)
+	glfw.SetWindowPosCallback(window, onPos)
+	glfw.SetWindowSizeCallback(window, onSize)
+	glfw.SetFramebufferSizeCallback(window, onFramebuffer)
+	glfw.SetStopCallback(window, onStop)
+	glfw.SetWindowPos(window, 30, 40)
+	glfw.Fullscreen(window, true, 0, 0, 0, 0)
+	var i i32
+	for i = 0; i < 20; i++ {
+		glfw.PollEvents()
+		glfw.SwapBuffers(window)
+	}
+}

@@ -27,6 +27,7 @@ var ratio f32
 var lEdge f64 // left 
 var rEdge f64 // right 
 var program i32
+var window i32
 
 // keys 
 var	GLFW_KEY_W i32
@@ -52,10 +53,10 @@ var ball Ball
 
 
 
-func main () { global ball, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_W, lEdge, rEdge, ratio, bufferWidth, bufferHeight, program
+func main () { global window, ball, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_W, lEdge, rEdge, ratio, bufferWidth, bufferHeight, program
 	init()
 
-	for bool.not(glfw.ShouldClose("window")) {
+	for bool.not(glfw.ShouldClose(window)) {
 		updateTiming()
 
 		// ball velocity & position 
@@ -73,7 +74,7 @@ func main () { global ball, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_W, lEdg
 		ball.y = f32.add(ball.y, ball.vy)
 
 		// graphics 
-		bufferWidth, bufferHeight = glfw.GetFramebufferSize("window")
+		bufferWidth, bufferHeight = glfw.GetFramebufferSize(window)
 		ratio = f32.div(i32.f32(bufferWidth), i32.f32(bufferHeight))
 		lEdge = f32.f64(f32.mul(ratio, -1.0))
 		rEdge = f32.f64(ratio)
@@ -87,13 +88,13 @@ func main () { global ball, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_S, GLFW_KEY_W, lEdg
 		drawBall(ball)
 		
 		glfw.PollEvents()
-		glfw.SwapBuffers("window")
+		glfw.SwapBuffers(window)
 	}
 }
 
 
 
-func init () () { global TAU, FORCE, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, ball, WIDTH, HEIGHT, program
+func init () () { global window, TAU, FORCE, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, ball, WIDTH, HEIGHT, program
 	string.PrintLine("\nMove the ball with the W,A,S,D keys.")
 
 	TAU = f32.mul(2.0, 3.141592654)
@@ -116,8 +117,8 @@ func init () () { global TAU, FORCE, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KE
 
 	// graphics 
 	glfw.Init()
-	glfw.CreateWindow("window", WIDTH, HEIGHT, "Smooth Motion Control (from keyboard polling)")
-	glfw.MakeContextCurrent("window")
+	window = glfw.CreateWindow(WIDTH, HEIGHT, "Smooth Motion Control (from keyboard polling)")
+	glfw.MakeContextCurrent(window)
 	gl.Init()
 	program = gl.CreateProgram()
 	gl.LinkProgram(program)
@@ -154,18 +155,18 @@ func dampenPositiveMovement (currentVelocity f32, strength f32) (out f32) { glob
 }
 
 
-func getVelocityChangesFromInput (velocity f32, subKey i32, addKey i32) (out f32) { global FORCE, timeDelta
+func getVelocityChangesFromInput (velocity f32, subKey i32, addKey i32) (out f32) { global window, FORCE, timeDelta
 	out = velocity
 
 	//______________________________________________________________________ 
-	if i32.eq(glfw.GetKey("window", addKey), 1) { //     speed up positively 
+	if i32.eq(glfw.GetKey(window, addKey), 1) { //     speed up positively 
 		if out < 0.0 {
 			out = dampenNegativeMovement(out, 4.0)
 		}
 
 		out = f32.add(out, FORCE * timeDelta)
 	} else //___________________________________________ speed up negatively 
-	if i32.eq(glfw.GetKey("window", subKey), 1) {
+	if i32.eq(glfw.GetKey(window, subKey), 1) {
 		if out > 0.0 {
 			out = dampenPositiveMovement(out, 4.0)
 		}
