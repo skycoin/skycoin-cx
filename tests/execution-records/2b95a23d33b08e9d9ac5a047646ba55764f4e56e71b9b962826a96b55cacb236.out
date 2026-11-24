@@ -1,0 +1,7 @@
+error: test-vm-init-divide.cx:7, CX_RUNTIME_ERROR, runtime error: integer divide by zero
+===Callstack===
+>>> *init()
+Expressions
+ 	test-vm-init-divide.cx:6 : identity() : 0
+	test-vm-init-divide.cx:7 : i32.div() : 0
+

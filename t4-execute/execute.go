@@ -47,8 +47,10 @@ func runLoop(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall type
 }
 
 // runSysInitFunc runs *init, ticking the GC after each step as runLoop does.
+// A runtime error ends it with nil and is left in cxprogram.RuntimeError, as in RunCxAst.
 // GCREACH: the GC tick of *init, see docs/GarbageCollector.md.
 func runSysInitFunc(cxprogram *ast.CXProgram, mod *ast.CXPackage) error {
+	defer ast.RuntimeError(cxprogram)
 	fn, err := mod.SelectFunction(cxprogram, cxprogram.CxIrState.CxIrStateNameSysInit)
 	if err != nil {
 		return err
@@ -133,6 +135,9 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 		err = runSysInitFunc(cxprogram, mod)
 		if err != nil {
 			return err
+		}
+		if cxprogram.RuntimeError.RuntimeErrorRecordRaised {
+			return nil
 		}
 
 		fn, err := mod.SelectFunction(cxprogram, cxprogram.CxIrState.CxIrStateNameMain)

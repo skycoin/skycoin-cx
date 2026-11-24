@@ -1,0 +1,19 @@
+// A method whose receiver is not a struct, or is a struct that does not
+// exist, is a compile error, not a compiler panic (skycoin-cx#515).
+package main
+
+func (x i32) twice() (r i32) {
+	r = x * 2
+}
+
+func (c Circle) area() (a f32) {
+	a = c.radius * c.radius
+}
+
+func (c Circle) perimeter() (p f32) {
+	p = c.radius * 2.0
+}
+
+func main() {
+	var late i32 = "s"
+}

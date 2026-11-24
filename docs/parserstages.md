@@ -88,7 +88,7 @@ Program
 		1.- Function: sayHi () ()
 			0.- Expression: string.PrintLine(&*lit str)
 
-after ParseSourceCode
+after ParseSourceStrings
 Program
 0.- Package: main
 	Imports

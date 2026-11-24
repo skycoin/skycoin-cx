@@ -43,9 +43,9 @@ The `cx` command (`t11-cx/main.go`) builds the program in this order.
    of a name with the sorted names of `ast.NativeNames` once and caches the
    result by Gids in `CxIrState.CxIrStateNativeNames`. Constants such as
    `cx.SUCCESS` are found the same way in `actions.ConstNames`.
-4. `cxparsing.ParseSourceCode` (`t9-cxparsing/cxparsing.go`) reads the
-   files and calls `cxparsing.ParseSourceStrings`, which runs the two
-   passes below.
+4. `compileSourceStrings` (`t11-cx/helpers.go`), which the cx command and
+   the tests share, calls `cxparsing.ParseSourceStrings`, which runs the
+   two passes below.
 5. `cxparsing.AddInitFunction` (`t9-cxparsing/utils.go`) adds the function
    `*init` (`constants.SYS_INIT_FUNC`) to package `main`. Its body is
    `CXProgram.SysInitExprs`, the global initializers collected by

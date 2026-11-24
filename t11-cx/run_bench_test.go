@@ -18,7 +18,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-opcodes"
 	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
-	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"
 )
 
 // runBenchProgram is a CX program BenchmarkRun and TestRunAllocs execute.
@@ -166,10 +165,7 @@ func compileRunSources(tb testing.TB, names []string, sources []string) {
 	opcodes.RegisterOpcodes(actions.AST)
 	globals.FoundCompileErrors = false
 	globals.HeapOffset = 0
-	if err := cxparsing.ParseSourceStrings(sources, names); err != nil {
-		tb.Fatalf("%s: %v", names, err)
-	}
-	if err := cxparsing.AddInitFunction(actions.AST); err != nil {
+	if err := compileSourceStrings(names, sources); err != nil {
 		tb.Fatalf("%s: %v", names, err)
 	}
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()

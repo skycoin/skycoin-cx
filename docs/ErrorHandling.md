@@ -199,7 +199,9 @@ Three error records exist.
   a listed name that is not a global, function or type of the package.
   7080 `CompileErrorCodeFunctionReferenceInput` is an argument that does
   not name a function where an opcode takes a function reference, such
-  as the callback of `glfw.SetKeyboardCallback` (#432).
+  as the callback of `glfw.SetKeyboardCallback` (#432). 7081
+  `CompileErrorCodeMethodReceiverType` is a method receiver that is not a
+  struct or a pointer to one (#515).
   A package that loads but has compile errors
   prints them with the errors of the program and fails like an import
   that cannot be loaded, without an error at the import. 7000 is

@@ -915,3 +915,8 @@ func GetArgSizeFromTypeName(typeName string) int {
 		// panic(CX_INTERNAL_ERROR)
 	}
 }
+
+// ArgumentFormattedType is the CX spelling of the type of arg.
+func ArgumentFormattedType(prgrm *CXProgram, arg *CXArgument) string {
+	return getFormattedType_CXArg(prgrm, arg)
+}

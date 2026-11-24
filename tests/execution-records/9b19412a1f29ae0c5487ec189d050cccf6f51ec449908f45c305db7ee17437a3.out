@@ -1,0 +1,6002 @@
+1
+error: test-vm-call-depth.cx:7, CX_RUNTIME_STACK_OVERFLOW_ERROR, stack overflow
+===Callstack===
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 999
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 1000
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 998
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 999
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 997
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 998
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 996
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 997
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 995
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 996
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 994
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 995
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 993
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 994
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 992
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 993
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 991
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 992
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 990
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 991
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 989
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 990
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 988
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 989
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 987
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 988
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 986
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 987
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 985
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 986
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 984
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 985
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 983
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 984
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 982
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 983
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 981
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 982
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 980
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 981
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 979
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 980
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 978
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 979
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 977
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 978
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 976
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 977
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 975
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 976
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 974
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 975
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 973
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 974
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 972
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 973
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 971
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 972
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 970
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 971
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 969
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 970
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 968
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 969
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 967
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 968
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 966
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 967
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 965
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 966
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 964
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 965
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 963
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 964
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 962
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 963
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 961
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 962
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 960
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 961
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 959
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 960
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 958
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 959
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 957
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 958
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 956
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 957
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 955
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 956
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 954
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 955
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 953
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 954
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 952
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 953
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 951
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 952
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 950
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 951
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 949
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 950
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 948
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 949
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 947
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 948
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 946
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 947
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 945
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 946
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 944
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 945
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 943
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 944
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 942
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 943
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 941
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 942
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 940
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 941
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 939
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 940
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 938
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 939
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 937
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 938
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 936
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 937
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 935
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 936
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 934
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 935
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 933
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 934
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 932
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 933
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 931
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 932
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 930
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 931
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 929
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 930
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 928
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 929
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 927
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 928
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 926
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 927
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 925
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 926
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 924
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 925
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 923
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 924
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 922
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 923
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 921
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 922
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 920
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 921
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 919
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 920
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 918
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 919
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 917
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 918
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 916
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 917
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 915
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 916
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 914
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 915
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 913
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 914
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 912
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 913
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 911
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 912
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 910
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 911
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 909
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 910
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 908
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 909
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 907
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 908
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 906
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 907
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 905
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 906
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 904
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 905
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 903
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 904
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 902
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 903
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 901
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 902
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 900
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 901
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 899
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 900
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 898
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 899
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 897
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 898
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 896
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 897
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 895
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 896
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 894
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 895
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 893
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 894
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 892
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 893
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 891
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 892
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 890
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 891
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 889
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 890
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 888
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 889
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 887
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 888
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 886
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 887
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 885
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 886
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 884
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 885
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 883
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 884
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 882
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 883
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 881
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 882
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 880
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 881
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 879
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 880
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 878
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 879
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 877
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 878
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 876
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 877
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 875
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 876
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 874
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 875
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 873
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 874
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 872
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 873
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 871
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 872
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 870
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 871
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 869
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 870
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 868
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 869
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 867
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 868
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 866
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 867
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 865
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 866
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 864
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 865
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 863
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 864
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 862
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 863
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 861
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 862
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 860
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 861
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 859
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 860
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 858
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 859
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 857
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 858
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 856
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 857
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 855
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 856
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 854
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 855
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 853
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 854
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 852
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 853
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 851
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 852
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 850
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 851
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 849
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 850
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 848
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 849
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 847
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 848
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 846
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 847
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 845
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 846
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 844
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 845
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 843
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 844
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 842
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 843
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 841
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 842
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 840
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 841
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 839
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 840
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 838
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 839
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 837
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 838
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 836
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 837
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 835
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 836
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 834
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 835
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 833
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 834
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 832
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 833
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 831
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 832
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 830
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 831
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 829
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 830
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 828
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 829
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 827
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 828
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 826
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 827
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 825
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 826
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 824
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 825
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 823
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 824
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 822
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 823
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 821
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 822
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 820
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 821
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 819
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 820
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 818
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 819
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 817
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 818
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 816
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 817
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 815
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 816
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 814
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 815
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 813
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 814
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 812
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 813
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 811
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 812
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 810
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 811
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 809
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 810
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 808
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 809
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 807
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 808
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 806
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 807
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 805
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 806
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 804
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 805
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 803
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 804
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 802
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 803
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 801
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 802
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 800
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 801
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 799
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 800
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 798
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 799
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 797
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 798
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 796
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 797
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 795
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 796
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 794
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 795
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 793
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 794
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 792
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 793
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 791
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 792
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 790
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 791
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 789
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 790
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 788
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 789
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 787
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 788
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 786
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 787
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 785
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 786
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 784
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 785
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 783
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 784
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 782
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 783
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 781
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 782
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 780
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 781
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 779
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 780
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 778
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 779
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 777
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 778
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 776
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 777
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 775
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 776
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 774
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 775
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 773
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 774
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 772
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 773
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 771
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 772
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 770
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 771
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 769
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 770
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 768
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 769
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 767
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 768
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 766
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 767
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 765
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 766
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 764
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 765
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 763
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 764
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 762
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 763
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 761
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 762
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 760
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 761
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 759
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 760
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 758
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 759
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 757
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 758
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 756
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 757
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 755
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 756
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 754
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 755
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 753
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 754
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 752
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 753
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 751
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 752
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 750
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 751
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 749
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 750
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 748
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 749
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 747
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 748
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 746
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 747
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 745
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 746
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 744
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 745
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 743
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 744
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 742
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 743
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 741
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 742
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 740
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 741
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 739
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 740
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 738
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 739
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 737
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 738
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 736
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 737
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 735
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 736
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 734
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 735
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 733
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 734
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 732
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 733
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 731
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 732
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 730
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 731
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 729
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 730
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 728
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 729
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 727
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 728
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 726
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 727
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 725
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 726
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 724
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 725
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 723
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 724
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 722
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 723
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 721
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 722
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 720
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 721
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 719
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 720
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 718
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 719
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 717
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 718
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 716
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 717
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 715
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 716
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 714
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 715
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 713
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 714
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 712
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 713
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 711
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 712
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 710
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 711
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 709
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 710
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 708
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 709
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 707
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 708
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 706
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 707
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 705
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 706
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 704
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 705
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 703
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 704
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 702
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 703
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 701
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 702
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 700
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 701
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 699
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 700
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 698
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 699
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 697
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 698
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 696
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 697
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 695
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 696
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 694
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 695
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 693
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 694
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 692
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 693
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 691
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 692
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 690
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 691
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 689
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 690
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 688
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 689
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 687
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 688
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 686
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 687
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 685
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 686
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 684
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 685
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 683
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 684
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 682
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 683
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 681
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 682
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 680
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 681
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 679
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 680
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 678
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 679
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 677
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 678
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 676
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 677
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 675
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 676
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 674
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 675
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 673
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 674
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 672
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 673
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 671
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 672
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 670
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 671
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 669
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 670
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 668
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 669
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 667
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 668
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 666
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 667
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 665
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 666
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 664
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 665
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 663
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 664
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 662
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 663
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 661
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 662
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 660
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 661
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 659
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 660
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 658
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 659
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 657
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 658
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 656
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 657
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 655
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 656
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 654
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 655
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 653
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 654
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 652
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 653
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 651
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 652
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 650
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 651
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 649
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 650
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 648
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 649
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 647
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 648
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 646
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 647
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 645
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 646
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 644
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 645
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 643
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 644
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 642
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 643
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 641
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 642
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 640
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 641
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 639
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 640
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 638
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 639
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 637
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 638
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 636
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 637
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 635
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 636
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 634
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 635
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 633
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 634
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 632
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 633
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 631
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 632
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 630
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 631
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 629
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 630
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 628
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 629
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 627
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 628
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 626
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 627
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 625
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 626
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 624
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 625
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 623
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 624
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 622
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 623
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 621
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 622
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 620
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 621
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 619
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 620
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 618
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 619
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 617
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 618
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 616
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 617
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 615
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 616
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 614
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 615
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 613
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 614
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 612
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 613
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 611
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 612
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 610
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 611
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 609
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 610
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 608
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 609
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 607
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 608
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 606
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 607
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 605
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 606
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 604
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 605
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 603
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 604
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 602
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 603
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 601
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 602
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 600
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 601
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 599
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 600
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 598
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 599
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 597
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 598
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 596
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 597
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 595
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 596
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 594
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 595
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 593
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 594
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 592
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 593
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 591
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 592
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 590
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 591
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 589
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 590
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 588
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 589
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 587
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 588
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 586
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 587
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 585
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 586
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 584
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 585
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 583
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 584
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 582
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 583
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 581
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 582
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 580
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 581
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 579
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 580
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 578
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 579
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 577
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 578
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 576
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 577
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 575
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 576
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 574
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 575
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 573
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 574
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 572
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 573
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 571
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 572
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 570
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 571
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 569
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 570
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 568
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 569
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 567
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 568
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 566
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 567
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 565
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 566
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 564
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 565
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 563
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 564
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 562
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 563
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 561
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 562
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 560
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 561
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 559
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 560
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 558
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 559
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 557
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 558
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 556
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 557
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 555
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 556
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 554
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 555
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 553
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 554
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 552
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 553
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 551
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 552
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 550
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 551
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 549
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 550
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 548
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 549
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 547
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 548
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 546
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 547
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 545
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 546
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 544
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 545
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 543
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 544
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 542
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 543
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 541
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 542
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 540
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 541
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 539
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 540
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 538
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 539
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 537
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 538
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 536
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 537
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 535
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 536
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 534
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 535
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 533
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 534
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 532
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 533
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 531
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 532
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 530
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 531
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 529
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 530
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 528
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 529
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 527
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 528
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 526
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 527
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 525
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 526
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 524
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 525
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 523
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 524
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 522
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 523
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 521
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 522
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 520
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 521
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 519
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 520
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 518
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 519
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 517
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 518
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 516
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 517
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 515
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 516
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 514
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 515
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 513
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 514
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 512
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 513
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 511
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 512
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 510
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 511
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 509
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 510
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 508
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 509
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 507
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 508
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 506
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 507
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 505
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 506
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 504
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 505
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 503
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 504
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 502
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 503
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 501
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 502
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 500
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 501
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 499
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 500
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 498
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 499
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 497
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 498
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 496
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 497
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 495
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 496
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 494
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 495
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 493
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 494
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 492
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 493
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 491
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 492
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 490
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 491
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 489
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 490
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 488
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 489
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 487
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 488
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 486
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 487
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 485
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 486
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 484
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 485
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 483
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 484
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 482
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 483
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 481
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 482
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 480
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 481
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 479
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 480
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 478
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 479
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 477
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 478
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 476
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 477
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 475
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 476
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 474
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 475
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 473
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 474
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 472
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 473
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 471
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 472
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 470
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 471
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 469
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 470
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 468
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 469
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 467
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 468
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 466
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 467
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 465
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 466
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 464
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 465
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 463
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 464
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 462
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 463
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 461
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 462
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 460
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 461
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 459
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 460
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 458
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 459
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 457
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 458
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 456
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 457
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 455
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 456
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 454
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 455
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 453
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 454
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 452
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 453
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 451
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 452
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 450
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 451
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 449
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 450
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 448
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 449
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 447
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 448
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 446
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 447
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 445
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 446
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 444
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 445
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 443
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 444
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 442
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 443
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 441
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 442
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 440
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 441
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 439
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 440
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 438
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 439
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 437
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 438
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 436
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 437
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 435
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 436
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 434
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 435
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 433
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 434
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 432
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 433
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 431
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 432
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 430
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 431
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 429
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 430
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 428
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 429
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 427
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 428
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 426
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 427
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 425
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 426
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 424
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 425
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 423
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 424
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 422
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 423
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 421
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 422
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 420
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 421
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 419
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 420
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 418
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 419
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 417
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 418
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 416
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 417
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 415
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 416
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 414
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 415
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 413
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 414
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 412
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 413
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 411
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 412
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 410
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 411
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 409
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 410
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 408
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 409
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 407
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 408
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 406
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 407
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 405
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 406
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 404
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 405
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 403
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 404
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 402
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 403
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 401
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 402
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 400
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 401
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 399
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 400
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 398
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 399
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 397
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 398
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 396
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 397
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 395
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 396
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 394
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 395
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 393
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 394
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 392
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 393
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 391
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 392
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 390
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 391
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 389
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 390
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 388
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 389
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 387
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 388
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 386
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 387
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 385
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 386
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 384
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 385
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 383
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 384
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 382
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 383
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 381
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 382
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 380
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 381
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 379
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 380
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 378
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 379
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 377
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 378
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 376
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 377
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 375
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 376
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 374
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 375
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 373
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 374
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 372
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 373
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 371
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 372
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 370
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 371
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 369
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 370
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 368
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 369
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 367
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 368
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 366
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 367
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 365
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 366
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 364
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 365
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 363
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 364
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 362
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 363
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 361
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 362
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 360
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 361
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 359
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 360
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 358
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 359
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 357
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 358
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 356
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 357
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 355
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 356
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 354
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 355
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 353
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 354
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 352
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 353
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 351
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 352
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 350
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 351
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 349
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 350
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 348
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 349
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 347
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 348
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 346
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 347
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 345
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 346
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 344
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 345
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 343
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 344
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 342
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 343
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 341
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 342
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 340
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 341
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 339
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 340
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 338
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 339
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 337
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 338
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 336
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 337
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 335
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 336
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 334
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 335
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 333
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 334
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 332
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 333
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 331
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 332
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 330
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 331
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 329
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 330
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 328
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 329
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 327
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 328
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 326
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 327
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 325
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 326
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 324
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 325
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 323
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 324
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 322
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 323
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 321
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 322
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 320
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 321
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 319
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 320
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 318
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 319
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 317
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 318
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 316
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 317
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 315
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 316
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 314
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 315
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 313
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 314
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 312
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 313
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 311
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 312
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 310
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 311
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 309
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 310
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 308
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 309
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 307
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 308
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 306
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 307
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 305
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 306
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 304
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 305
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 303
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 304
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 302
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 303
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 301
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 302
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 300
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 301
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 299
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 300
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 298
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 299
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 297
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 298
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 296
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 297
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 295
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 296
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 294
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 295
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 293
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 294
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 292
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 293
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 291
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 292
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 290
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 291
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 289
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 290
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 288
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 289
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 287
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 288
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 286
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 287
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 285
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 286
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 284
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 285
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 283
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 284
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 282
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 283
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 281
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 282
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 280
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 281
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 279
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 280
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 278
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 279
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 277
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 278
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 276
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 277
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 275
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 276
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 274
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 275
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 273
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 274
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 272
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 273
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 271
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 272
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 270
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 271
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 269
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 270
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 268
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 269
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 267
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 268
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 266
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 267
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 265
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 266
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 264
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 265
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 263
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 264
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 262
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 263
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 261
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 262
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 260
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 261
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 259
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 260
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 258
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 259
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 257
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 258
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 256
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 257
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 255
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 256
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 254
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 255
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 253
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 254
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 252
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 253
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 251
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 252
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 250
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 251
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 249
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 250
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 248
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 249
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 247
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 248
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 246
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 247
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 245
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 246
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 244
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 245
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 243
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 244
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 242
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 243
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 241
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 242
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 240
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 241
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 239
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 240
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 238
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 239
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 237
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 238
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 236
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 237
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 235
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 236
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 234
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 235
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 233
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 234
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 232
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 233
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 231
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 232
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 230
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 231
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 229
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 230
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 228
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 229
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 227
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 228
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 226
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 227
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 225
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 226
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 224
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 225
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 223
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 224
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 222
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 223
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 221
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 222
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 220
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 221
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 219
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 220
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 218
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 219
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 217
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 218
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 216
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 217
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 215
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 216
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 214
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 215
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 213
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 214
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 212
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 213
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 211
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 212
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 210
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 211
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 209
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 210
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 208
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 209
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 207
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 208
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 206
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 207
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 205
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 206
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 204
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 205
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 203
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 204
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 202
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 203
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 201
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 202
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 200
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 201
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 199
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 200
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 198
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 199
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 197
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 198
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 196
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 197
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 195
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 196
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 194
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 195
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 193
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 194
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 192
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 193
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 191
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 192
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 190
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 191
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 189
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 190
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 188
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 189
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 187
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 188
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 186
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 187
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 185
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 186
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 184
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 185
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 183
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 184
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 182
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 183
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 181
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 182
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 180
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 181
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 179
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 180
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 178
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 179
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 177
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 178
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 176
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 177
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 175
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 176
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 174
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 175
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 173
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 174
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 172
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 173
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 171
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 172
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 170
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 171
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 169
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 170
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 168
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 169
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 167
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 168
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 166
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 167
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 165
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 166
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 164
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 165
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 163
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 164
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 162
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 163
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 161
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 162
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 160
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 161
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 159
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 160
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 158
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 159
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 157
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 158
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 156
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 157
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 155
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 156
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 154
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 155
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 153
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 154
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 152
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 153
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 151
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 152
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 150
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 151
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 149
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 150
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 148
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 149
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 147
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 148
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 146
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 147
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 145
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 146
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 144
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 145
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 143
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 144
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 142
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 143
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 141
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 142
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 140
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 141
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 139
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 140
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 138
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 139
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 137
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 138
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 136
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 137
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 135
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 136
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 134
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 135
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 133
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 134
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 132
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 133
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 131
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 132
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 130
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 131
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 129
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 130
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 128
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 129
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 127
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 128
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 126
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 127
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 125
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 126
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 124
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 125
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 123
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 124
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 122
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 123
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 121
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 122
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 120
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 121
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 119
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 120
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 118
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 119
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 117
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 118
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 116
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 117
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 115
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 116
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 114
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 115
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 113
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 114
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 112
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 113
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 111
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 112
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 110
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 111
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 109
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 110
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 108
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 109
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 107
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 108
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 106
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 107
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 105
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 106
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 104
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 105
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 103
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 104
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 102
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 103
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 101
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 102
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 100
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 101
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 99
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 100
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 98
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 99
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 97
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 98
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 96
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 97
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 95
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 96
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 94
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 95
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 93
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 94
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 92
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 93
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 91
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 92
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 90
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 91
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 89
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 90
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 88
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 89
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 87
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 88
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 86
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 87
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 85
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 86
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 84
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 85
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 83
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 84
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 82
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 83
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 81
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 82
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 80
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 81
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 79
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 80
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 78
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 79
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 77
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 78
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 76
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 77
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 75
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 76
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 74
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 75
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 73
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 74
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 72
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 73
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 71
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 72
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 70
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 71
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 69
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 70
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 68
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 69
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 67
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 68
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 66
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 67
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 65
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 66
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 64
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 65
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 63
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 64
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 62
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 63
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 61
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 62
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 60
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 61
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 59
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 60
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 58
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 59
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 57
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 58
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 56
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 57
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 55
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 56
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 54
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 55
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 53
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 54
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 52
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 53
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 51
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 52
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 50
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 51
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 49
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 50
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 48
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 49
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 47
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 48
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 46
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 47
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 45
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 46
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 44
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 45
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 43
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 44
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 42
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 43
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 41
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 42
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 40
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 41
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 39
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 40
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 38
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 39
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 37
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 38
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 36
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 37
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 35
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 36
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 34
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 35
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 33
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 34
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 32
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 33
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 31
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 32
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 30
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 31
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 29
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 30
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 28
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 29
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 27
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 28
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 26
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 27
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 25
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 26
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 24
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 25
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 23
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 24
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 22
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 23
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 21
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 22
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 20
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 21
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 19
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 20
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 18
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 19
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 17
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 18
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 16
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 17
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 15
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 16
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 14
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 15
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 13
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 14
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 12
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 13
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 11
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 12
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 10
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 11
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 9
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 10
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 8
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 9
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 7
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 8
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 6
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 7
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 5
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 6
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 4
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 5
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 3
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 4
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 2
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 3
+
+>>> recur()
+ProgramInput
+	test-vm-call-depth.cx:6 : recur() : 1
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 2
+
+>>> main()
+Expressions
+ 	test-vm-call-depth.cx:7 : i32.add() : 1
+	test-vm-call-depth.cx:7 : i32.add() : 2
+

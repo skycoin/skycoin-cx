@@ -7,7 +7,7 @@
 
 # CX Compiler Stages
 
-Parsing starts in [t11-cx/helpers.go parseProgram()](../t11-cx/helpers.go). This creates an empty AST and will call [t9-cxparsing/cxparsing.go ParseSourceCode()](../t9-cxparsing/cxparsing.go) to start parsing the source code. It will copy the CX source code into a string variable and will be passed to [t9-cxparsing/utils.go Preliminarystage()](../t9-cxparsing/utils.go). 
+Parsing starts in [t11-cx/helpers.go parseProgram()](../t11-cx/helpers.go). This creates an empty AST and reads the CX source code into strings and calls compileSourceStrings(), which calls [t9-cxparsing/cxparsing.go ParseSourceStrings()](../t9-cxparsing/cxparsing.go). The strings are passed to [t9-cxparsing/utils.go Preliminarystage()](../t9-cxparsing/utils.go). 
 
 `Preliminarystage`
 

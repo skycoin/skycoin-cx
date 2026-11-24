@@ -7,13 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/skycoin/skycoin-cx/t0-types"
+	types "github.com/skycoin/skycoin-cx/t0-types"
 )
 
 // astPrintRun is one -ast run of a program.
@@ -24,12 +23,13 @@ type astPrintRun struct {
 }
 
 // TestAstPrintsEveryProgram runs cx -ast twice on every program that
-// astPrintPrograms lists. A program that compiles prints its AST and
-// one that does not reports its errors, and neither panics. Both runs print
-// the same, so the order of packages does not change from run to run.
+// executionRecordPrograms lists, each file of a package alone too (#515). A
+// program that compiles prints its AST and one that does not reports its
+// errors, and neither panics. Both runs print the same, so the order of
+// packages does not change from run to run.
 func TestAstPrintsEveryProgram(t *testing.T) {
 	tests := filepath.Join("..", "tests")
-	programs := astPrintPrograms(t, tests)
+	programs := executionRecordPrograms(t, tests)
 	runs := make([][2]astPrintRun, len(programs))
 	limit := make(chan struct{}, runtime.NumCPU())
 	var wait sync.WaitGroup
@@ -88,43 +88,4 @@ func astPrintProcess(t *testing.T, dir string, args []string) astPrintRun {
 		t.Error(err)
 	}
 	return run
-}
-
-// astPrintPrograms lists each .cx file of tests/ and tests/examples/
-// alone, then each t1-cxtest entry that passes flags or several files. A
-// program is its cx arguments relative to tests/, joined by spaces.
-func astPrintPrograms(t *testing.T, tests string) []string {
-	var programs []string
-	for _, pattern := range []string{"*.cx", filepath.Join("examples", "*.cx")} {
-		matches, err := filepath.Glob(filepath.Join(tests, pattern))
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, match := range matches {
-			name, err := filepath.Rel(tests, match)
-			if err != nil {
-				t.Fatal(err)
-			}
-			programs = append(programs, filepath.ToSlash(name))
-		}
-	}
-	sort.Strings(programs)
-
-	harness, err := os.ReadFile(filepath.Join("..", "t1-cxtest", "main.go"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, match := range lowerCompareHarnessRun.FindAllStringSubmatch(string(harness), -1) {
-		args := strings.Fields(match[1])
-		files := 0
-		for _, arg := range args {
-			if strings.HasSuffix(arg, ".cx") {
-				files++
-			}
-		}
-		if files > 0 && (len(args) > 1) {
-			programs = append(programs, match[1])
-		}
-	}
-	return programs
 }

@@ -43,7 +43,7 @@ actions.FunctionDeclaration()
 All CX actions are defined in [t4-actions](../t4-actions).
 
 
-at the end of ParseSourceCode() we get complete CXProgram as object.
+at the end of ParseSourceStrings() we get complete CXProgram as object.
 
 
  

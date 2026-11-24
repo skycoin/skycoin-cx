@@ -154,6 +154,9 @@ const (
 	// callback of glfw.SetKeyboardCallback. Its operands are the opcode, the
 	// argument number and the type that was provided.
 	CompileErrorCodeFunctionReferenceInput
+	// CompileErrorCodeMethodReceiverType is a method receiver that is not a
+	// struct or a pointer to one, at the receiver. Its operand is the type.
+	CompileErrorCodeMethodReceiverType
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

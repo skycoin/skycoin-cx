@@ -1,6 +1,6 @@
 // Recursion with small frames reaches the call depth limit before the stack
-// is full. vm stops with a stack overflow error. The old loop crashes with
-// an index out of range in RuntimeError (skycoin-cx#408).
+// is full. Both loops stop with a stack overflow error (skycoin-cx#408,
+// skycoin-cx#514).
 package main
 
 func recur(n i32) {

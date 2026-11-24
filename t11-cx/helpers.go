@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -22,7 +23,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"             // thin: only MakeProgram, RegisterPackages; no depth gain
 	cxgo "github.com/skycoin/skycoin-cx/t8-cxparsingcompletor" // thin: only Tokenize; no depth gain
-	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"     // thin: only AddInitFunction, ParseSourceCode; no depth gain
+	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"     // thin: only AddInitFunction, ErrCompilation, ParseSourceStrings; no depth gain
 )
 
 func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File) bool {
@@ -57,31 +58,53 @@ func parseProgram(options cxCmdFlags, fileNames []string, sourceCode []*os.File)
 		cxinit.RegisterPackages(actions.AST)
 	}
 
-	// Parsing all the source code files sent as CLI arguments to CX.
-	cxparsing.ParseSourceCode(sourceCode, fileNames)
+	sources := make([]string, len(sourceCode))
+	for i, file := range sourceCode {
+		source, err := io.ReadAll(file)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			profiling.CleanupAndExit(types.CX_COMPILATION_ERROR)
+		}
+		sources[i] = string(source)
+	}
+
+	// Setting what function to start in if using the REPL.
+	repl.ReplTargetFn = constants.MAIN_FUNC
+
+	if err := compileSourceStrings(fileNames, sources); err != nil {
+		if err != cxparsing.ErrCompilation {
+			fmt.Fprintln(os.Stdout, "error:", err)
+		}
+		profiling.CleanupAndExit(types.CX_COMPILATION_ERROR)
+	}
+
+	return true
+}
+
+// compileSourceStrings compiles sources, named by fileNames, into actions.AST
+// with its *init. The cx command and the tests compile through it (#516).
+func compileSourceStrings(fileNames []string, sources []string) error {
+	if err := cxparsing.ParseSourceStrings(sources, fileNames); err != nil {
+		return err
+	}
 
 	// Checking if a main package exists. If not, create and add it to `AST`.
 	if _, err := actions.AST.GetFunction(actions.AST.CxIrState.CxIrStateNameMain, actions.AST.CxIrState.CxIrStateNameMain); err != nil {
 		initMainPkg(actions.AST)
 	}
 
-	// Setting what function to start in if using the REPL.
-	repl.ReplTargetFn = constants.MAIN_FUNC
-
 	// Adding *init function that initializes all the global variables.
-	err = cxparsing.AddInitFunction(actions.AST)
-	if err != nil {
-		panic(fmt.Sprintf("error initializing function: %v", err))
+	if err := cxparsing.AddInitFunction(actions.AST); err != nil {
+		return fmt.Errorf("initializing *init: %w", err)
 	}
 
 	actions.LineNo = 0
 
 	if globals.FoundCompileErrors {
 		printer.PrinterCompileErrorsPrint(actions.AST)
-		profiling.CleanupAndExit(types.CX_COMPILATION_ERROR)
+		return cxparsing.ErrCompilation
 	}
-
-	return true
+	return nil
 }
 
 // initMainPkg adds a `main` package with an empty `main` function to `prgrm`.
