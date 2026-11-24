@@ -81,7 +81,7 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{131, "bool.or", 0, 0, 0},
 	{132, "bool.and", 0, 0, 0},
 	{133, "bool.not", 0, 0, 0},
-	{134, "cipher.GenerateKeyPair", 0, 0, 0},
+	{134, "cipher.GenerateKeyPair", 0, 2611240003, 2711240001},
 	{135, "time.Sleep", 0, 0, 0},
 	{136, "time.UnixMilli", 0, 0, 0},
 	{137, "time.UnixNano", 0, 0, 0},

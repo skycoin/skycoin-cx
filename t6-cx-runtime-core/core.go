@@ -1,7 +1,8 @@
 // Package core is the minimum interpreter core that cx build puts in front of
 // a serialized program: the opcode set it registers, the trailer that marks
 // the appended program, and the executors. It uses no module outside the Go
-// standard library and has no parser.
+// standard library and has no parser. A core that links the cipher library
+// links the cipher package of Skycoin with it.
 package core
 
 import (
@@ -22,8 +23,8 @@ import (
 // CoreRegister adds the native packages of the core to prgrm and their
 // opcodes to the global tables, and the system libraries that
 // libraryRegisters register. It leaves out every other library (t5-cxos,
-// t5-tcp) and every opcode that needs a module outside the standard library
-// (t5-cipher, t6-cxfx). The built-in opcodes come last, as in cx.
+// t5-tcp, t5-cipher) and every opcode that needs a module outside the
+// standard library (t6-cxfx). The built-in opcodes come last, as in cx.
 func CoreRegister(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgram)) {
 	cxoscore.RegisterPackage(prgrm)
 	printer.PrinterOpcodesRegister(prgrm)

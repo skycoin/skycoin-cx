@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -22,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin-cx/t0-textsections"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
@@ -65,13 +65,13 @@ const executionRecordsChildFailed = 125
 const executionRecordsFormatVersion = 1
 
 // executionRecordHashName names the hash of every hash in the record file.
-// Decision D23 may replace SHA-256 with a BLAKE hash, here and in
-// executionRecordHash only.
-const executionRecordHashName = "SHA-256"
+// It is the hash of CX, so decision D23 changes it in t0-cxhash for the
+// cipher library and the records at once.
+const executionRecordHashName = cxhash.CxHashName
 
 // executionRecordHash is the one hash function of the execution records.
 func executionRecordHash(data []byte) string {
-	sum := sha256.Sum256(data)
+	sum := cxhash.CxHashOfBytes(data)
 	return hex.EncodeToString(sum[:])
 }
 
@@ -143,7 +143,6 @@ var executionRecordSourcePatterns = []struct {
 	{regexp.MustCompile(`"sys/(gl|glfw|gltext|al|cxfx)"`), "gui"},
 	{regexp.MustCompile(`\btcp\.(Dial|Listen|Accept)\b|"http"|\bhttp\.`), "network"},
 	{regexp.MustCompile(`\.rand\b`), "random"},
-	{regexp.MustCompile(`\bcipher\.GenerateKeyPair\b`), "random"},
 	{regexp.MustCompile(`\btime\.(Unix|Now)`), "clock"},
 	{regexp.MustCompile(`\bos\.Run\b`), "process"},
 	{regexp.MustCompile(`\bos\.Create\("[A-Za-z0-9_-]+\.tmp"\)`), "shared"},

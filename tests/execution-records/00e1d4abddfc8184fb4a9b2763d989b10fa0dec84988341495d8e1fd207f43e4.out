@@ -1,0 +1,9 @@
+error: deprecated/test-cipher.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
+===Callstack===
+>>> main()
+Expressions
+ 	deprecated/test-cipher.cx:7 : cipher.KeyPairGenerate() : []
+	deprecated/test-cipher.cx:7 : cipher.KeyPairGenerate() : []
+	:-1 : len() : 0
+	:-1 : len() : 0
+

@@ -15,7 +15,8 @@ GUI_TAGS := cxfx
 
 # CORE_LIBRARY_SETS are the system library sets of the cx build cores, one
 # core each, cx-core for none and cx-core-file-net for file,net.
-CORE_LIBRARY_SETS := none file net process file,net file,process net,process file,net,process
+CORE_LIBRARY_SETS := none file net process file,net file,process net,process file,net,process \
+	cipher file,cipher net,cipher process,cipher file,net,cipher file,process,cipher net,process,cipher file,net,process,cipher
 
 # names-csv output file and extra repository paths to scan.
 NAMES_CSV ?= bin/names.csv

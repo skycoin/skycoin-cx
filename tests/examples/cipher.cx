@@ -1,32 +1,32 @@
 package main
+
 import "sys/cipher"
 import "sys/string"
 
+// Run with cx --enable=cipher examples/cipher.cx.
 func main() {
-	var pubKey cipher.PubKey
-	var secKey cipher.SecKey
-	pubKey, secKey = cipher.GenerateKeyPair()
+	var pubKey []ui8
+	var secKey []ui8
+	pubKey, secKey = cipher.KeyPairGenerate()
 
-	// The length of a PubKey is 33 bytes (ui8).
-	i32.print(len(pubKey.PubKey))
-
-	// The length of a SecKey is 34 bytes (ui8).
-	i32.print(len(secKey.SecKey))
+	// A public key is 33 bytes and a secret key 32.
+	i32.print(len(pubKey))
+	i32.print(len(secKey))
 
 	string.PrintLine("PubKey:")
-	
-	// Printing PubKey
-	for c := 0; c < len(pubKey.PubKey); c++ {
-		printf("%d ", pubKey.PubKey[c])
+	for c := 0; c < len(pubKey); c++ {
+		printf("%d ", pubKey[c])
 	}
-	
 	string.PrintLine("\nSecKey:")
-
-	// Printing SecKey
-	for c := 0; c < len(secKey.SecKey); c++ {
-		printf("%d ", secKey.SecKey[c])
+	for c := 0; c < len(secKey); c++ {
+		printf("%d ", secKey[c])
 	}
-	
-	// Printing newline.
 	string.PrintLine("")
+
+	// Sign the hash of a message and verify the signature.
+	var digest []ui8 = cipher.HashOfBytes(string.BytesOfString("Hello World!"))
+	var signature []ui8
+	var signed bool
+	signature, signed = cipher.SignatureSign(digest, secKey)
+	printf("signed %v, valid %v\n", signed, cipher.SignatureVerify(digest, signature, pubKey))
 }

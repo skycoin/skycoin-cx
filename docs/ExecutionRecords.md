@@ -27,10 +27,10 @@ what differs from form to form and is no result of the program: the Go
 stack of a crash, with its addresses, the refusal of vm for a program that
 does not lower, and the messages of `cx build` and of the core.
 
-Every hash is SHA-256 for now, through `executionRecordHash` and
-`executionRecordHashName` in `t11-cx/execution_records_test.go`, the only
-places to change. The lead asked for a BLAKE hash and which one is decision
-D23. The file names its hash in the format section, so a file written with
+Every hash is the hash of CX, `cxhash.CxHashOfBytes` in `t0-cxhash`, which
+the cipher library hashes with too. It is SHA-256 for now. The lead asked
+for a BLAKE hash and which one is decision D23, which changes `t0-cxhash`
+only. The file names its hash in the format section, so a file written with
 another hash is refused, not misread.
 
 ## The record file
@@ -113,7 +113,7 @@ source gives now is counted in the log and does not fail, since every change
 of the language version or the serialized form changes every program hash.
 The output is what is checked.
 
-It builds the eight cores of `cx build` first, then logs the runs checked by
+It builds the sixteen cores of `cx build` first, then logs the runs checked by
 form, the forms not run and why, the core sizes and the sizes of the
 appended programs.
 

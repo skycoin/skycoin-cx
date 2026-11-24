@@ -81,8 +81,9 @@ document or check script.
     has a two line `GCREACH:` comment above it or above its function. `make
     check-gcreach` runs [check-gcreach.sh](../check-gcreach.sh). See
     [GarbageCollector.md](GarbageCollector.md).
-16. **System libraries.** File access, networking and processes are system
-    libraries, never rows of the opcode table. A program calls one through
+16. **System libraries.** File access, networking, processes and the hash and
+    signatures of `sys/cipher` (see [CipherLibrary.md](CipherLibrary.md))
+    are system libraries, never rows of the opcode table. A program calls one through
     the single opcode `LibraryCall` with a library number and a function
     number, and the run checks at every call that the library is enabled.
     Library numbers (`constants.LibraryTable`) and the function numbers of

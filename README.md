@@ -187,9 +187,9 @@ one core per set of libraries, `cx-core` for none, `cx-core-file`,
 `cx-core-file-net` and so on. `cx build --enable=file program.cx -o program`
 picks `cx-core-file`, and the built program runs with exactly the libraries
 it was built with. `cx build` refuses a program that uses an opcode the core
-leaves out, such as `cipher` or `gl`. Whether the core may use a Go module
-outside the standard library is an open decision, and until then it uses
-none. See [Building an executable](LanguageGuide.md#building-an-executable).
+leaves out, such as `gl`. Only a core with the cipher library links a Go
+module outside the standard library, the `cipher` package of Skycoin.
+See [Building an executable](LanguageGuide.md#building-an-executable).
 
 ## Performance
 

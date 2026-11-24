@@ -836,12 +836,7 @@ S1356,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,92,RegisterOpcodes,ast.Sli
 S1357,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,503,RegisterOpcodes,ast.Slice(types.AFF),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1358,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,506,RegisterOpcodes,ast.Slice(types.AFF),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1359,CXPackage,ctor-call,t5-cipher/init.go,15,RegisterPackage,"ast.MakePackage(""cipher"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1360,CXStruct,ctor-call,t5-cipher/init.go,18,RegisterPackage,"ast.MakeStruct(""PubKey"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1361,CXStruct,ctor-call,t5-cipher/init.go,21,RegisterPackage,"ast.MakeStruct(""SecKey"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S1362,CXPackage,arena-add,t5-cipher/init.go,25,RegisterPackage,prgrm.AddPackage(cipherPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1363,CXPackage,get-call,t5-cipher/init.go,28,RegisterPackage,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1366,CXArgument,ctor-call,t5-cipher/init.go,59,RegisterPackage,"ast.MakeStructParameter(prgrm, ""cipher"", ""PubKey"", ""pubKey"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1367,CXArgument,ctor-call,t5-cipher/init.go,59,RegisterPackage,"ast.MakeStructParameter(prgrm, ""cipher"", ""SecKey"", ""sec"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1368,CXArgument,ctor-call,t5-cxos/init.go,38,RegisterPackage,ast.Slice(types.F64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1369,CXArgument,ctor-call,t5-cxos/init.go,41,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1370,CXArgument,ctor-call,t5-cxos/init.go,44,RegisterPackage,ast.Slice(types.UI64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng

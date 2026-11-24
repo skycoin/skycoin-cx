@@ -653,8 +653,8 @@ not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
 `core.CoreRegister` registers the opcodes of the core, the built-in ones,
 `LibraryCall` and those of `sys/regexp`, `sys/time` and `os.Exit`
 (`t5-cxos-core`), and the system libraries the core links. A library is
-linked by the build tag `cxcorelibraryfile`, `cxcorelibrarynet` or
-`cxcorelibraryprocess`, whose file in `t7-cx-core-run` adds its register
+linked by the build tag `cxcorelibraryfile`, `cxcorelibrarynet`,
+`cxcorelibraryprocess` or `cxcorelibrarycipher`, whose file in `t7-cx-core-run` adds its register
 function. `make build` builds a core for every set, named by
 `buildCoreFileName`, `cx-core-file-net` for file and net. `cx build` keeps
 the enabled libraries the program calls, records them in the serialized

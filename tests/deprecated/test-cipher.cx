@@ -2,10 +2,10 @@ package main
 import "sys/cipher"
 
 func main() {
-	var pubKey cipher.PubKey
-	var secKey cipher.SecKey
-	pubKey, secKey = cipher.GenerateKeyPair()
+	var pubKey []ui8
+	var secKey []ui8
+	pubKey, secKey = cipher.KeyPairGenerate()
 
-	test(len(pubKey.PubKey), 33, "PubKey length does not match.")
-	test(len(secKey.SecKey), 32, "SecKey length does not match.")
+	test(len(pubKey), 33, "PubKey length does not match.")
+	test(len(secKey), 32, "SecKey length does not match.")
 }

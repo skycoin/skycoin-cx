@@ -27,6 +27,10 @@ prepared.
 - `TestRunNoGC` collects, runs each program that allocates nothing, and
   requires `runtime.MemStats.NumGC` unchanged, also with `GOGC=1`.
 - `TestRunVmAllocs` requires 0 for the vm.
+- `TestRunCipherAllocs` requires 0 for 100 calls of the hash functions of
+  `sys/cipher`, and for `cipher.SignatureVerify` no more than the Skycoin
+  call makes, VMALLOC-024. `TestRunVmCipherAllocs` requires 0 for its vm
+  forms.
 
 ## Codes
 
@@ -60,6 +64,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-021 | open, t6-cxfx | `Callback` runs a nested loop with its own buffers |
 | VMALLOC-022 | open, once | a print longer than `ProgramFormatBufferSize` grows the format buffer once |
 | VMALLOC-023 | open, boundary | the serialize opcodes run the serializer |
+| VMALLOC-024 | open, boundary | `cipher.SignatureVerify`, `SignatureRecoverPubKey`, `SignatureSign` and `KeyPairGenerate`, whose `secp256k1-go2` of Skycoin computes with `math/big`. The hash functions of the library allocate nothing, see [CipherLibrary.md](CipherLibrary.md) |
 
 ## Import depth
 

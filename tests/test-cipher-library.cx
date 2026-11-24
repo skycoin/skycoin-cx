@@ -1,0 +1,72 @@
+package main
+
+import "sys/cipher"
+import "sys/string"
+
+// The digests are SHA-256 (decision D23), the vectors of FIPS 180-2. The
+// signature was made by cipher.SignHash of Skycoin with the key pair of the
+// seed "skycoin-cx#510", over the digest of "abc". See skycoin-cx#510.
+
+func hexDigit(value ui8) (digit ui8) {
+	if value < 10UB {
+		digit = value + 48UB
+	} else {
+		digit = value + 87UB
+	}
+}
+
+func hexOfBytes(data []ui8) (text str) {
+	var out []ui8
+	for i := 0; i < len(data); i++ {
+		out = append(out, hexDigit(data[i]/16UB))
+		out = append(out, hexDigit(data[i]%16UB))
+	}
+	text = string.StringOfBytes(out)
+}
+
+func hashPrint(message str) {
+	string.PrintLine(hexOfBytes(cipher.HashOfBytes(string.BytesOfString(message))))
+}
+
+func main() {
+	hashPrint("")
+	hashPrint("abc")
+	hashPrint("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")
+	hashPrint("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu")
+
+	var state i32 = cipher.HashStateNew()
+	cipher.HashStateWrite(state, string.BytesOfString("ab"))
+	string.PrintLine(hexOfBytes(cipher.HashStateSum(state)))
+	cipher.HashStateWrite(state, string.BytesOfString("c"))
+	string.PrintLine(hexOfBytes(cipher.HashStateSum(state)))
+	cipher.HashStateRelease(state)
+
+	var pubKey []ui8 = []ui8{2UB, 243UB, 130UB, 88UB, 156UB, 103UB, 251UB, 172UB, 112UB, 101UB, 181UB, 239UB, 246UB, 111UB, 53UB, 195UB, 11UB, 199UB, 62UB, 56UB, 95UB, 254UB, 171UB, 70UB, 50UB, 110UB, 193UB, 169UB, 48UB, 177UB, 13UB, 28UB, 83UB}
+	var secKey []ui8 = []ui8{182UB, 138UB, 57UB, 101UB, 18UB, 11UB, 61UB, 87UB, 108UB, 20UB, 255UB, 175UB, 66UB, 29UB, 217UB, 174UB, 185UB, 222UB, 121UB, 242UB, 64UB, 196UB, 91UB, 91UB, 20UB, 98UB, 195UB, 208UB, 106UB, 207UB, 201UB, 58UB}
+	var signature []ui8 = []ui8{103UB, 210UB, 238UB, 227UB, 240UB, 242UB, 134UB, 118UB, 234UB, 168UB, 77UB, 112UB, 166UB, 21UB, 143UB, 124UB, 3UB, 213UB, 217UB, 201UB, 238UB, 243UB, 177UB, 63UB, 246UB, 250UB, 193UB, 246UB, 172UB, 123UB, 209UB, 114UB, 114UB, 179UB, 151UB, 199UB, 111UB, 150UB, 211UB, 170UB, 18UB, 26UB, 246UB, 195UB, 181UB, 70UB, 15UB, 92UB, 254UB, 196UB, 238UB, 1UB, 176UB, 155UB, 126UB, 20UB, 68UB, 96UB, 21UB, 66UB, 26UB, 216UB, 246UB, 231UB, 0UB}
+	var digest []ui8 = cipher.HashOfBytes(string.BytesOfString("abc"))
+
+	printf("verify %v\n", cipher.SignatureVerify(digest, signature, pubKey))
+	var otherDigest []ui8 = cipher.HashOfBytes(string.BytesOfString("abd"))
+	printf("verify other hash %v\n", cipher.SignatureVerify(otherDigest, signature, pubKey))
+	signature[10] = signature[10] + 1UB
+	printf("verify changed signature %v\n", cipher.SignatureVerify(digest, signature, pubKey))
+	signature[10] = signature[10] - 1UB
+	printf("verify short key %v\n", cipher.SignatureVerify(digest, signature, secKey))
+
+	var recovered []ui8
+	var recoveredOk bool
+	recovered, recoveredOk = cipher.SignatureRecoverPubKey(digest, signature)
+	printf("recover %v %s\n", recoveredOk, hexOfBytes(recovered))
+	recovered, recoveredOk = cipher.SignatureRecoverPubKey(digest, pubKey)
+	printf("recover from a short signature %v %d\n", recoveredOk, len(recovered))
+
+	var signed []ui8
+	var signedOk bool
+	signed, signedOk = cipher.SignatureSign(otherDigest, secKey)
+	printf("sign %v %d\n", signedOk, len(signed))
+	printf("verify signed %v\n", cipher.SignatureVerify(otherDigest, signed, pubKey))
+	printf("verify signed with the other hash %v\n", cipher.SignatureVerify(digest, signed, pubKey))
+	signed, signedOk = cipher.SignatureSign(digest, pubKey)
+	printf("sign with a public key %v %d\n", signedOk, len(signed))
+}

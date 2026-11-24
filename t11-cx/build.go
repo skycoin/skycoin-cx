@@ -216,9 +216,10 @@ and passes its own command line arguments to it as os.Args.
                     calls and --enable enables, %s for none,
                     %s-file-net for file and net.
 
-The core has no parser and no module outside the Go standard library. It
-links a system library only when the program calls it and --enable enables
-it, and the built program records the libraries it was built with. A call
+The core has no parser. It links a system library only when the program
+calls it and --enable enables it, and only the cipher library brings a
+module outside the Go standard library, the cipher package of Skycoin.
+The built program records the libraries it was built with, and a call
 into a library that was not enabled is a runtime error. A program that uses
 an opcode the core does not include is refused with the list of those
 opcodes.

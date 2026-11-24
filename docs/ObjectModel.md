@@ -698,11 +698,11 @@ constructors create it.
 | Step | Objects (phase 4, phase 5 sites each) | Phase 4 sites | Phase 5 sites |
 | --- | --- | --- | --- |
 | 1 | `CXArgumentDebug` (0, 0), `CXLine` (2, 2), `CXTypeSignature_Array` (0, 60), `CXTypeSignature_Struct` (0, 28) | 2 | 90 |
-| 2 | `CXArgument` (102, 263), `CXTypeSignature` (18, 169) | 120 | 432 |
-| 3 | `CXStruct` (31, 9) | 31 | 9 |
+| 2 | `CXArgument` (100, 263), `CXTypeSignature` (18, 169) | 118 | 432 |
+| 3 | `CXStruct` (29, 9) | 29 | 9 |
 | 4 | `CXAtomicOperator` (14, 85), `CXExpression` (113, 9) | 127 | 94 |
 | 5 | `CXFunction` (38, 77), `CXNativeFunction` (6, 0) | 44 | 77 |
-| 6 | `CXPackage` (45, 52), `CXCall` (8, 1), `CXProgram` (59, 2) | 112 | 55 |
+| 6 | `CXPackage` (45, 51), `CXCall` (8, 1), `CXProgram` (59, 2) | 112 | 54 |
 
 `CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
 the object in `ArgDetails`, a pointer field that a `CXArgument` and its
@@ -722,7 +722,7 @@ every site in the table, in one PR. Phase 6 adds the teardown functions and thei
 ## Inventory
 
 [objectmodel-sites.csv](objectmodel-sites.csv) has one row for every site
-that breaks the standard today, 1193 in all, plus one row for
+that breaks the standard today, 1188 in all, plus one row for
 `DereferenceStruct.arg`, which lives on the stack and needs no change. Its
 columns are
 
@@ -771,17 +771,17 @@ The counts per object.
 | `CXLine` | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 2 | 4 |
 | `CXTypeSignature_Array` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
 | `CXTypeSignature_Struct` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 0 | 0 | 0 | 0 | 28 | 28 |
-| `CXArgument` | 5 | 66 | 8 | 0 | 2 | 0 | 3 | 0 | 13 | 0 | 1 | 260 | 0 | 7 | 0 | 0 | 102 | 263 | 365 |
+| `CXArgument` | 5 | 64 | 8 | 0 | 2 | 0 | 3 | 0 | 13 | 0 | 1 | 260 | 0 | 7 | 0 | 0 | 100 | 263 | 363 |
 | `CXTypeSignature` | 0 | 0 | 4 | 0 | 7 | 1 | 2 | 0 | 0 | 0 | 4 | 168 | 0 | 1 | 0 | 0 | 18 | 169 | 187 |
-| `CXStruct` | 1 | 15 | 1 | 1 | 10 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 2 | 7 | 0 | 0 | 31 | 9 | 40 |
+| `CXStruct` | 1 | 13 | 1 | 1 | 10 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 2 | 7 | 0 | 0 | 29 | 9 | 38 |
 | `CXAtomicOperator` | 0 | 0 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 84 | 1 | 0 | 0 | 0 | 14 | 85 | 99 |
 | `CXExpression` | 2 | 76 | 0 | 0 | 2 | 0 | 7 | 0 | 18 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 113 | 9 | 122 |
 | `CXFunction` | 1 | 7 | 17 | 2 | 3 | 0 | 2 | 0 | 1 | 2 | 1 | 75 | 1 | 3 | 0 | 0 | 38 | 77 | 115 |
 | `CXNativeFunction` | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 0 | 6 |
-| `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 51 | 1 | 0 | 0 | 0 | 45 | 52 | 97 |
+| `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 50 | 1 | 0 | 0 | 0 | 45 | 51 | 96 |
 | `CXCall` | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 1 | 9 |
 | `CXProgram` | 3 | 34 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 2 | 0 | 59 | 2 | 61 |
-| total | 16 | 217 | 56 | 5 | 42 | 2 | 15 | 2 | 36 | 4 | 30 | 728 | 5 | 22 | 4 | 9 | 436 | 757 | 1193 |
+| total | 16 | 213 | 56 | 5 | 42 | 2 | 15 | 2 | 36 | 4 | 30 | 727 | 5 | 22 | 4 | 9 | 432 | 756 | 1188 |
 
 
 

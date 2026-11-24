@@ -19,7 +19,7 @@ import (
 
 // coreLibraryRegisters register the system libraries linked into this core.
 // The library_*.go files add them by build tag, cxcorelibraryfile,
-// cxcorelibrarynet and cxcorelibraryprocess.
+// cxcorelibrarynet, cxcorelibraryprocess and cxcorelibrarycipher.
 var coreLibraryRegisters []func(prgrm *ast.CXProgram)
 
 func main() {

@@ -95,7 +95,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.StringVar(&options.cxpath, "cxpath", options.cxpath, "Workspace directory, used instead of the CXPATH environment variable")
 	commandLine.StringVar(&options.sandbox, "sandbox", options.sandbox, "Directory a running program's file opcodes are confined to. Program paths must be relative and stay inside it. Defaults to the working directory.")
 	commandLine.StringVar(&options.executor, "executor", options.executor, "Loop that runs the program: auto runs it on the flat vm when every function lowers and on the old loop otherwise, old and vm force one loop. vm fails on a program that does not lower.")
-	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries the program may call, a comma separated list of file, net and process. A call into a library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
+	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries the program may call, a comma separated list of file, net, process and cipher. A call into a library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
 
 	// Debug flags
 	commandLine.BoolVar(&options.debugFileAccess, "debug-file-access", options.debugFileAccess, "Print each file the compiler opens, creates or stats")

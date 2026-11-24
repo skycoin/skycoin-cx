@@ -1,0 +1,22 @@
+// A new key pair signs a hash that its public key verifies. Run with
+// --enable=cipher, see skycoin-cx#510.
+
+package main
+
+import "sys/cipher"
+import "sys/string"
+
+func main() {
+	var pubKey []ui8
+	var secKey []ui8
+	pubKey, secKey = cipher.KeyPairGenerate()
+	var digest []ui8 = cipher.HashOfBytes(string.BytesOfString("skycoin-cx#510"))
+	var signature []ui8
+	var signed bool
+	signature, signed = cipher.SignatureSign(digest, secKey)
+	var recovered []ui8
+	var recoveredOk bool
+	recovered, recoveredOk = cipher.SignatureRecoverPubKey(digest, signature)
+	printf("%d %d %v %d %v\n", len(pubKey), len(secKey), signed, len(signature), cipher.SignatureVerify(digest, signature, pubKey))
+	printf("%v %v\n", recoveredOk, string.EqualityByByteValue(string.StringOfBytes(recovered), string.StringOfBytes(pubKey)))
+}

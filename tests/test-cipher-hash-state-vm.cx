@@ -1,0 +1,16 @@
+// cipher.HashStateNew and cipher.HashStateRelease take and return only an
+// i32, so they run on vm. Run with --enable=cipher, see skycoin-cx#510.
+
+package main
+
+import "sys/cipher"
+
+func main() {
+	var first i32 = cipher.HashStateNew()
+	var second i32 = cipher.HashStateNew()
+	cipher.HashStateRelease(first)
+	var third i32 = cipher.HashStateNew()
+	cipher.HashStateRelease(second)
+	cipher.HashStateRelease(third)
+	printf("%d %d %d\n", first, second, third)
+}

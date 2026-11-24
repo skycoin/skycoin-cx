@@ -1,0 +1,20 @@
+error: test-cipher-keypair.cx:12, CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
+===Callstack===
+>>> main()
+Expressions
+ 	test-cipher-keypair.cx:12 : cipher.KeyPairGenerate() : []
+	test-cipher-keypair.cx:12 : cipher.KeyPairGenerate() : []
+	test-cipher-keypair.cx:13 : string.BytesOfString() : 0
+	test-cipher-keypair.cx:13 : cipher.HashOfBytes() : []
+	test-cipher-keypair.cx:16 : cipher.SignatureSign() : []
+	test-cipher-keypair.cx:16 : cipher.SignatureSign() : false
+	test-cipher-keypair.cx:19 : cipher.SignatureRecoverPubKey() : []
+	test-cipher-keypair.cx:19 : cipher.SignatureRecoverPubKey() : false
+	:-1 : len() : 0
+	:-1 : len() : 0
+	:-1 : len() : 0
+	:-1 : cipher.SignatureVerify() : false
+	test-cipher-keypair.cx:21 : string.StringOfBytes() : 
+	test-cipher-keypair.cx:21 : string.StringOfBytes() : 
+	:-1 : string.EqualityByByteValue() : false
+

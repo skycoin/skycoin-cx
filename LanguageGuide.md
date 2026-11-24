@@ -19,6 +19,7 @@
     * [Packages](#packages)
     * [Imports into scope](#imports-into-scope)
     * [System libraries](#system-libraries)
+    * [The cipher library](#the-cipher-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
     * [Else if](#else-if)
@@ -967,10 +968,11 @@ cx --enable=file,net program.cx
 | `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), `StartCPUProfile` and `StopCPUProfile` |
 | `net` | every function of `sys/tcp` |
 | `process` | `os.Run` |
+| `cipher` | every function of `sys/cipher`, see [The cipher library](#the-cipher-library) |
 
-`os.Exit`, `sys/time`, `sys/regexp`, `sys/cipher` and `sys/string` are
-not system libraries. They end the program, read the clock or compute,
-and always run.
+`os.Exit`, `sys/time`, `sys/regexp` and `sys/string` are not system
+libraries. They end the program, read the clock or compute, and always
+run.
 
 A call into a library that is not enabled is the runtime error
 `CX_RUNTIME_LIBRARY_DISABLED` (12), on the old loop and on vm, and the
@@ -992,6 +994,51 @@ The compiler turns every call of a library function into one opcode,
 number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
 numbers, see [Language versions](#language-versions).
+
+### [The cipher library](#table-of-contents)
+
+`sys/cipher` hashes bytes and makes and checks secp256k1 signatures. It
+is the system library `cipher`, so a run enables it with
+`--enable=cipher`. Bytes, digests, keys and signatures are `[]ui8`.
+
+| function | returns |
+|---|---|
+| `cipher.HashOfBytes(data []ui8)` | the 32 byte digest of `data` |
+| `cipher.HashStateNew()` | an `i32` state for data that arrives in parts |
+| `cipher.HashStateWrite(state i32, data []ui8)` | nothing, adds `data` to the state |
+| `cipher.HashStateSum(state i32)` | the digest of what was written, the state keeps it |
+| `cipher.HashStateRelease(state i32)` | nothing, frees the state |
+| `cipher.SignatureVerify(hash, signature, pubKey []ui8)` | `bool`, whether `pubKey` signed `hash` |
+| `cipher.SignatureRecoverPubKey(hash, signature []ui8)` | the public key that signed, and a `bool` |
+| `cipher.SignatureSign(hash, secKey []ui8)` | the signature, and a `bool` |
+| `cipher.KeyPairGenerate()` | a new public key and secret key |
+
+The hash is SHA-256 until decision D23 names the BLAKE hash that replaces
+it. Signatures are those of the `cipher` package of Skycoin (decision
+D22): a public key is 33 bytes, a secret key 32 and a signature 65, and an
+input of another length does not verify, recover or sign.
+
+```cx
+package main
+
+import "sys/cipher"
+import "sys/string"
+
+func main() {
+	var pubKey []ui8
+	var secKey []ui8
+	pubKey, secKey = cipher.KeyPairGenerate()
+	var digest []ui8 = cipher.HashOfBytes(string.BytesOfString("Hello World!"))
+	var signature []ui8
+	var signed bool
+	signature, signed = cipher.SignatureSign(digest, secKey)
+	printf("%v %v\n", signed, cipher.SignatureVerify(digest, signature, pubKey)) // true true
+}
+```
+
+At most 64 hash states are held at once, and a state that was released or
+never returned is an assert. The function numbers, allocations and vm
+support are in [docs/CipherLibrary.md](docs/CipherLibrary.md).
 
 ## [Statements](#table-of-contents)
 
@@ -3841,14 +3888,15 @@ The built program records the libraries it was built with and runs with
 exactly those. A library that is not enabled stays out of it, and a call
 into it is the runtime error `CX_RUNTIME_LIBRARY_DISABLED`, as under cx.
 The file library resolves paths in the working directory, as `cx` does
-without `--sandbox`. A program that calls `cipher`, `gl` or another opcode
+without `--sandbox`. A program that calls `gl` or another opcode
 outside the core is refused.
 Every `cx build` failure exits with `CX_COMPILATION_ERROR` (1). A core with
 no program appended, or one whose trailer is damaged, prints a message and
 exits with the same code.
 
-Whether the core may use modules outside the Go standard library is an
-open decision. Until it is made it uses none.
+The core uses no module outside the Go standard library, except that a
+core with the cipher library links the `cipher` package of Skycoin, see
+decision D75 in [docs/CipherLibrary.md](docs/CipherLibrary.md#cx-build).
 
 # [Language versions](#table-of-contents)
 
@@ -4049,3 +4097,23 @@ functions 52 to 61 of the system library `file`, which are deprecated and
 reassignable from version `2711240001`. The other functions keep their
 numbers. Serialized programs from before this version must be recompiled.
 See [skycoin-cx#509](https://github.com/skycoin/skycoin-cx/issues/509).
+
+## Version 2611240003, 2026-11-24
+
+`sys/cipher` is the system library `cipher`, number 4, and a run enables
+it with `--enable=cipher`, see [The cipher library](#the-cipher-library).
+It hashes bytes, in one call or in parts through a state, and verifies,
+recovers and makes secp256k1 signatures of Skycoin.
+
+| before | from 2611240003 |
+|---|---|
+| `var pubKey cipher.PubKey`, `var secKey cipher.SecKey` | `var pubKey []ui8`, `var secKey []ui8` |
+| `pubKey, secKey = cipher.GenerateKeyPair()` | `pubKey, secKey = cipher.KeyPairGenerate()` |
+| `pubKey.PubKey[i]`, `secKey.SecKey[i]` | `pubKey[i]`, `secKey[i]` |
+
+The opcode `cipher.GenerateKeyPair` (134) is deprecated and reassignable
+from version `2711240001`, and the structs `cipher.PubKey` and
+`cipher.SecKey` are removed. The new functions are numbers 1 to 9 of the
+cipher library. Serialized programs from before this version must be
+recompiled. See
+[skycoin-cx#510](https://github.com/skycoin/skycoin-cx/issues/510).

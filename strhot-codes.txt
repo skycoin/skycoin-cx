@@ -336,3 +336,5 @@ STRHOT-322 O open t0-util/program_text.go ProgramTextStringView
 STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure
 STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure
 STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg
+STRHOT-326 E open t5-cipher/op_cipher.go cipherHashStateAssertFailure
+STRHOT-327 E open t5-cipher/op_cipher.go cipherHashStateFullAssertFailure

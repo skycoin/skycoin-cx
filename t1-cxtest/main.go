@@ -200,7 +200,17 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("test-os-getwd.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "a str library call that is not enabled stops the old loop (skycoin-cx#492)", "library file is not enabled, enable it with --enable=file")
 	t.RunWant("test-tcp.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/tcp is the net library (skycoin-cx#492)", "library net is not enabled, enable it with --enable=net")
 	t.RunWant("test-os-run-empty.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "os.Run is the process library (skycoin-cx#492)", "library process is not enabled, enable it with --enable=process")
-	t.RunWant("--enable=file,nosuch test-library-call.cx", types.CX_COMPILATION_ERROR, "an unknown library in --enable (skycoin-cx#492)", `unknown library "nosuch" in --enable, the libraries are file, net, process`)
+	t.RunWant("--enable=cipher test-cipher-library.cx", types.CX_SUCCESS, "the cipher library hashes with the published vectors and verifies, recovers and makes Skycoin signatures (skycoin-cx#510)",
+		"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1\ncf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1\n"+
+			"fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n"+
+			"verify true\nverify other hash false\nverify changed signature false\nverify short key false\n"+
+			"recover true 02f382589c67fbac7065b5eff66f35c30bc73e385ffeab46326ec1a930b10d1c53\nrecover from a short signature false 0\n"+
+			"sign true 65\nverify signed true\nverify signed with the other hash false\nsign with a public key false 0\n")
+	t.RunWant("--enable=cipher test-cipher-keypair.cx", types.CX_SUCCESS, "a generated key pair signs and verifies (skycoin-cx#510)", "33 32 true 65 true\ntrue true\n")
+	t.RunWant("--enable=cipher --executor=vm test-cipher-hash-state-vm.cx", types.CX_SUCCESS, "cipher functions with i32 operands run on vm (skycoin-cx#510)", "0 1 0\n")
+	t.RunWant("--enable=cipher --executor=old test-cipher-hash-state-vm.cx", types.CX_SUCCESS, "cipher hash states on the old loop (skycoin-cx#510)", "0 1 0\n")
+	t.RunWant("test-cipher-library.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "sys/cipher is the cipher library (skycoin-cx#510)", "library cipher is not enabled, enable it with --enable=cipher")
+	t.RunWant("--enable=file,nosuch test-library-call.cx", types.CX_COMPILATION_ERROR, "an unknown library in --enable (skycoin-cx#492)", `unknown library "nosuch" in --enable, the libraries are file, net, process, cipher`)
 	t.Run("test-utils.cx test-pointers.cx", types.CX_SUCCESS, "pointers")
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
@@ -1180,7 +1190,7 @@ func runTestCases(t *runner.TestRunner) {
 
 	// Examples
 	t.RunEx("./examples/bubble-sort.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
-	t.RunEx("./examples/cipher.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
+	t.RunEx("--enable=cipher ./examples/cipher.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/concatenating-strings.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/conversions.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
 	t.RunEx("./examples/convert-time.cx", types.CX_SUCCESS, "", runner.TestExamples, 0)
