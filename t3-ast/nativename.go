@@ -24,6 +24,8 @@ type NativeNameIndex struct {
 type NativeNameEntry struct {
 	NativeNameEntryText string
 	NativeNameEntryCode int
+	// NativeNameEntryBytes is the text as bytes, for printing without a string.
+	NativeNameEntryBytes []byte
 }
 
 // NativeNameKey is the name a program looks a built-in up by, the Gids of its
@@ -62,7 +64,7 @@ func (index *NativeNameIndex) NativeNameIndexAdd(code int, text string) {
 			return
 		}
 	}
-	index.NativeNameIndexEntries = append(index.NativeNameIndexEntries, NativeNameEntry{NativeNameEntryText: text, NativeNameEntryCode: code})
+	index.NativeNameIndexEntries = append(index.NativeNameIndexEntries, NativeNameEntry{NativeNameEntryText: text, NativeNameEntryCode: code, NativeNameEntryBytes: []byte(text)[:len(text):len(text)]})
 	index.NativeNameIndexSorted = false
 	index.NativeNameIndexGeneration++
 }
@@ -128,6 +130,19 @@ func (index *NativeNameIndex) NativeNameIndexCodeText(code int) string {
 		}
 	}
 	return ""
+}
+
+// NativeNameIndexCodeBytes returns the bytes of NativeNameIndexCodeText
+// without building a string, nil when no name is. The caller must not write
+// to them.
+func (index *NativeNameIndex) NativeNameIndexCodeBytes(code int) []byte {
+	for i := range index.NativeNameIndexEntries {
+		entry := &index.NativeNameIndexEntries[i]
+		if entry.NativeNameEntryCode == code {
+			return entry.NativeNameEntryBytes
+		}
+	}
+	return nil
 }
 
 // NativeNameIndexPackage returns the entries whose name is "pkg." followed by

@@ -29,8 +29,9 @@ prepared.
   requires `runtime.MemStats.NumGC` unchanged, also with `GOGC=1`.
 - `TestRunVmAllocs` requires 0 for the vm.
 - `TestRunPrintAllocs` requires 0 for printf and sprintf of `%v` of atomic
-  values, arrays, slices, structs and pointers, of extra arguments, and for
-  the stack dump of the debug opcode. `TestRunVmPrintAllocs` requires 0 for
+  values, arrays, slices, structs and pointers, of extra arguments of each
+  kind with their type names, and for the stack dump of the debug opcode
+  with the names of the functions and built-ins it prints. `TestRunVmPrintAllocs` requires 0 for
   `%v` of atomic values on vm, the only `%v` that lowers.
 - `TestRunCipherAllocs` requires 0 for 100 calls of the hash functions of
   `sys/cipher`, and for `cipher.SignatureVerify` no more than the Skycoin

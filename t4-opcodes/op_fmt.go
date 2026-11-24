@@ -13,7 +13,6 @@ import (
 
 // buildString appends the text printf and sprintf make of inputs to res and
 // returns it. %v appends the value with ast.AppendPrintableValue.
-// VIOLATION STRHOT-086: P, an extra argument appends the name of its type, #412.
 // VIOLATION VMALLOC-022: appending grows the format buffer past its size, once, #407.
 func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, res []byte) []byte {
 	fmtStr := inputs[0].Get_str_bytes(prgrm)
@@ -91,7 +90,7 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, res []byte) []byte 
 		lInps := len(inputs[specifiersCounter+1:])
 		for c := 0; c < lInps; c++ {
 			inp := &inputs[specifiersCounter+1+c]
-			res = append(res, inp.TypeSignature.GetValueTypeName(prgrm)...)
+			res = inp.TypeSignature.AppendValueTypeName(res, prgrm)
 			res = append(res, '=')
 			res = ast.AppendPrintableValue(res, prgrm, inp.FramePointer, inp.TypeSignature)
 			if c != lInps-1 {

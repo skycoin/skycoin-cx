@@ -85,7 +85,7 @@ func main() {
 	for i = 0; i < 100; i++ {
 		printf("%v|%v|%v|%v|%v|%v|%v|%v\n", p, sh, a, m, sl, sh.corner, sh.sides, np)
 		out = sprintf("%v %v", sh, i)
-		printf("%d\n", i, out, p.y, p)
+		printf("%d\n", i, out, p.y, p, a, m, sl, np, ip, sh.ok)
 	}
 	np = &p
 	ip = &p.x
@@ -103,10 +103,12 @@ type point struct {
 	y f64
 }
 
-func twice(x i32, p point) (y i32) {
+func twice(x i32, p point, s []f64) (y i32) {
 	var a [2]i32
 	a[1] = x
 	y = x * 2
+	var t str
+	t = sprintf("%d", y)
 	debug()
 }
 
@@ -115,8 +117,10 @@ func main() {
 	p.x = 4
 	var i i32
 	var r i32
+	var s []f64
+	s = append(s, 1.5D)
 	for i = 0; i < 50; i++ {
-		r = twice(i, p)
+		r = twice(i, p, s)
 	}
 }
 `

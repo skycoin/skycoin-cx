@@ -37,6 +37,15 @@ func (fn *CXFunction) BuiltInName() string {
 	return NativeNames.NativeNameIndexCodeText(fn.AtomicOPCode)
 }
 
+// BuiltInNameBytes returns the bytes of BuiltInName without building a
+// string, for printing on the run path. The caller must not write to them.
+func (fn *CXFunction) BuiltInNameBytes() []byte {
+	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
+		return constants.LibraryFunctionLiveNameBytes(fn.LibraryNumber, fn.LibraryFunctionNumber)
+	}
+	return NativeNames.NativeNameIndexCodeBytes(fn.AtomicOPCode)
+}
+
 // RuntimeLibraryDisabled is the panic value of a call into a system library
 // the run did not enable. It is the message the runtime error prints.
 type RuntimeLibraryDisabled string

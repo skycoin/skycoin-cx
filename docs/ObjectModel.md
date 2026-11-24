@@ -498,9 +498,10 @@ map.
 
 `CXLine.FileName`, `CXArgumentDebug.FileName` and `CXFunction.FileName`
 are `SourceFileGid`, and `CXLine.LineStr` is a `StringGid`. The parsers
-register a file once when they start it. Diagnostics, `PrinterStackPrint`,
-lowering, the serializer and the REPL take the path as text through
-`CXProgramSourceFileText`. The serialized format writes the string pool and
+register a file once when they start it. Diagnostics, lowering, the
+serializer and the REPL take the path as text through
+`CXProgramSourceFileText`, and `PrinterStackPrint` appends its bytes from
+`CXProgramSourceFileBytes`. The serialized format writes the string pool and
 `SourceFileMng` as they are.
 
 ## Rules
@@ -710,7 +711,7 @@ the object in `ArgDetails`, a pointer field that a `CXArgument` and its
 before that field is a `CXArgumentDebugGid` (#306, #307). A native parameter
 made by `Param` or `MakeStructParameter` belongs to no program, so its
 `ArgDetails` is `CXArgumentDebugGidNil`, and `CXArgumentDebugFileLine`
-reads it as file "" and line -1, as before.
+reads it as an empty file name and line -1, as before.
 
 
 

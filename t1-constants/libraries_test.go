@@ -50,3 +50,25 @@ func TestLibraryTablesConsistent(t *testing.T) {
 		}
 	}
 }
+
+// TestLibraryFunctionLiveNameBytes fails when the bytes of a live function
+// name differ from LibraryFunctionLiveByNumber, or allocate.
+func TestLibraryFunctionLiveNameBytes(t *testing.T) {
+	for _, row := range LibraryFunctionLifecycleTable {
+		live, found := LibraryFunctionLiveByNumber(row.LibraryNumber, row.Number)
+		name := LibraryFunctionLiveNameBytes(row.LibraryNumber, row.Number)
+		if !found {
+			live.Name = ""
+		}
+		if string(name) != live.Name || cap(name) != len(name) {
+			t.Errorf("library %d function %d: %q with cap %d, want %q with no spare capacity", row.LibraryNumber, row.Number, name, cap(name), live.Name)
+		}
+	}
+	if name := LibraryFunctionLiveNameBytes(LibraryCount, 1); name != nil {
+		t.Errorf("unknown library: %q, want nil", name)
+	}
+	row := LibraryFunctionLifecycleTable[0]
+	if allocs := testing.AllocsPerRun(100, func() { _ = LibraryFunctionLiveNameBytes(row.LibraryNumber, row.Number) }); allocs != 0 {
+		t.Errorf("%.0f allocations, want 0", allocs)
+	}
+}

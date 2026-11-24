@@ -18,8 +18,7 @@ var printerStackHeader = []byte("\n===Callstack===\n")
 // printerStackValueLine appends "\tfile:line : name() : value\n" for the
 // value of argTypeSig in the frame at fp. A value whose index is bad, often
 // the one that failed, prints as a placeholder instead of panicking again.
-// VIOLATION STRHOT-320: P, appends the file name and the name of the printed value, #412.
-func printerStackValueLine(dst []byte, prgrm *ast.CXProgram, fp types.Pointer, argTypeSig *ast.CXTypeSignature, name string) []byte {
+func printerStackValueLine(dst []byte, prgrm *ast.CXProgram, fp types.Pointer, argTypeSig *ast.CXTypeSignature, name []byte) []byte {
 	fileName, fileLine := ast.CXArgumentDebugFileLine(prgrm, argTypeSig.ArgDetails)
 	dst = append(dst, '\t')
 	dst = append(dst, fileName...)
@@ -107,7 +106,6 @@ func printerStackShownBefore(cxprogram *ast.CXProgram, op *ast.CXFunction, sig *
 // call down to the entry point, with the values of its arguments. Each frame
 // is appended to the format buffer and written at once, so the debug opcode
 // allocates nothing (#407).
-// VIOLATION STRHOT-267: P, appends the names of the printed functions, #412.
 func PrinterStackPrint(cxprogram *ast.CXProgram) {
 	os.Stdout.Write(printerStackHeader)
 
@@ -117,7 +115,7 @@ func PrinterStackPrint(cxprogram *ast.CXProgram) {
 	for c := cxprogram.CallCounter; c != types.InvalidPointer; c-- {
 		op := cxprogram.CallStack[c].Operator
 		fp -= op.Size
-		opName := cxprogram.CXProgramNameText(op.Name)
+		opName := cxprogram.CXProgramNameBytes(op.Name)
 
 		text := cxprogram.ProgramFormatBuffer[:0]
 		text = append(text, ">>> "...)
@@ -167,7 +165,7 @@ func PrinterStackPrint(cxprogram *ast.CXProgram) {
 					if printerStackShownBefore(cxprogram, op, sig, e, index) {
 						continue
 					}
-					text = printerStackValueLine(text, cxprogram, fp, sig, cxAtomicOp.GetOperatorName(cxprogram))
+					text = printerStackValueLine(text, cxprogram, fp, sig, cxAtomicOp.GetOperatorNameBytes(cxprogram))
 					exprsShown = true
 				}
 			}

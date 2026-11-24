@@ -81,3 +81,24 @@ func TestNativeNameIndex(t *testing.T) {
 		t.Error("zzz found after Reset")
 	}
 }
+
+// TestNativeNameIndexCodeBytes fails when the bytes of a code's name differ
+// from NativeNameIndexCodeText, before and after the index is sorted.
+func TestNativeNameIndexCodeBytes(t *testing.T) {
+	var index NativeNameIndex
+	index.NativeNameIndexAdd(1, "len")
+	index.NativeNameIndexAdd(2, "os.ReadFile")
+	index.NativeNameIndexAdd(3, "i32.add")
+	for pass := 0; pass < 2; pass++ {
+		for code := 0; code <= 4; code++ {
+			name := index.NativeNameIndexCodeBytes(code)
+			if string(name) != index.NativeNameIndexCodeText(code) || cap(name) != len(name) {
+				t.Errorf("pass %d, code %d: %q with cap %d, want %q with no spare capacity", pass, code, name, cap(name), index.NativeNameIndexCodeText(code))
+			}
+		}
+		index.NativeNameIndexLen()
+	}
+	if allocs := testing.AllocsPerRun(100, func() { _ = index.NativeNameIndexCodeBytes(3) }); allocs != 0 {
+		t.Errorf("%.0f allocations, want 0", allocs)
+	}
+}
