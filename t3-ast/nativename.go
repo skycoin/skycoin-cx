@@ -63,11 +63,11 @@ func nativeNamesMake() NativeNameIndex {
 	return NativeNameIndex{NativeNameIndexEntries: entries, NativeNameIndexSorted: true, NativeNameIndexLinkedOnly: true}
 }
 
-// NativeLinked reports whether this binary links the built-in code, an opcode
-// number or a library function key.
+// NativeLinked reports whether this binary links the built-in code, an opcode,
+// a library function key or an opcode of NativeFunctionHost.
 func NativeLinked(code int) bool {
 	if code >= 0 {
-		return constants.OpcodeLinked(code)
+		return constants.OpcodeLinked(code) || NativeFunctionHost != nil && NativeFunctionHost(nil, code) != nil
 	}
 	library, function := constants.LibraryFunctionKeyParts(code)
 	return LibraryFunctionLinked(library, function)

@@ -20,6 +20,13 @@ func opcodeDispatchNone(prgrm *CXProgram, code int, inputs []CXValue, outputs []
 	return false
 }
 
+// NativeFunctionHost returns the native of an opcode a program that embeds
+// CX adds outside OpcodeSignatureTable, such as app.Rect of the playground,
+// or nil. prgrm is nil when NativeLinked only asks whether code exists. Its
+// OpcodeDispatch wrapper runs the opcode. Nil adds none.
+// VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
+var NativeFunctionHost func(prgrm *CXProgram, code int) *CXNativeFunction
+
 // IsOperator reports whether opCode is an untyped operator.
 func IsOperator(opCode int) bool {
 	return opCode > constants.START_OF_OPERATORS && opCode < constants.END_OF_OPERATORS
@@ -59,6 +66,9 @@ func NativeFunctionOf(prgrm *CXProgram, code int) *CXNativeFunction {
 	}
 	signature := constants.OpcodeSignatureOf(code)
 	if signature.OpcodeSignatureGroup == constants.OpcodeGroupNone {
+		if NativeFunctionHost != nil {
+			return NativeFunctionHost(prgrm, code)
+		}
 		return nil
 	}
 	// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.

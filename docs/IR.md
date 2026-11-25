@@ -699,6 +699,12 @@ This document does not list the opcodes. The list is
   `nocxos` and `noregexp` groups in their own files, and `CxfxOpcodeDispatch`
   in t6-cxfx under the `cxfx` tag. Each case calls the handler directly.
   Nothing registers an opcode at startup and a deprecated row has no case.
+* A program that embeds CX, such as the Android playground with its `app`
+  functions, adds opcodes outside the table. It names each one in
+  `ast.NativeNames`, gives the compiler its native through
+  `ast.NativeFunctionHost` and runs it from a wrapper of `ast.OpcodeDispatch`.
+  These opcodes run on the old loop only. `TestNativeFunctionHost` in t11-cx
+  shows the three steps.
 * `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has no definition row
   and no name, so no program calls it by name, and the loop runs it. The system library functions have
   their own numbers in `constants.LibraryFunctionLifecycleTable` and compile
