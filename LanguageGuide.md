@@ -1014,8 +1014,8 @@ is the system library `cipher`, so a run enables it with
 | `cipher.SignatureSign(hash, secKey []ui8)` | the signature, and a `bool` |
 | `cipher.KeyPairGenerate()` | a new public key and secret key |
 
-The hash is SHA-256 until decision D23 names the BLAKE hash that replaces
-it. Signatures are those of the `cipher` package of Skycoin (decision
+The hash is BLAKE3 with a 256 bit output (decision D23), see
+[docs/CipherLibrary.md](docs/CipherLibrary.md). Signatures are those of the `cipher` package of Skycoin (decision
 D22): a public key is 33 bytes, a secret key 32 and a signature 65, and an
 input of another length does not verify, recover or sign.
 

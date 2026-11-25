@@ -28,10 +28,11 @@ stack of a crash, with its addresses, the refusal of vm for a program that
 does not lower, and the messages of `cx build` and of the core.
 
 Every hash is the hash of CX, `cxhash.CxHashOfBytes` in `t0-cxhash`, which
-the cipher library hashes with too. It is SHA-256 for now. The lead asked
-for a BLAKE hash and which one is decision D23, which changes `t0-cxhash`
-only. The file names its hash in the format section, so a file written with
-another hash is refused, not misread.
+the cipher library hashes with too. It is BLAKE3-256, BLAKE3 with a 256 bit
+output (decision D23). The file names its hash in the format section, so a
+file written with another hash is refused, not misread. Format 1 files were
+SHA-256 and are not read. They were regenerated with `make records`, which
+changed every hash and no output.
 
 ## The record file
 
@@ -45,7 +46,7 @@ because it may hold spaces.
 
 | Section | Columns |
 | --- | --- |
-| `[format]` | the format version, 1, and the hash name |
+| `[format]` | the format version, 2, and the hash name, `BLAKE3-256` |
 | `[inputs]` | stdin and each argument as Go quoted strings, the argument count before the arguments, then the program. Edited by hand |
 | `[records]` | record hash, program hash, source hash, input hash, output hash, exit code, program |
 | `[reasons]` | the key of each exclusion reason and its text |

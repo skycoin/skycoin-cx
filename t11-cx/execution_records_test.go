@@ -62,7 +62,7 @@ const executionRecordsArgumentSeparator = "\x1f"
 const executionRecordsChildFailed = 125
 
 // executionRecordsFormatVersion is the version of the record file format.
-const executionRecordsFormatVersion = 1
+const executionRecordsFormatVersion = 2
 
 // executionRecordHashName names the hash of every hash in the record file.
 // It is the hash of CX, so decision D23 changes it in t0-cxhash for the

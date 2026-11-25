@@ -1,0 +1,61 @@
+error: test-cipher-library.cx:37, CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
+===Callstack===
+>>> hashPrint()
+ProgramInput
+	test-cipher-library.cx:36 : hashPrint() : 0
+Expressions
+ 	test-cipher-library.cx:22 : ui8.div() : <index out of range>
+	test-cipher-library.cx:22 : ui8.div() : 0
+	test-cipher-library.cx:30 : vectorInput() : []
+	test-cipher-library.cx:37 : cipher.HashOfBytes() : 0
+	test-cipher-library.cx:37 : hexOfBytes() : 
+
+>>> main()
+Expressions
+ 	test-cipher-library.cx:23 : append() : []
+	test-cipher-library.cx:11 : append() : 0
+	test-cipher-library.cx:23 : hexDigit() : 0
+	test-cipher-library.cx:23 : ui8.mod() : <index out of range>
+	test-cipher-library.cx:49 : cipher.HashStateNew() : 0
+	test-cipher-library.cx:50 : vectorInput() : []
+	:-1 : jmp() : false
+	test-cipher-library.cx:52 : identity() : 0
+	test-cipher-library.cx:25 : string.StringOfBytes() : 
+	:-1 : i32.lt() : false
+	test-cipher-library.cx:31 : identity() : 0
+	test-cipher-library.cx:53 : append() : []
+	test-cipher-library.cx:31 : i32.lt() : 0
+	:-1 : i32.lt() : false
+	test-cipher-library.cx:56 : cipher.HashStateSum() : 0
+	test-cipher-library.cx:56 : hexOfBytes() : 
+	test-cipher-library.cx:57 : append() : []
+	test-cipher-library.cx:57 : identity() : []
+	test-cipher-library.cx:32 : i32.ui8() : 0
+	:-1 : i32.ui8() : 0
+	test-cipher-library.cx:58 : cipher.HashStateSum() : 0
+	test-cipher-library.cx:58 : hexOfBytes() : 
+	test-cipher-library.cx:61 : append() : []
+	test-cipher-library.cx:61 : identity() : []
+	test-cipher-library.cx:62 : append() : []
+	test-cipher-library.cx:62 : identity() : []
+	test-cipher-library.cx:63 : append() : []
+	test-cipher-library.cx:63 : identity() : []
+	test-cipher-library.cx:64 : string.BytesOfString() : 0
+	test-cipher-library.cx:64 : cipher.HashOfBytes() : []
+	:-1 : cipher.SignatureVerify() : false
+	test-cipher-library.cx:67 : string.BytesOfString() : 0
+	test-cipher-library.cx:67 : cipher.HashOfBytes() : []
+	:-1 : cipher.SignatureVerify() : false
+	:-1 : cipher.SignatureVerify() : false
+	:-1 : cipher.SignatureVerify() : false
+	test-cipher-library.cx:76 : cipher.SignatureRecoverPubKey() : []
+	test-cipher-library.cx:76 : cipher.SignatureRecoverPubKey() : false
+	test-cipher-library.cx:77 : hexOfBytes() : 
+	:-1 : len() : 0
+	test-cipher-library.cx:83 : cipher.SignatureSign() : []
+	test-cipher-library.cx:83 : cipher.SignatureSign() : false
+	:-1 : len() : 0
+	:-1 : cipher.SignatureVerify() : false
+	:-1 : cipher.SignatureVerify() : false
+	:-1 : len() : 0
+

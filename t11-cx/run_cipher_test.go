@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
@@ -22,7 +23,7 @@ const runCipherCallCount = 100
 // made by cipher.SignHash of Skycoin over the digest of "abc".
 const (
 	runCipherPubKeyHex    = "02f382589c67fbac7065b5eff66f35c30bc73e385ffeab46326ec1a930b10d1c53"
-	runCipherSignatureHex = "67d2eee3f0f28676eaa84d70a6158f7c03d5d9c9eef3b13ff6fac1f6ac7bd17272b397c76f96d3aa121af6c3b5460f5cfec4ee01b09b7e14446015421ad8f6e700"
+	runCipherSignatureHex = "b70e75dd813b465a5e7047b63f442dd96f48f58ceff7b3dd27425e79686398070ec2a9d61c512d103d52ebc4937e1e726a657adefd82734a0ae11f310465eed801"
 )
 
 // runCipherBytesLiteral returns a CX []ui8 literal of data.
@@ -149,7 +150,7 @@ func TestRunCipherAllocs(t *testing.T) {
 
 	pubKey := cipher.MustPubKeyFromHex(runCipherPubKeyHex)
 	signature := cipher.MustSigFromHex(runCipherSignatureHex)
-	digest := cipher.SumSHA256([]byte("abc"))
+	digest := cipher.SHA256(cxhash.CxHashOfBytes([]byte("abc")))
 	skycoinVerifyAllocs := testing.AllocsPerRun(10, func() {
 		if cipher.VerifyPubKeySignedHash(pubKey, signature, digest) != nil {
 			t.Fatal("the Skycoin signature does not verify")

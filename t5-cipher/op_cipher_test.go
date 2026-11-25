@@ -5,6 +5,7 @@ package cipher
 import (
 	"testing"
 
+	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
@@ -14,7 +15,7 @@ func TestCipherSignatureVerifySkycoinSignatures(t *testing.T) {
 	for i := range 8 {
 		pubKey, secKey := cipher.GenerateKeyPair()
 		otherPubKey, _ := cipher.GenerateKeyPair()
-		digest := cipher.SumSHA256([]byte{byte(i), 'c', 'x'})
+		digest := cipher.SHA256(cxhash.CxHashOfBytes([]byte{byte(i), 'c', 'x'}))
 		signature := cipher.MustSignHash(digest, secKey)
 
 		if !CipherSignatureVerify(digest[:], signature[:], pubKey[:]) {
@@ -45,7 +46,7 @@ func TestCipherSignatureVerifySkycoinSignatures(t *testing.T) {
 // CipherSignatureVerify allocates only what the Skycoin call allocates.
 func TestCipherSignatureVerifyAllocs(t *testing.T) {
 	pubKey, secKey := cipher.GenerateKeyPair()
-	digest := cipher.SumSHA256([]byte("abc"))
+	digest := cipher.SHA256(cxhash.CxHashOfBytes([]byte("abc")))
 	signature := cipher.MustSignHash(digest, secKey)
 	skycoin := testing.AllocsPerRun(10, func() { cipher.VerifyPubKeySignedHash(pubKey, signature, digest) })
 	views := testing.AllocsPerRun(10, func() { CipherSignatureVerify(digest[:], signature[:], pubKey[:]) })
@@ -56,7 +57,7 @@ func TestCipherSignatureVerifyAllocs(t *testing.T) {
 
 func BenchmarkCipherSignatureVerify(b *testing.B) {
 	pubKey, secKey := cipher.GenerateKeyPair()
-	digest := cipher.SumSHA256([]byte("abc"))
+	digest := cipher.SHA256(cxhash.CxHashOfBytes([]byte("abc")))
 	signature := cipher.MustSignHash(digest, secKey)
 	b.ReportAllocs()
 	for b.Loop() {

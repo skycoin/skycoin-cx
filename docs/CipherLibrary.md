@@ -56,14 +56,15 @@ func main() {
 
 ## The hash
 
-The hash is SHA-256 until decision D23 names the BLAKE variant the lead
-asked for. It is one function, `cxhash.CxHashOfBytes` in `t0-cxhash`, with
-`cxhash.CxHashNew` for the incremental form and `cxhash.CxHashName`. The
-execution records hash through the same functions, so D23 changes the
-cipher library and the records at once. Every candidate has a 32 byte
-digest, so the functions keep their signatures. The test vectors in
-`t0-cxhash/cxhash_test.go` are kept by hash name, and a new hash adds its
-published vectors there.
+The hash is BLAKE3 with a 256 bit output, BLAKE3-256 (decision D23). It
+replaced SHA-256, and a digest stays 32 bytes. It is one function,
+`cxhash.CxHashOfBytes` in `t0-cxhash`, with `cxhash.CxHashNew` for the
+incremental form and `cxhash.CxHashName`. The execution records hash
+through the same functions, so a change of hash changes the cipher library
+and the records at once. The implementation is `lukechampine.com/blake3`,
+pure Go with assembly for amd64 and arm64, and the published BLAKE3 vectors
+are checked in `t0-cxhash/cxhash_test.go` and `tests/test-cipher-library.cx`.
+Signatures still sign a 32 byte digest, which is now a BLAKE3-256 digest.
 
 An incremental state is an `i32` handle into a fixed table of 64 states,
 `CipherHashStateCountMax` in `t5-cipher`. The table is made before the run

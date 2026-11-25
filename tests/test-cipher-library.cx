@@ -3,9 +3,10 @@ package main
 import "sys/cipher"
 import "sys/string"
 
-// The digests are SHA-256 (decision D23), the vectors of FIPS 180-2. The
-// signature was made by cipher.SignHash of Skycoin with the key pair of the
-// seed "skycoin-cx#510", over the digest of "abc". See skycoin-cx#510.
+// The digests are BLAKE3 with a 256 bit output (decision D23), the hash
+// mode vectors of https://github.com/BLAKE3-team/BLAKE3/blob/master/test_vectors/test_vectors.json.
+// The signature was made by cipher.SignHash of Skycoin with the key pair
+// of the seed "skycoin-cx#510", over the digest of "abc". See skycoin-cx#510.
 
 func hexDigit(value ui8) (digit ui8) {
 	if value < 10UB {
@@ -24,26 +25,42 @@ func hexOfBytes(data []ui8) (text str) {
 	text = string.StringOfBytes(out)
 }
 
-func hashPrint(message str) {
-	string.PrintLine(hexOfBytes(cipher.HashOfBytes(string.BytesOfString(message))))
+// vectorInput returns length bytes of the repeating sequence 0, 1, ..., 250
+// that the BLAKE3 test vectors hash.
+func vectorInput(length i32) (input []ui8) {
+	for i := 0; i < length; i++ {
+		input = append(input, i32.ui8(i%251))
+	}
+}
+
+func hashPrint(length i32) {
+	string.PrintLine(hexOfBytes(cipher.HashOfBytes(vectorInput(length))))
 }
 
 func main() {
-	hashPrint("")
-	hashPrint("abc")
-	hashPrint("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")
-	hashPrint("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu")
+	hashPrint(0)
+	hashPrint(1)
+	hashPrint(64)
+	hashPrint(65)
+	hashPrint(1024)
+	hashPrint(1025)
+	hashPrint(2049)
 
 	var state i32 = cipher.HashStateNew()
-	cipher.HashStateWrite(state, string.BytesOfString("ab"))
+	var input []ui8 = vectorInput(1025)
+	var head []ui8
+	for i := 0; i < 1024; i++ {
+		head = append(head, input[i])
+	}
+	cipher.HashStateWrite(state, head)
 	string.PrintLine(hexOfBytes(cipher.HashStateSum(state)))
-	cipher.HashStateWrite(state, string.BytesOfString("c"))
+	cipher.HashStateWrite(state, []ui8{input[1024]})
 	string.PrintLine(hexOfBytes(cipher.HashStateSum(state)))
 	cipher.HashStateRelease(state)
 
 	var pubKey []ui8 = []ui8{2UB, 243UB, 130UB, 88UB, 156UB, 103UB, 251UB, 172UB, 112UB, 101UB, 181UB, 239UB, 246UB, 111UB, 53UB, 195UB, 11UB, 199UB, 62UB, 56UB, 95UB, 254UB, 171UB, 70UB, 50UB, 110UB, 193UB, 169UB, 48UB, 177UB, 13UB, 28UB, 83UB}
 	var secKey []ui8 = []ui8{182UB, 138UB, 57UB, 101UB, 18UB, 11UB, 61UB, 87UB, 108UB, 20UB, 255UB, 175UB, 66UB, 29UB, 217UB, 174UB, 185UB, 222UB, 121UB, 242UB, 64UB, 196UB, 91UB, 91UB, 20UB, 98UB, 195UB, 208UB, 106UB, 207UB, 201UB, 58UB}
-	var signature []ui8 = []ui8{103UB, 210UB, 238UB, 227UB, 240UB, 242UB, 134UB, 118UB, 234UB, 168UB, 77UB, 112UB, 166UB, 21UB, 143UB, 124UB, 3UB, 213UB, 217UB, 201UB, 238UB, 243UB, 177UB, 63UB, 246UB, 250UB, 193UB, 246UB, 172UB, 123UB, 209UB, 114UB, 114UB, 179UB, 151UB, 199UB, 111UB, 150UB, 211UB, 170UB, 18UB, 26UB, 246UB, 195UB, 181UB, 70UB, 15UB, 92UB, 254UB, 196UB, 238UB, 1UB, 176UB, 155UB, 126UB, 20UB, 68UB, 96UB, 21UB, 66UB, 26UB, 216UB, 246UB, 231UB, 0UB}
+	var signature []ui8 = []ui8{15UB, 91UB, 141UB, 152UB, 96UB, 241UB, 105UB, 70UB, 106UB, 53UB, 208UB, 138UB, 199UB, 203UB, 173UB, 232UB, 93UB, 75UB, 203UB, 229UB, 246UB, 8UB, 186UB, 40UB, 38UB, 241UB, 254UB, 190UB, 172UB, 132UB, 6UB, 63UB, 83UB, 111UB, 90UB, 239UB, 94UB, 160UB, 254UB, 69UB, 249UB, 181UB, 138UB, 128UB, 26UB, 200UB, 121UB, 242UB, 243UB, 251UB, 222UB, 18UB, 144UB, 29UB, 90UB, 177UB, 175UB, 174UB, 9UB, 182UB, 114UB, 151UB, 224UB, 168UB, 1UB}
 	var digest []ui8 = cipher.HashOfBytes(string.BytesOfString("abc"))
 
 	printf("verify %v\n", cipher.SignatureVerify(digest, signature, pubKey))

@@ -205,8 +205,8 @@ func runTestCases(t *runner.TestRunner) {
 	t.RunWant("--net-record=a.netreplay --net-replay=b.netreplay test-net-tcp.cx", types.CX_COMPILATION_ERROR, "a run records or replays the net library, not both (skycoin-cx#508)", "--net-record and --net-replay cannot both be given")
 	t.RunWant("test-os-run-empty.cx", types.CX_RUNTIME_LIBRARY_DISABLED, "os.Run is the process library (skycoin-cx#492)", "library process is not enabled, enable it with --enable=process")
 	t.RunWant("--enable=cipher test-cipher-library.cx", types.CX_SUCCESS, "the cipher library hashes with the published vectors and verifies, recovers and makes Skycoin signatures (skycoin-cx#510)",
-		"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1\ncf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1\n"+
-			"fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603\nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n"+
+		"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262\n2d3adedff11b61f14c886e35afa036736dcd87a74d27b5c1510225d0f592e213\n4eed7141ea4a5cd4b788606bd23f46e212af9cacebacdc7d1f4c6dc7f2511b98\nde1e5fa0be70df6d2be8fffd0e99ceaa8eb6e8c93a63f2d8d1c30ecb6b263dee\n42214739f095a406f3fc83deb889744ac00df831c10daa55189b5d121c855af7\nd00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444\n5f4d72f40d7a5f82b15ca2b2e44b1de3c2ef86c426c95c1af0b6879522563030\n"+
+			"42214739f095a406f3fc83deb889744ac00df831c10daa55189b5d121c855af7\nd00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444\n"+
 			"verify true\nverify other hash false\nverify changed signature false\nverify short key false\n"+
 			"recover true 02f382589c67fbac7065b5eff66f35c30bc73e385ffeab46326ec1a930b10d1c53\nrecover from a short signature false 0\n"+
 			"sign true 65\nverify signed true\nverify signed with the other hash false\nsign with a public key false 0\n")

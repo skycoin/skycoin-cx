@@ -118,6 +118,9 @@ func TestBuildCoreRefuses(t *testing.T) {
 		t.Errorf("damaged program: exit code %d, stderr %q", run.exitCode, stderr)
 	}
 
+	// A new file, since a child forked while the damaged program was written
+	// may still hold it open, and writing it again fails with ETXTBSY.
+	output = filepath.Join(dir, "file-program"+filepath.Ext(output))
 	build, stderr = buildTestProcess(t, executable, []string{"CX_TEST_RUN_MAIN=1"}, tests, buildCommand, "--enable=file", "test-os-read-slice-grow.cx", "-o", output, "--core", corePath)
 	if build.exitCode != types.CX_SUCCESS {
 		t.Fatalf("file program on a given core: exit code %d, stderr %q", build.exitCode, stderr)

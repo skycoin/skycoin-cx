@@ -16,10 +16,12 @@ require (
 	go.etcd.io/bbolt v1.5.0
 	golang.org/x/crypto v0.59.0
 	golang.org/x/mobile v0.0.0-20261117202452-47699113848a
+	lukechampine.com/blake3 v1.5.3
 )
 
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	golang.org/x/exp/shiny v0.0.0-20261121134650-e1094eeca1b5 // indirect
 	golang.org/x/image v0.48.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
