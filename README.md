@@ -7,8 +7,9 @@
 CX is a general purpose programming language with a strict type system and a
 syntax close to Go's. This repository holds its compiler, which is written in
 Go, the two loops that run a compiled program, and `cx build`, which turns a
-program into one executable file. CX has no native code generator. A built
-program is a CX core binary with the compiled program appended.
+program into one executable file. By default a built program is a CX core
+binary with the compiled program appended. `cx build --target=llvm` compiles a
+program to LLVM IR instead and, with clang, to a native executable.
 
 The language is described in [LanguageGuide.md](LanguageGuide.md) and the
 changes in [CHANGELOG.md](CHANGELOG.md). The rules of this repository are in
