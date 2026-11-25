@@ -59,6 +59,7 @@ func MakeProgram() *ast.CXProgram {
 		},
 		Heap: ast.HeapSegmentStruct{
 			Size:    minHeapSize,
+			Max:     constants.MAX_HEAP_SIZE,
 			Pointer: constants.NULL_HEAP_ADDRESS_OFFSET, // We can start adding objects to the heap after the NULL (nil) bytes.
 		},
 		Version:   constants.LanguageVersionCurrent,

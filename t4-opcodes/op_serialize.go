@@ -19,8 +19,8 @@ func OpSerialize(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVal
 		panic(types.CX_RUNTIME_NOT_IMPLEMENTED)
 	}
 	count := types.Cast_int_to_ptr(len(byts))
-	if count > ast.SliceElementLimit(1) {
-		panic(constants.HEAP_EXHAUSTED_ERROR)
+	if count > ast.SliceElementLimit(prgrm, 1) {
+		ast.HeapOutOfMemory(prgrm, uint64(types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE)+uint64(count))
 	}
 	slice := ast.SliceResizeEx(prgrm, 0, count, 1)
 	copy(ast.GetSliceData(prgrm, slice, 1), byts)

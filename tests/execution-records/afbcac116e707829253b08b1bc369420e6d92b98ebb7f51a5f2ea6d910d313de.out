@@ -1,0 +1,8 @@
+error: issue-297b.cx:37, CX_RUNTIME_HEAP_EXHAUSTED_ERROR, out of memory: 81 bytes requested with 53 taken do not fit the heap cap of 110 bytes, raise it with -heap-max
+===Callstack===
+>>> main()
+Expressions
+ 	issue-297b.cx:10 : append() : [1, 1, 1, 1, 1, 1, 1, 1]
+	issue-297b.cx:22 : identity() : 100
+	:-1 : i32.lt() : false
+

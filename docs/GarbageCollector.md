@@ -31,8 +31,9 @@ func GarbageCollectorCollect(memory []byte, heapStartsAt types.Pointer,
 - `roots`, a `GCRootTable`: the global roots, each a `GCRoot` with an address
   and a `GCType`, the live frames, each a `GCRootFrame` with its frame
   pointer and the roots of its function, and the stack size.
-- `state`, the collector's scratch memory, kept between collections so a
-  collection allocates only when it outgrows it.
+- `state`, the collector's scratch memory. `GCStatePrepare` allocates it
+  once for the heap cap, and a collection allocates nothing, see "The heap
+  cap" below.
 
 It returns the new heap pointer. A `GCType` says where a value holds
 pointers, slices and strs. A nil `*GCType` holds none, so values without
@@ -41,15 +42,17 @@ references cost nothing to walk.
 The collector sees no CX IR, no `CXProgram`, no call stack and no opcode.
 t3-ast builds the root table: `gcGlobalRoots` and `gcFrameRoots` in
 t3-ast/gc_type.go turn the globals and each function's `ListOfSlots` and
-`ListOfPointers` into `GCRoot`s, cached in `Heap.Types`. `make
+`ListOfPointers` into `GCRoot`s, cached in `Heap.Types`.
+`GarbageCollectorPrepare` builds them for the globals and every function
+before the run. `make
 check-gcreach` fails when any package but t3-ast imports t2-cx-runtime-gc.
 
 ### The tick
 
 The allocator never collects. `AllocateSeq` bumps the heap pointer, adds the
 bytes to `Heap.Pressure`, and grows the heap when a request does not fit,
-leaving `MIN_HEAP_FREE_RATIO` of it free. Past `MAX_HEAP_SIZE` it panics with
-`HEAP_EXHAUSTED_ERROR`, the runtime error `CX_RUNTIME_HEAP_EXHAUSTED_ERROR`.
+leaving `MIN_HEAP_FREE_RATIO` of it free. Past the heap cap it panics with
+`RuntimeOutOfMemory`, the runtime error `CX_RUNTIME_HEAP_EXHAUSTED_ERROR`.
 
 The old loop ticks after every step, one expression, in `runLoop` and
 `runSysInitFunc` (t4-execute/execute.go). Between two steps every root is in a
@@ -60,11 +63,15 @@ global or a frame slot, so no Go code holds a heap address.
 - `GarbageCollectorTrigger` builds the root table from the globals and the
   live frames, runs the collector, resizes the heap to keep between
   `MIN_HEAP_FREE_RATIO` and `MAX_HEAP_FREE_RATIO` of it free, and sets
-  `PressureLimit` to the free heap.
+  `PressureLimit` to the free heap, but to no more than half of what is left
+  below the heap cap.
 
 So the collection runs once the program has allocated what was free after
 the last one, which is when the inline collector ran before, moved to the end
-of the step. `-heap-initial 0` still collects after every step that
+of the step. Near the cap the limit is lower, so the collection runs before
+the heap is full instead of the next allocation failing. A heap whose live
+data stays well under the cap collects as before. `-heap-initial 0`
+still collects after every step that
 allocates while the heap is small, so the `test-gc*.cx` programs stress it as
 before.
 
@@ -73,9 +80,48 @@ object moves under an opcode in progress. `Heap.Pinned` is gone, as nothing
 collects inside `AllocateStrAt`.
 
 The trade-off is a single step that needs more than the room left below
-`MAX_HEAP_SIZE`. The inline collector could free garbage for it in the middle
+the heap cap. The inline collector could free garbage for it in the middle
 of the step. The tick collects only between steps, so such a step is a heap
 exhausted error.
+
+### The heap cap
+
+The heap has a fixed cap, `Heap.Max` (D42). It is `MAX_HEAP_SIZE`, 64M,
+unless `-heap-max` sets another, and `cx build` stores it in the built
+program. `RunPrepare` calls `EnsureMinimumHeapSize`, which allocates once,
+before the run:
+
+- `prgrm.Memory` with the capacity of the stack, the data and the cap.
+  `ResizeMemory` grows the heap by reslicing into it and zeroing the new
+  bytes, and shrinks it by reslicing.
+- the root table: the roots of the globals and of every function, and
+  `GCRootTableFrames` for a full call stack.
+- the scratch, `GCState`, by `GCStatePrepare`.
+
+| Scratch | Size | Use |
+| --- | --- | --- |
+| `GCStateStarts` | a bit per byte of the heap cap, cap/8 bytes | where each object starts, for the object a pointer points into. It replaces the sorted list of object addresses |
+| `GCStateSlots` and `GCStateSlotWords` | a bit per byte of memory, and a bit per word of that | the references the mark read. Its set bits are the references to update, in address order, so the sort of the old list is gone |
+| `GCStateWork` | cap/1024 entries, at least 256 | objects to walk. The type to walk an object with is in its forwarding address field until the mark ends, which replaces the map of followed pointers |
+| `GCStateViews` | memory/512 entries, at least 256 | pointers into an object, as `&s[1]`, and pointers to an object already queued with another type |
+
+For the default cap of 64M the scratch is about 19 MB of Go memory. Pages
+the collection does not touch are not committed on Linux, macOS and Windows.
+
+The mark follows a reference only the first time it reads its slot. CX gives
+a memory location one type, so the first read queued everything the
+reference leads to, and the slot bitmap ends the walk of a cycle. An object
+that does not fit a full `GCStateWork` is left marked pending, and the mark
+scans the heap for pending objects once the queues are empty, so a deep list
+needs no more scratch. More pointers into objects than `GCStateViews` holds
+at once grow it, the one Go allocation a collection can make, VMALLOC-011 and
+decision D97.
+
+An allocation past the cap is the runtime error
+`CX_RUNTIME_HEAP_EXHAUSTED_ERROR` with the message `out of memory: 80017
+bytes requested with 4 taken do not fit the heap cap of 65536 bytes, raise it
+with -heap-max`. Taken is the heap pointer, garbage included, since the
+collector runs only between steps.
 
 ### The vm
 
@@ -109,9 +155,10 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 
 - t4-execute/execute.go:46 to :47 the tick in `runLoop`, :78 to :79 in
   `runSysInitFunc`
-- t3-ast/gc_tick.go:14 `GarbageCollectorCheck`, :26 to :39
+- t3-ast/gc_tick.go:14 `GarbageCollectorCheck`, :26 and :29
+  `GarbageCollectorPrepare` building the roots before the run, :50 to :63
   `GarbageCollectorTrigger` building the root table and calling the
-  collector, :54 and :61 the heap resize after it
+  collector, :78 and :85 the heap resize after it
 
 ### Imports of t3-ast by the interpreter and the IR base
 
@@ -127,9 +174,9 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 
 ### Allocation, which adds to the pressure
 
-- t3-ast/ast_memory.go:36 to :37 `EnsureMinimumHeapSize` starts the pressure,
-  :84 to :87 `AllocateSeq` grows the heap and adds to it, :98 `AllocateStr`,
-  :110 `AllocateStrAt`, :120 `AllocateStrBytesAt`
+- t3-ast/ast_memory.go `EnsureMinimumHeapSize` starts the pressure,
+  :110 to :113 `AllocateSeq` grows the heap and adds to it, :130
+  `AllocateStr`, :142 `AllocateStrAt`, :152 `AllocateStrBytesAt`
 - t3-ast/ast_cxvalue.go:219 `CXValue.Set_str`, used by the system library
   opcodes, :227 `Set_str_bytes` and :235 `Set_str_concat`, the path of every
   other opcode that writes a str

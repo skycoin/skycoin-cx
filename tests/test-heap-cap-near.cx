@@ -1,0 +1,36 @@
+package main
+
+import "sys/string"
+
+type node struct {
+	next *node
+	name str
+}
+
+// Run with -heap-max 512K: the live slice and list fill most of the heap
+// and the garbage strs collect with the heap at its cap.
+func main() {
+	var keep []i32
+	for c := 0; c < 60000; c++ {
+		keep = append(keep, c)
+	}
+	var head *node
+	for c := 0; c < 2000; c++ {
+		var n node
+		n.next = head
+		n.name = string.Concatenation("n", "x")
+		head = &n
+	}
+	var garbage str
+	for c := 0; c < 20000; c++ {
+		garbage = string.Concatenation("garbage", "str")
+	}
+	var count i32
+	var n *node
+	n = head
+	for c := 0; c < 1999; c++ {
+		n = n.next
+		count = count + 1
+	}
+	printf("%d %d %d %s %s\n", len(keep), keep[59999], count, head.name, garbage)
+}

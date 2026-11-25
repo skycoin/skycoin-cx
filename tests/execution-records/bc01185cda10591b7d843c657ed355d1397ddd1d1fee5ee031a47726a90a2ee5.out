@@ -1,0 +1,7 @@
+error: test-slice-resize-huge.cx:5, CX_RUNTIME_HEAP_EXHAUSTED_ERROR, out of memory: 4294967317 bytes requested with 4 taken do not fit the heap cap of 67108864 bytes, raise it with -heap-max
+===Callstack===
+>>> main()
+Expressions
+ 	test-slice-resize-huge.cx:5 : resize() : []
+	:-1 : len() : 0
+

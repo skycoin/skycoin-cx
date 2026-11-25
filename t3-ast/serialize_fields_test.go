@@ -17,7 +17,7 @@ func TestSerializeFieldCounts(t *testing.T) {
 		{CXProgram{}, 31},
 		{StackSegmentStruct{}, 3},
 		{DataSegmentStruct{}, 2},
-		{HeapSegmentStruct{}, 8},
+		{HeapSegmentStruct{}, 9},
 		{CxIrState{}, 24},
 		{CXPackage{}, 8},
 		{CXPackageMethodKey{}, 2},

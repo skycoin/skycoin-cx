@@ -126,8 +126,7 @@ func main() {
 
 // runBenchPrograms are count, fib, bubble sort, the fixed array sort and the
 // struct walk plus the BenchmarkCompile programs. A run allocates nothing
-// (#407), except test-gc.cx, whose collections grow the Go scratch of the CX
-// collector and build its root table (VMALLOC-011).
+// (#407), test-gc.cx and its collections included (D42).
 func runBenchPrograms(tb testing.TB) []runBenchProgram {
 	programs := []runBenchProgram{
 		{"count", runCountSource, 0},
@@ -136,15 +135,12 @@ func runBenchPrograms(tb testing.TB) []runBenchProgram {
 		{"array", runArraySource, 0},
 		{"struct", runStructSource, 0},
 	}
-	ceilings := map[string]float64{
-		"test-gc.cx": 90,
-	}
 	for _, programPath := range compileBenchmarkPrograms {
 		source, err := os.ReadFile(filepath.Join("..", "tests", programPath))
 		if err != nil {
 			tb.Fatal(err)
 		}
-		programs = append(programs, runBenchProgram{filepath.Base(programPath), string(source), ceilings[programPath]})
+		programs = append(programs, runBenchProgram{filepath.Base(programPath), string(source), 0})
 	}
 	return programs
 }
@@ -207,7 +203,7 @@ func BenchmarkRun(b *testing.B) {
 }
 
 // TestRunAllocs fails when the allocations of execute.RunCompiled go above
-// the ceiling, 0 but for test-gc.cx (#407). Each run gets its own compile and
+// the ceiling, 0 (#407). Each run gets its own compile and
 // RunPrepare, made before AllocsPerRun starts, so it is a first run as cx
 // makes it.
 func TestRunAllocs(t *testing.T) {
@@ -380,8 +376,7 @@ func runComparePrograms(tb testing.TB) []runBenchProgram {
 
 // TestRunNoGC fails when a Go garbage collection runs while execute.RunCompiled
 // runs a program that allocates nothing (#407). It collects first, so a cycle
-// could only come from the run's own allocations. test-gc.cx grows program
-// memory, which may start one (VMALLOC-010).
+// could only come from the run's own allocations.
 func TestRunNoGC(t *testing.T) {
 	initProgram()
 	for _, p := range append(runBenchPrograms(t), runComparePrograms(t)...) {

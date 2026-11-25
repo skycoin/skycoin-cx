@@ -152,8 +152,8 @@ func OpStrBytesOfString(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []as
 		outputs[0].Set_ptr(prgrm, 0)
 		return
 	}
-	if count > ast.SliceElementLimit(1) {
-		panic(constants.HEAP_EXHAUSTED_ERROR)
+	if count > ast.SliceElementLimit(prgrm, 1) {
+		ast.HeapOutOfMemory(prgrm, uint64(types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE)+uint64(count))
 	}
 	slice := ast.SliceResizeEx(prgrm, 0, count, 1)
 	copy(ast.GetSliceData(prgrm, slice, 1), str)

@@ -152,6 +152,12 @@ them. See "The runtime image" in [docs/IR.md](docs/IR.md#the-runtime-image).
 The garbage collector runs as a tick of the old loop, between steps, never
 inside an opcode. The vm and the IR base do not reach it, which
 `make check-gcreach` checks. See
+The heap has a fixed cap, 64M unless `-heap-max` sets another, and the
+heap, the collector scratch and its root table are allocated once when the
+program is loaded (D42). A program that needs more stops with the runtime
+error `CX_RUNTIME_HEAP_EXHAUSTED_ERROR`, "out of memory", naming the request
+and the cap. `cx build -heap-max 256K` stores the cap in the built program,
+so a target with little memory can run with a small heap.
 [docs/GarbageCollector.md](docs/GarbageCollector.md).
 
 A compiled program can be serialized and loaded again. The format is in
@@ -187,7 +193,8 @@ one core per set of libraries, `cx-core` for none, `cx-core-file`,
 `cx-core-file-net` and so on. `cx build --enable=file program.cx -o program`
 picks `cx-core-file`, and the built program runs with exactly the libraries
 it was built with. `cx build` refuses a program that uses an opcode the core
-leaves out, such as `gl`. Only a core with the cipher library links a Go
+leaves out, such as `gl`. The heap cap given with `-heap-max` is stored in
+the built program. Only a core with the cipher library links a Go
 module outside the standard library, the `cipher` package of Skycoin.
 See [Building an executable](LanguageGuide.md#building-an-executable).
 

@@ -19,8 +19,9 @@ import (
 
 // buildTestRunFlags are the cx flags, without dashes, that only change how
 // cx runs a program. A built program runs with their defaults, so programs
-// that pass one are not compared.
-var buildTestRunFlags = map[string]bool{"executor": true, "debug-go-stack": true, "ast": true, "heap-max": true, "hm": true, "min-heap-free": true, "max-heap-free": true}
+// that pass one are not compared. -heap-max is not one, as a built program
+// keeps the heap cap it was built with (D42).
+var buildTestRunFlags = map[string]bool{"executor": true, "debug-go-stack": true, "ast": true, "min-heap-free": true, "max-heap-free": true}
 
 // buildTestCore builds the core that links libraries into dir, by its
 // buildCoreFileName, with ptr64 when this cx uses 8 byte pointers.

@@ -1853,6 +1853,13 @@ example, but using arrays. When `resize` asks for more than twice the
 capacity, the new capacity is the new size, and a slice too large for
 the heap is a `CX_RUNTIME_HEAP_EXHAUSTED_ERROR`.
 
+The heap has a fixed cap, 64M unless `-heap-max` gives another, allocated
+once when the program is loaded. An allocation that does not fit it after
+the collector has run stops the program with
+`CX_RUNTIME_HEAP_EXHAUSTED_ERROR` and a message such as `out of memory: 80017
+bytes requested with 4 taken do not fit the heap cap of 65536 bytes, raise it
+with -heap-max`. `cx build` stores the cap in the built program.
+
 A slice literal can hold structs, and `[]i32{}` is an empty slice. A
 pointer to a slice is dereferenced before it is indexed, measured or
 passed to `append`, as in Go.
@@ -3949,8 +3956,9 @@ appended. The core is a minimum interpreter with no parser. At start up it
 reads the program from the end of its own file and runs it, on vm when the
 program lowers and on the old loop otherwise. Its command line arguments
 reach the program unchanged as `os.Args`, so `./hello ++a` sees what
-`cx hello.cx ++a` sees. The run time flags of cx, such as `--executor` and
-`-heap-max`, are not recorded and take their defaults.
+`cx hello.cx ++a` sees. The heap cap of `-heap-max` is recorded, so the
+built program runs with the cap it was built with. The other run time flags
+of cx, such as `--executor`, are not recorded and take their defaults.
 
 The core includes the built-in functions, `sys/string`, `sys/regexp`,
 `sys/time`, `os.Exit` of `sys/os` and the `LibraryCall` opcode. A

@@ -12,7 +12,11 @@ that keep the run free of the others.
 ## Before the run
 
 `execute.RunPrepare`, which `ExecutorRun` calls before `RunCompiled`, sizes
-the heap of program memory (`EnsureMinimumHeapSize`), the operand buffers of
+the heap of program memory (`EnsureMinimumHeapSize`). It allocates program
+memory once for the heap cap, `-heap-max` or 64M, with the scratch and the
+root table of the collector (D42, see "The heap cap" in
+[GarbageCollector.md](GarbageCollector.md)), so the heap grows and collects
+without a Go allocation. It also sizes the operand buffers of
 the run and of a `Callback` loop to the largest arity of an expression and
 the format buffer that print, printf, sprintf and the str conversions append
 to (`RunBuffersPrepare`).
@@ -24,7 +28,13 @@ prepared.
 - `TestRunAllocs` runs every `BenchmarkRun` program and the
   `t0-benchmarks/compare` programs, shrunk to a size that runs in
   milliseconds, with `testing.AllocsPerRun` around `RunCompiled` and requires
-  0. test-gc.cx is the exception, see VMALLOC-010 and VMALLOC-011.
+  0, test-gc.cx included.
+- `TestRunHeapAllocs` requires 0 and no Go GC cycle for the GC tests run with
+  `-heap-initial 0`, which collect after nearly every step, test-gc.cx at the
+  default heap, and test-heap-cap-near.cx, whose live heap grows near a cap
+  of 512K and collects there.
+- `TestRunHeapCapExceeded` checks the out of memory error past the cap and
+  that a serialized program keeps its cap.
 - `TestRunNoGC` collects, runs each program that allocates nothing, and
   requires `runtime.MemStats.NumGC` unchanged, also with `GOGC=1`.
 - `TestRunVmAllocs` requires 0 for the vm.
@@ -60,9 +70,9 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-006 | fixed | the number to str conversions |
 | VMALLOC-007 | fixed | `feedOSArgs` built an error when `os` is not imported |
 | VMALLOC-008 | fixed | `rand.Seed`, a no-op since Go 1.24, removed |
-| VMALLOC-009 | fixed for the run | `EnsureMinimumHeapSize`, called by `RunPrepare` |
-| VMALLOC-010 | open | `ResizeMemory` grows program memory when the heap outgrows it. Needs a decision on a fixed cap |
-| VMALLOC-011 | open | the CX collector builds its root table and type cache and grows its scratch in Go memory. test-gc.cx makes 90 allocations a run here and in VMALLOC-010 |
+| VMALLOC-009 | fixed for the run | `EnsureMinimumHeapSize`, called by `RunPrepare`, allocates program memory for the heap cap once |
+| VMALLOC-010 | fixed (D42) | `ResizeMemory` grows the heap into the memory `EnsureMinimumHeapSize` allocated once for the heap cap |
+| VMALLOC-011 | fixed (D42), one rest | the root table, type cache and scratch of the collector are built before the run. A collection grows `GCStateViews` only when more than memory/512 pointers into objects are pending at once, D97. A function the affordance opcodes change gets its roots built at the next collection, a boundary |
 | VMALLOC-012 | open, boundary | `ReadSlice_*`, used by the serialize and file opcodes |
 | VMALLOC-013 | not on the run path | `Make_obj` and `Write_str_data` run at compile time |
 | VMALLOC-014 | failure only | the getters build an error only on a miss |

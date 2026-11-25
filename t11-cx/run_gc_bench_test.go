@@ -21,7 +21,8 @@ var gcBenchPrograms = []string{
 }
 
 // BenchmarkRunGC times execute.RunCompiled on gcBenchPrograms with an
-// initial heap of 0 bytes. The compile is not timed.
+// initial heap of 0 bytes. The compile and RunPrepare, which allocates the
+// heap and the collector scratch for the heap cap, are not timed.
 func BenchmarkRunGC(b *testing.B) {
 	initProgram()
 	initHeap := constants.INIT_HEAP_SIZE
@@ -40,6 +41,7 @@ func BenchmarkRunGC(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
 				compileRunProgram(b, p)
+				execute.RunPrepare(actions.AST)
 				b.StartTimer()
 				if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
 					b.Fatal(err)

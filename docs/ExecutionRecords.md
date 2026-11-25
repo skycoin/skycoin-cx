@@ -90,7 +90,7 @@ the compiler and two runs on the old loop. Those two are listed by hand in
 | vm | `cx --executor=vm`, when every function lowers |
 | image-old | compiled, turned into the image `cx build` appends, loaded again with `ast.Deserialize` and run on the old loop |
 | image-vm | the same on vm, when every function lowers |
-| built | the executable `cx build` writes, which runs vm when the program lowers and the old loop otherwise. Not for a program that passes a run time flag of cx, such as `-heap-max`, which a built program cannot take, or one that uses an opcode the core leaves out |
+| built | the executable `cx build` writes, which runs vm when the program lowers and the old loop otherwise. Not for a program that passes a run time flag of cx, such as `--executor`, which a built program cannot take, or one that uses an opcode the core leaves out. `-heap-max` is stored in the built program, so programs that pass it are compared |
 
 A later native form, such as the LLVM target, is added as one more form.
 

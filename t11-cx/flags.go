@@ -90,7 +90,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.BoolVar(&options.replMode, "r", options.replMode, "alias for -repl")
 	commandLine.StringVar(&options.initialHeap, "heap-initial", options.initialHeap, "Initial heap size of the CX virtual machine in bytes. The suffixes G, M and K (or g, m and k) mean gigabytes, megabytes and kilobytes.")
 	commandLine.StringVar(&options.initialHeap, "hi", options.initialHeap, "alias for -heap-initial")
-	commandLine.StringVar(&options.maxHeap, "heap-max", options.maxHeap, "Maximum heap size of the CX virtual machine, in the units of -heap-initial. A -heap-max below -heap-initial lowers the initial heap to it.")
+	commandLine.StringVar(&options.maxHeap, "heap-max", options.maxHeap, "Heap cap of the CX virtual machine, 64M by default, in the units of -heap-initial. The heap is allocated once at this size when the program loads, a program that needs more stops with an out of memory error, and cx build stores the cap in the built program. A -heap-max below -heap-initial lowers the initial heap to it.")
 	commandLine.StringVar(&options.maxHeap, "hm", options.maxHeap, "alias for -heap-max")
 	commandLine.StringVar(&options.stackSize, "stack-size", options.stackSize, "Stack size of the CX virtual machine, in the units of -heap-initial")
 	commandLine.StringVar(&options.stackSize, "ss", options.stackSize, "alias for -stack-size")

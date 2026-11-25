@@ -364,7 +364,10 @@ string being a pointer to a heap or data object.
 `Data.StartsAt = constants.STACK_SIZE` and
 `Heap.Pointer = constants.NULL_HEAP_ADDRESS_OFFSET`. `STACK_SIZE` defaults
 to 1048576 and `INIT_HEAP_SIZE` to 2097152, and `-stack-size`,
-`-heap-initial` and `-heap-max` change them. `Stack.StartsAt` stays 0.
+`-heap-initial` and `-heap-max` change them. `Heap.Max` is the heap cap,
+`MAX_HEAP_SIZE` (64M) or `-heap-max`, and `EnsureMinimumHeapSize` gives
+`Memory` the capacity of the stack, the data and the cap once before the
+run, so the heap grows without a Go allocation (D42). `Stack.StartsAt` stays 0.
 
 * Stack. Each call gets a frame of `CXFunction.Size` bytes at
   `CXCall.FramePointer`. Parameters, then outputs, then locals and
@@ -554,7 +557,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 6 |
+| 8 to 11 | format | `serializeFormatVersion`, now 7 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 
@@ -567,7 +570,7 @@ serializations of the same program are byte for byte equal
 
 | Section | Contents |
 | --- | --- |
-| program | stack, data and heap bounds, `Packages`, `CurrentPackage`, `ProgramInput`, the call stack length, `CallCounter` and the entries in use, `Terminated`, `ProgramLibrariesUsed` and `ProgramLibrariesEnabled` as a count and one bool per library, `SysInitExprs` |
+| program | stack, data and heap bounds, the heap cap `Heap.Max`, `Packages`, `CurrentPackage`, `ProgramInput`, the call stack length, `CallCounter` and the entries in use, `Terminated`, `ProgramLibrariesUsed` and `ProgramLibrariesEnabled` as a count and one bool per library, `SysInitExprs` |
 | strings | every string pool slot in order, whether the pool is frozen, the four `CxIrStateName*` Gids and `SourceFileMng` |
 | packages | `CXPackages`, with imports, functions, structs and methods by name Gid, and the globals struct |
 | structs | `CXStructs` |
@@ -668,9 +671,10 @@ core refuses a program that enables a library it does not link, and opens
 the working directory as the sandbox when the file library is enabled. The core runs the program on vm when it
 lowers and on the old loop otherwise, as `cx --executor=auto` does, and
 passes its command line arguments to the program as `os.Args`. It has no
-flags, so the run time flags of cx, `--executor`, `-heap-max`,
-`-min-heap-free`, `-max-heap-free` and `--debug-go-stack`, take their
-defaults.
+flags, so the run time flags of cx, `--executor`, `-min-heap-free`,
+`-max-heap-free` and `--debug-go-stack`, take their defaults. The heap cap
+of `-heap-max` is stored in the program, `Heap.Max`, so it runs with the cap
+it was built with (D42).
 
 ## Opcodes
 

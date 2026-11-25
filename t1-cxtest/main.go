@@ -1126,6 +1126,9 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("issue-296.cx", types.CX_COMPILATION_ERROR, "No compilation error when comparing value of different types")
 	t.Run("-stack-size 30 issue-297a.cx", types.CX_RUNTIME_STACK_OVERFLOW_ERROR, "No stack overflow error")
 	t.Run("-heap-initial 100 -heap-max 110 issue-297b.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "No heap exhausted error")
+	t.RunWant("-heap-max 64K test-heap-cap-exceeded.cx", types.CX_RUNTIME_HEAP_EXHAUSTED_ERROR, "a slice past the heap cap is an out of memory error that names the request and the cap (D42)",
+		"test-heap-cap-exceeded.cx:7, CX_RUNTIME_HEAP_EXHAUSTED_ERROR, out of memory: ", " do not fit the heap cap of 65536 bytes, raise it with -heap-max\n")
+	t.RunWant("-heap-max 512K test-heap-cap-near.cx", types.CX_SUCCESS, "a live heap near the heap cap collects before the heap is full (D42)", "60000 59999 1999 nx garbagestr\n")
 	t.Run("issue-298.cx", types.CX_SUCCESS, "Argument type deduction failed when passing address of an i32 struct field to a function accepting *i32 argument.")
 	t.Run("issue-299.cx", types.CX_COMPILATION_ERROR, "Type checking is not working with receiving variables of unexpected types")
 	t.Run("issue-300.cx", types.CX_SUCCESS, "Crash when using a constant expression in a slice literal expression")

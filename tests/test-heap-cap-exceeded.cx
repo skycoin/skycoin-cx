@@ -1,0 +1,9 @@
+package main
+
+// Run with -heap-max 64K: a slice larger than the heap cap is an out of
+// memory error that names the cap and the request.
+func main() {
+	var keep []i32
+	keep = resize(keep, 20000)
+	i32.print(len(keep))
+}

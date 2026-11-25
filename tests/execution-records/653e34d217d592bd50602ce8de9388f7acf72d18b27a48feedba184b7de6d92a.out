@@ -1,0 +1,7 @@
+error: test-heap-cap-exceeded.cx:7, CX_RUNTIME_HEAP_EXHAUSTED_ERROR, out of memory: 80017 bytes requested with 4 taken do not fit the heap cap of 65536 bytes, raise it with -heap-max
+===Callstack===
+>>> main()
+Expressions
+ 	test-heap-cap-exceeded.cx:7 : resize() : []
+	:-1 : len() : 0
+
