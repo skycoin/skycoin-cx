@@ -28,6 +28,8 @@ const (
 	FileOperationPathValidate    FileOperationCode = 1504
 	FileOperationSandboxRootOpen FileOperationCode = 1505
 	FileOperationWrite           FileOperationCode = 1506
+	FileOperationOpenReadWrite   FileOperationCode = 1507
+	FileOperationRemove          FileOperationCode = 1508
 )
 
 // FileError is a class A failure of a file operation, nil on success.

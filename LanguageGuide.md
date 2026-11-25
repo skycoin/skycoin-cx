@@ -966,7 +966,7 @@ cx --enable=file,net program.cx
 
 | library | functions |
 |---|---|
-| `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.Close`, `os.Seek`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), `StartCPUProfile` and `StopCPUProfile` |
+| `file` | the file functions of `sys/os` (`os.Open`, `os.Create`, `os.OpenReadWrite`, `os.Close`, `os.Seek`, `os.Sync`, `os.Remove`, `os.Read*`, `os.Write*`, `os.ReadAllText`, `os.GetWorkingDirectory`, `os.LogFile`), `StartCPUProfile` and `StopCPUProfile` |
 | `net` | every function of `sys/net`, see [The net library](#the-net-library) |
 | `process` | `os.Run` |
 | `cipher` | every function of `sys/cipher`, see [The cipher library](#the-cipher-library) |
@@ -3762,10 +3762,21 @@ file, `os.Open` returns -1 (#433).
 
 ### `os.GetWorkingDirectory`
 ### `os.Open`
+### `os.OpenReadWrite`
 ### `os.Close`
+### `os.Sync`
+### `os.Remove`
 
 `os.Open` returns a handle, or -1 when the file cannot be opened.
+`os.OpenReadWrite` opens a file for reading and writing at any offset,
+creates it when it does not exist and keeps its content when it does, and
+returns a handle or -1. `os.Create` truncates instead.
 `os.Close` returns `true` when it closed the handle.
+`os.Sync(handle)` commits what was written to stable storage and returns
+`true` when it worked.
+`os.Remove(path)` removes a file or an empty directory inside the sandbox
+and returns `true` when it did. A symlink is removed itself, not what it
+points to. Close a file before removing it, which Windows requires.
 
 #### Example
 
@@ -4228,3 +4239,15 @@ Functions 1 to 4 of the net library, `tcp.Dial`, `tcp.Listen`,
 numbers 5 to 19. A library function input of undefined type is a byte
 buffer, a `ui8` array the vm form gets as its address and size. Serialized
 programs from before this version must be recompiled.
+
+## Version 2611250001, 2026-11-25
+
+Three functions of the `file` library are new, numbers 64 to 66, see
+[`os` Package Functions](#os-package-functions). Serialized programs from
+before this version must be recompiled.
+
+| function | number | does |
+|---|---|---|
+| `os.OpenReadWrite(path str) (handle i32)` | 64 | opens a file for reading and writing, creating it when it does not exist and keeping its content |
+| `os.Sync(handle i32) (synced bool)` | 65 | commits the writes of a file to stable storage, and runs on vm |
+| `os.Remove(path str) (removed bool)` | 66 | removes a file or an empty directory inside the sandbox |

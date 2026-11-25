@@ -1,0 +1,41 @@
+// os.OpenReadWrite creates a file or opens an existing one without
+// truncating it, for reads and writes at any offset. os.Sync commits the
+// writes and os.Remove removes the file inside the sandbox (skycoin-cx D19).
+
+package main
+
+import "sys/os"
+
+func main() {
+	var f i32
+	var ok bool
+	var value ui32
+	f = os.OpenReadWrite("test-os-read-write.tmp")
+	test(f >= 0, true, "a missing file is created")
+	ok = os.WriteUI32(f, 10U)
+	ok = os.WriteUI32(f, 20U)
+	ok = os.WriteUI32(f, 30U)
+	test(os.Sync(f), true, "sync an open file")
+	test(os.Seek(f, 0L, 0), 0L, "seek to the start")
+	value, ok = os.ReadUI32(f)
+	printf("first %d\n", value)
+	test(os.Close(f), true, "close")
+	test(os.Sync(f), false, "sync a closed handle")
+	test(os.Sync(-1), false, "sync a handle that was never open")
+
+	f = os.OpenReadWrite("test-os-read-write.tmp")
+	test(os.Seek(f, 0L, 2), 12L, "the content is kept, not truncated")
+	test(os.Seek(f, 4L, 0), 4L, "seek to the second value")
+	ok = os.WriteUI32(f, 21U)
+	test(os.Seek(f, 4L, 0), 4L, "seek back")
+	value, ok = os.ReadUI32(f)
+	printf("second %d\n", value)
+	value, ok = os.ReadUI32(f)
+	printf("third %d\n", value)
+	test(os.Sync(f), true, "sync after an overwrite")
+	test(os.Close(f), true, "close again")
+
+	test(os.Remove("test-os-read-write.tmp"), true, "remove the file")
+	test(os.Open("test-os-read-write.tmp"), -1, "a removed file does not open")
+	test(os.Remove("test-os-read-write.tmp"), false, "remove a missing file")
+}

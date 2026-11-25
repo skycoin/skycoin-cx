@@ -40,6 +40,14 @@ Numbers 1 to 4, the blocking `tcp.Dial`, `tcp.Listen`, `tcp.Accept` and
 | 18 | `net.UDPWriteTo(handle i32, peer i32, buffer [N]ui8, length i32) (queued i32)` | queues one datagram to the peer, and returns its length or 0 when it does not fit |
 | 19 | `net.UDPPeerResolve(host str, port i32) (peer i32)` | the peer of a numeric address, added to the peer table |
 
+Decision D19 asked for `tcp.Read`, `tcp.Write` and the UDP functions
+`Listen`, `Dial`, `ReadFrom`, `WriteTo` and `Close`. They are `net.Read` and
+`net.Write` on a TCP handle, and `net.UDPListen`, `net.UDPDial`,
+`net.UDPReadFrom`, `net.UDPWriteTo` and `net.Close`, tested by
+`tests/test-net-tcp.cx` and `tests/test-net-udp.cx` with their replay
+records. The file functions of D19 are `os.OpenReadWrite`, `os.Sync` and
+`os.Remove` of the file library.
+
 A function that opens a socket returns its handle at once, or 0 when the
 handle table is full. Its result is an entry of a later update: listening,
 connected or error. A function given a handle that is not open returns 0 or

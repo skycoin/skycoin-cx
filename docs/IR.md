@@ -769,7 +769,7 @@ one loop, and vm fails on a program that does not lower.
   `processNonAtomicOperators` and `popStack` make.
 * A system library call lowers when its function has a vm form in
   `constants.LibraryFunctionDefinitionTable` and its library is linked, see
-  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`,
+  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`, `os.Sync`,
   `cipher.HashStateNew`, `cipher.HashStateRelease` and every function of
   `sys/net`. A `str` input is a pointer the vm form reads from the data
   segment, and an input of undefined type is a byte buffer, a `ui8` array

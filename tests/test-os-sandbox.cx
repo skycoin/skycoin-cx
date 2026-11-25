@@ -11,6 +11,8 @@ func rejected(path str, message str) {
 	test(os.Open(path), -1, message)
 	text, ok = os.ReadAllText(path)
 	test(ok, false, message)
+	test(os.OpenReadWrite(path), -1, message)
+	test(os.Remove(path), false, message)
 }
 
 func main() {
@@ -26,6 +28,7 @@ func main() {
 	test(os.Create("a/../../test-os-sandbox-escape.tmp"), -1, "create a/../../x")
 	test(os.Create("/test-os-sandbox-escape.tmp"), -1, "create /x")
 	test(os.Create("test-os-sandbox\000.tmp"), -1, "create with a NUL byte")
+	test(os.Remove("."), false, "remove the sandbox root")
 
 	var text str
 	var ok bool

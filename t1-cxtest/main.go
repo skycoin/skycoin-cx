@@ -1243,4 +1243,5 @@ func runFileWriteTests(t *runner.TestRunner, workingDir string) {
 
 	sandbox := "--enable=file --sandbox=" + filepath.Base(sandboxDir) + " "
 	t.RunWant(sandbox+"test-os-write-slice-size.cx", types.CX_SUCCESS, "os.Write*Slice writes len(s) elements of the slice type", "size 31\n", "1 2 3 -4 5 6 7 0.5 1.5\n")
+	t.RunWant(sandbox+"test-os-read-write-sync-remove.cx", types.CX_SUCCESS, "os.OpenReadWrite keeps and overwrites, os.Sync and os.Remove (skycoin-cx D19)", "first 10\n", "second 21\nthird 30\n")
 }

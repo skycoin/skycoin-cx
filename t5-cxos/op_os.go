@@ -95,6 +95,24 @@ func OpOsCreate(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 	outputs[0].Set_i32(prgrm, int32(handle))
 }
 
+// OpOsOpenReadWrite is os.OpenReadWrite(path str) (handle i32): the file at
+// path opened for reading and writing, created when it does not exist, or -1.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
+func OpOsOpenReadWrite(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	handle := int32(-1)
+	if file, fileError := ast.ProgramSandboxFileOpenReadWrite(prgrm, &inputs[0]); fileError == nil {
+		handle = getFileHandle(file)
+	}
+	outputs[0].Set_i32(prgrm, handle)
+}
+
+// OpOsRemove is os.Remove(path str) (removed bool): removes the file or empty
+// directory at path inside the sandbox.
+// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
+func OpOsRemove(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_bool(prgrm, ast.ProgramSandboxFileRemove(prgrm, &inputs[0]) == nil)
+}
+
 func OpOsClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outputs[0].Set_bool(prgrm, fileClose(inputs[0].Get_i32(prgrm)))
 }
@@ -119,6 +137,25 @@ func fileClose(handle int32) bool {
 func LibraryFileCloseVm(memory []byte, block uint32) {
 	closed := fileClose(types.Read_i32(memory, types.Pointer(block)))
 	types.Write_bool(memory, types.Pointer(block+4), closed)
+}
+
+// OpOsSync is os.Sync(handle i32) (synced bool): commits what was written to
+// the file of handle to stable storage.
+func OpOsSync(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].Set_bool(prgrm, fileSync(inputs[0].Get_i32(prgrm)))
+}
+
+// fileSync syncs the file of handle and returns false for a handle that is
+// not open or a failed sync.
+func fileSync(handle int32) bool {
+	file := ValidFile(handle)
+	return file != nil && file.Sync() == nil
+}
+
+// LibraryFileSyncVm is os.Sync on vm, an i32 at block and the bool after it.
+func LibraryFileSyncVm(memory []byte, block uint32) {
+	synced := fileSync(types.Read_i32(memory, types.Pointer(block)))
+	types.Write_bool(memory, types.Pointer(block+4), synced)
 }
 
 func OpOsSeek(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

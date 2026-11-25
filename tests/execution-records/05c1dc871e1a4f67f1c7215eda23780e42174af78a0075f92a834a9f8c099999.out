@@ -12,22 +12,27 @@ Expressions
 	test-os-sandbox.cx:11 : test() : ../x
 	test-os-sandbox.cx:12 : os.ReadAllText() : 
 	test-os-sandbox.cx:12 : os.ReadAllText() : false
+	:-1 : os.OpenReadWrite() : 0
+	test-os-sandbox.cx:14 : i32.neg() : 0
+	:-1 : os.Remove() : false
 
 >>> main()
 Expressions
- 	test-os-sandbox.cx:11 : os.Open() : 
-	:-1 : os.Open() : 0
-	test-os-sandbox.cx:11 : i32.neg() : 0
+ 	test-os-sandbox.cx:11 : i32.neg() : 0
+	test-os-sandbox.cx:12 : os.ReadAllText() : 
 	test-os-sandbox.cx:12 : os.ReadAllText() : 
 	test-os-sandbox.cx:12 : os.ReadAllText() : false
-	:-1 : os.Create() : 0
-	test-os-sandbox.cx:25 : i32.neg() : 0
-	:-1 : os.Create() : 0
-	test-os-sandbox.cx:26 : i32.neg() : 0
 	test-os-sandbox.cx:13 : test() : 
 	:-1 : os.Create() : 0
 	test-os-sandbox.cx:27 : i32.neg() : 0
 	:-1 : os.Create() : 0
 	test-os-sandbox.cx:28 : i32.neg() : 0
-	test-os-sandbox.cx:32 : os.ReadAllText() : false
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:29 : i32.neg() : 0
+	:-1 : os.Create() : 0
+	test-os-sandbox.cx:30 : i32.neg() : 0
+	:-1 : test() : 0
+	test-os-sandbox.cx:14 : test() : 0
+	:-1 : os.Remove() : false
+	test-os-sandbox.cx:35 : os.ReadAllText() : false
 

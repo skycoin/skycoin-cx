@@ -359,3 +359,5 @@ STRHOT-345 B open t1-netbatch/socket.go netErrorOf
 STRHOT-346 B removed t1-netbatch/errno_unix.go netErrorOfSystem folded into netErrorOf, whose code covers it on every system
 STRHOT-347 B open t1-netbatch/socket.go netTCPDialRun
 STRHOT-348 B open t1-netbatch/replay.go netPayloadQuote
+STRHOT-349 B open t0-util/program_path.go ProgramSandboxFileOpenReadWrite
+STRHOT-350 B open t0-util/program_path.go ProgramSandboxFileRemove

@@ -3,8 +3,11 @@
 package cxos
 
 import (
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/skycoin/skycoin-cx/t0-types"
 )
 
 // os.Run split the command on single spaces. See #118.
@@ -33,6 +36,28 @@ func TestSplitCommand(t *testing.T) {
 		}
 		if c.ok && !reflect.DeepEqual(got, c.want) {
 			t.Errorf("splitCommand(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// os.Sync on vm makes no Go allocation, for an open file and for a handle
+// that is not open.
+func TestLibraryFileSyncVmAllocs(t *testing.T) {
+	file, err := os.CreateTemp(t.TempDir(), "sync")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle := getFileHandle(file)
+	defer fileClose(handle)
+	memory := make([]byte, 8)
+	for _, h := range []int32{handle, -1, 1000} {
+		types.Write_i32(memory, 0, h)
+		allocs := testing.AllocsPerRun(100, func() { LibraryFileSyncVm(memory, 0) })
+		if allocs != 0 {
+			t.Errorf("handle %d: %v allocations", h, allocs)
+		}
+		if synced := types.Read_bool(memory, 4); synced != (h == handle) {
+			t.Errorf("handle %d: synced %v", h, synced)
 		}
 	}
 }

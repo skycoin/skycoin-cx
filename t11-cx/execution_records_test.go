@@ -148,7 +148,7 @@ var executionRecordSourcePatterns = []struct {
 	{regexp.MustCompile(`\.rand\b`), "random"},
 	{regexp.MustCompile(`\btime\.(Unix|Now)`), "clock"},
 	{regexp.MustCompile(`\bos\.Run\b`), "process"},
-	{regexp.MustCompile(`\bos\.Create\("[A-Za-z0-9_-]+\.tmp"\)`), "shared"},
+	{regexp.MustCompile(`\bos\.(Create|OpenReadWrite)\("[A-Za-z0-9_-]+\.tmp"\)`), "shared"},
 }
 
 // executionRecordExcludedByHand overrides the reason make records finds.

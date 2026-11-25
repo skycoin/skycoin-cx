@@ -47,3 +47,24 @@ func ProgramSandboxFileRead(prgrm *CXProgram, value *CXValue) ([]byte, *util.Fil
 	}
 	return util.ProgramSandboxFileRead(prgrm.ProgramSandboxRoot, programPath)
 }
+
+// ProgramSandboxFileOpenReadWrite opens the program path in value for
+// reading and writing inside the program's sandbox root, creating it when
+// it does not exist.
+func ProgramSandboxFileOpenReadWrite(prgrm *CXProgram, value *CXValue) (*os.File, *util.FileError) {
+	programPath, fileError := ProgramFileSystemPathRead(prgrm, value)
+	if fileError != nil {
+		return nil, fileError
+	}
+	return util.ProgramSandboxFileOpenReadWrite(prgrm.ProgramSandboxRoot, programPath)
+}
+
+// ProgramSandboxFileRemove removes the program path in value inside the
+// program's sandbox root.
+func ProgramSandboxFileRemove(prgrm *CXProgram, value *CXValue) *util.FileError {
+	programPath, fileError := ProgramFileSystemPathRead(prgrm, value)
+	if fileError != nil {
+		return fileError
+	}
+	return util.ProgramSandboxFileRemove(prgrm.ProgramSandboxRoot, programPath)
+}

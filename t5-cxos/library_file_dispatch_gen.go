@@ -122,6 +122,12 @@ func LibraryFileDispatch(prgrm *ast.CXProgram, function int, inputs []ast.CXValu
 		OpStartProfile(prgrm, inputs, outputs)
 	case 63:
 		OpStopProfile(prgrm, inputs, outputs)
+	case 64:
+		OpOsOpenReadWrite(prgrm, inputs, outputs)
+	case 65:
+		OpOsSync(prgrm, inputs, outputs)
+	case 66:
+		OpOsRemove(prgrm, inputs, outputs)
 	default:
 		return false
 	}
@@ -136,6 +142,8 @@ func LibraryFileDispatchVm(function uint32, memory []byte, block uint32) bool {
 		LibraryFileCloseVm(memory, block)
 	case 6:
 		LibraryFileSeekVm(memory, block)
+	case 65:
+		LibraryFileSyncVm(memory, block)
 	default:
 		return false
 	}

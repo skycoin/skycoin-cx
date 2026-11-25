@@ -223,3 +223,84 @@ func TestProgramSandboxDirectorySymlinkSwap(t *testing.T) {
 	}
 	programSandboxOutsideCheck(t, outside)
 }
+
+// os.OpenReadWrite creates a missing file, keeps the content of an existing
+// one and writes at any offset, and os.Remove removes inside the sandbox.
+func TestProgramSandboxOpenReadWriteAndRemove(t *testing.T) {
+	root, sandbox, outside := programSandboxFixture(t)
+	programPath := programPathMust(t, "rw.bin")
+	file, fileError := ProgramSandboxFileOpenReadWrite(root, programPath)
+	if fileError != nil {
+		t.Fatal(fileError.FileErrorMessage)
+	}
+	file.WriteString("abcd")
+	file.Close()
+	file, fileError = ProgramSandboxFileOpenReadWrite(root, programPath)
+	if fileError != nil {
+		t.Fatal(fileError.FileErrorMessage)
+	}
+	file.WriteAt([]byte("X"), 2)
+	if err := file.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	file.Close()
+	if content, err := os.ReadFile(filepath.Join(sandbox, "rw.bin")); err != nil || string(content) != "abXd" {
+		t.Fatalf("read-write file holds %q, %v", content, err)
+	}
+	if fileError := ProgramSandboxFileRemove(root, programPath); fileError != nil {
+		t.Fatal(fileError.FileErrorMessage)
+	}
+	if _, err := os.Stat(filepath.Join(sandbox, "rw.bin")); !os.IsNotExist(err) {
+		t.Fatalf("removed file: %v", err)
+	}
+	fileError = ProgramSandboxFileRemove(root, programPath)
+	if fileError == nil || fileError.FileErrorCode != FileErrorCodeNotFound || fileError.FileErrorOperation != FileOperationRemove {
+		t.Errorf("removing a missing file gave %+v", fileError)
+	}
+	if err := os.Mkdir(filepath.Join(sandbox, "d"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(sandbox, "d", "x"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if fileError := ProgramSandboxFileRemove(root, programPathMust(t, "d")); fileError == nil {
+		t.Error("removed a directory that is not empty")
+	}
+	if fileError := ProgramSandboxFileRemove(root, programPathMust(t, ".")); fileError == nil {
+		t.Error("removed the sandbox root")
+	}
+	if _, fileError := ProgramSandboxFileOpenReadWrite(nil, programPath); fileError == nil || fileError.FileErrorCode != FileErrorCodeSandboxRootMissing {
+		t.Errorf("read-write open without a root gave %+v", fileError)
+	}
+	if fileError := ProgramSandboxFileRemove(nil, programPath); fileError == nil || fileError.FileErrorCode != FileErrorCodeSandboxRootMissing {
+		t.Errorf("remove without a root gave %+v", fileError)
+	}
+	programSandboxOutsideCheck(t, outside)
+}
+
+// A symlink inside the sandbox that points out is removed itself, and
+// nothing outside is opened or removed through it.
+func TestProgramSandboxRemoveAndReadWriteSymlinkOut(t *testing.T) {
+	root, sandbox, outside := programSandboxFixture(t)
+	programSandboxSymlink(t, filepath.Join(outside, "secret.txt"), filepath.Join(sandbox, "link.txt"))
+	programSandboxSymlink(t, outside, filepath.Join(sandbox, "linkdir"))
+
+	for _, path := range []string{"link.txt", "linkdir/secret.txt", "linkdir/new.txt"} {
+		if _, fileError := ProgramSandboxFileOpenReadWrite(root, programPathMust(t, path)); fileError == nil || fileError.FileErrorCode != FileErrorCodePathOutsideSandbox {
+			t.Errorf("read-write open %q gave %+v", path, fileError)
+		}
+	}
+	if fileError := ProgramSandboxFileRemove(root, programPathMust(t, "linkdir/secret.txt")); fileError == nil || fileError.FileErrorCode != FileErrorCodePathOutsideSandbox {
+		t.Errorf("remove linkdir/secret.txt gave %+v", fileError)
+	}
+	programSandboxOutsideCheck(t, outside)
+	for _, path := range []string{"link.txt", "linkdir"} {
+		if fileError := ProgramSandboxFileRemove(root, programPathMust(t, path)); fileError != nil {
+			t.Errorf("remove the symlink %q: %s", path, fileError.FileErrorMessage)
+		}
+		if _, err := os.Lstat(filepath.Join(sandbox, path)); !os.IsNotExist(err) {
+			t.Errorf("symlink %q still there: %v", path, err)
+		}
+	}
+	programSandboxOutsideCheck(t, outside)
+}
