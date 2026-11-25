@@ -1,0 +1,34 @@
+// serialize of pkg(name), fn(name) and strct(name) gives the package, the
+// function or the struct as the serialized program encodes it, after a
+// header that starts with CXSELECT, see docs/IR.md.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func area(p Point) (a i32) {
+	a = p.x * p.y
+}
+
+func header(b []ui8) {
+	for i := 0; i < 8; i++ {
+		ui8.print(b[i])
+	}
+	ui8.print(b[24])
+	bool.print(len(b) > 25)
+}
+
+func main() {
+	header(serialize(#{pkg(main)}))
+	header(serialize(#{pkg(main) fn(area)}))
+	header(serialize(#{fn(main)}))
+	header(serialize(#{pkg(main) strct(Point)}))
+	var p aff
+	p = #{strct(Point)}
+	var q aff
+	q = p
+	header(serialize(q))
+}

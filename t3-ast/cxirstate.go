@@ -45,6 +45,9 @@ type CxIrState struct {
 	CxIrStateGlobalsDeferred []GlobalDeferred
 	// CxIrStateGlobalInitializers holds the run of SysInitExprs of each global.
 	CxIrStateGlobalInitializers []GlobalInitializer
+	// CxIrStateAffordanceLiterals holds the aff literals whose value is written
+	// once every function body is compiled. It is not serialized.
+	CxIrStateAffordanceLiterals []AffordanceLiteral
 	// CxIrStateNativeNames caches the built-ins CXProgramNativeFind found by
 	// name Gids. It is a compile cache and is not serialized.
 	CxIrStateNativeNames map[NativeNameKey]NativeNameFound

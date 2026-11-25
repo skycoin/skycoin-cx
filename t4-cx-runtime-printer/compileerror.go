@@ -106,6 +106,7 @@ var printerCompileErrorFormats = [ast.CompileErrorCodeEnd - ast.CompileErrorCode
 	ast.CompileErrorCodeImportNameUnknown - ast.CompileErrorCodeNil:               {Format: "%H '%s' is not a global, function or type of package '%s'\n"},
 	ast.CompileErrorCodeFunctionReferenceInput - ast.CompileErrorCodeNil:          {Format: "%H function '%s' expected a function name as input argument %d; '%s' was provided\n"},
 	ast.CompileErrorCodeMethodReceiverType - ast.CompileErrorCodeNil:              {Format: "%H method receiver must be a struct or a pointer to one; '%s' was provided\n"},
+	ast.CompileErrorCodeAffordanceInvalid - ast.CompileErrorCodeNil:               {Format: "%H invalid aff literal: %s\n"},
 }
 
 // PrinterCompileErrorsRegister makes prgrm print its compile errors through

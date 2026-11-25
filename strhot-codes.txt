@@ -19,7 +19,7 @@ STRHOT-005 E open t3-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.C
 STRHOT-006 E open t3-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureGet
 STRHOT-007 E open t3-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructGet
 STRHOT-008 O removed t0-types/types_string.go AllocWrite_str_data not on the run path at dfcc46ab
-STRHOT-009 B open t0-types/types_string.go Read_str_data
+STRHOT-009 B removed t0-types/types_string.go Read_str_data deleted, only the affordance opcodes used it, D5 #500
 STRHOT-010 O removed t0-types/types_string.go Write_str not on the run path at dfcc46ab
 STRHOT-011 B open t0-types/types_string.go Read_str O fixed, boundary opcodes only
 STRHOT-012 O removed t0-util/file.go CXOpenFile not on the run path at dfcc46ab
@@ -30,7 +30,7 @@ STRHOT-016 B open t1-profiling/profiling.go StartCPUProfileOnFile
 STRHOT-017 O removed t3-ast/ast_cxfunction.go *CXFunction.AddInput not on the run path at dfcc46ab
 STRHOT-018 O removed t3-ast/ast_cxfunction.go *CXFunction.AddOutput not on the run path at dfcc46ab
 STRHOT-019 O removed t3-ast/ast_cxfunction.go *CXFunction.AddLocalVariableName not on the run path at dfcc46ab
-STRHOT-020 E open t3-ast/ast_cxpackage.go *CXPackage.GetFunction
+STRHOT-020 E removed t3-ast/ast_cxpackage.go *CXPackage.GetFunction not on the run path since op_aff.go was deleted, D5 #500
 STRHOT-021 O removed t3-ast/ast_cxpackage.go *CXPackage.GetStruct not on the run path at dfcc46ab
 STRHOT-022 O removed t3-ast/ast_cxprogram.go *CXProgram.AddPackage not on the run path at dfcc46ab
 STRHOT-023 O removed t3-ast/ast_cxprogram.go *CXProgram.AddNativeFunctionInArray not on the run path at dfcc46ab
@@ -80,17 +80,17 @@ STRHOT-066 O removed t3-ast/serialize.go packagesByName not on the run path at d
 STRHOT-067 O removed t3-ast/serialize.go structsByName not on the run path at dfcc46ab
 STRHOT-068 O removed t3-ast/serialize.go functionsByName not on the run path at dfcc46ab
 STRHOT-069 O removed t3-ast/serialize.go importsByName not on the run path at dfcc46ab
-STRHOT-070 B open t4-opcodes/op_aff.go GetInferActions
-STRHOT-071 B open t4-opcodes/op_aff.go OpAffPrint
-STRHOT-072 B open t4-opcodes/op_aff.go queryParam
-STRHOT-073 B open t4-opcodes/op_aff.go QueryArgument
-STRHOT-074 B open t4-opcodes/op_aff.go QueryExpressions
-STRHOT-075 B open t4-opcodes/op_aff.go getSignatureSlice
-STRHOT-076 B open t4-opcodes/op_aff.go queryStructsInPackage
-STRHOT-077 B open t4-opcodes/op_aff.go QueryFunction
-STRHOT-078 B open t4-opcodes/op_aff.go QueryCaller
-STRHOT-079 B open t4-opcodes/op_aff.go QueryProgram
-STRHOT-080 B open t4-opcodes/op_aff.go OpAffQuery
+STRHOT-070 B removed t4-opcodes/op_aff.go GetInferActions op_aff.go deleted by decision D5, #500
+STRHOT-071 B removed t4-opcodes/op_aff.go OpAffPrint op_aff.go deleted by decision D5, #500
+STRHOT-072 B removed t4-opcodes/op_aff.go queryParam op_aff.go deleted by decision D5, #500
+STRHOT-073 B removed t4-opcodes/op_aff.go QueryArgument op_aff.go deleted by decision D5, #500
+STRHOT-074 B removed t4-opcodes/op_aff.go QueryExpressions op_aff.go deleted by decision D5, #500
+STRHOT-075 B removed t4-opcodes/op_aff.go getSignatureSlice op_aff.go deleted by decision D5, #500
+STRHOT-076 B removed t4-opcodes/op_aff.go queryStructsInPackage op_aff.go deleted by decision D5, #500
+STRHOT-077 B removed t4-opcodes/op_aff.go QueryFunction op_aff.go deleted by decision D5, #500
+STRHOT-078 B removed t4-opcodes/op_aff.go QueryCaller op_aff.go deleted by decision D5, #500
+STRHOT-079 B removed t4-opcodes/op_aff.go QueryProgram op_aff.go deleted by decision D5, #500
+STRHOT-080 B removed t4-opcodes/op_aff.go OpAffQuery op_aff.go deleted by decision D5, #500
 STRHOT-081 O removed t4-opcodes/op_bool.go OpBoolPrint fixed, byte views of CX memory and the format buffer
 STRHOT-082 O removed t4-opcodes/op_f32.go OpF32ToStr fixed, byte views of CX memory and the format buffer
 STRHOT-083 O removed t4-opcodes/op_f32.go OpF32Print fixed, byte views of CX memory and the format buffer
@@ -293,10 +293,10 @@ STRHOT-279 P removed t3-ast/ast_cxtype_signature.go *CXTypeSignature.GetTypeStri
 STRHOT-280 P removed t3-ast/ast_cxtype_signature.go *CXTypeSignature.GetValueTypeName not on the run path, printing appends with AppendValueTypeName, #412
 STRHOT-281 B open t3-ast/ast_memory.go AllocateStr O fixed, boundary opcodes only
 STRHOT-282 B open t3-ast/ast_memory.go AllocateStrAt O fixed, boundary opcodes only
-STRHOT-283 B open t3-ast/ast_names.go *CXProgram.CXProgramNameFind
+STRHOT-283 B removed t3-ast/ast_names.go *CXProgram.CXProgramNameFind not on the run path since op_aff.go was deleted, D5 #500
 STRHOT-284 B open t3-ast/ast_names.go *CXProgram.CXProgramNameText
 STRHOT-285 E open t3-ast/ast_names.go *CXProgram.CXProgramSourceFileText
-STRHOT-286 B open t3-ast/libraries.go *CXFunction.BuiltInName
+STRHOT-286 B removed t3-ast/libraries.go *CXFunction.BuiltInName not on the run path since op_aff.go was deleted, D5 #500
 STRHOT-287 E open t3-ast/libraries.go libraryCall
 STRHOT-288 E open t3-ast/libraries.go RuntimeLibraryDisabledMessage
 STRHOT-289 B open t3-ast/serialize_codec.go deserializeUint8
@@ -327,7 +327,7 @@ STRHOT-313 E open t3-ast/sourcefilemng.go *SourceFileMng.SourceFilePath
 STRHOT-314 P removed t3-ast/tostring.go printPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-315 P removed t3-ast/tostring.go printStructPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-316 E removed t4-opcodes/libraries.go opLibraryCall removed with the opcode registration (D21)
-STRHOT-317 B open t4-opcodes/op_aff.go affFunction
+STRHOT-317 B removed t4-opcodes/op_aff.go affFunction op_aff.go deleted by decision D5, #500
 STRHOT-318 O removed t4-opcodes/op_str.go OpStrBytesOfString fixed, byte views of CX memory and the format buffer
 STRHOT-319 O removed t4-opcodes/op_str.go OpStrStringOfBytes fixed, byte views of CX memory and the format buffer
 STRHOT-320 P removed t4-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412

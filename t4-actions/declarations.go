@@ -64,11 +64,6 @@ func DeclarationSpecifiers(declSpec *ast.CXArgument, arrayLengths []types.Pointe
 func DeclarationSpecifiersBasic(prgrm *ast.CXProgram, typeCode types.Code) *ast.CXArgument {
 	_, arg := ast.MakeArgument(prgrm, stringpool.StringGidNil, CurrentFile, LineNo)
 	arg.SetType(typeCode)
-	if typeCode == types.AFF {
-		// equivalent to slice of strings
-		return DeclarationSpecifiers(arg, []types.Pointer{0}, constants.DECL_SLICE)
-	}
-
 	return DeclarationSpecifiers(arg, []types.Pointer{0}, constants.DECL_BASIC)
 }
 

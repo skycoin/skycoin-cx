@@ -18,7 +18,6 @@ type CXPackageMethodKey struct {
 
 // GetFunction returns the function fnName of pkg. A function of an import
 // is reached as pkg.name or through an import into scope, see #487.
-// VIOLATION STRHOT-020: E, error or assert text, built on a failure branch only, #412.
 func (pkg *CXPackage) GetFunction(prgrm *CXProgram, fnName stringpool.StringGid) (*CXFunction, error) {
 	if fnIdx, ok := pkg.Functions[fnName]; ok {
 		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.

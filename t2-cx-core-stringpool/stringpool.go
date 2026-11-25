@@ -74,7 +74,7 @@ func (pool *StringPool) StringPoolIntern(bytes []byte) StringGid {
 
 // StringPoolFind returns the Gid of bytes without interning them, and false
 // when they were never interned. On a frozen pool it scans every slot, so it is
-// for rare run time lookups by text such as affordances.
+// for rare run time lookups by text.
 // VIOLATION STRHOT-275: B, name text for compiler code run by an opcode, #412.
 func (pool *StringPool) StringPoolFind(text []byte) (StringGid, bool) {
 	if len(text) == 0 {

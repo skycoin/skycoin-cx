@@ -107,7 +107,7 @@
                         ASSIGN CASSIGN IMPORT RETURN GOTO GT_OP LT_OP GTEQ_OP LTEQ_OP EQUAL COLON NEW
                         EQUALWORD GTHANWORD LTHANWORD
                         GTHANEQ LTHANEQ UNEQUAL AND OR
-                        ADD_OP SUB_OP MUL_OP DIV_OP MOD_OP REF_OP NEG_OP AFFVAR
+                        ADD_OP SUB_OP MUL_OP DIV_OP MOD_OP REF_OP NEG_OP
                         PLUSPLUS MINUSMINUS REMAINDER LEFTSHIFT RIGHTSHIFT EXP
                         NOT
                         BITXOR_OP BITOR_OP BITCLEAR_OP
@@ -135,7 +135,7 @@
                         /* Debugging */
                         DSTACK DPROGRAM DSTATE
                         /* Affordances */
-                        AFF CAFF TAG INFER VALUE
+                        AFF TAG INFER VALUE
                         /* Pointers */
                         ADDR
 
@@ -684,47 +684,20 @@ compound_literal_expression:
 
 
 
-/* infer_action_arg: */
-/*                 MUL_OP GT_OP assignment_expression */
-/*         |       MUL_OP GT_OP MUL_OP */
-/*         ; */
-
-infer_action_arg:
-                IDENTIFIER
-        |       INT_LITERAL
-	|	type_specifier PERIOD IDENTIFIER
+affordance_clause:
+                IDENTIFIER LPAREN IDENTIFIER RPAREN
+        |       VAR LPAREN IDENTIFIER RPAREN
         ;
 
-infer_action:
-                IDENTIFIER LPAREN infer_action_arg COMMA IDENTIFIER RPAREN
-	|	IDENTIFIER LPAREN infer_action_arg RPAREN
-	|	IDENTIFIER LPAREN infer_action RPAREN
-	|	IDENTIFIER LPAREN infer_action COMMA infer_action RPAREN
+affordance_clauses:
+        |       affordance_clauses affordance_clause
+        |       affordance_clauses SEMICOLON
         ;
-
-infer_actions:
-                infer_action SEMICOLON
-        |       infer_actions infer_action SEMICOLON
-                ;
-
-/* infer_target: */
-/*                 IDENTIFIER LPAREN IDENTIFIER RPAREN SEMICOLON */
-/*         ; */
-
-/* infer_targets: */
-/*                 infer_target */
-/*         |       infer_targets infer_target */
-/*         ; */
-
-infer_clauses:
-        |       infer_actions
-        /* |       infer_targets */
-                ;
 
 primary_expression:
                 IDENTIFIER
         /* |       IDENTIFIER LBRACE struct_literal_fields RBRACE */
-        |       INFER LBRACE infer_clauses RBRACE
+        |       INFER LBRACE affordance_clauses RBRACE
         |       STRING_LITERAL
         |       BOOLEAN_LITERAL
         |       BYTE_LITERAL

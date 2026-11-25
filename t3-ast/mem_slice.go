@@ -254,7 +254,7 @@ func SliceRemove(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 
 // WriteToSlice is used to create slices in the backend, i.e. not by calling `append`
 // in a CX program, but rather by the CX code itself. This function is used by
-// affordances, serialization and to store OS input arguments.
+// serialization and to store OS input arguments.
 // GCREACH: allocates a larger slice object, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
 func WriteToSlice(prgrm *CXProgram, off types.Pointer, inp []byte) types.Pointer {

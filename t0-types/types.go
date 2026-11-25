@@ -53,6 +53,10 @@ const (
 	SLICE_SIZE = POINTER_SIZE
 
 	STR_SIZE = POINTER_SIZE
+
+	// AFF_SIZE is an aff value, four i32 the compiler resolves from an aff
+	// literal, see docs/IR.md.
+	AFF_SIZE = Pointer(16)
 )
 
 type Code int
@@ -142,7 +146,7 @@ var definitions []Type = []Type{
 	{"slice", SLICE_SIZE, false},
 	{"struct", InvalidPointer, false},
 	{"func", InvalidPointer, false},
-	{"aff", InvalidPointer, false},
+	{"aff", AFF_SIZE, false},
 	{"und", InvalidPointer, false},
 	{"ident", POINTER_SIZE, false}, // TODO:PTR use InvalidPointer to track addressing issues.
 	{"invalid type", 0, false},

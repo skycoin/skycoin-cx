@@ -1,0 +1,13 @@
+// deserialize loads a whole program only, so the bytes of a selection are
+// the runtime error CX_RUNTIME_INVALID_ARGUMENT.
+
+package main
+
+var g i32 = 9
+
+func main() {
+	var b []ui8
+	b = serialize(#{var(g)})
+	deserialize(b)
+	i32.print(1)
+}

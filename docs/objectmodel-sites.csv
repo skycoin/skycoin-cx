@@ -622,14 +622,6 @@ S1049,CXExpression,ctor-call,t4-actions/literals.go,626,StructLiteralFields,"ast
 S1050,CXAtomicOperator,get-call,t4-actions/literals.go,629,StructLiteralFields,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S1055,CXExpression,ctor-call,t4-actions/misc.go,96,WritePrimaryExprs,"ast.MakeAtomicOperatorExpression(prgrm, nil)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1057,CXExpression,make-slice,t4-actions/misc.go,104,WritePrimaryExprs,[]ast.CXExpression{*expr},state.CXExpressionMng (manager storage) or []CXExpressionGid,4-alloc,346,CXExpression phase 2-mng
-S1058,CXStruct,ctor-call,t4-actions/misc.go,111,AffordanceStructs,"ast.MakeStruct(""Argument"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1062,CXStruct,ctor-call,t4-actions/misc.go,133,AffordanceStructs,"ast.MakeStruct(""Expression"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1064,CXStruct,ctor-call,t4-actions/misc.go,147,AffordanceStructs,"ast.MakeStruct(""Function"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1068,CXStruct,ctor-call,t4-actions/misc.go,176,AffordanceStructs,"ast.MakeStruct(""Structure"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1070,CXStruct,ctor-call,t4-actions/misc.go,190,AffordanceStructs,"ast.MakeStruct(""Structure"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1072,CXStruct,ctor-call,t4-actions/misc.go,204,AffordanceStructs,"ast.MakeStruct(""Caller"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1075,CXStruct,ctor-call,t4-actions/misc.go,222,AffordanceStructs,"ast.MakeStruct(""Program"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1078,CXPackage,get-call,t4-actions/misc.go,235,AffordanceStructs,prgrm.GetPackageFromArray(callStrct.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S1080,CXExpression,ctor-call,t4-actions/misc.go,265,PrimaryIdentifier,"ast.MakeAtomicOperatorExpression(prgrm, nil)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1081,CXAtomicOperator,get-call,t4-actions/misc.go,268,PrimaryIdentifier,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S1083,CXExpression,make-slice,t4-actions/misc.go,278,PrimaryIdentifier,[]ast.CXExpression{*expr},state.CXExpressionMng (manager storage) or []CXExpressionGid,4-alloc,346,CXExpression phase 2-mng
@@ -724,44 +716,6 @@ S1249,CXCall,ctor-call,t4-execute/execute.go,49,runSysInitFunc,"MakeCall(cxprogr
 S1250,CXCall,ctor-call,t4-execute/execute.go,122,RunCompiled,"MakeCall(cxprogram, fn)",state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng
 S1251,CXCall,ctor-def,t4-execute/execute.go,159,MakeCall,func MakeCall,state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng
 S1252,CXCall,alloc-literal-value,t4-execute/execute.go,162,MakeCall,"ast.CXCall{ Operator: op, Line: 0, FramePointer: 0, }",state.CXCallMng.CXCallAlloc(),4-alloc,366,CXCall phase 2-mng
-S1253,CXTypeSignature,get-call,t4-opcodes/op_aff.go,79,CallAffPredicate,prgrm.GetCXTypeSignatureFromArray(newCallOperatorInputs[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1254,CXTypeSignature,get-call,t4-opcodes/op_aff.go,103,CallAffPredicate,prgrm.GetCXTypeSignatureFromArray(newCallOperatorOutputs[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1255,CXArgument,get-call,t4-opcodes/op_aff.go,117,queryParam,prgrm.GetCXArgFromArray(argIdx),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1256,CXPackage,get-call,t4-opcodes/op_aff.go,124,queryParam,prgrm.GetPackageFromArray(elt.StructType.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1257,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,173,QueryArgument,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1258,CXFunction,get-call,t4-opcodes/op_aff.go,180,QueryArgument,prgrm.GetFunctionFromArray(cxAtomicOp.Function),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S1259,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,185,QueryArgument,prgrm.GetCXAtomicOp(ex.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1260,CXTypeSignature,get-call,t4-opcodes/op_aff.go,199,QueryArgument,prgrm.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1261,CXTypeSignature,get-call,t4-opcodes/op_aff.go,212,QueryArgument,prgrm.GetCXTypeSignatureFromArray(outputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1262,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,227,QueryExpressions,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1263,CXFunction,get-call,t4-opcodes/op_aff.go,234,QueryExpressions,prgrm.GetFunctionFromArray(cxAtomicOp.Function),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S1264,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,239,QueryExpressions,prgrm.GetCXAtomicOp(ex.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1265,CXFunction,get-call,t4-opcodes/op_aff.go,245,QueryExpressions,prgrm.GetFunctionFromArray(exCXAtomicOp.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S1266,CXArgument,get-call,t4-opcodes/op_aff.go,291,getSignatureSlice,prgrm.GetCXArgFromArray(paramIdx),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1267,CXTypeSignature,get-call,t4-opcodes/op_aff.go,297,getSignatureSlice,prgrm.GetCXTypeSignatureFromArray(paramIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1268,CXArgument,get-call,t4-opcodes/op_aff.go,301,getSignatureSlice,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(param.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1269,CXPackage,get-call,t4-opcodes/op_aff.go,313,getSignatureSlice,prgrm.GetPackageFromArray(param.StructType.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1270,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,364,QueryStructure,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1271,CXPackage,get-call,t4-opcodes/op_aff.go,371,QueryStructure,prgrm.GetPackageFromArray(cxAtomicOp.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1272,CXPackage,get-call,t4-opcodes/op_aff.go,380,QueryStructure,prgrm.GetPackageFromArray(impIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1273,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,392,QueryFunction,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1274,CXPackage,get-call,t4-opcodes/op_aff.go,399,QueryFunction,prgrm.GetPackageFromArray(cxAtomicOp.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1275,CXFunction,get-call,t4-opcodes/op_aff.go,406,QueryFunction,prgrm.GetFunctionFromArray(fIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S1276,CXPackage,get-call,t4-opcodes/op_aff.go,464,QueryCaller,prgrm.GetPackageFromArray(call.Operator.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1277,CXPackage,get-call,t4-opcodes/op_aff.go,511,QueryProgram,prgrm.GetPackageFromArray(call.Operator.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1278,CXPackage,alloc-copy,t4-opcodes/op_aff.go,564,getTarget,*tgtPkg = *pkg,state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1279,CXFunction,alloc-copy,t4-opcodes/op_aff.go,572,getTarget,*tgtFn = *fn,state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S1280,CXExpression,alloc-copy,t4-opcodes/op_aff.go,580,getTarget,*tgtExpr = *expr,state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
-S1281,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,619,getAffordances,prgrm.GetCXAtomicOp(tgtExpr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1282,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,887,readArgAff,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1283,CXAtomicOperator,get-call,t4-opcodes/op_aff.go,934,readArgAff,prgrm.GetCXAtomicOp(affExpr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1284,CXTypeSignature,get-call,t4-opcodes/op_aff.go,943,readArgAff,prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetInputs(prgrm)[argIdx]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1286,CXArgument,get-call,t4-opcodes/op_aff.go,948,readArgAff,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpInputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1287,CXTypeSignature,get-call,t4-opcodes/op_aff.go,958,readArgAff,prgrm.GetCXTypeSignatureFromArray(affExprAtomicOp.GetOutputs(prgrm)[argIdx]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1289,CXArgument,get-call,t4-opcodes/op_aff.go,963,readArgAff,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(affExprAtomicOpOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1290,CXPackage,get-call,t4-opcodes/op_aff.go,1268,opAffQuery,prgrm.GetPackageFromArray(inputs[0].TypeSignature.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1291,CXTypeSignature,get-call,t4-opcodes/op_aff.go,1325,opAffQuery,prgrm.GetCXTypeSignatureFromArray(fnInputs[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1292,CXArgument,get-call,t4-opcodes/op_aff.go,1330,opAffQuery,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fnInputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1294,CXAtomicOperator,get-call,t4-opcodes/op_i32.go,236,opI32JmpEq,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S1295,CXAtomicOperator,get-call,t4-opcodes/op_i32.go,255,opI32JmpUnEq,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S1296,CXAtomicOperator,get-call,t4-opcodes/op_i32.go,274,opI32JmpGt,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc

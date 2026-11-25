@@ -607,32 +607,35 @@ func deserializeStringGid(decoder *serializeDecoder, pool *stringpool.StringPool
 func serializePackages(prgrm *CXProgram, encoder *serializeEncoder) error {
 	encoder.serializeEncoderLength(len(prgrm.CXPackages), prgrm.CXPackages == nil)
 	for i := range prgrm.CXPackages {
-		pkg := &prgrm.CXPackages[i]
-		encoder.serializeEncoderInt(int64(pkg.Name))
-		encoder.serializeEncoderInt(int64(pkg.Index))
-		serializeNameMap(encoder, pkg.Imports)
-		serializeNameMap(encoder, pkg.Functions)
-		serializeNameMap(encoder, pkg.Structs)
-		keys := make([]CXPackageMethodKey, 0, len(pkg.Methods))
-		for key := range pkg.Methods {
-			keys = append(keys, key)
-		}
-		sort.Slice(keys, func(i, j int) bool {
-			if keys[i].CXPackageMethodKeyStruct != keys[j].CXPackageMethodKeyStruct {
-				return keys[i].CXPackageMethodKeyStruct < keys[j].CXPackageMethodKeyStruct
-			}
-			return keys[i].CXPackageMethodKeyMethod < keys[j].CXPackageMethodKeyMethod
-		})
-		encoder.serializeEncoderLength(len(keys), pkg.Methods == nil)
-		for _, key := range keys {
-			encoder.serializeEncoderInt(int64(key.CXPackageMethodKeyStruct))
-			encoder.serializeEncoderInt(int64(key.CXPackageMethodKeyMethod))
-			encoder.serializeEncoderInt(int64(pkg.Methods[key]))
-		}
-		serializeOwnedStruct(encoder, pkg.Globals)
-		encoder.serializeEncoderInt(int64(pkg.CurrentFunction))
+		serializePackage(encoder, &prgrm.CXPackages[i])
 	}
 	return nil
+}
+
+func serializePackage(encoder *serializeEncoder, pkg *CXPackage) {
+	encoder.serializeEncoderInt(int64(pkg.Name))
+	encoder.serializeEncoderInt(int64(pkg.Index))
+	serializeNameMap(encoder, pkg.Imports)
+	serializeNameMap(encoder, pkg.Functions)
+	serializeNameMap(encoder, pkg.Structs)
+	keys := make([]CXPackageMethodKey, 0, len(pkg.Methods))
+	for key := range pkg.Methods {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].CXPackageMethodKeyStruct != keys[j].CXPackageMethodKeyStruct {
+			return keys[i].CXPackageMethodKeyStruct < keys[j].CXPackageMethodKeyStruct
+		}
+		return keys[i].CXPackageMethodKeyMethod < keys[j].CXPackageMethodKeyMethod
+	})
+	encoder.serializeEncoderLength(len(keys), pkg.Methods == nil)
+	for _, key := range keys {
+		encoder.serializeEncoderInt(int64(key.CXPackageMethodKeyStruct))
+		encoder.serializeEncoderInt(int64(key.CXPackageMethodKeyMethod))
+		encoder.serializeEncoderInt(int64(pkg.Methods[key]))
+	}
+	serializeOwnedStruct(encoder, pkg.Globals)
+	encoder.serializeEncoderInt(int64(pkg.CurrentFunction))
 }
 
 func deserializePackages(prgrm *CXProgram, decoder *serializeDecoder) {

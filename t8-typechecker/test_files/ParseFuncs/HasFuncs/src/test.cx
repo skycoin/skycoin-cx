@@ -39,7 +39,7 @@ func main () { global Bool, Byte, I16, I32, I64, UByte, UI16, UI32, UI64, F32, F
 	f32.print(F32)
 	f64.print(F64)
 	string.PrintLine(string)
-	aff.print(Affordance)
+	serialize(Affordance)
 	
 
 	//Addition

@@ -785,10 +785,6 @@ func CoreOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 		opcodes.OpPanicIfNot(prgrm, inputs, outputs)
 	case 579:
 		opcodes.OpStrError(prgrm, inputs, outputs)
-	case 580:
-		opcodes.OpAffPrint(prgrm, inputs, outputs)
-	case 581:
-		opcodes.OpAffQuery(prgrm, inputs, outputs)
 	case 586:
 		opcodes.OpStrEqualByValue(prgrm, inputs, outputs)
 	case 587:

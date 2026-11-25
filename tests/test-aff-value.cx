@@ -1,0 +1,36 @@
+// An aff value is a value: it is copied by assignment, passed to a function
+// and kept in a global, and the zero value selects the whole program.
+
+package main
+
+var selected aff = #{var(count)}
+
+var count i32 = 3
+
+func bytes(selection aff) (b []ui8) {
+	b = serialize(selection)
+}
+
+func main() {
+	global selected
+	var b []ui8
+	b = bytes(selected)
+	i32.print(len(b))
+	ui8.print(b[0])
+
+	var zero aff
+	var program []ui8
+	program = serialize(zero)
+	var literal []ui8
+	literal = serialize(#{})
+	ui8.print(program[3])
+	ui8.print(literal[3])
+	deserialize(program)
+	deserialize(literal)
+
+	var copied aff
+	copied = #{mem(data)}
+	selected = copied
+	b = bytes(selected)
+	bool.print(len(b) > 0)
+}

@@ -498,7 +498,7 @@ func TestTypeChecker_ParseGlobals(t *testing.T) {
 					Name:    "Affordance",
 					Index:   12,
 					Package: "main",
-					Type:    "[]aff",
+					Type:    "aff",
 				},
 				{
 					Name:    "intArray",
@@ -1060,7 +1060,7 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 						},
 						{
 							Name: "Affordance",
-							Type: "[]aff",
+							Type: "aff",
 						},
 						{
 							Name: "intArray",

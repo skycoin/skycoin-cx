@@ -117,10 +117,6 @@ func DeclareImportAt(prgrm *ast.CXProgram, impName string, currentFile ast.Sourc
 		pkg.AddImport(prgrm, newImp)
 
 		prgrm.CurrentPackage = ast.CXPackageIndex(pkg.Index)
-
-		if ident == "aff" {
-			AffordanceStructs(prgrm, newImp, currentFile, lineNo)
-		}
 	} else {
 		// This should never happen.
 		panic(fmt.Sprintf("error: %s:%d: unkown error when trying to read package '%s'", prgrm.CXProgramSourceFileText(currentFile), lineNo, ident))

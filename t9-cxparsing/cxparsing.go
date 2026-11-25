@@ -122,6 +122,7 @@ func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 	}
 
 	profiling.StopProfile("4. passtwo")
+	actions.AffordanceLiteralsResolve(actions.AST)
 	actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 	if globals.FoundCompileErrors || parseErrors > 0 {

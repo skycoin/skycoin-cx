@@ -112,6 +112,8 @@ package constants
 // 2611240001  deprecated    593 gl.Strs
 // 2611240001  deprecated    594 gl.Free
 // 2611240003  deprecated    134 cipher.GenerateKeyPair
+// 2611250002  deprecated    580 aff.print
+// 2611250002  deprecated    581 aff.query
 // 2711200001  reassignable  559 str.eq
 // 2711200001  reassignable  560 str.uneq
 // 2711200001  reassignable  582 str.lt
@@ -190,6 +192,8 @@ package constants
 // 2711240001  reassignable  592 gl.Destroy
 // 2711240001  reassignable  593 gl.Strs
 // 2711240001  reassignable  594 gl.Free
+// 2711250001  reassignable  580 aff.print
+// 2711250001  reassignable  581 aff.query
 //
 // Interval format. A version is yymmddnnnn, so version / 100000000 is the
 // year since 2000, the next two digits the month, the next two the day and

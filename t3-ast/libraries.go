@@ -35,7 +35,6 @@ func LibraryFunctionLinked(library int, function int) bool {
 
 // BuiltInName returns the name of the built-in fn calls, the library function
 // for constants.OP_LIBRARY_CALL and the opcode otherwise.
-// VIOLATION STRHOT-286: B, name text for compiler code run by an opcode, #412.
 func (fn *CXFunction) BuiltInName() string {
 	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		// A binary that does not link the library, such as a cx build core,

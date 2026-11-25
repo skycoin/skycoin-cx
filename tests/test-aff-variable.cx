@@ -1,0 +1,45 @@
+// serialize of var(name) gives the bytes of a global, or with fn(name) of a
+// variable of the innermost running call of that function.
+
+package main
+
+type Point struct {
+	x i32
+	y i32
+}
+
+var g i32 = 258
+
+func show(b []ui8) {
+	i32.print(len(b))
+	for i := 0; i < len(b); i++ {
+		ui8.print(b[i])
+	}
+}
+
+func inner(p Point) {
+	show(serialize(#{fn(inner) var(p)}))
+	show(serialize(#{pkg(main) fn(outer) var(n)}))
+}
+
+func outer() {
+	var n i32 = 5
+	inner(Point{x: 1, y: 2})
+}
+
+func countdown(d i32) {
+	if d > 0 {
+		countdown(d - 1)
+	} else {
+		show(serialize(#{fn(countdown) var(d)}))
+	}
+}
+
+func main() {
+	global g
+	show(serialize(#{pkg(main) var(g)}))
+	g = 7
+	show(serialize(#{var(g)}))
+	outer()
+	countdown(3)
+}

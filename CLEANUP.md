@@ -121,7 +121,7 @@ Counts are files, not rows.
 |---|---|---:|---|---|---|
 | cx | `tests/examples/` | 176 | keep | `tests/examples` | Canonical example corpus, the playground copy duplicates 150 of these |
 | cx-playground | `examples/` | 16 | merge | `skycoin-cx/tests/examples` | 150 of 160 files are byte identical to cx tests/examples, serve that copy instead |
-| cx-playground | `examples/affordances/` | 31 | merge | `skycoin-cx/tests/examples` | 150 of 160 files are byte identical to cx tests/examples, serve that copy instead |
+| cx-playground | `examples/affordances/` | 31 | delete | | aff.query and the other query functions were dropped by decision D5 (#500), skycoin-cx removed its copy |
 | cx-playground | `examples/blockchain/` | 9 | merge | `skycoin-cx/tests/examples` | 150 of 160 files are byte identical to cx tests/examples, serve that copy instead |
 | cx-playground | `examples/book/` | 38 | merge | `skycoin-cx/tests/examples` | 150 of 160 files are byte identical to cx tests/examples, serve that copy instead |
 | cx-playground | `examples/buggy-examples/` | 22 | merge | `skycoin-cx/tests/examples` | 150 of 160 files are byte identical to cx tests/examples, serve that copy instead |

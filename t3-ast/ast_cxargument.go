@@ -35,7 +35,7 @@ func CXArgumentTakesAddress(prgrm *CXProgram, out *CXArgument, input *CXTypeSign
 	if specs := out.DeclarationSpecifiers; len(specs) > 0 && specs[len(specs)-1] == constants.DECL_POINTER && len(out.DereferenceOperations) == 0 && CXTypeSignaturePassBy(prgrm, input) == constants.PASSBY_REFERENCE {
 		return true
 	}
-	return out.IsPointer() && out.PointerTargetType != types.STR && out.Type != types.AFF && !CXTypeSignaturePointerValue(prgrm, input)
+	return out.IsPointer() && out.PointerTargetType != types.STR && !CXTypeSignaturePointerValue(prgrm, input)
 }
 
 // CXTypeSignatureStructTakesAddress reports whether assigning input to the

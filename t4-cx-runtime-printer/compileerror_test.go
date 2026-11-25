@@ -108,6 +108,7 @@ func TestPrinterCompileErrorAppend(t *testing.T) {
 		{ast.CompileErrorCodeImportNameUnknown, ast.CompileErrorOperands{text("Missing"), text("geometry")}, header + " 'Missing' is not a global, function or type of package 'geometry'\n"},
 		{ast.CompileErrorCodeFunctionReferenceInput, ast.CompileErrorOperands{text("glfw.SetKeyboardCallback"), 2, text("str")}, header + " function 'glfw.SetKeyboardCallback' expected a function name as input argument 2; 'str' was provided\n"},
 		{ast.CompileErrorCodeMethodReceiverType, ast.CompileErrorOperands{text("i32")}, header + " method receiver must be a struct or a pointer to one; 'i32' was provided\n"},
+		{ast.CompileErrorCodeAffordanceInvalid, ast.CompileErrorOperands{text("unknown clause 'expr', expected mem, pkg, fn, var or strct")}, header + " invalid aff literal: unknown clause 'expr', expected mem, pkg, fn, var or strct\n"},
 	}
 
 	covered := map[ast.CompileErrorCode]bool{}

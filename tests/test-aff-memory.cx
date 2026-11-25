@@ -1,0 +1,17 @@
+// serialize of mem(data), mem(stack) and mem(heap) gives the bytes in use of
+// that memory segment.
+
+package main
+
+func main() {
+	var b []ui8
+	b = serialize(#{mem(stack)})
+	i32.print(len(b))
+	b = serialize(#{mem(data)})
+	i32.print(len(b))
+	b = serialize(#{mem(heap)})
+	var before i32
+	before = len(b)
+	b = serialize(#{mem(heap)})
+	bool.print(len(b) > before)
+}

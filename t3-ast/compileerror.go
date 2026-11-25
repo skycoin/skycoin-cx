@@ -157,6 +157,9 @@ const (
 	// CompileErrorCodeMethodReceiverType is a method receiver that is not a
 	// struct or a pointer to one, at the receiver. Its operand is the type.
 	CompileErrorCodeMethodReceiverType
+	// CompileErrorCodeAffordanceInvalid is an aff literal the compiler does not
+	// accept, at its clause. Its operand says why.
+	CompileErrorCodeAffordanceInvalid
 	// CompileErrorCodeEnd is one past the last code.
 	CompileErrorCodeEnd
 )

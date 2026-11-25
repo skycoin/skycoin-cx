@@ -1,0 +1,15 @@
+// serialize of a variable of a function that has no running call is the
+// runtime error CX_RUNTIME_INVALID_ARGUMENT.
+
+package main
+
+func other() {
+	var x i32 = 1
+	i32.print(x)
+}
+
+func main() {
+	var b []ui8
+	b = serialize(#{fn(other) var(x)})
+	i32.print(len(b))
+}

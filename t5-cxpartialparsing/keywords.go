@@ -42,7 +42,6 @@ var KeywordMap map[string]int = map[string]int{
 	":dp":       DPROGRAM,
 	":dProgram": DPROGRAM,
 	":rem":      REM,
-	":aff":      CAFF,
 	"def":       DEF,
 	"clauses":   CLAUSES,
 	"field":     FIELD,

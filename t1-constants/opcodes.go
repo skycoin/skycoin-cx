@@ -527,8 +527,8 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{577, "panicIf", 0, 0, 0},
 	{578, "panicIfNot", 0, 0, 0},
 	{579, "strerror", 0, 0, 0},
-	{580, "aff.print", 0, 0, 0},
-	{581, "aff.query", 0, 0, 0},
+	{580, "aff.print", 0, 2611250002, 2711250001},
+	{581, "aff.query", 0, 2611250002, 2711250001},
 	{582, "str.lt", 0, 2611200001, 2711200001},   // 582 str.lt: added 0000000000, deprecated 2611200001, reassignable from 2711200001
 	{583, "str.lteq", 0, 2611200001, 2711200001}, // 583 str.lteq: added 0000000000, deprecated 2611200001, reassignable from 2711200001
 	{584, "str.gt", 0, 2611200001, 2711200001},   // 584 str.gt: added 0000000000, deprecated 2611200001, reassignable from 2711200001

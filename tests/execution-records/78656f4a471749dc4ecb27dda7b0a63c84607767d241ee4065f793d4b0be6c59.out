@@ -1,0 +1,8 @@
+error: test-aff-local-not-running.cx:13, CX_RUNTIME_INVALID_ARGUMENT, 8
+===Callstack===
+>>> main()
+Expressions
+ 	test-aff-local-not-running.cx:8 : i32.print() : 0
+	test-aff-local-not-running.cx:13 : serialize() : []
+	:-1 : len() : 0
+

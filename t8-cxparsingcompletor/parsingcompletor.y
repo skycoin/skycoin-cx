@@ -1,7 +1,6 @@
 %{
 	package parsingcompletor
 	import (
-		"strconv"
 		"github.com/skycoin/skycoin/src/cipher/encoder"
 		"github.com/skycoin/skycoin-cx/t3-ast"
 		"github.com/skycoin/skycoin-cx/t1-constants"
@@ -85,6 +84,10 @@ build-parser: ## Generate lexer and parser for CX grammar
 
     // The names of a global statement, see #486.
     scopeGlobalNames []actions.ScopeGlobalName
+
+    // The clauses of an aff literal, see #500.
+    affordanceClause actions.AffordanceClauseParsed
+    affordanceClauses []actions.AffordanceClauseParsed
 }
 
 %token  <bool>          BOOLEAN_LITERAL
@@ -104,7 +107,7 @@ build-parser: ## Generate lexer and parser for CX grammar
                         ASSIGN CASSIGN IMPORT RETURN GOTO GT_OP LT_OP GTEQ_OP LTEQ_OP EQUAL COLON NEW
                         EQUALWORD GTHANWORD LTHANWORD
                         GTHANEQ LTHANEQ UNEQUAL AND OR
-                        ADD_OP SUB_OP MUL_OP DIV_OP MOD_OP REF_OP NEG_OP AFFVAR
+                        ADD_OP SUB_OP MUL_OP DIV_OP MOD_OP REF_OP NEG_OP
                         PLUSPLUS MINUSMINUS REMAINDER LEFTSHIFT RIGHTSHIFT EXP
                         NOT
                         BITXOR_OP BITOR_OP BITCLEAR_OP
@@ -132,13 +135,12 @@ build-parser: ## Generate lexer and parser for CX grammar
                         /* Debugging */
                         DSTACK DPROGRAM DSTATE
                         /* Affordances */
-                        AFF CAFF TAG INFER VALUE
+                        AFF TAG INFER VALUE
                         /* Pointers */
                         ADDR
 
                         yyDefault
 
-%type   <i32>           int_value
 
 %type   <tok>           after_period
 %type   <tok>           unary_operator
@@ -160,7 +162,6 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <arguments>     id_list
 %type   <arguments>     types_list
 
-/* %type   <stringA>       package_identifier */
                                 
 %type   <expressions>   assignment_expression
 %type   <expressions>   constant_expression
@@ -228,9 +229,8 @@ build-parser: ## Generate lexer and parser for CX grammar
 %type   <functionIndex>      function_header
 %type   <scopeGlobalNames>   global_names global_name
 
-%type   <string>        infer_action_arg
-%type   <stringA>       infer_action, infer_actions
-%type   <expressions>   infer_clauses
+%type   <affordanceClause>    affordance_clause
+%type   <affordanceClauses>   affordance_clauses
 
 %type   <ints>          indexing_literal
 %type   <ints>          indexing_slice_literal
@@ -778,83 +778,30 @@ compound_literal_expression:
 			$$ = actions.LiteralCompound(actions.AST, $1, $<line>1, $<column>1, nil)
                 }
                 ;
-infer_action_arg:
-                IDENTIFIER
+affordance_clause:
+                IDENTIFIER LPAREN IDENTIFIER RPAREN
+                {
+			$$ = actions.AffordanceClauseParsed{AffordanceClauseParsedName: $1, AffordanceClauseParsedArgument: $3, AffordanceClauseParsedLine: $<line>1, AffordanceClauseParsedColumn: $<column>1}
+                }
+        |       VAR LPAREN IDENTIFIER RPAREN
+                {
+			$$ = actions.AffordanceClauseParsed{AffordanceClauseParsedName: "var", AffordanceClauseParsedArgument: $3, AffordanceClauseParsedLine: $<line>1, AffordanceClauseParsedColumn: $<column>1}
+                }
+        ;
+
+affordance_clauses:
+                {
+			$$ = nil
+                }
+        |       affordance_clauses affordance_clause
+                {
+			$$ = append($1, $2)
+                }
+        |       affordance_clauses SEMICOLON
                 {
 			$$ = $1
                 }
-        |       int_value
-                {
-			$$ = strconv.Itoa(int($1))
-                }
-	|	type_specifier PERIOD IDENTIFIER
-		{
-			$$ = types.Code($1).Name() + "." + $3
-		}
         ;
-
-infer_action:
-                IDENTIFIER LPAREN infer_action_arg COMMA IDENTIFIER RPAREN
-		{
-			res := append([]string{$3}, $5)
-			res = append(res, $1)
-			$$ = res
-		}
-	|	IDENTIFIER LPAREN infer_action_arg RPAREN
-		{
-			$$ = append([]string{$1}, $3)
-		}
-	|	IDENTIFIER LPAREN infer_action RPAREN
-		{
-			$$ = append($3, $1)
-		}
-	|	IDENTIFIER LPAREN infer_action COMMA infer_action RPAREN
-		{
-			res := append($3, $5...)
-			$$ = append(res, $1)
-		}
-        ;
-
-infer_actions:
-                infer_action SEMICOLON
-                {
-			$$ = $1
-                }
-        |       infer_actions infer_action SEMICOLON
-                {
-			$1 = append($1, $2...)
-			$$ = $1
-                }
-                ;
-        ;
-
-infer_clauses:
-                {
-			$$ = actions.SliceLiteralExpression(actions.AST,types.AFF, nil)
-                }
-        |       infer_actions
-                {
-			var exprs []ast.CXExpression
-			for _, str := range $1 {
-				expr := actions.WritePrimaryExprs(actions.AST,types.AFF, encoder.Serialize(str), false)
-				expr[len(expr) - 1].ExpressionType = ast.CXEXPR_ARRAY_LITERAL
-				exprs = append(exprs, expr...)
-			}
-			
-			$$ = actions.SliceLiteralExpression(actions.AST,types.AFF, exprs)
-                }
-                ;
-
-
-int_value:
-            INT_LITERAL
-            {
-		    $$ = $1
-            }
-        |   SUB_OP INT_LITERAL
-            {
-		    $$ = -$2
-            }
 
 primary_expression:
                 IDENTIFIER
@@ -867,9 +814,9 @@ primary_expression:
 		{
 			$$ = nil
 		}
-        |       INFER LBRACE infer_clauses RBRACE
+        |       INFER LBRACE affordance_clauses RBRACE
                 {
-			$$ = $3
+			$$ = actions.AffordanceLiteral(actions.AST, $3, $<line>1)
                 }
         |       STRING_LITERAL
                 {

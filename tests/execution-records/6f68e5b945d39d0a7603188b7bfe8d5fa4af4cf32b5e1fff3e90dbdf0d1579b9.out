@@ -1,0 +1,7 @@
+error: test-aff-deserialize-selection.cx:11, CX_RUNTIME_INVALID_ARGUMENT, 8
+===Callstack===
+>>> main()
+Expressions
+ 	test-aff-deserialize-selection.cx:6 : identity() : 9
+	test-aff-deserialize-selection.cx:10 : serialize() : [9, 0, 0, 0]
+

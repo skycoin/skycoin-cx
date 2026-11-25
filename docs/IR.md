@@ -20,6 +20,7 @@ numbers quoted below are the same in every build. See [Opcodes](#opcodes).
 * [How the VM runs an expression](#how-the-vm-runs-an-expression)
 * [Worked example](#worked-example)
 * [Serialized form](#serialized-form)
+  * [Affordances](#affordances)
   * [Built programs](#built-programs)
 * [Opcodes](#opcodes)
 * [The runtime image](#the-runtime-image)
@@ -347,7 +348,8 @@ pointer into an absolute address in `Memory`, applying the dereferences.
 `SLICE` 15, `STRUCT` 16, `FUNC` 17, `AFF` 18, `UNDEFINED` 19,
 `IDENTIFIER` 20. `Code.Size` gives the byte size. `POINTER`, `STR`,
 `ARRAY`, `SLICE` and `IDENTIFIER` are `types.POINTER_SIZE` bytes, a
-string being a pointer to a heap or data object.
+string being a pointer to a heap or data object. `AFF` is
+`types.AFF_SIZE`, 16 bytes, see [Affordances](#affordances).
 
 ## Memory layout
 
@@ -545,10 +547,38 @@ per-expression native copies.
   section. They add up to the length of the uncompressed bytes.
 
 The CX functions `serialize(aff) []ui8` and `deserialize([]ui8)`
-(`t4-opcodes/op_serialize.go`) serialize the running program with its
-memory and check that bytes hold a program this cx can load. Bytes that do
-not are the runtime error `CX_RUNTIME_INVALID_ARGUMENT`. The affordance does
-not narrow what is serialized yet.
+(`t4-opcodes/op_serialize.go`) serialize what an aff value selects, see
+[Affordances](#affordances), and check that bytes hold a program this cx
+can load. Bytes that do not are the runtime error
+`CX_RUNTIME_INVALID_ARGUMENT`. Both take a slice, so they run on the old
+loop only, and `cx --executor=vm` refuses a program that calls them with
+`opcode outside subset serialize`.
+
+### Affordances
+
+An aff value selects what `serialize` writes (decision D5, #500). It is
+`types.AFF_SIZE`, 16 bytes, four little endian i32 that `ast.AffordanceValue`
+names: the kind, the package index, the item and the type signature index of
+a variable, -1 where unused. The compiler writes the value of each aff
+literal `#{...}` into the data segment once every function body is compiled
+(`actions.AffordanceLiteralsResolve`), so no name is looked up at run time.
+An aff value moves like any other value, on the old loop and on vm.
+
+| Literal | Kind | serialize gives |
+| --- | --- | --- |
+| `#{}`, or the zero value | program | the whole program with its memory, which `deserialize` loads |
+| `#{mem(data)}`, `#{mem(stack)}`, `#{mem(heap)}` | memory | the bytes in use of the segment, the stack up to `Stack.Pointer` and the heap up to `Heap.Pointer` |
+| `#{pkg(p)}` | package | the header, then the package, its structs and its functions as the packages, structs and functions sections encode them |
+| `#{pkg(p) fn(f)}` | function | the header, then the function |
+| `#{pkg(p) strct(s)}` | struct | the header, then the struct |
+| `#{pkg(p) var(v)}` | global | the bytes of the global |
+| `#{pkg(p) fn(f) var(v)}` | local | the bytes of the parameter, result or local variable `v` in the innermost running call of `f` |
+
+The header is laid out as the 24 bytes of a program header with the magic
+`CXSELECT`, followed by the kind as a uvarint. `pkg` defaults to the package
+of the literal. `deserialize` loads only a whole program, so the bytes of
+any other selection are `CX_RUNTIME_INVALID_ARGUMENT`, as is a local of a
+function with no running call.
 
 ### Encoding
 

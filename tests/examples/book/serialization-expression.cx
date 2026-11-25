@@ -12,7 +12,6 @@ func main () {
     var foo i32
     var bar Point
     
-foobar:
     i32.print(foo)
 
     target = #{
@@ -24,11 +23,8 @@ foobar:
     
     target = #{
         pkg(main)
-        fn(bar)
+        fn(main)
         var(bar)
     }
-    result = serialize(target)
-    
-    target = #{pkg(main) fn(bar) expr(foobar)}
     result = serialize(target)
 }

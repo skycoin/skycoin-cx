@@ -19,7 +19,7 @@ func OpSliceLen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 
 		elt := inp0.GetAssignmentElement(prgrm)
 
-		if elt.IsSlice() || elt.Type == types.AFF { //TODO: FIX
+		if elt.IsSlice() {
 			sliceOffset := types.Read_ptr(prgrm.Memory, inputs[0].Offset)
 			if sliceOffset > 0 && sliceOffset.IsValid() {
 				sliceLen = ast.GetSliceLen(prgrm, sliceOffset)
@@ -52,7 +52,7 @@ func OpSliceLen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 			fld := prgrm.GetCXArgFromArray(structDetails.Fields[fldLen-1])
 			fld = fld.GetAssignmentElement(prgrm)
 
-			if fld.IsSlice() || fld.Type == types.AFF { //TODO: FIX
+			if fld.IsSlice() {
 				sliceOffset := types.Read_ptr(prgrm.Memory, inputs[0].Offset)
 				if sliceOffset > 0 && sliceOffset.IsValid() {
 					sliceLen = ast.GetSliceLen(prgrm, sliceOffset)
@@ -217,7 +217,7 @@ func OpSliceAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 			var obj [types.POINTER_SIZE]byte
 			types.Write_ptr(obj[:], 0, ast.PointerOfAddress(prgrm, input.Offset))
 			ast.SliceAppendWrite(prgrm, outputSliceOffset, obj[:], inputSliceLen+types.Cast_int_to_ptr(i))
-		} else if (inpType == types.STR || inpType == types.AFF) && eltSize == types.POINTER_SIZE {
+		} else if inpType == types.STR && eltSize == types.POINTER_SIZE {
 			// An array of str, as [][2]str appends, is copied whole below.
 			var obj [types.POINTER_SIZE]byte
 			types.Write_ptr(obj[:], 0, types.Read_ptr(prgrm.Memory, input.Offset))
@@ -363,7 +363,7 @@ func OpSliceInsertElement(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []
 	index := types.Cast_i32_to_ptr(inputs[1].Get_i32(prgrm))
 
 	var outputSliceOffset types.Pointer
-	if inp2Type == types.STR || inp2Type == types.AFF {
+	if inp2Type == types.STR {
 		var obj [types.POINTER_SIZE]byte
 		types.Write_ptr(obj[:], 0, types.Read_ptr(prgrm.Memory, inputs[2].Offset))
 		outputSliceOffset = ast.SliceInsert(prgrm, fp, outputs[0].TypeSignature, inputs[0].TypeSignature, index, obj[:])

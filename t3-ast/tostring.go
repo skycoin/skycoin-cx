@@ -615,24 +615,6 @@ func SignatureStringOfStruct(prgrm *CXProgram, s *CXStruct) string {
 	return fmt.Sprintf("%s struct {%s }", prgrm.CXProgramNameText(s.Name), fields)
 }
 
-// GetArgSizeFromTypeName ...
-func GetArgSizeFromTypeName(typeName string) int {
-	switch typeName {
-	case "bool", "i8", "ui8":
-		return 1
-	case "i16", "ui16":
-		return 2
-	case "str", "i32", "ui32", "f32", "aff":
-		return 4
-	case "i64", "ui64", "f64":
-		return 8
-	default:
-		return 4
-		// return -1
-		// panic(CX_INTERNAL_ERROR)
-	}
-}
-
 // ArgumentFormattedType is the CX spelling of the type of arg.
 func ArgumentFormattedType(prgrm *CXProgram, arg *CXArgument) string {
 	return getFormattedType_CXArg(prgrm, arg)

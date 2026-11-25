@@ -1786,7 +1786,7 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 			// Now an arena getter, site S0838.
 			output := prgrm.GetCXTypeSignatureFromArray(outputIdx)
 
-			// Only a CXArgument can hold a str or aff value, typed signatures are never strings.
+			// Only a CXArgument can hold a str value, typed signatures are never strings.
 			if output.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
 				continue
 			}
@@ -1808,8 +1808,8 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 				out = out.GetAssignmentElement(prgrm)
 				inp := expressionInputArg.GetAssignmentElement(prgrm)
 
-				if (out.Type == types.STR || out.Type == types.AFF) && out.Name != stringpool.StringGidNil &&
-					(inp.Type == types.STR || inp.Type == types.AFF) && inp.Name != stringpool.StringGidNil {
+				if out.Type == types.STR && out.Name != stringpool.StringGidNil &&
+					inp.Type == types.STR && inp.Name != stringpool.StringGidNil {
 					out.PassBy = constants.PASSBY_VALUE
 				}
 			}

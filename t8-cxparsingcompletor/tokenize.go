@@ -102,8 +102,6 @@ func TokenName(token int) string {
 		return " ADDOP"
 	case AFF:
 		return "   AFF"
-	case AFFVAR:
-		return "AFFVAR"
 	case AND:
 		return "   AND"
 	case AND_ASSIGN:
@@ -134,8 +132,6 @@ func TokenName(token int) string {
 		return " BREAK"
 	case BYTE_LITERAL:
 		return "BYTELT"
-	case CAFF:
-		return "  CAFF"
 	case CASE:
 		return "  CASE"
 	case CASSIGN:

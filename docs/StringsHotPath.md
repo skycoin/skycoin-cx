@@ -36,7 +36,7 @@ free number, and a fixed one is marked removed, never deleted.
 - `E`, only on a failure branch: the text of a panic, an assert or an error.
 - `B`, a boundary. The string goes to Go, the OS or compiler code that an
   opcode runs: file and process opcodes, regexp, tcp, the CPU
-  profile, read, serialize and the affordance queries.
+  profile, read and serialize.
 
 I and O are what #412 removes. P, E and B may stay with their comment. No I,
 O or P code is open. The str to f32 and f64 opcodes parse with

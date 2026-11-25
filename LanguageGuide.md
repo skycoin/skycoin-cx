@@ -46,7 +46,6 @@
     * [If and if/else](#if-and-ifelse-1)
     * [For loop](#for-loop-1)
     * [Go-to](#go-to)
-  * [Affordances](#affordances-1)
 * [Native Functions](#native-functions)
   * [Type-inferenced Functions](#type-inferenced-functions)
   * [Slice Functions](#slice-functions)
@@ -1448,18 +1447,58 @@ that holds 7.
 
 ## [Affordances](#table-of-contents)
 
-The affordance system lets a program ask, at run time, what can be
-done with one of its own objects, such as an expression, a function or
-a package, and filter the answers with predicate functions. A block
-written `#{ ... }` holds the target and the filters, and functions of
-the `aff` package, such as `aff.query`, run the query.
+An affordance selects a part of the running program, and `serialize`
+returns that part as a `[]ui8`. The type `aff` holds one selection, and
+an aff literal `#{ ... }` writes it as clauses, each a name and one
+argument in parentheses. Clauses are separated by spaces, semicolons or
+newlines.
 
-Affordances cannot be used right now, an open bug tracked in
-[#500](https://github.com/skycoin/skycoin-cx/issues/500). Their
-opcodes are still in the compiler, but `aff` is not in the list of
-built-in packages, so `import "aff"` fails and `import "sys/aff"` is an
-unknown built-in package. The programs in `tests/examples/affordances`
-fail to load for the same reason.
+| Clauses | Selects |
+|---|---|
+| none, `#{}` | the whole program with its memory |
+| `mem(data)`, `mem(stack)` or `mem(heap)` | the bytes in use of that memory segment |
+| `pkg(p)` | the package `p` |
+| `pkg(p) fn(f)` | the function `f` |
+| `pkg(p) strct(s)` | the struct `s` |
+| `pkg(p) var(v)` | the bytes of the global `v` |
+| `pkg(p) fn(f) var(v)` | the bytes of the parameter, result or variable `v` of the innermost running call of `f` |
+
+`pkg` may be left out for the package of the literal, and `p` is that
+package or one it imports. `mem` stands alone, and `strct` takes no `fn`
+or `var`. The compiler resolves every name, so an unknown clause or name
+is a compile error. The zero value of an `aff` selects the whole program,
+like `#{}`.
+
+```cx
+package main
+
+var total i32 = 3
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func main() {
+	var b []ui8
+	b = serialize(#{var(total)})
+	i32.print(len(b)) // 4
+	b = serialize(#{pkg(main) strct(Point)})
+	b = serialize(#{
+		mem(stack)
+	})
+	deserialize(serialize(#{}))
+}
+```
+
+`deserialize` checks that bytes hold a whole program this cx can load,
+so only the bytes of `#{}` pass it. A selected package, function or
+struct is encoded as the serialized program encodes it, after a header
+that starts with `CXSELECT`, see
+[docs/IR.md](docs/IR.md#affordances). `serialize` and `deserialize` run
+on the old loop. Querying, filtering and running affordances, as the
+CX book describes with `aff.query`, are not part of the language
+(decision D5, [#500](https://github.com/skycoin/skycoin-cx/issues/500)).
 
 # [Runtime](#table-of-contents)
 
@@ -2685,13 +2724,6 @@ pigeon:
 The program above creates an infinite loop by using `goto`s. The loop
 will keep asking the user to input commands, and will jump to certain
 expression depending on the command.
-
-## [Affordances](#table-of-contents)
-
-![CX Affordances](docs/images/affordances.png)
-
-The diagram shows the design. See [Affordances](#affordances) above for
-why they cannot be used yet.
 
 # [Native Functions](#table-of-contents)
 
@@ -4251,3 +4283,20 @@ before this version must be recompiled.
 | `os.OpenReadWrite(path str) (handle i32)` | 64 | opens a file for reading and writing, creating it when it does not exist and keeping its content |
 | `os.Sync(handle i32) (synced bool)` | 65 | commits the writes of a file to stable storage, and runs on vm |
 | `os.Remove(path str) (removed bool)` | 66 | removes a file or an empty directory inside the sandbox |
+
+## Version 2611250002, 2026-11-25
+
+An aff literal selects what `serialize` writes, see
+[Affordances](#affordances) (decision D5). Its clauses are `mem`, `pkg`,
+`fn`, `var` and `strct`, separated by spaces, semicolons or newlines, so
+`#{pkg(main) strct(Point)}` on one line parses, and `var` is a clause
+name. An `aff` is a 16 byte value the compiler resolves, no longer a
+slice of strings.
+
+| before | from 2611250002 |
+|---|---|
+| `#{pkg(main); var(x);}` did not parse, `var` being a keyword | `#{pkg(main) var(x)}` |
+| `serialize(#{pkg(main)})` gave the whole program | gives the package after a `CXSELECT` header |
+| `aff.print` (580), `aff.query` (581) | deprecated, reassignable from `2711250001` |
+
+Serialized programs from before this version must be recompiled.

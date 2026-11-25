@@ -66,7 +66,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | --- | --- | --- |
 | VMALLOC-001 | fixed in #422 | the expression copy in `CXCall.Call` |
 | VMALLOC-002 | fixed | operand buffers, sized by `RunBuffersPrepare`, those of a `Callback` loop included |
-| VMALLOC-003 | open, boundary | `Read_str`, `Read_str_data`, `CXValue.Get_str`, Go string copies the system library and affordance opcodes use. The str opcodes read views |
+| VMALLOC-003 | open, boundary | `Read_str`, `CXValue.Get_str`, Go string copies the system library opcodes use. The str opcodes read views |
 | VMALLOC-004 | fixed | `fmt.Println` in the print opcodes |
 | VMALLOC-005 | fixed | printf and sprintf append to the format buffer, `%v` and extra arguments included |
 | VMALLOC-006 | fixed | the number to str conversions |
@@ -74,7 +74,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-008 | fixed | `rand.Seed`, a no-op since Go 1.24, removed |
 | VMALLOC-009 | fixed for the run | `EnsureMinimumHeapSize`, called by `RunPrepare`, allocates program memory for the heap cap once |
 | VMALLOC-010 | fixed (D42) | `ResizeMemory` grows the heap into the memory `EnsureMinimumHeapSize` allocated once for the heap cap |
-| VMALLOC-011 | fixed (D42), one rest | the root table, type cache and scratch of the collector are built before the run. A collection grows `GCStateViews` only when more than memory/512 pointers into objects are pending at once, D97. A function the affordance opcodes change gets its roots built at the next collection, a boundary |
+| VMALLOC-011 | fixed (D42), one rest | the root table, type cache and scratch of the collector are built before the run. A collection grows `GCStateViews` only when more than memory/512 pointers into objects are pending at once, D97 |
 | VMALLOC-012 | open, boundary | `ReadSlice_*`, used by the serialize and file opcodes |
 | VMALLOC-013 | not on the run path | `Make_obj` and `Write_str_data` run at compile time |
 | VMALLOC-014 | failure only | the getters build an error only on a miss |
@@ -82,7 +82,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-016 | fixed | assert builds its text only when it fails |
 | VMALLOC-017 | open, boundary | regexp compile and find |
 | VMALLOC-018 | open, boundary | the file, process, profile and read opcodes, and the net functions that open a socket. `os.Sync` on vm allocates nothing, `TestLibraryFileSyncVmAllocs`. The net update, ready reads, reads and writes allocate nothing, see [Networking.md](Networking.md) |
-| VMALLOC-019 | open, boundary | the affordance opcodes run compiler code |
+| VMALLOC-019 | open, boundary | `serialize` of a selection runs the encoder of the serialized form, compiler code, `ast.SerializeAffordance`. The aff literal is resolved at compile time and an aff value is four i32, which move without a Go allocation (D5, #500) |
 | VMALLOC-020 | not heap | CXArgument stack temporaries, #408 |
 | VMALLOC-021 | fixed but nesting | `Callback` runs its nested loop on operand buffers `RunBuffersPrepare` sizes. A callback made inside a callback sizes a set for its depth once |
 | VMALLOC-022 | open, once | a print longer than `ProgramFormatBufferSize` grows the format buffer once |

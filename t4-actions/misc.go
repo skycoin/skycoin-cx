@@ -2,7 +2,6 @@ package actions
 
 import (
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
@@ -30,7 +29,7 @@ func hasDerefOp(arg *ast.CXArgument, spec int) bool {
 }
 
 // WritePrimary writes those bytes to prgrm.Data and returns a new argument
-// for them. The caller takes the argument or releases it. A str or aff
+// for them. The caller takes the argument or releases it. A str
 // literal points to itself, storage being the zero value of a variable,
 // whose pointer stays nil.
 func WritePrimary(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, storage bool) *ast.CXArgument {
@@ -48,7 +47,7 @@ func WritePrimary(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, storag
 	arg.Size = typeCode.Size()
 	arg.Offset = prgrm.Data.Size + prgrm.Data.StartsAt
 
-	if arg.Type == types.STR || arg.Type == types.AFF {
+	if arg.Type == types.STR {
 		arg.Size = types.POINTER_SIZE
 		if !storage {
 			types.Write_ptr(byts, 0, arg.Offset)
@@ -102,122 +101,6 @@ func WritePrimaryExprs(prgrm *ast.CXProgram, typeCode types.Code, byts []byte, i
 	// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 	// Now a slice of objects, site S1057.
 	return []ast.CXExpression{*expr}
-}
-
-func AffordanceStructs(prgrm *ast.CXProgram, pkg *ast.CXPackage, currentFile ast.SourceFileGid, lineNo int) {
-	// Argument type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1058.
-	argStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Argument"))
-	// argStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR)
-
-	_, argFldName := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Name"), types.STR, ast.SourceFileGidNil, 0)
-	_, argFldIndex := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Index"), types.I32, ast.SourceFileGidNil, 0)
-	_, argFldType := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Type"), types.STR, ast.SourceFileGidNil, 0)
-
-	argStrct.AddField(prgrm, argFldName)
-	argStrct.AddField(prgrm, argFldIndex)
-	argStrct.AddField(prgrm, argFldType)
-
-	pkg.AddStruct(prgrm, argStrct)
-
-	// Expression type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1062.
-	exprStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Expression"))
-	// exprStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
-
-	_, exprFldOperator := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Operator"), types.STR, ast.SourceFileGidNil, 0)
-
-	exprStrct.AddField(prgrm, exprFldOperator)
-
-	pkg.AddStruct(prgrm, exprStrct)
-
-	// Function type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1064.
-	fnStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Function"))
-	// fnStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_STR)
-
-	_, fnFldName := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Name"), types.STR, ast.SourceFileGidNil, 0)
-
-	_, fnFldInpSig := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("InputSignature"), types.STR, ast.SourceFileGidNil, 0)
-	fnFldInpSig.Size = types.STR.Size()
-	fnFldInpSig = DeclarationSpecifiers(fnFldInpSig, []types.Pointer{0}, constants.DECL_SLICE)
-
-	_, fnFldOutSig := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("OutputSignature"), types.STR, ast.SourceFileGidNil, 0)
-	fnFldOutSig.Size = types.STR.Size()
-	fnFldOutSig = DeclarationSpecifiers(fnFldOutSig, []types.Pointer{0}, constants.DECL_SLICE)
-
-	fnStrct.AddField(prgrm, fnFldName)
-	fnStrct.AddField(prgrm, fnFldInpSig)
-
-	fnStrct.AddField(prgrm, fnFldOutSig)
-
-	pkg.AddStruct(prgrm, fnStrct)
-
-	// Structure type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1068.
-	strctStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Structure"))
-	// strctStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
-
-	_, strctFldName := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Name"), types.STR, ast.SourceFileGidNil, 0)
-
-	strctStrct.AddField(prgrm, strctFldName)
-
-	pkg.AddStruct(prgrm, strctStrct)
-
-	// Package type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1070.
-	pkgStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Structure"))
-	// pkgStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR)
-
-	_, pkgFldName := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("Name"), types.STR, ast.SourceFileGidNil, 0)
-
-	pkgStrct.AddField(prgrm, pkgFldName)
-
-	pkg.AddStruct(prgrm, pkgStrct)
-
-	// Caller type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1072.
-	callStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Caller"))
-	// callStrct.Size = cxcore.GetArgSize(cxcore.TYPE_STR) + cxcore.GetArgSize(cxcore.TYPE_I32)
-
-	_, callFldFnName := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("FnName"), types.STR, ast.SourceFileGidNil, 0)
-	_, callFldFnSize := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("FnSize"), types.I32, ast.SourceFileGidNil, 0)
-
-	callStrct.AddField(prgrm, callFldFnName)
-	callStrct.AddField(prgrm, callFldFnSize)
-
-	pkg.AddStruct(prgrm, callStrct)
-
-	// Program type
-	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-	// Now a constructor call, site S1075.
-	prgrmStrct := ast.MakeStruct(prgrm.CXProgramNameIntern("Program"))
-	// prgrmStrct.Size = cxcore.GetArgSize(cxcore.TYPE_I32) + cxcore.GetArgSize(cxcore.TYPE_I64)
-
-	_, prgrmFldCallCounter := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("CallCounter"), types.I32, ast.SourceFileGidNil, 0)
-	_, prgrmFldFreeHeap := ast.MakeField(prgrm, prgrm.CXProgramNameIntern("HeapUsed"), types.I64, ast.SourceFileGidNil, 0)
-
-	// prgrmFldCaller := cxcore.MakeField("Caller", cxcore.TYPE_STRUCT, "", 0)
-	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
-	// Now an arena getter, site S1078.
-	strctPkg, err := prgrm.GetPackageFromArray(callStrct.Package)
-	if err != nil {
-		panic(err)
-	}
-	prgrmFldCaller := DeclarationSpecifiersStruct(prgrm, prgrm.CXProgramNameText(callStrct.Name), prgrm.CXProgramNameText(strctPkg.Name), false, currentFile, lineNo, 0)
-	prgrmFldCaller.Name = prgrm.CXProgramNameIntern("Caller")
-
-	prgrmStrct.AddField(prgrm, prgrmFldCallCounter)
-	prgrmStrct.AddField(prgrm, prgrmFldFreeHeap)
-	prgrmStrct.AddField(prgrm, prgrmFldCaller)
-
-	pkg.AddStruct(prgrm, prgrmStrct)
 }
 
 // PrimaryIdentifier creates an identifier expression with an output name of 'ident'.

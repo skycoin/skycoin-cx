@@ -100,7 +100,6 @@ var tok2ideal map[int]string = map[int]string{
 	MOD_OP:          "%",
 	REF_OP:          "&",
 	NEG_OP:          "!",
-	AFFVAR:          "",
 	PLUSPLUS:        "",
 	MINUSMINUS:      "",
 	REMAINDER:       "",
@@ -182,7 +181,6 @@ var tok2ideal map[int]string = map[int]string{
 	DSTATE:   ":dl",
 	/* Affordances */
 	AFF:   "aff",
-	CAFF:  ":aff",
 	TAG:   "",
 	INFER: "#",
 	VALUE: "",

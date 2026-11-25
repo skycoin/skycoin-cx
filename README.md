@@ -103,13 +103,10 @@ error: err.cx:10:6 'g' shadows global declared at err.cx:3:5
 error: err.cx:11:7 identifier 'undefinedthing' does not exist
 ```
 
-Affordances are part of the original design of CX, a way for a program to
-ask at run time what it can do with one of its own objects. They do not work
-in this version. The `aff` package is not a built-in package, so the
-programs in `tests/examples/affordances` fail to load. See
-[Affordances](LanguageGuide.md#affordances) and
-[#500](https://github.com/skycoin/skycoin-cx/issues/500), which tracks
-whether to implement or remove them.
+An affordance selects a part of the running program for `serialize`, the
+whole program, a memory segment, a package, a function, a struct or a
+variable, written as an aff literal such as `#{pkg(main) fn(main) var(x)}`.
+See [Affordances](LanguageGuide.md#affordances).
 
 ## System libraries
 
@@ -261,8 +258,6 @@ See [t0-benchmarks/README.md](t0-benchmarks/README.md).
 - `t7-cxmobile` does not compile and no target builds it
   ([#35](https://github.com/skycoin/skycoin-cx/issues/35)). The mobile files of
   t6-cxfx were removed in #432.
-- Affordances do not work, see above and
-  [#500](https://github.com/skycoin/skycoin-cx/issues/500).
 
 See the [open issues](https://github.com/skycoin/skycoin-cx/issues) for the
 rest, much of it the move to the object model, string pool and error types

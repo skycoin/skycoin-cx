@@ -10,7 +10,6 @@ func (prgrm *CXProgram) CXProgramNameIntern(text string) stringpool.StringGid {
 
 // CXProgramNameFind returns the Gid of a name without interning it, and false
 // when no name has that text. It works on a frozen pool, for run time lookups.
-// VIOLATION STRHOT-283: B, name text for compiler code run by an opcode, #412.
 func (prgrm *CXProgram) CXProgramNameFind(text string) (stringpool.StringGid, bool) {
 	return prgrm.CxIrState.StringPool.StringPoolFind([]byte(text))
 }
