@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -26,14 +26,51 @@ GOVULNCHECK_VERSION := v1.10.0
 NAMES_CSV ?= bin/names.csv
 REPOS ?=
 
-build: ## Build cx and the cx build cores, cx-core and one per system library set, into ./bin
-	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
-	@for set in $(CORE_LIBRARY_SETS); do \
+# release-archives writes one archive per RELEASE_PLATFORMS entry, and
+# SHA256SUMS, into RELEASE_DIR for the tag VERSION.
+VERSION ?=
+RELEASE_DIR ?= bin/release
+RELEASE_PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+
+# CORE_BUILD is recipe shell that builds every cx build core into $$coredir,
+# with the file suffix $$exe and the go build flags $$goflags.
+CORE_BUILD = for set in $(CORE_LIBRARY_SETS); do \
 		suffix=$$(echo "-$$set" | sed "s/^-none$$//; s/,/-/g"); \
 		tags=$$(echo "$$set" | sed "s/^none$$//; s/[a-z][a-z]*/cxcorelibrary&/g; s/,/ /g"); \
-		echo go build -tags=\"$(TAGS) cxcore $$tags\" -o ./bin/cx-core$$suffix$(EXE) ./t6-cx-core-run; \
-		go build -tags="$(TAGS) cxcore $$tags" -o ./bin/cx-core$$suffix$(EXE) ./t6-cx-core-run || exit 1; \
+		echo go build $$goflags -tags=\"$(TAGS) cxcore $$tags\" -o $$coredir/cx-core$$suffix$$exe ./t6-cx-core-run; \
+		go build $$goflags -tags="$(TAGS) cxcore $$tags" -o $$coredir/cx-core$$suffix$$exe ./t6-cx-core-run || exit 1; \
 	done
+
+build: ## Build cx and the cx build cores, cx-core and one per system library set, into ./bin
+	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx
+	@coredir=./bin; exe=$(EXE); goflags=; $(CORE_BUILD)
+
+release-archives: ## Build the archives of release VERSION (a v tag) for RELEASE_PLATFORMS with cgo off, and SHA256SUMS, into RELEASE_DIR
+	@case "$(VERSION)" in v[0-9]*) ;; *) echo "give the tag, as in make release-archives VERSION=v0.9.0"; exit 1 ;; esac
+	rm -rf $(RELEASE_DIR)
+	@set -e; for platform in $(RELEASE_PLATFORMS); do \
+		export GOOS=$${platform%/*} GOARCH=$${platform#*/} CGO_ENABLED=0; \
+		exe=; if test $$GOOS = windows; then exe=.exe; fi; \
+		name=cx-$(VERSION)-$$GOOS-$$GOARCH; coredir=$(RELEASE_DIR)/$$name/bin; goflags="-trimpath -ldflags=-s"; \
+		mkdir -p $$coredir; \
+		echo go build -trimpath -ldflags=\"-s -X main.VERSION=$(VERSION:v%=%)\" -tags=\"$(TAGS)\" -o $$coredir/cx$$exe ./t11-cx; \
+		go build -trimpath -ldflags="-s -X main.VERSION=$(VERSION:v%=%)" -tags="$(TAGS)" -o $$coredir/cx$$exe ./t11-cx; \
+		$(CORE_BUILD); \
+		cp LICENSE README.md CHANGELOG.md $(RELEASE_DIR)/$$name/; \
+		if test $$GOOS = windows; then (cd $(RELEASE_DIR) && zip -qr $$name.zip $$name); \
+		else tar -C $(RELEASE_DIR) -czf $(RELEASE_DIR)/$$name.tar.gz $$name; fi; \
+		rm -r $(RELEASE_DIR)/$$name; \
+	done
+	cd $(RELEASE_DIR) && sha256sum cx-* > SHA256SUMS && cat SHA256SUMS
+
+release-notes: ## Print the release notes of VERSION, its CHANGELOG.md section or else the Unreleased section
+	@echo "The GUI build of cx (the cxfx tag with sys/gl, sys/glfw and sys/gltext) is not included, since it needs cgo. Build it from source with make build-gui. \`cx build --target=llvm\` needs clang on your machine, see docs/LlvmTarget.md."
+	@echo
+	@awk -v version="### $(VERSION)" ' \
+		/^### / { inversion = ($$0 == version || index($$0, version " ") == 1); inunreleased = ($$0 == "### Unreleased"); next } \
+		inversion { found = found $$0 "\n" } \
+		inunreleased { unreleased = unreleased $$0 "\n" } \
+		END { printf "%s", (found != "" ? found : unreleased) }' CHANGELOG.md
 
 build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/GL headers)
 	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/$(CXEXE) ./t11-cx
