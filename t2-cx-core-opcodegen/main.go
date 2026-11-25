@@ -129,8 +129,12 @@ func generate() (*generated, error) {
 		if row.Handler != "" {
 			pkg, function, ok := strings.Cut(row.Handler, ".")
 			group, known := handlerPackages[pkg]
-			if !ok || !known || function == "" || function[0] < 'A' || function[0] > 'Z' {
-				return nil, fmt.Errorf("definition %q: handler %q is not an exported function of a known package", row.Name, row.Handler)
+			if ok && known && group != constants.OpcodeGroupCore && handlerInline(function) {
+				if _, err := inlineCase(row, function); err != nil {
+					return nil, err
+				}
+			} else if !ok || !known || function == "" || function[0] < 'A' || function[0] > 'Z' {
+				return nil, fmt.Errorf("definition %q: handler %q is not an exported function of a known package or an inline call", row.Name, row.Handler)
 			}
 			signature.OpcodeSignatureGroup = group
 			signature.OpcodeSignatureHandled = true

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -82,8 +83,44 @@ func (gen *generated) groupNumbers(group constants.OpcodeGroup) []string {
 }
 
 func (gen *generated) dispatchGroupFile(group dispatchGroup) []byte {
+	var cases bytes.Buffer
+	used := map[string]bool{}
+	for _, row := range constants.OpcodeDefinitionTable {
+		pkg, function, _ := strings.Cut(row.Handler, ".")
+		if row.Handler == "" || handlerPackages[pkg] != group.group {
+			continue
+		}
+		if handlerInline(function) {
+			body, _ := inlineCase(row, function)
+			inlinePackages(function, used)
+			used["types"] = true
+			fmt.Fprintf(&cases, "\tcase %d:\n\t\t%s\n", row.Number, body)
+			continue
+		}
+		call := function
+		if group.importName != "" {
+			call = group.importName + "." + function
+		}
+		fmt.Fprintf(&cases, "\tcase %d:\n\t\t%s(prgrm, inputs, outputs)\n", row.Number, call)
+	}
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "//go:build %s\n\n%spackage %s\n\nimport (\n", group.tag, header, group.pkg)
+	names := make([]string, 0, len(used))
+	for name := range used {
+		if name != "types" {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		fmt.Fprintf(&b, "\t%q\n", inlineImports[name])
+	}
+	if len(names) > 0 {
+		b.WriteString("\n")
+	}
+	if used["types"] {
+		b.WriteString("\t\"github.com/skycoin/skycoin-cx/t0-types\"\n")
+	}
 	if group.pkg == "core" {
 		b.WriteString(astImport)
 	} else {
@@ -95,17 +132,7 @@ func (gen *generated) dispatchGroupFile(group dispatchGroup) []byte {
 	b.WriteString(")\n\n")
 	fmt.Fprintf(&b, "// %s runs the opcode code of constants.%s on its operands\n// and reports false for any other opcode.\n", group.function, groupNames[group.group])
 	fmt.Fprintf(&b, "func %s%s {\n\tswitch code {\n", group.function, dispatchParameters)
-	for _, row := range constants.OpcodeDefinitionTable {
-		pkg, function, _ := strings.Cut(row.Handler, ".")
-		if row.Handler == "" || handlerPackages[pkg] != group.group {
-			continue
-		}
-		call := function
-		if group.importName != "" {
-			call = group.importName + "." + function
-		}
-		fmt.Fprintf(&b, "\tcase %d:\n\t\t%s(prgrm, inputs, outputs)\n", row.Number, call)
-	}
+	b.Write(cases.Bytes())
 	b.WriteString("\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n")
 	return b.Bytes()
 }

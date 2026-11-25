@@ -5,6 +5,10 @@
 package cxfx
 
 import (
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
+	"github.com/go-gl/glfw/v3.3/glfw"
+
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
@@ -37,109 +41,109 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 605:
 		OpGlAppend(prgrm, inputs, outputs)
 	case 606:
-		OpGlMatrixMode(prgrm, inputs, outputs)
+		gl.MatrixMode(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 607:
-		OpGlRotatef(prgrm, inputs, outputs)
+		gl.Rotatef(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset), types.Read_f32(prgrm.Memory, inputs[3].Offset))
 	case 608:
-		OpGlTranslatef(prgrm, inputs, outputs)
+		gl.Translatef(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 609:
-		OpGlLoadIdentity(prgrm, inputs, outputs)
+		gl.LoadIdentity()
 	case 610:
-		OpGlPushMatrix(prgrm, inputs, outputs)
+		gl.PushMatrix()
 	case 611:
-		OpGlPopMatrix(prgrm, inputs, outputs)
+		gl.PopMatrix()
 	case 612:
-		OpGlEnableClientState(prgrm, inputs, outputs)
+		gl.EnableClientState(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 613:
-		OpGlColor3f(prgrm, inputs, outputs)
+		gl.Color3f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 614:
-		OpGlColor4f(prgrm, inputs, outputs)
+		gl.Color4f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset), types.Read_f32(prgrm.Memory, inputs[3].Offset))
 	case 615:
-		OpGlBegin(prgrm, inputs, outputs)
+		gl.Begin(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 616:
-		OpGlEnd(prgrm, inputs, outputs)
+		gl.End()
 	case 617:
-		OpGlNormal3f(prgrm, inputs, outputs)
+		gl.Normal3f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 618:
-		OpGlVertex2f(prgrm, inputs, outputs)
+		gl.Vertex2f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset))
 	case 619:
-		OpGlVertex3f(prgrm, inputs, outputs)
+		gl.Vertex3f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 620:
 		OpGlLightfv(prgrm, inputs, outputs)
 	case 621:
-		OpGlFrustum(prgrm, inputs, outputs)
+		gl.Frustum(types.Read_f64(prgrm.Memory, inputs[0].Offset), types.Read_f64(prgrm.Memory, inputs[1].Offset), types.Read_f64(prgrm.Memory, inputs[2].Offset), types.Read_f64(prgrm.Memory, inputs[3].Offset), types.Read_f64(prgrm.Memory, inputs[4].Offset), types.Read_f64(prgrm.Memory, inputs[5].Offset))
 	case 622:
-		OpGlTexEnvi(prgrm, inputs, outputs)
+		gl.TexEnvi(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), types.Read_i32(prgrm.Memory, inputs[2].Offset))
 	case 623:
-		OpGlOrtho(prgrm, inputs, outputs)
+		gl.Ortho(types.Read_f64(prgrm.Memory, inputs[0].Offset), types.Read_f64(prgrm.Memory, inputs[1].Offset), types.Read_f64(prgrm.Memory, inputs[2].Offset), types.Read_f64(prgrm.Memory, inputs[3].Offset), types.Read_f64(prgrm.Memory, inputs[4].Offset), types.Read_f64(prgrm.Memory, inputs[5].Offset))
 	case 624:
-		OpGlScalef(prgrm, inputs, outputs)
+		gl.Scalef(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 625:
-		OpGlTexCoord2d(prgrm, inputs, outputs)
+		gl.TexCoord2d(types.Read_f64(prgrm.Memory, inputs[0].Offset), types.Read_f64(prgrm.Memory, inputs[1].Offset))
 	case 626:
-		OpGlTexCoord2f(prgrm, inputs, outputs)
+		gl.TexCoord2f(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset))
 	case 627:
-		OpGlCullFace(prgrm, inputs, outputs)
+		gl.CullFace(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 628:
-		OpGlFrontFace(prgrm, inputs, outputs)
+		gl.FrontFace(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 629:
-		OpGlHint(prgrm, inputs, outputs)
+		gl.Hint(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 630:
-		OpGlScissor(prgrm, inputs, outputs)
+		gl.Scissor(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset), types.Read_i32(prgrm.Memory, inputs[3].Offset))
 	case 631:
-		OpGlTexParameteri(prgrm, inputs, outputs)
+		gl.TexParameteri(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), types.Read_i32(prgrm.Memory, inputs[2].Offset))
 	case 632:
 		OpGlTexImage2D(prgrm, inputs, outputs)
 	case 633:
-		OpGlClear(prgrm, inputs, outputs)
+		gl.Clear(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 634:
-		OpGlClearColor(prgrm, inputs, outputs)
+		gl.ClearColor(types.Read_f32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset), types.Read_f32(prgrm.Memory, inputs[3].Offset))
 	case 635:
-		OpGlClearStencil(prgrm, inputs, outputs)
+		gl.ClearStencil(types.Read_i32(prgrm.Memory, inputs[0].Offset))
 	case 636:
-		OpGlClearDepth(prgrm, inputs, outputs)
+		gl.ClearDepth(types.Read_f64(prgrm.Memory, inputs[0].Offset))
 	case 637:
-		OpGlStencilMask(prgrm, inputs, outputs)
+		gl.StencilMask(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 638:
-		OpGlColorMask(prgrm, inputs, outputs)
+		gl.ColorMask(types.Read_bool(prgrm.Memory, inputs[0].Offset), types.Read_bool(prgrm.Memory, inputs[1].Offset), types.Read_bool(prgrm.Memory, inputs[2].Offset), types.Read_bool(prgrm.Memory, inputs[3].Offset))
 	case 639:
-		OpGlDepthMask(prgrm, inputs, outputs)
+		gl.DepthMask(types.Read_bool(prgrm.Memory, inputs[0].Offset))
 	case 640:
-		OpGlDisable(prgrm, inputs, outputs)
+		gl.Disable(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 641:
-		OpGlEnable(prgrm, inputs, outputs)
+		gl.Enable(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 642:
-		OpGlBlendFunc(prgrm, inputs, outputs)
+		gl.BlendFunc(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 643:
-		OpGlStencilFunc(prgrm, inputs, outputs)
+		gl.StencilFunc(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), types.Read_i32(prgrm.Memory, inputs[1].Offset), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)))
 	case 644:
-		OpGlStencilOp(prgrm, inputs, outputs)
+		gl.StencilOp(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)))
 	case 645:
-		OpGlDepthFunc(prgrm, inputs, outputs)
+		gl.DepthFunc(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 646:
-		OpGlGetError(prgrm, inputs, outputs)
+		types.Write_i32(prgrm.Memory, outputs[0].Offset, int32(gl.GetError()))
 	case 647:
 		OpGlGetTexLevelParameteriv(prgrm, inputs, outputs)
 	case 648:
-		OpGlDepthRange(prgrm, inputs, outputs)
+		gl.DepthRange(types.Read_f64(prgrm.Memory, inputs[0].Offset), types.Read_f64(prgrm.Memory, inputs[1].Offset))
 	case 649:
-		OpGlViewport(prgrm, inputs, outputs)
+		gl.Viewport(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset), types.Read_i32(prgrm.Memory, inputs[3].Offset))
 	case 650:
-		OpGlDrawArrays(prgrm, inputs, outputs)
+		gl.DrawArrays(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset))
 	case 651:
-		OpGlDrawElements(prgrm, inputs, outputs)
+		gl.DrawElements(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), types.Read_i32(prgrm.Memory, inputs[1].Offset), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), nil)
 	case 652:
-		OpGlBindTexture(prgrm, inputs, outputs)
+		gl.BindTexture(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 653:
 		OpGlDeleteTextures(prgrm, inputs, outputs)
 	case 654:
 		OpGlGenTextures(prgrm, inputs, outputs)
 	case 655:
-		OpGlActiveTexture(prgrm, inputs, outputs)
+		gl.ActiveTexture(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 656:
-		OpGlBlendFuncSeparate(prgrm, inputs, outputs)
+		gl.BlendFuncSeparate(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[3].Offset)))
 	case 657:
-		OpGlBindBuffer(prgrm, inputs, outputs)
+		gl.BindBuffer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 658:
 		OpGlDeleteBuffers(prgrm, inputs, outputs)
 	case 659:
@@ -151,29 +155,29 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 662:
 		OpGlDrawBuffers(prgrm, inputs, outputs)
 	case 663:
-		OpGlStencilOpSeparate(prgrm, inputs, outputs)
+		gl.StencilOpSeparate(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[3].Offset)))
 	case 664:
-		OpGlStencilFuncSeparate(prgrm, inputs, outputs)
+		gl.StencilFuncSeparate(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), types.Read_i32(prgrm.Memory, inputs[2].Offset), uint32(types.Read_i32(prgrm.Memory, inputs[3].Offset)))
 	case 665:
-		OpGlStencilMaskSeparate(prgrm, inputs, outputs)
+		gl.StencilMaskSeparate(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 666:
-		OpGlAttachShader(prgrm, inputs, outputs)
+		gl.AttachShader(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 667:
 		OpGlBindAttribLocation(prgrm, inputs, outputs)
 	case 668:
-		OpGlCompileShader(prgrm, inputs, outputs)
+		gl.CompileShader(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 669:
-		OpGlCreateProgram(prgrm, inputs, outputs)
+		types.Write_i32(prgrm.Memory, outputs[0].Offset, int32(gl.CreateProgram()))
 	case 670:
-		OpGlCreateShader(prgrm, inputs, outputs)
+		types.Write_i32(prgrm.Memory, outputs[0].Offset, int32(gl.CreateShader(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))))
 	case 671:
-		OpGlDeleteProgram(prgrm, inputs, outputs)
+		gl.DeleteProgram(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 672:
-		OpGlDeleteShader(prgrm, inputs, outputs)
+		gl.DeleteShader(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 673:
-		OpGlDetachShader(prgrm, inputs, outputs)
+		gl.DetachShader(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 674:
-		OpGlEnableVertexAttribArray(prgrm, inputs, outputs)
+		gl.EnableVertexAttribArray(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 675:
 		OpGlGetAttribLocation(prgrm, inputs, outputs)
 	case 676:
@@ -187,27 +191,27 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 680:
 		OpGlGetUniformLocation(prgrm, inputs, outputs)
 	case 681:
-		OpGlLinkProgram(prgrm, inputs, outputs)
+		gl.LinkProgram(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 682:
 		OpGlShaderSource(prgrm, inputs, outputs)
 	case 683:
-		OpGlUseProgram(prgrm, inputs, outputs)
+		gl.UseProgram(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 684:
-		OpGlUniform1f(prgrm, inputs, outputs)
+		gl.Uniform1f(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset))
 	case 685:
-		OpGlUniform2f(prgrm, inputs, outputs)
+		gl.Uniform2f(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset))
 	case 686:
-		OpGlUniform3f(prgrm, inputs, outputs)
+		gl.Uniform3f(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset), types.Read_f32(prgrm.Memory, inputs[3].Offset))
 	case 687:
-		OpGlUniform4f(prgrm, inputs, outputs)
+		gl.Uniform4f(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_f32(prgrm.Memory, inputs[1].Offset), types.Read_f32(prgrm.Memory, inputs[2].Offset), types.Read_f32(prgrm.Memory, inputs[3].Offset), types.Read_f32(prgrm.Memory, inputs[4].Offset))
 	case 688:
-		OpGlUniform1i(prgrm, inputs, outputs)
+		gl.Uniform1i(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset))
 	case 689:
-		OpGlUniform2i(prgrm, inputs, outputs)
+		gl.Uniform2i(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset))
 	case 690:
-		OpGlUniform3i(prgrm, inputs, outputs)
+		gl.Uniform3i(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset), types.Read_i32(prgrm.Memory, inputs[3].Offset))
 	case 691:
-		OpGlUniform4i(prgrm, inputs, outputs)
+		gl.Uniform4i(types.Read_i32(prgrm.Memory, inputs[0].Offset), types.Read_i32(prgrm.Memory, inputs[1].Offset), types.Read_i32(prgrm.Memory, inputs[2].Offset), types.Read_i32(prgrm.Memory, inputs[3].Offset), types.Read_i32(prgrm.Memory, inputs[4].Offset))
 	case 692:
 		OpGlUniform1fv(prgrm, inputs, outputs)
 	case 693:
@@ -237,9 +241,9 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 705:
 		OpGlUniformM44FV(prgrm, inputs, outputs)
 	case 706:
-		OpGlVertexAttribPointer(prgrm, inputs, outputs)
+		gl.VertexAttribPointer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), types.Read_i32(prgrm.Memory, inputs[1].Offset), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), types.Read_bool(prgrm.Memory, inputs[3].Offset), types.Read_i32(prgrm.Memory, inputs[4].Offset), nil)
 	case 707:
-		OpGlVertexAttribPointerI32(prgrm, inputs, outputs)
+		gl.VertexAttribPointer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), types.Read_i32(prgrm.Memory, inputs[1].Offset), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), types.Read_bool(prgrm.Memory, inputs[3].Offset), types.Read_i32(prgrm.Memory, inputs[4].Offset), gl.PtrOffset(int(types.Read_i32(prgrm.Memory, inputs[5].Offset))))
 	case 708:
 		OpGlClearBufferI(prgrm, inputs, outputs)
 	case 709:
@@ -247,31 +251,31 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 710:
 		OpGlClearBufferF(prgrm, inputs, outputs)
 	case 711:
-		OpGlBindRenderbuffer(prgrm, inputs, outputs)
+		gl.BindRenderbuffer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 712:
 		OpGlDeleteRenderbuffers(prgrm, inputs, outputs)
 	case 713:
 		OpGlGenRenderbuffers(prgrm, inputs, outputs)
 	case 714:
-		OpGlRenderbufferStorage(prgrm, inputs, outputs)
+		gl.RenderbufferStorage(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), types.Read_i32(prgrm.Memory, inputs[2].Offset), types.Read_i32(prgrm.Memory, inputs[3].Offset))
 	case 715:
-		OpGlBindFramebuffer(prgrm, inputs, outputs)
+		gl.BindFramebuffer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 716:
 		OpGlDeleteFramebuffers(prgrm, inputs, outputs)
 	case 717:
 		OpGlGenFramebuffers(prgrm, inputs, outputs)
 	case 718:
-		OpGlCheckFramebufferStatus(prgrm, inputs, outputs)
+		types.Write_i32(prgrm.Memory, outputs[0].Offset, int32(gl.CheckFramebufferStatus(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))))
 	case 719:
-		OpGlFramebufferTexture2D(prgrm, inputs, outputs)
+		gl.FramebufferTexture2D(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[3].Offset)), types.Read_i32(prgrm.Memory, inputs[4].Offset))
 	case 720:
-		OpGlFramebufferRenderbuffer(prgrm, inputs, outputs)
+		gl.FramebufferRenderbuffer(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[1].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[2].Offset)), uint32(types.Read_i32(prgrm.Memory, inputs[3].Offset)))
 	case 721:
-		OpGlGenerateMipmap(prgrm, inputs, outputs)
+		gl.GenerateMipmap(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 722:
 		OpGlBindVertexArray(prgrm, inputs, outputs)
 	case 723:
-		OpGlBindVertexArrayCore(prgrm, inputs, outputs)
+		gl.BindVertexArray(uint32(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 724:
 		OpGlDeleteVertexArrays(prgrm, inputs, outputs)
 	case 725:
@@ -285,19 +289,19 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 729:
 		OpGlfwInit(prgrm, inputs, outputs)
 	case 730:
-		OpGlfwWindowHint(prgrm, inputs, outputs)
+		glfw.WindowHint(glfw.Hint(types.Read_i32(prgrm.Memory, inputs[0].Offset)), int(types.Read_i32(prgrm.Memory, inputs[1].Offset)))
 	case 731:
 		OpGlfwCreateWindow(prgrm, inputs, outputs)
 	case 732:
-		OpGlfwMakeContextCurrent(prgrm, inputs, outputs)
+		cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).MakeContextCurrent()
 	case 733:
-		OpGlfwShouldClose(prgrm, inputs, outputs)
+		types.Write_bool(prgrm.Memory, outputs[0].Offset, cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).ShouldClose())
 	case 734:
-		OpGlfwSetShouldClose(prgrm, inputs, outputs)
+		cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).SetShouldClose(types.Read_bool(prgrm.Memory, inputs[1].Offset))
 	case 735:
 		OpGlfwPollEvents(prgrm, inputs, outputs)
 	case 736:
-		OpGlfwSwapBuffers(prgrm, inputs, outputs)
+		cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).SwapBuffers()
 	case 737:
 		OpGlfwGetFramebufferSize(prgrm, inputs, outputs)
 	case 738:
@@ -305,9 +309,9 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 739:
 		OpGlfwGetWindowSize(prgrm, inputs, outputs)
 	case 740:
-		OpGlfwGetTime(prgrm, inputs, outputs)
+		types.Write_f64(prgrm.Memory, outputs[0].Offset, glfw.GetTime())
 	case 741:
-		OpGlfwSwapInterval(prgrm, inputs, outputs)
+		glfw.SwapInterval(int(types.Read_i32(prgrm.Memory, inputs[0].Offset)))
 	case 742:
 		OpGlfwSetStartCallback(prgrm, inputs, outputs)
 	case 743:
@@ -331,11 +335,11 @@ func CxfxOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 	case 752:
 		OpGlfwGetCursorPos(prgrm, inputs, outputs)
 	case 753:
-		OpGlfwSetInputMode(prgrm, inputs, outputs)
+		cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).SetInputMode(glfw.InputMode(types.Read_i32(prgrm.Memory, inputs[1].Offset)), int(types.Read_i32(prgrm.Memory, inputs[2].Offset)))
 	case 754:
-		OpGlfwSetWindowPos(prgrm, inputs, outputs)
+		cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).SetPos(int(types.Read_i32(prgrm.Memory, inputs[1].Offset)), int(types.Read_i32(prgrm.Memory, inputs[2].Offset)))
 	case 755:
-		OpGlfwGetKey(prgrm, inputs, outputs)
+		types.Write_i32(prgrm.Memory, outputs[0].Offset, int32(cxfxWindowGet(types.Read_i32(prgrm.Memory, inputs[0].Offset)).GetKey(glfw.Key(types.Read_i32(prgrm.Memory, inputs[1].Offset)))))
 	case 756:
 		OpGlfwFuncI32I32(prgrm, inputs, outputs)
 	case 757:

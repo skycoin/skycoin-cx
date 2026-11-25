@@ -697,7 +697,10 @@ This document does not list the opcodes. The list is
   operator and name tables of `t1-constants/opcodes_signatures_gen.go` and
   the opcode switch: `CoreOpcodeDispatch` in t5-cx-runtime-core, with the
   `nocxos` and `noregexp` groups in their own files, and `CxfxOpcodeDispatch`
-  in t6-cxfx under the `cxfx` tag. Each case calls the handler directly.
+  in t6-cxfx under the `cxfx` tag. Each case calls the handler directly,
+  or, for a row whose handler is a call such as
+  `cxfx.gl.Clear(uint32(%0))`, makes that call inline with the operands read
+  at their offsets, which the simple GL and GLFW calls do (#432).
   Nothing registers an opcode at startup and a deprecated row has no case.
 * A program that embeds CX, such as the Android playground with its `app`
   functions, adds opcodes outside the table. It names each one in

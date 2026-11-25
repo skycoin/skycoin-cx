@@ -30,6 +30,10 @@ outside the standard library is a system library instead, see
    a pair of `opcodes_linked_*.go` files and a `dispatchGroups` entry. Run
    `make generate-opcodes`, which writes the signature tables and adds the
    handlers to the opcode switch (decision D21). There is no registration.
+   A function that is one Go call on atomic operands can name that call as
+   its handler instead, `"cxfx.gl.Clear(uint32(%0))"` with `%N` for input N,
+   and its case makes the call inline, writing the value to the one output
+   when there is one.
 
 4. **Write `RegisterPackage(prgrm *ast.CXProgram)`** when the package has
    types or structs. In [t4-regexp/init.go](../t4-regexp/init.go) it calls
