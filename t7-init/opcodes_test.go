@@ -34,6 +34,12 @@ func TestOpcodeNamesMatchLifecycleTable(t *testing.T) {
 		if constants.OpcodeNameOf(row.Number) != "" || constants.OpcodeHandled(row.Number) {
 			t.Errorf("deprecated opcode %d %q has a name or a handler", row.Number, row.Name)
 		}
+		// A name may come back only on a live opcode added after the
+		// deprecation, as os.Open did when the file library became opcodes
+		// (D119).
+		if live, found := constants.OpcodeLifecycleLiveByName(row.Name); found && live.VersionAdded > row.VersionDeprecated {
+			continue
+		}
 		if entry, found := ast.NativeNames.NativeNameIndexText(row.Name); found && entry.NativeNameEntryCode >= 0 {
 			t.Errorf("deprecated opcode name %q is opcode %d", row.Name, entry.NativeNameEntryCode)
 		}

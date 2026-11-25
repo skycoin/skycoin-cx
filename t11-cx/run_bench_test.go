@@ -313,8 +313,9 @@ func main() {
 }
 `
 
-// TestRunVmLibraryCallAllocs fails when a LibraryCall on vm, enabled or
-// stopped as disabled, allocates or does not lower (#407, #492).
+// TestRunVmLibraryCallAllocs fails when the file and net opcodes on vm
+// allocate or do not lower, or when the loader does not refuse them for a
+// run that does not enable their libraries (#407, #492, D119).
 func TestRunVmLibraryCallAllocs(t *testing.T) {
 	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 	initProgram()
@@ -326,11 +327,15 @@ func TestRunVmLibraryCallAllocs(t *testing.T) {
 		if outside != "" {
 			t.Fatalf("does not lower: %s", outside)
 		}
+		core.CoreLibrariesEnabledResolve(actions.AST)
+		if refused := core.CoreOperationRefused(actions.AST) != 0; refused == enabled {
+			t.Fatalf("enabled %v: refused %v", enabled, refused)
+		}
+		if !enabled {
+			continue
+		}
 		machine := vm.MachineNew(&image, core.ExecutorOutputSize)
 		want := vm.StopReturn
-		if !enabled {
-			want = vm.StopLibraryDisabled
-		}
 		allocs := testing.AllocsPerRun(3, func() {
 			machine.Reset()
 			if stop, _ := machine.Run(image.ImageEntryMain, 0); stop != want {

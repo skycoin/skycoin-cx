@@ -72,9 +72,9 @@ cache and links the object with each program.
 
 * A program outside the vm subset, with the message vm gives:
   `cx build: cannot run on vm: opcode outside subset append in main`.
-* A program that calls a function of the file library. Those are still
-  called through `LibraryCall` (795), and a native program has no Go
-  runtime to call them in.
+* A program that calls `os.Run` of the process library, which is still
+  called through `LibraryCall` (795). It never lowers, as it takes and
+  returns a `str`, so vm refuses it first.
 
 ## System libraries
 

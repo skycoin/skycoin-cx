@@ -27,12 +27,13 @@ var coreLibraryRegisters []func(prgrm *ast.CXProgram)
 var coreLibraryOpcodesLinked = [constants.LibraryCount]bool{
 	constants.LibraryNumberCipher: coreLibraryCipherLinked,
 	constants.LibraryNumberNet:    coreLibraryNetLinked,
+	constants.LibraryNumberFile:   coreLibraryFileLinked,
 }
 
 // coreOpcodeDispatch is the opcode switch of this core, the switch of
 // t5-cx-runtime-core and then the switches of the libraries it links.
 func coreOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
-	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs) || coreOpcodeDispatchNet(prgrm, code, inputs, outputs)
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs) || coreOpcodeDispatchNet(prgrm, code, inputs, outputs) || coreOpcodeDispatchFile(prgrm, code, inputs, outputs)
 }
 
 func main() {
@@ -77,7 +78,7 @@ func coreRun(args []string) int32 {
 		fmt.Fprintf(os.Stderr, "cx-core: the program enables system libraries this core does not link: %s\n", strings.Join(missing, ", "))
 		return types.CX_COMPILATION_ERROR
 	}
-	if prgrm.ProgramLibrariesEnabled[constants.LibraryNumberFile] {
+	if core.CoreLibrariesActive(prgrm)[constants.LibraryNumberFile] {
 		// The file library resolves paths in the working directory, as cx
 		// does without --sandbox. The core has no flags to name another.
 		root, fileError := util.ProgramSandboxRootOpen("")

@@ -89,15 +89,15 @@ document or check script.
 16. **System libraries.** File access, networking, processes and the hash and
     signatures of `sys/cipher` (see [CipherLibrary.md](CipherLibrary.md))
     are system libraries. Each function of a library that is hardcoded as
-    opcodes, `cipher` and `net` so far, is its own row of the opcode table, in the
+    opcodes, `file`, `net` and `cipher`, is its own row of the opcode table, in the
     opcode group of its library with the build tag of its package, named
     from the library down, `constants.OpcodeCipherHashStateNew`. Nothing is
     loaded or registered at run time (decision D119). The loader refuses a
     program that uses an opcode of a library its run does not enable, once
-    before the run, so the run loop never checks a library. The other
-    libraries are still called through the single opcode `LibraryCall`
-    with a library number and a function number, and the run checks at
-    every call that the library is enabled.
+    before the run, so the run loop never checks a library. The process library,
+    `os.Run`, is still called through the opcode `LibraryCall` with a
+    library number and a function number, and the run checks at every
+    call that the library is enabled.
     Library numbers (`constants.LibraryTable`) and the function numbers of
     each library (`constants.LibraryFunctionLifecycleTable`) in
     [t1-constants/libraries.go](../t1-constants/libraries.go) follow rules 7

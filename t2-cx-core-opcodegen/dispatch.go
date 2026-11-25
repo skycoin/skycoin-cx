@@ -28,6 +28,7 @@ var dispatchGroups = []dispatchGroup{
 	{constants.OpcodeGroupCxfx, "t6-cxfx/cxfx_dispatch", "cxfx", "CxfxOpcodeDispatch", "cxfx", "!cxfx", "", ""},
 	{constants.OpcodeGroupCipher, "t4-cipher/cipher_dispatch", "cipher", "CipherOpcodeDispatch", "!nocipher", "nocipher", "", ""},
 	{constants.OpcodeGroupNet, "t4-cxnet/net_dispatch", "cxnet", "NetOpcodeDispatch", "", "", "", ""},
+	{constants.OpcodeGroupFile, "t5-cxos/file_dispatch", "cxos", "FileOpcodeDispatch", "!nocxos", "nocxos", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.

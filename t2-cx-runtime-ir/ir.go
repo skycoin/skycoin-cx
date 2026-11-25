@@ -261,6 +261,11 @@ const (
 	OpcodeNetUDPReadFrom
 	OpcodeNetUDPWriteTo
 	OpcodeNetUDPPeerResolve
+	// OpcodeFileClose, OpcodeFileSeek and OpcodeFileSync are the file
+	// functions that take and return only scalars.
+	OpcodeFileClose
+	OpcodeFileSeek
+	OpcodeFileSync
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -570,7 +575,7 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeNetUDPPeerResolve
+	OpcodeLibraryLast  = OpcodeFileSync
 )
 
 // OpcodeLibrary reports whether op is an opcode of a system library.

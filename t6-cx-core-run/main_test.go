@@ -43,9 +43,9 @@ var coreStandardDenied = map[string]bool{"net": true, "os/exec": true, "net/http
 // coreLibraryImports are the packages of this module each system library
 // adds to the core, by its build tag.
 var coreLibraryImports = map[string][]string{
-	"cxcorelibraryfile":    {"t1-profiling", "t5-cxos"},
+	"cxcorelibraryfile":    {"t0-cxfiles", "t1-profiling", "t5-cxos"},
 	"cxcorelibrarynet":     {"t0-textsections", "t1-netbatch", "t4-cxnet"},
-	"cxcorelibraryprocess": {"t1-profiling", "t5-cxos"},
+	"cxcorelibraryprocess": {"t0-cxfiles", "t1-profiling", "t5-cxos"},
 }
 
 // TestCoreImports fails when the transitive imports of the core, with the

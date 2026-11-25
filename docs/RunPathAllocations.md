@@ -81,7 +81,7 @@ allocates only when it fails, and is marked by its STRHOT E code instead
 | VMALLOC-015 | fixed | `AppendPrintableValue` and the stack dump of the debug opcode and of a runtime error append to the format buffer |
 | VMALLOC-016 | fixed | assert builds its text only when it fails |
 | VMALLOC-017 | open, boundary | regexp compile and find |
-| VMALLOC-018 | open, boundary | the file, process, profile and read opcodes, and the net functions that open a socket. `os.Sync` on vm allocates nothing, `TestLibraryFileSyncVmAllocs`. The net update, ready reads, reads and writes allocate nothing, see [Networking.md](Networking.md) |
+| VMALLOC-018 | open, boundary | the file, process, profile and read opcodes, and the net functions that open a socket. `os.Sync` on vm allocates nothing, `TestFileHandleSyncAllocs` in t0-cxfiles. The net update, ready reads, reads and writes allocate nothing, see [Networking.md](Networking.md) |
 | VMALLOC-019 | open, boundary | `serialize` of a selection runs the encoder of the serialized form, compiler code, `ast.SerializeAffordance`. The aff literal is resolved at compile time and an aff value is four i32, which move without a Go allocation (D5, #500) |
 | VMALLOC-020 | not heap | CXArgument stack temporaries, #408 |
 | VMALLOC-021 | fixed but nesting | `Callback` runs its nested loop on operand buffers `RunBuffersPrepare` sizes. A callback made inside a callback sizes a set for its depth once |

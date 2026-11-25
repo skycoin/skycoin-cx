@@ -1122,6 +1122,12 @@ func libraryOpcodeOf(opcode int) ir.Opcode {
 		return ir.OpcodeNetUDPWriteTo
 	case constants.OpcodeNetUDPPeerResolve:
 		return ir.OpcodeNetUDPPeerResolve
+	case constants.OpcodeFileClose:
+		return ir.OpcodeFileClose
+	case constants.OpcodeFileSeek:
+		return ir.OpcodeFileSeek
+	case constants.OpcodeFileSync:
+		return ir.OpcodeFileSync
 	}
 	return ir.OpcodeInvalid
 }

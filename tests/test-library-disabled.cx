@@ -1,5 +1,5 @@
-// A call into a system library the run did not enable is the runtime error
-// CX_RUNTIME_LIBRARY_DISABLED naming the library, see skycoin-cx#492.
+// A program that uses a system library the run did not enable is refused
+// before it runs with CX_RUNTIME_LIBRARY_DISABLED, see skycoin-cx#492, D119.
 
 package main
 

@@ -1546,3 +1546,21 @@ CX_NET_FUNCTION(udp_peer_resolve) {
 	netAddress address;
 	netBlockI32Write(&block, netAddressParse(text, &address) ? netPeerFind(&address) : 0);
 }
+
+// The file opcodes that run on vm, decision D119. Every function that opens
+// a file takes or returns a str and runs on the old loop only, so a program
+// that lowers holds no open file: os.Close and os.Sync of any handle report
+// false and os.Seek -1, as t0-cxfiles does for a handle that is not open.
+void cx_rt_file_close(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block) {
+	(void)mem, (void)size, (void)ptrSize;
+	block[4] = 0;
+}
+void cx_rt_file_seek(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block) {
+	(void)mem, (void)size, (void)ptrSize;
+	int64_t position = -1;
+	memcpy(block + 16, &position, 8);
+}
+void cx_rt_file_sync(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block) {
+	(void)mem, (void)size, (void)ptrSize;
+	block[4] = 0;
+}

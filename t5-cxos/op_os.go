@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/skycoin/skycoin-cx/t0-cxfiles"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t3-ast"
@@ -24,18 +25,9 @@ const (
 	OS_SEEK_END
 )
 
-// VIOLATION: state outside State. Owner: t5-cxos; moves to OsFileMng in phase 1.
-var openFiles []*os.File
-
-// VIOLATION: state outside State. Owner: t5-cxos; moves to OsFileMng in phase 1.
-var freeFiles []int32
-
-// helper function used to validate file handle from i32
+// ValidFile returns the open file of handle, nil for one that is not open.
 func ValidFile(handle int32) *os.File {
-	if handle >= 0 && handle < int32(len(openFiles)) && openFiles[handle] != nil {
-		return openFiles[handle]
-	}
-	return nil
+	return cxfiles.FileHandleOf(handle)
 }
 
 func OpOsLogFile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
@@ -55,31 +47,10 @@ func OpOsReadAllText(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.C
 }
 
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func getFileHandle(file *os.File) int32 {
-	handle := int32(-1)
-	freeCount := len(freeFiles)
-	if freeCount > 0 {
-		freeCount--
-		handle = int32(freeFiles[freeCount])
-		freeFiles = freeFiles[:freeCount]
-	} else {
-		handle = int32(len(openFiles))
-		openFiles = append(openFiles, nil)
-	}
-
-	if handle < 0 || handle >= int32(len(openFiles)) {
-		panic("internal error")
-	}
-
-	openFiles[handle] = file
-	return handle
-}
-
-// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func OpOsOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
 	if file, fileError := ast.ProgramSandboxFileOpen(prgrm, &inputs[0]); fileError == nil {
-		handle = getFileHandle(file)
+		handle = cxfiles.FileHandleTake(file)
 	}
 
 	outputs[0].Set_i32(prgrm, int32(handle))
@@ -89,7 +60,7 @@ func OpOsOpen(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue)
 func OpOsCreate(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
 	if file, fileError := ast.ProgramSandboxFileCreate(prgrm, &inputs[0]); fileError == nil {
-		handle = getFileHandle(file)
+		handle = cxfiles.FileHandleTake(file)
 	}
 
 	outputs[0].Set_i32(prgrm, int32(handle))
@@ -101,7 +72,7 @@ func OpOsCreate(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 func OpOsOpenReadWrite(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	handle := int32(-1)
 	if file, fileError := ast.ProgramSandboxFileOpenReadWrite(prgrm, &inputs[0]); fileError == nil {
-		handle = getFileHandle(file)
+		handle = cxfiles.FileHandleTake(file)
 	}
 	outputs[0].Set_i32(prgrm, handle)
 }
@@ -114,73 +85,17 @@ func OpOsRemove(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 }
 
 func OpOsClose(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outputs[0].Set_bool(prgrm, fileClose(inputs[0].Get_i32(prgrm)))
-}
-
-// fileClose closes the file of handle and frees the handle. It returns
-// false for a handle that is not open or a failed close.
-// VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func fileClose(handle int32) bool {
-	success := false
-	if file := ValidFile(handle); file != nil {
-		if err := file.Close(); err == nil {
-			success = true
-		}
-
-		openFiles[handle] = nil
-		freeFiles = append(freeFiles, handle)
-	}
-	return success
-}
-
-// LibraryFileCloseVm is os.Close on vm, an i32 at block and the bool after it.
-func LibraryFileCloseVm(memory []byte, block uint32) {
-	closed := fileClose(types.Read_i32(memory, types.Pointer(block)))
-	types.Write_bool(memory, types.Pointer(block+4), closed)
+	outputs[0].Set_bool(prgrm, cxfiles.FileHandleClose(inputs[0].Get_i32(prgrm)))
 }
 
 // OpOsSync is os.Sync(handle i32) (synced bool): commits what was written to
 // the file of handle to stable storage.
 func OpOsSync(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outputs[0].Set_bool(prgrm, fileSync(inputs[0].Get_i32(prgrm)))
-}
-
-// fileSync syncs the file of handle and returns false for a handle that is
-// not open or a failed sync.
-func fileSync(handle int32) bool {
-	file := ValidFile(handle)
-	return file != nil && file.Sync() == nil
-}
-
-// LibraryFileSyncVm is os.Sync on vm, an i32 at block and the bool after it.
-func LibraryFileSyncVm(memory []byte, block uint32) {
-	synced := fileSync(types.Read_i32(memory, types.Pointer(block)))
-	types.Write_bool(memory, types.Pointer(block+4), synced)
+	outputs[0].Set_bool(prgrm, cxfiles.FileHandleSync(inputs[0].Get_i32(prgrm)))
 }
 
 func OpOsSeek(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outputs[0].Set_i64(prgrm, fileSeek(inputs[0].Get_i32(prgrm), inputs[1].Get_i64(prgrm), inputs[2].Get_i32(prgrm)))
-}
-
-// fileSeek moves the file of handle to offset from whence and returns the
-// new offset, -1 for a handle that is not open or a failed seek.
-func fileSeek(handle int32, offset int64, whence int32) int64 {
-	file := ValidFile(handle)
-	if file == nil {
-		return -1
-	}
-	position, err := file.Seek(offset, int(whence))
-	if err != nil {
-		return -1
-	}
-	return position
-}
-
-// LibraryFileSeekVm is os.Seek on vm, an i32, an i64 and an i32 from block
-// and the i64 after them.
-func LibraryFileSeekVm(memory []byte, block uint32) {
-	position := fileSeek(types.Read_i32(memory, types.Pointer(block)), types.Read_i64(memory, types.Pointer(block+4)), types.Read_i32(memory, types.Pointer(block+12)))
-	types.Write_i64(memory, types.Pointer(block+16), position)
+	outputs[0].Set_i64(prgrm, cxfiles.FileHandleSeek(inputs[0].Get_i32(prgrm), inputs[1].Get_i64(prgrm), inputs[2].Get_i32(prgrm)))
 }
 
 // VIOLATION STRHOT-134: B, hands a path or text to Go or the OS, #412.

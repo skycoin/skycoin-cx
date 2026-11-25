@@ -26,6 +26,9 @@ const (
 	// OpcodeGroupNet is the net library in t4-cxnet, in every build of cx and
 	// in the cores built with cxcorelibrarynet.
 	OpcodeGroupNet
+	// OpcodeGroupFile is the file library in t5-cxos, left out by the nocxos
+	// tag.
+	OpcodeGroupFile
 	OpcodeGroupCount
 )
 
@@ -158,6 +161,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupCxfx:   opcodeGroupCxfxLinked,
 	OpcodeGroupCipher: opcodeGroupCipherLinked,
 	OpcodeGroupNet:    true,
+	OpcodeGroupFile:   opcodeGroupFileLinked,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
@@ -165,6 +169,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupCipher: LibraryNumberCipher,
 	OpcodeGroupNet:    LibraryNumberNet,
+	OpcodeGroupFile:   LibraryNumberFile,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

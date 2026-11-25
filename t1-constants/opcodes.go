@@ -767,6 +767,62 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{817, "net.UDPReadFrom", 2611250004, 0, 0},
 	{818, "net.UDPWriteTo", 2611250004, 0, 0},
 	{819, "net.UDPPeerResolve", 2611250004, 0, 0},
+	{820, "os.GetWorkingDirectory", 2611250005, 0, 0},
+	{821, "os.LogFile", 2611250005, 0, 0},
+	{822, "os.Open", 2611250005, 0, 0},
+	{823, "os.Create", 2611250005, 0, 0},
+	{824, "os.Close", 2611250005, 0, 0},
+	{825, "os.Seek", 2611250005, 0, 0},
+	{826, "os.ReadStr", 2611250005, 0, 0},
+	{827, "os.ReadF64", 2611250005, 0, 0},
+	{828, "os.ReadF32", 2611250005, 0, 0},
+	{829, "os.ReadUI64", 2611250005, 0, 0},
+	{830, "os.ReadUI32", 2611250005, 0, 0},
+	{831, "os.ReadUI16", 2611250005, 0, 0},
+	{832, "os.ReadUI8", 2611250005, 0, 0},
+	{833, "os.ReadI64", 2611250005, 0, 0},
+	{834, "os.ReadI32", 2611250005, 0, 0},
+	{835, "os.ReadI16", 2611250005, 0, 0},
+	{836, "os.ReadI8", 2611250005, 0, 0},
+	{837, "os.ReadBOOL", 2611250005, 0, 0},
+	{838, "os.ReadF64Slice", 2611250005, 0, 0},
+	{839, "os.ReadF32Slice", 2611250005, 0, 0},
+	{840, "os.ReadUI64Slice", 2611250005, 0, 0},
+	{841, "os.ReadUI32Slice", 2611250005, 0, 0},
+	{842, "os.ReadUI16Slice", 2611250005, 0, 0},
+	{843, "os.ReadUI8Slice", 2611250005, 0, 0},
+	{844, "os.ReadI64Slice", 2611250005, 0, 0},
+	{845, "os.ReadI32Slice", 2611250005, 0, 0},
+	{846, "os.ReadI16Slice", 2611250005, 0, 0},
+	{847, "os.ReadI8Slice", 2611250005, 0, 0},
+	{848, "os.ReadAllText", 2611250005, 0, 0},
+	{849, "os.WriteStr", 2611250005, 0, 0},
+	{850, "os.WriteF64", 2611250005, 0, 0},
+	{851, "os.WriteF32", 2611250005, 0, 0},
+	{852, "os.WriteUI64", 2611250005, 0, 0},
+	{853, "os.WriteUI32", 2611250005, 0, 0},
+	{854, "os.WriteUI16", 2611250005, 0, 0},
+	{855, "os.WriteUI8", 2611250005, 0, 0},
+	{856, "os.WriteI64", 2611250005, 0, 0},
+	{857, "os.WriteI32", 2611250005, 0, 0},
+	{858, "os.WriteI16", 2611250005, 0, 0},
+	{859, "os.WriteI8", 2611250005, 0, 0},
+	{860, "os.WriteBOOL", 2611250005, 0, 0},
+	{861, "os.WriteF64Slice", 2611250005, 0, 0},
+	{862, "os.WriteF32Slice", 2611250005, 0, 0},
+	{863, "os.WriteUI64Slice", 2611250005, 0, 0},
+	{864, "os.WriteUI32Slice", 2611250005, 0, 0},
+	{865, "os.WriteUI16Slice", 2611250005, 0, 0},
+	{866, "os.WriteUI8Slice", 2611250005, 0, 0},
+	{867, "os.WriteI64Slice", 2611250005, 0, 0},
+	{868, "os.WriteI32Slice", 2611250005, 0, 0},
+	{869, "os.WriteI16Slice", 2611250005, 0, 0},
+	{870, "os.WriteI8Slice", 2611250005, 0, 0},
+	{871, "StartCPUProfile", 2611250005, 0, 0},
+	{872, "StopCPUProfile", 2611250005, 0, 0},
+	{873, "os.OpenReadWrite", 2611250005, 0, 0},
+	{874, "os.Sync", 2611250005, 0, 0},
+	{875, "os.Remove", 2611250005, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -957,6 +1013,64 @@ const (
 	OpcodeNetUDPReadFrom    = 817
 	OpcodeNetUDPWriteTo     = 818
 	OpcodeNetUDPPeerResolve = 819
+
+	// The file library, decision D119.
+	OpcodeFileGetWorkingDirectory = 820
+	OpcodeFileLogFile             = 821
+	OpcodeFileOpen                = 822
+	OpcodeFileCreate              = 823
+	OpcodeFileClose               = 824
+	OpcodeFileSeek                = 825
+	OpcodeFileReadStr             = 826
+	OpcodeFileReadF64             = 827
+	OpcodeFileReadF32             = 828
+	OpcodeFileReadUI64            = 829
+	OpcodeFileReadUI32            = 830
+	OpcodeFileReadUI16            = 831
+	OpcodeFileReadUI8             = 832
+	OpcodeFileReadI64             = 833
+	OpcodeFileReadI32             = 834
+	OpcodeFileReadI16             = 835
+	OpcodeFileReadI8              = 836
+	OpcodeFileReadBOOL            = 837
+	OpcodeFileReadF64Slice        = 838
+	OpcodeFileReadF32Slice        = 839
+	OpcodeFileReadUI64Slice       = 840
+	OpcodeFileReadUI32Slice       = 841
+	OpcodeFileReadUI16Slice       = 842
+	OpcodeFileReadUI8Slice        = 843
+	OpcodeFileReadI64Slice        = 844
+	OpcodeFileReadI32Slice        = 845
+	OpcodeFileReadI16Slice        = 846
+	OpcodeFileReadI8Slice         = 847
+	OpcodeFileReadAllText         = 848
+	OpcodeFileWriteStr            = 849
+	OpcodeFileWriteF64            = 850
+	OpcodeFileWriteF32            = 851
+	OpcodeFileWriteUI64           = 852
+	OpcodeFileWriteUI32           = 853
+	OpcodeFileWriteUI16           = 854
+	OpcodeFileWriteUI8            = 855
+	OpcodeFileWriteI64            = 856
+	OpcodeFileWriteI32            = 857
+	OpcodeFileWriteI16            = 858
+	OpcodeFileWriteI8             = 859
+	OpcodeFileWriteBOOL           = 860
+	OpcodeFileWriteF64Slice       = 861
+	OpcodeFileWriteF32Slice       = 862
+	OpcodeFileWriteUI64Slice      = 863
+	OpcodeFileWriteUI32Slice      = 864
+	OpcodeFileWriteUI16Slice      = 865
+	OpcodeFileWriteUI8Slice       = 866
+	OpcodeFileWriteI64Slice       = 867
+	OpcodeFileWriteI32Slice       = 868
+	OpcodeFileWriteI16Slice       = 869
+	OpcodeFileWriteI8Slice        = 870
+	OpcodeFileStartCPUProfile     = 871
+	OpcodeFileStopCPUProfile      = 872
+	OpcodeFileOpenReadWrite       = 873
+	OpcodeFileSync                = 874
+	OpcodeFileRemove              = 875
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OP_RESIZE = 210

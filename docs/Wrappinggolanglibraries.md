@@ -76,7 +76,7 @@ A system library function has no opcode row. It is called through
 3. **Define it.** Add a row to `constants.LibraryFunctionDefinitionTable` in
    [t1-constants/libraries_definitions.go](../t1-constants/libraries_definitions.go),
    for example
-   `{LibraryNumberFile, 5, "os.Close", "cxos.OpOsClose", "cxos.LibraryFileCloseVm", "i32", "bool"}`.
+   `{LibraryNumberProcess, 1, "os.Run", "cxos.OpOsRun", "", "str i32 i32 str", "i32 i32 str"}`.
    Run `make generate-opcodes`, which writes the signature tables and adds the
    handler to the switch of its library (decision D96). There is no
    registration. A new library also needs its number in `LibraryTable`, a

@@ -29,6 +29,9 @@ var libraryRuntimeFunctions = map[ir.Opcode]string{
 	ir.OpcodeNetUDPReadFrom:         "cx_rt_net_udp_read_from",
 	ir.OpcodeNetUDPWriteTo:          "cx_rt_net_udp_write_to",
 	ir.OpcodeNetUDPPeerResolve:      "cx_rt_net_udp_peer_resolve",
+	ir.OpcodeFileClose:              "cx_rt_file_close",
+	ir.OpcodeFileSeek:               "cx_rt_file_seek",
+	ir.OpcodeFileSync:               "cx_rt_file_sync",
 }
 
 // instrLibrary emits a system library opcode: the arguments of the pending

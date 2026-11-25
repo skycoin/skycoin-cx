@@ -912,6 +912,8 @@ func (machine *Machine) slow() Stop {
 		cipherstate.HashStateRelease(rI32(mem, machine.MachineStackPointer))
 	case ir.OpcodeNetUpdate, ir.OpcodeNetReadyCount, ir.OpcodeNetReadyNext, ir.OpcodeNetClock, ir.OpcodeNetRead, ir.OpcodeNetWrite, ir.OpcodeNetClose, ir.OpcodeNetTimeoutSet, ir.OpcodeNetTCPListen, ir.OpcodeNetTCPDial, ir.OpcodeNetUDPListen, ir.OpcodeNetUDPDial, ir.OpcodeNetUDPReadFrom, ir.OpcodeNetUDPWriteTo, ir.OpcodeNetUDPPeerResolve:
 		netOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer)
+	case ir.OpcodeFileClose, ir.OpcodeFileSeek, ir.OpcodeFileSync:
+		fileOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer)
 	case ir.OpcodePrintValue:
 		machine.MachineOutput = printValue(machine.MachineOutput, mem, a, types.Code(in.InstrM), byte(in.InstrN))
 	case ir.OpcodeTestEqual:

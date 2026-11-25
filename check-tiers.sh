@@ -4,7 +4,7 @@
 # highest tier it imports, and no .go file is deeper than <dir>/<file>.go.
 M=$(go list -m)
 E=$(mktemp)
-for tags in "" cxfx ptr64 "cxfx,android" "cxfx,mobile" "os,mobile" "nocipher,nocxos,noregexp" cxcore "cxcore,cxcorelibrarynet"; do
+for tags in "" cxfx ptr64 "cxfx,android" "cxfx,mobile" "os,mobile" "nocipher,nocxos,noregexp" cxcore "cxcore,cxcorelibrarynet,cxcorelibraryfile"; do
 	go list -e -tags "$tags" -json ./... | jq -r --arg m "$M" '.ImportPath as $p | ((.Imports//[])+(.TestImports//[])+(.XTestImports//[]))[] | select(startswith($m+"/")) | select(. != $p) | "\($p) \(.)"'
 done | sed "s#$M/##g" | sort -u >"$E"
 go list -e ./... | sed "s#^$M/##" | awk -v E="$E" '
