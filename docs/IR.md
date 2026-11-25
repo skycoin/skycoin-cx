@@ -171,7 +171,7 @@ calls a native operator gets its own copy of the native, made by
 which makes it from `constants.OpcodeSignatureTable`. The copy has
 `AtomicOPCode` set and no `Expressions`. A system library function is the
 native `ast.NativeFunctionOf(prgrm, ast.LibraryFunctionKey(library, function))`
-returns from `ast.LibraryFunctionNatives`, a negative key that
+makes from `constants.LibraryFunctionSignatureTable`, a negative key that
 is also its code in `ast.NativeNames`. Its copy has `AtomicOPCode`
 `OP_LIBRARY_CALL` and the two library numbers, and adding it marks the
 library in `CXProgram.ProgramLibrariesUsed`.
@@ -233,8 +233,8 @@ A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
   switch.
   For `OP_LIBRARY_CALL` the loop first checks
   `CXProgram.ProgramLibrariesEnabled[LibraryNumber]`, one indexed load and
-  compare, then calls
-  `ast.LibraryFunctionHandlers[LibraryNumber][LibraryFunctionNumber]`.
+  compare, then calls the generated switch of the library,
+  `ast.LibraryDispatches[LibraryNumber]`, with `LibraryFunctionNumber`.
 * A `CXFunction` with `AtomicOPCode == 0`. The expression calls that user
   function.
 
@@ -700,10 +700,19 @@ This document does not list the opcodes. The list is
   in t6-cxfx under the `cxfx` tag. Each case calls the handler directly.
   Nothing registers an opcode at startup and a deprecated row has no case.
 * `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has no definition row
-  and no name, so no program calls it by name, and the loop runs it. The system library functions are
-  registered through `opcodes.RegisterLibraryFunction`, with their own
-  numbers in `constants.LibraryFunctionLifecycleTable`, and compile to
-  `LibraryCall`. See item 16 of [Conventions.md](Conventions.md).
+  and no name, so no program calls it by name, and the loop runs it. The system library functions have
+  their own numbers in `constants.LibraryFunctionLifecycleTable` and compile
+  to `LibraryCall`. `constants.LibraryFunctionDefinitionTable` in
+  t1-constants/libraries_definitions.go gives each live one its handler, vm
+  form and signature (decision D96). t2-cx-core-opcodegen writes the library
+  signature tables of `t1-constants/libraries_signatures_gen.go` and one
+  switch per library in the package of its handlers, under that package's
+  build tag: `LibraryFileDispatch` and `LibraryProcessDispatch` in t5-cxos,
+  `LibraryNetDispatch` in t5-cxnet and `LibraryCipherDispatch` in t5-cipher,
+  each with a `Vm` switch of its vm forms. A binary links a library with
+  `opcodes.LibraryLink`, which sets `ast.LibraryDispatches` and
+  `vm.LibraryDispatchesVm` for its number. Nothing registers a library
+  function. See item 16 of [Conventions.md](Conventions.md).
 * A renamed opcode has its new name only.
   `constants.OpcodeRenameTable` keeps the old names, and the compiler
   turns a call by an old name into a compile error that names the new one.
@@ -750,14 +759,15 @@ one loop, and vm fails on a program that does not lower.
   `OpcodeCallResult` per output the caller receives, the same copies
   `processNonAtomicOperators` and `popStack` make.
 * A system library call lowers when its function has a vm form in
-  `vm.LibraryFunctionVmHandlers`, which today are `os.Close`, `os.Seek`,
+  `constants.LibraryFunctionDefinitionTable` and its library is linked, see
+  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`,
   `cipher.HashStateNew`, `cipher.HashStateRelease` and every function of
   `sys/net`. A `str` input is a pointer the vm form reads from the data
   segment, and an input of undefined type is a byte buffer, a `ui8` array
   lowered as its address and its byte size, two pointers that
   `OpcodeAddressOf` writes, see [Networking.md](Networking.md). It becomes
   `OpcodeCallFrame` for a block of the inputs then the outputs, packed as
-  `opcodes.MakeNativeFunction` lays them out, one `OpcodeCallArg` per input,
+  `ast.NativeFunctionOf` lays them out, one `OpcodeCallArg` per input,
   `OpcodeLibraryCall` with the library in M and the function in N, then
   `OpcodeCallResult` per output. `OpcodeLibraryCall` runs in the slow path.
   It checks `ImageLibraryEnabled[M]`, which `lower.Program` copies from

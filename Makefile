@@ -105,10 +105,10 @@ names-csv: ## Write one CSV row per declared Go and CX name to NAMES_CSV, for sk
 	mkdir -p $(dir $(NAMES_CSV))
 	go run ./t0-cx-tools-names -out $(NAMES_CSV) . $(REPOS)
 
-generate-opcodes: ## Regenerate the opcode signature tables from t1-constants/opcodes_definitions.go, decision D21
+generate-opcodes: ## Regenerate the opcode and library signature tables and switches from t1-constants/opcodes_definitions.go and libraries_definitions.go, decisions D21 and D96
 	go run ./t2-cx-core-opcodegen -root .
 
-check-opcodes: ## Check that the opcode signature tables are up to date with t1-constants/opcodes_definitions.go
+check-opcodes: ## Check that the opcode and library tables and switches are up to date with t1-constants/opcodes_definitions.go and libraries_definitions.go
 	go run ./t2-cx-core-opcodegen -root . -check
 
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md

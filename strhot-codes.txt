@@ -141,16 +141,16 @@ STRHOT-127 O removed t4-opcodes/op_ui8.go OpUI8ToStr fixed, byte views of CX mem
 STRHOT-128 O removed t4-opcodes/op_ui8.go OpUI8Print fixed, byte views of CX memory and the format buffer
 STRHOT-129 O removed t5-cxos/op_json.go opJsonOpen not on the run path at dfcc46ab
 STRHOT-130 B removed t5-cxos/op_json.go opJsonTokenStr deleted with the json functions, #509
-STRHOT-131 B open t5-cxos/op_os.go opOsReadAllText
-STRHOT-132 O removed t5-cxos/op_os.go opOsOpen not on the run path at dfcc46ab
-STRHOT-133 O removed t5-cxos/op_os.go opOsCreate not on the run path at dfcc46ab
-STRHOT-134 B open t5-cxos/op_os.go opOsReadStr
-STRHOT-135 B open t5-cxos/op_os.go opOsWriteStr
-STRHOT-136 B open t5-cxos/op_os.go opOsGetWorkingDirectory
-STRHOT-137 B open t5-cxos/op_os.go opOsRun
+STRHOT-131 B open t5-cxos/op_os.go OpOsReadAllText
+STRHOT-132 O removed t5-cxos/op_os.go OpOsOpen not on the run path at dfcc46ab
+STRHOT-133 O removed t5-cxos/op_os.go OpOsCreate not on the run path at dfcc46ab
+STRHOT-134 B open t5-cxos/op_os.go OpOsReadStr
+STRHOT-135 B open t5-cxos/op_os.go OpOsWriteStr
+STRHOT-136 B open t5-cxos/op_os.go OpOsGetWorkingDirectory
+STRHOT-137 B open t5-cxos/op_os.go OpOsRun
 STRHOT-138 B open t5-cxos/op_os.go splitCommand
-STRHOT-139 B open t5-cxos/op_profile.go opStartProfile
-STRHOT-140 B open t5-cxos/op_profile.go opStopProfile
+STRHOT-139 B open t5-cxos/op_profile.go OpStartProfile
+STRHOT-140 B open t5-cxos/op_profile.go OpStopProfile
 STRHOT-141 O removed t4-regexp/op_regexp.go expOffset not on the run path at dfcc46ab
 STRHOT-142 B open t4-regexp/op_regexp.go regexpCompile
 STRHOT-143 B open t4-regexp/op_regexp.go OpRegexpCompile
@@ -339,11 +339,11 @@ STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg
 STRHOT-326 E open t5-cipher/op_cipher.go cipherHashStateAssertFailure
 STRHOT-327 E open t5-cipher/op_cipher.go cipherHashStateFullAssertFailure
 STRHOT-328 E open t5-cxnet/op_net.go netReplayEndAssertFailure
-STRHOT-329 B open t5-cxnet/op_net.go opNetTCPListen
-STRHOT-330 B open t5-cxnet/op_net.go opNetTCPDial
-STRHOT-331 B open t5-cxnet/op_net.go opNetUDPListen
-STRHOT-332 B open t5-cxnet/op_net.go opNetUDPDial
-STRHOT-333 B open t5-cxnet/op_net.go opNetUDPPeerResolve
+STRHOT-329 B open t5-cxnet/op_net.go OpNetTCPListen
+STRHOT-330 B open t5-cxnet/op_net.go OpNetTCPDial
+STRHOT-331 B open t5-cxnet/op_net.go OpNetUDPListen
+STRHOT-332 B open t5-cxnet/op_net.go OpNetUDPDial
+STRHOT-333 B open t5-cxnet/op_net.go OpNetUDPPeerResolve
 STRHOT-334 B removed t5-cxnet/op_net.go blockStr a vm form, not on the run path of the old loop
 STRHOT-335 B open t1-netbatch/socket.go netUDPReadLoop
 STRHOT-336 E open t5-cxnet/op_net.go netBufferAssertFailure

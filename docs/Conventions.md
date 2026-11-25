@@ -97,7 +97,10 @@ document or check script.
     and 8: fixed for life, a new one takes the next number, a deleted one is
     deprecated and not reused before its reassignable version, 0 is never
     assigned. `constants.LibraryPolicyEnabledWhenImported` is the default
-    for a library `--enable` does not name. See the System libraries section
+    for a library `--enable` does not name. Each live function has a row of
+    `constants.LibraryFunctionDefinitionTable` with its handler, vm form and
+    signature, from which t2-cx-core-opcodegen writes one switch per library
+    (decision D96). See the System libraries section
     of [LanguageGuide.md](../LanguageGuide.md#system-libraries) and #492.
 17. **Variable scoping.** A name in a function body is a local, a
     parameter or result, or a global the function declares, and nothing

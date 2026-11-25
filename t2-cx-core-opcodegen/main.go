@@ -1,5 +1,7 @@
 // Command opcodegen writes the opcode signature tables of t1-constants from
-// constants.OpcodeDefinitionTable, decision D21. With -check it fails when a
+// constants.OpcodeDefinitionTable, decision D21, and the library signature
+// tables and library switches from constants.LibraryFunctionDefinitionTable,
+// decision D96. With -check it fails when a
 // written file differs from what it would write. Run it with go generate
 // ./t1-constants or make generate-opcodes.
 package main
@@ -47,10 +49,19 @@ func main() {
 		fmt.Fprintln(os.Stderr, "opcodegen:", err)
 		os.Exit(1)
 	}
+	libraries, err := librariesGenerate()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "opcodegen:", err)
+		os.Exit(1)
+	}
 	files := map[string][]byte{
-		"t1-constants/opcodes_signatures_gen.go": gen.signaturesFile(),
+		"t1-constants/opcodes_signatures_gen.go":   gen.signaturesFile(),
+		"t1-constants/libraries_signatures_gen.go": libraries.signaturesFile(),
 	}
 	for path, source := range gen.dispatchFiles() {
+		files[path] = source
+	}
+	for path, source := range libraries.dispatchFiles() {
 		files[path] = source
 	}
 	failed := false

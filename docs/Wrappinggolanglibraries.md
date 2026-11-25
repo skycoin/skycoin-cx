@@ -52,3 +52,30 @@ To make the package optional, give its files a build tag and the
 with `noregexp`. Pass concrete Go types to the wrapped library, not
 interfaces. `make check` runs the tier, init, opcode table and object model
 checks.
+
+## System libraries
+
+A system library function has no opcode row. It is called through
+`LibraryCall`, and the run checks that its library is enabled first, see
+[Conventions.md](Conventions.md) rule 16.
+
+1. **Give it a number.** Add a row to `constants.LibraryFunctionLifecycleTable`
+   in [t1-constants/libraries.go](../t1-constants/libraries.go), taking the
+   next number of its library.
+
+2. **Write the handler** as for an opcode, exported, in the package of the
+   library: t5-cxos for file and process, t5-cxnet for net, t5-cipher for
+   cipher. A function that reads and writes only scalars may also have a vm
+   form, `func(memory []byte, block uint32)`, which reads its inputs and then
+   writes its outputs in the block from `block`.
+
+3. **Define it.** Add a row to `constants.LibraryFunctionDefinitionTable` in
+   [t1-constants/libraries_definitions.go](../t1-constants/libraries_definitions.go),
+   for example
+   `{LibraryNumberFile, 5, "os.Close", "cxos.OpOsClose", "cxos.LibraryFileCloseVm", "i32", "bool"}`.
+   Run `make generate-opcodes`, which writes the signature tables and adds the
+   handler to the switch of its library (decision D96). There is no
+   registration. A new library also needs its number in `LibraryTable`, a
+   `libraryDispatches` entry in t2-cx-core-opcodegen, and a call of
+   `opcodes.LibraryLink` with its two switches from the `RegisterPackage` of
+   its package.

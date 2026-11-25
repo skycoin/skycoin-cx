@@ -34,17 +34,28 @@ func IsComparisonOperator(opCode int) bool {
 }
 
 // NativeFunctionOf returns the built-in function code names, an opcode
-// number or a library function key, nil when there is none. An opcode's
-// parameters come from constants.OpcodeSignatureTable.
+// number or a library function key, nil when there is none or the binary
+// does not link its library. An opcode's parameters come from
+// constants.OpcodeSignatureTable and a library function's from
+// constants.LibraryFunctionSignatureTable.
 // OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
 // Now a constructor, site S1785.
 func NativeFunctionOf(prgrm *CXProgram, code int) *CXNativeFunction {
 	if code < 0 {
 		library, function := constants.LibraryFunctionKeyParts(code)
-		if library >= constants.LibraryCount || function >= len(LibraryFunctionNatives[library]) {
+		if !LibraryFunctionLinked(library, function) {
 			return nil
 		}
-		return LibraryFunctionNatives[library][function]
+		librarySignature := constants.LibraryFunctionSignatureOf(library, function)
+		// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
+		// Now a heap literal, site S1789.
+		return &CXNativeFunction{
+			AtomicOPCode:          constants.OP_LIBRARY_CALL,
+			LibraryNumber:         library,
+			LibraryFunctionNumber: function,
+			Inputs:                NativeParameters(prgrm, librarySignature.LibraryFunctionSignatureInputs()),
+			Outputs:               NativeParameters(prgrm, librarySignature.LibraryFunctionSignatureOutputs()),
+		}
 	}
 	signature := constants.OpcodeSignatureOf(code)
 	if signature.OpcodeSignatureGroup == constants.OpcodeGroupNone {

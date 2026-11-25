@@ -40,7 +40,7 @@ free one.
 | `CXProgram` | `0x01` | none, one per compile | `*CXProgram` |
 | `CXPackage` | `0x02` | `CXProgram.CXPackages` | `CXPackageIndex` |
 | `CXFunction` | `0x03` | `CXProgram.CXFunctions` | `CXFunctionIndex` |
-| `CXNativeFunction` | `0x04` | none, made by `ast.NativeFunctionOf` from `constants.OpcodeSignatureTable` | opcode number |
+| `CXNativeFunction` | `0x04` | none, made by `ast.NativeFunctionOf` from `constants.OpcodeSignatureTable` and `constants.LibraryFunctionSignatureTable` | opcode number or library function key |
 | `CXStruct` | `0x05` | `CXProgram.CXStructs`, and heap `*CXStruct` parameter lists | `CXStructIndex` |
 | `CXExpression` | `0x06` | none, held by value in `CXFunction.Expressions` and `CXProgram.SysInitExprs` | none |
 | `CXAtomicOperator` | `0x07` | `CXProgram.CXAtomicOps` | `int` |
@@ -426,9 +426,10 @@ type CxIrStateManagerLen struct {
   parse, may hold it for that call.
 * The program's runtime data, `Memory`, the segments and the call stack,
   stays in `CXProgram`. Its arena slices become the managers.
-* The opcode tables are constant data in t1-constants (decision D21). The
-  library tables `ast.LibraryFunctionHandlers` and `ast.LibraryFunctionNatives`
-  and `ast.OpcodeDispatch` are package state today. Moving them into
+* The opcode and library function tables are constant data in t1-constants
+  (decisions D21 and D96). `ast.OpcodeDispatch`, `ast.LibraryDispatches` and
+  `vm.LibraryDispatchesVm`, which say which switches a binary links, are
+  package state today. Moving them into
   `CxIrState` is part of the `CXNativeFunction` allocation phase.
 
 ### Until the program is managed
@@ -700,10 +701,10 @@ constructors create it.
 | Step | Objects (phase 4, phase 5 sites each) | Phase 4 sites | Phase 5 sites |
 | --- | --- | --- | --- |
 | 1 | `CXArgumentDebug` (0, 0), `CXLine` (2, 2), `CXTypeSignature_Array` (0, 60), `CXTypeSignature_Struct` (0, 28) | 2 | 90 |
-| 2 | `CXArgument` (61, 263), `CXTypeSignature` (18, 166) | 79 | 429 |
+| 2 | `CXArgument` (39, 263), `CXTypeSignature` (18, 166) | 57 | 429 |
 | 3 | `CXStruct` (28, 9) | 28 | 9 |
 | 4 | `CXAtomicOperator` (14, 85), `CXExpression` (113, 9) | 127 | 94 |
-| 5 | `CXFunction` (38, 77), `CXNativeFunction` (4, 0) | 42 | 77 |
+| 5 | `CXFunction` (38, 77), `CXNativeFunction` (3, 0) | 41 | 77 |
 | 6 | `CXPackage` (45, 47), `CXCall` (8, 1), `CXProgram` (59, 2) | 112 | 50 |
 
 `CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
@@ -724,7 +725,7 @@ every site in the table, in one PR. Phase 6 adds the teardown functions and thei
 ## Inventory
 
 [objectmodel-sites.csv](objectmodel-sites.csv) has one row for every site
-that breaks the standard today, 1139 in all, plus one row for
+that breaks the standard today, 1116 in all, plus one row for
 `DereferenceStruct.arg`, which lives on the stack and needs no change. Its
 columns are
 
@@ -773,17 +774,17 @@ The counts per object.
 | `CXLine` | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 2 | 4 |
 | `CXTypeSignature_Array` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
 | `CXTypeSignature_Struct` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 0 | 0 | 0 | 0 | 28 | 28 |
-| `CXArgument` | 6 | 25 | 8 | 0 | 2 | 0 | 3 | 0 | 12 | 0 | 1 | 260 | 0 | 7 | 0 | 0 | 61 | 263 | 324 |
+| `CXArgument` | 6 | 5 | 8 | 0 | 2 | 0 | 3 | 0 | 10 | 0 | 1 | 260 | 0 | 7 | 0 | 0 | 39 | 263 | 302 |
 | `CXTypeSignature` | 0 | 0 | 4 | 0 | 7 | 1 | 2 | 0 | 0 | 0 | 4 | 165 | 0 | 1 | 0 | 0 | 18 | 166 | 184 |
 | `CXStruct` | 1 | 12 | 1 | 1 | 10 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 2 | 7 | 0 | 0 | 28 | 9 | 37 |
 | `CXAtomicOperator` | 0 | 0 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 84 | 1 | 0 | 0 | 0 | 14 | 85 | 99 |
 | `CXExpression` | 2 | 76 | 0 | 0 | 2 | 0 | 7 | 0 | 18 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 113 | 9 | 122 |
 | `CXFunction` | 1 | 7 | 17 | 2 | 3 | 0 | 2 | 0 | 1 | 2 | 1 | 75 | 1 | 3 | 0 | 0 | 38 | 77 | 115 |
-| `CXNativeFunction` | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 |
+| `CXNativeFunction` | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 |
 | `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 46 | 1 | 0 | 0 | 0 | 45 | 47 | 92 |
 | `CXCall` | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 1 | 9 |
 | `CXProgram` | 3 | 34 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 2 | 0 | 59 | 2 | 61 |
-| total | 18 | 172 | 56 | 5 | 43 | 2 | 15 | 2 | 34 | 4 | 30 | 720 | 5 | 22 | 2 | 9 | 390 | 749 | 1139 |
+| total | 17 | 152 | 56 | 5 | 43 | 2 | 15 | 2 | 32 | 4 | 30 | 720 | 5 | 22 | 2 | 9 | 367 | 749 | 1116 |
 
 
 

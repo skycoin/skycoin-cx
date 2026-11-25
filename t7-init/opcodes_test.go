@@ -6,6 +6,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
+	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 )
 
 // Every opcode name sits on its live row of OpcodeLifecycleTable, and no
@@ -48,9 +49,11 @@ func TestOpcodeNamesMatchLifecycleTable(t *testing.T) {
 	}
 }
 
-// Every live library function is registered under its key with a handler,
-// and every linked library key is a live library function.
-func TestRegisteredLibraryFunctionsMatchLifecycleTable(t *testing.T) {
+// Every live function of a linked library is named under its key and has a
+// native made from its signature, and every linked library key is a live
+// library function. The library switches report false for a number without
+// a definition row.
+func TestLibraryFunctionsMatchLifecycleTable(t *testing.T) {
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a constructor call, as in TestOpcodeNamesMatchLifecycleTable.
 	prgrm := MakeProgram()
@@ -58,15 +61,31 @@ func TestRegisteredLibraryFunctionsMatchLifecycleTable(t *testing.T) {
 
 	for _, row := range constants.LibraryFunctionLifecycleTable {
 		key := ast.LibraryFunctionKey(row.LibraryNumber, row.Number)
-		live := row.VersionDeprecated == 0
-		handlers := ast.LibraryFunctionHandlers[row.LibraryNumber]
-		handled := row.Number < len(handlers) && handlers[row.Number] != nil
-		if live != (nativeCode(row.Name) == key && ast.NativeNames.NativeNameIndexCodeText(key) == row.Name && handled) {
-			t.Errorf("library %d function %d %q: live %v, registered %v", row.LibraryNumber, row.Number, row.Name, live, !live)
+		live := row.VersionDeprecated == 0 && ast.LibraryLinked(row.LibraryNumber)
+		named := nativeCode(row.Name) == key && ast.NativeNames.NativeNameIndexCodeText(key) == row.Name && ast.LibraryFunctionLinked(row.LibraryNumber, row.Number)
+		if live != named {
+			t.Errorf("library %d function %d %q: live and linked %v, named %v", row.LibraryNumber, row.Number, row.Name, live, named)
 		}
 		native := ast.NativeFunctionOf(prgrm, key)
-		if live && (native == nil || native.AtomicOPCode != constants.OP_LIBRARY_CALL || native.LibraryNumber != row.LibraryNumber || native.LibraryFunctionNumber != row.Number) {
+		signature := constants.LibraryFunctionSignatureOf(row.LibraryNumber, row.Number)
+		if live && (native == nil || native.AtomicOPCode != constants.OP_LIBRARY_CALL || native.LibraryNumber != row.LibraryNumber || native.LibraryFunctionNumber != row.Number || len(native.Inputs) != len(signature.LibraryFunctionSignatureInputs()) || len(native.Outputs) != len(signature.LibraryFunctionSignatureOutputs())) {
 			t.Errorf("library %d function %d %q: native %+v", row.LibraryNumber, row.Number, row.Name, native)
+		}
+		if !live && native != nil {
+			t.Errorf("library %d function %d %q: native %+v without a live linked row", row.LibraryNumber, row.Number, row.Name, native)
+		}
+		if row.VersionDeprecated != 0 && ast.LibraryLinked(row.LibraryNumber) && (ast.LibraryDispatches[row.LibraryNumber](prgrm, row.Number, nil, nil) || vm.LibraryDispatchesVm[row.LibraryNumber](uint32(row.Number), nil, 0)) {
+			t.Errorf("library %d function %d %q: deprecated, ran in the switch", row.LibraryNumber, row.Number, row.Name)
+		}
+	}
+	for library := 1; library < constants.LibraryCount; library++ {
+		if !ast.LibraryLinked(library) {
+			continue
+		}
+		for _, function := range []int{0, constants.LibraryFunctionTableSize} {
+			if ast.LibraryDispatches[library](prgrm, function, nil, nil) || vm.LibraryDispatchesVm[library](uint32(function), nil, 0) {
+				t.Errorf("library %d function %d ran in the switch", library, function)
+			}
 		}
 	}
 	for _, entry := range ast.NativeNames.NativeNameIndexAll() {

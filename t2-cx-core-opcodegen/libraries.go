@@ -1,0 +1,197 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"strings"
+
+	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
+)
+
+// libraryDispatch is the switch file of one system library, in the package
+// of its handlers and under that package's build tag.
+type libraryDispatch struct {
+	library  int
+	path     string
+	pkg      string
+	function string
+	tag      string
+}
+
+var libraryDispatches = []libraryDispatch{
+	{constants.LibraryNumberFile, "t5-cxos/library_file_dispatch_gen.go", "cxos", "LibraryFileDispatch", "!nocxos"},
+	{constants.LibraryNumberNet, "t5-cxnet/library_net_dispatch_gen.go", "cxnet", "LibraryNetDispatch", ""},
+	{constants.LibraryNumberProcess, "t5-cxos/library_process_dispatch_gen.go", "cxos", "LibraryProcessDispatch", "!nocxos"},
+	{constants.LibraryNumberCipher, "t5-cipher/library_cipher_dispatch_gen.go", "cipher", "LibraryCipherDispatch", "!nocipher"},
+}
+
+// librariesGenerated is everything opcodegen derives from
+// constants.LibraryFunctionDefinitionTable.
+type librariesGenerated struct {
+	parameters []constants.OpcodeParameter
+	signatures [constants.LibraryCount]map[int]constants.LibraryFunctionSignature
+	size       int
+}
+
+// librariesGenerate checks the library definition table against the
+// lifecycle table and derives the signature tables.
+func librariesGenerate() (*librariesGenerated, error) {
+	gen := &librariesGenerated{}
+	codes := typeCodes()
+	packages := map[int]string{}
+	for _, dispatch := range libraryDispatches {
+		packages[dispatch.library] = dispatch.pkg
+	}
+	previous := [2]int{}
+	for _, row := range constants.LibraryFunctionDefinitionTable {
+		live, found := constants.LibraryFunctionLiveByNumber(row.LibraryNumber, row.Number)
+		if !found || live.Name != row.Name {
+			return nil, fmt.Errorf("library definition %d %d %q is not a live row of LibraryFunctionLifecycleTable", row.LibraryNumber, row.Number, row.Name)
+		}
+		if order := [2]int{row.LibraryNumber, row.Number}; order[0] < previous[0] || (order[0] == previous[0] && order[1] <= previous[1]) {
+			return nil, fmt.Errorf("library definition %q is out of library and number order", row.Name)
+		} else {
+			previous = order
+		}
+		for index, handler := range []string{row.Handler, row.HandlerVm} {
+			if index == 1 && handler == "" {
+				continue
+			}
+			pkg, function, ok := strings.Cut(handler, ".")
+			if !ok || pkg != packages[row.LibraryNumber] || function == "" || function[0] < 'A' || function[0] > 'Z' {
+				return nil, fmt.Errorf("library definition %q: handler %q is not an exported function of package %s", row.Name, handler, packages[row.LibraryNumber])
+			}
+		}
+		signature := constants.LibraryFunctionSignature{
+			LibraryFunctionSignatureDefined:        true,
+			LibraryFunctionSignatureVm:             row.HandlerVm != "",
+			LibraryFunctionSignatureParameterFirst: uint16(len(gen.parameters)),
+		}
+		inputs, err := gen.parametersParse(codes, row.Inputs)
+		if err != nil {
+			return nil, fmt.Errorf("library definition %q inputs: %w", row.Name, err)
+		}
+		outputs, err := gen.parametersParse(codes, row.Outputs)
+		if err != nil {
+			return nil, fmt.Errorf("library definition %q outputs: %w", row.Name, err)
+		}
+		signature.LibraryFunctionSignatureInputCount = uint8(inputs)
+		signature.LibraryFunctionSignatureOutputCount = uint8(outputs)
+		if gen.signatures[row.LibraryNumber] == nil {
+			gen.signatures[row.LibraryNumber] = map[int]constants.LibraryFunctionSignature{}
+		}
+		gen.signatures[row.LibraryNumber][row.Number] = signature
+		gen.size = max(gen.size, row.Number+1)
+	}
+	for _, row := range constants.LibraryFunctionLifecycleTable {
+		if row.VersionDeprecated != 0 {
+			continue
+		}
+		if _, defined := gen.signatures[row.LibraryNumber][row.Number]; !defined {
+			return nil, fmt.Errorf("live library function %d %d %q has no definition row", row.LibraryNumber, row.Number, row.Name)
+		}
+	}
+	return gen, nil
+}
+
+// parametersParse appends the atomic and slice parameters spelled in text
+// and returns their count. A library function takes no struct.
+func (gen *librariesGenerated) parametersParse(codes map[string]types.Code, text string) (int, error) {
+	fields := strings.Fields(text)
+	for _, field := range fields {
+		parameter := constants.OpcodeParameter{OpcodeParameterForm: constants.OpcodeParameterFormAtomic}
+		if element, ok := strings.CutPrefix(field, "[]"); ok {
+			parameter.OpcodeParameterForm = constants.OpcodeParameterFormSlice
+			field = element
+		}
+		code, known := codes[field]
+		if !known {
+			return 0, fmt.Errorf("unknown type %q", field)
+		}
+		parameter.OpcodeParameterType = code
+		gen.parameters = append(gen.parameters, parameter)
+	}
+	return len(fields), nil
+}
+
+var libraryConstants = map[int]string{
+	constants.LibraryNumberFile:    "LibraryNumberFile",
+	constants.LibraryNumberNet:     "LibraryNumberNet",
+	constants.LibraryNumberProcess: "LibraryNumberProcess",
+	constants.LibraryNumberCipher:  "LibraryNumberCipher",
+}
+
+const librariesHeader = "// Code generated by t2-cx-core-opcodegen from LibraryFunctionDefinitionTable. DO NOT EDIT.\n\n"
+
+func (gen *librariesGenerated) signaturesFile() []byte {
+	var b bytes.Buffer
+	b.WriteString(librariesHeader)
+	b.WriteString("package constants\n\nimport (\n\t\"github.com/skycoin/skycoin-cx/t0-types\" // thin: only Code constants; core types, keep\n)\n\n")
+	fmt.Fprintf(&b, "// LibraryFunctionTableSize is one past the highest live function number of any library.\nconst LibraryFunctionTableSize = %d\n\n", gen.size)
+	b.WriteString("// LibraryParameterTable holds the parameters of every library function signature. Read only.\nvar LibraryParameterTable = [...]OpcodeParameter{\n")
+	for _, parameter := range gen.parameters {
+		fmt.Fprintf(&b, "\t{%s, %s, 0},\n", parameterForms[parameter.OpcodeParameterForm], typeConstant(parameter.OpcodeParameterType))
+	}
+	b.WriteString("}\n\n// LibraryFunctionSignatureTable is the signature of each library function by\n// library and then number. Read only.\n")
+	b.WriteString("var LibraryFunctionSignatureTable = [LibraryCount][LibraryFunctionTableSize]LibraryFunctionSignature{\n")
+	for library := 1; library < constants.LibraryCount; library++ {
+		signatures := gen.signatures[library]
+		if len(signatures) == 0 {
+			continue
+		}
+		fmt.Fprintf(&b, "\t%s: {\n", libraryConstants[library])
+		for number := 1; number < gen.size; number++ {
+			signature, found := signatures[number]
+			if !found {
+				continue
+			}
+			fmt.Fprintf(&b, "\t\t%d: {true, %t, %d, %d, %d},\n", number, signature.LibraryFunctionSignatureVm, signature.LibraryFunctionSignatureParameterFirst, signature.LibraryFunctionSignatureInputCount, signature.LibraryFunctionSignatureOutputCount)
+		}
+		b.WriteString("\t},\n")
+	}
+	b.WriteString("}\n")
+	return b.Bytes()
+}
+
+const libraryDispatchParameters = "(prgrm *ast.CXProgram, function int, inputs []ast.CXValue, outputs []ast.CXValue) bool"
+
+const libraryDispatchVmParameters = "(function uint32, memory []byte, block uint32) bool"
+
+// dispatchFiles returns the switch file of each library, with the switch
+// of the old loop and the switch of the vm forms.
+func (gen *librariesGenerated) dispatchFiles() map[string][]byte {
+	files := map[string][]byte{}
+	for _, dispatch := range libraryDispatches {
+		var b bytes.Buffer
+		if dispatch.tag != "" {
+			fmt.Fprintf(&b, "//go:build %s\n\n", dispatch.tag)
+		}
+		fmt.Fprintf(&b, "%spackage %s\n\nimport (\n%s)\n\n", librariesHeader, dispatch.pkg, astImport)
+		name := constants.LibraryNameOf(dispatch.library)
+		fmt.Fprintf(&b, "// %s runs function of the %s library on its\n// operands, the handler of its row of\n// constants.LibraryFunctionDefinitionTable, and reports false for a number\n// without one (decision D96).\n", dispatch.function, name)
+		fmt.Fprintf(&b, "func %s%s {\n\tswitch function {\n", dispatch.function, libraryDispatchParameters)
+		for _, row := range constants.LibraryFunctionDefinitionTable {
+			if row.LibraryNumber == dispatch.library {
+				_, handler, _ := strings.Cut(row.Handler, ".")
+				fmt.Fprintf(&b, "\tcase %d:\n\t\t%s(prgrm, inputs, outputs)\n", row.Number, handler)
+			}
+		}
+		b.WriteString("\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n\n")
+		fmt.Fprintf(&b, "// %sVm runs the vm form of function of the %s library\n// on the block of its operands and reports false for a number without one.\n", dispatch.function, name)
+		var cases bytes.Buffer
+		for _, row := range constants.LibraryFunctionDefinitionTable {
+			if row.LibraryNumber == dispatch.library && row.HandlerVm != "" {
+				_, handler, _ := strings.Cut(row.HandlerVm, ".")
+				fmt.Fprintf(&cases, "\tcase %d:\n\t\t%s(memory, block)\n", row.Number, handler)
+			}
+		}
+		if cases.Len() == 0 {
+			fmt.Fprintf(&b, "func %sVm%s {\n\treturn false\n}\n", dispatch.function, libraryDispatchVmParameters)
+		} else {
+			fmt.Fprintf(&b, "func %sVm%s {\n\tswitch function {\n%s\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n", dispatch.function, libraryDispatchVmParameters, cases.String())
+		}
+		files[dispatch.path] = b.Bytes()
+	}
+	return files
+}

@@ -812,32 +812,8 @@ S1340,CXTypeSignature_Array,get-call,t4-opcodes/op_slice.go,464,opSliceCopy,prgr
 S1341,CXArgument,get-call,t4-opcodes/op_testing.go,26,assert,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inputs[0].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1342,CXTypeSignature_Struct,get-call,t4-opcodes/op_testing.go,52,assert,prgrm.GetCXTypeSignatureStructFromArray(inputs[0].TypeSignature.Meta),state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid),5-gid,322,CXTypeSignature_Struct phase 4-alloc
 S1343,CXArgument,get-call,t4-opcodes/op_testing.go,58,assert,prgrm.GetCXArgFromArray(structDetails.Fields[lenFlds-1]),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1347,CXNativeFunction,ctor-def,t4-opcodes/opcodes.go,78,MakeNativeFunction,func MakeNativeFunction,state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
-S1348,CXNativeFunction,alloc-literal-heap,t4-opcodes/opcodes.go,81,MakeNativeFunction,"&ast.CXNativeFunction{ AtomicOPCode: opCode, Inputs: []*ast.CXArgument{}, Outputs: []*ast....",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
-S1349,CXArgument,make-slice,t4-opcodes/opcodes.go,85,MakeNativeFunction,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
-S1350,CXArgument,make-slice,t4-opcodes/opcodes.go,88,MakeNativeFunction,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1359,CXPackage,ctor-call,t5-cipher/init.go,15,RegisterPackage,"ast.MakePackage(""cipher"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1362,CXPackage,arena-add,t5-cipher/init.go,25,RegisterPackage,prgrm.AddPackage(cipherPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1368,CXArgument,ctor-call,t5-cxos/init.go,38,RegisterPackage,ast.Slice(types.F64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1369,CXArgument,ctor-call,t5-cxos/init.go,41,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1370,CXArgument,ctor-call,t5-cxos/init.go,44,RegisterPackage,ast.Slice(types.UI64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1371,CXArgument,ctor-call,t5-cxos/init.go,47,RegisterPackage,ast.Slice(types.UI32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1372,CXArgument,ctor-call,t5-cxos/init.go,50,RegisterPackage,ast.Slice(types.UI16),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1373,CXArgument,ctor-call,t5-cxos/init.go,53,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1374,CXArgument,ctor-call,t5-cxos/init.go,56,RegisterPackage,ast.Slice(types.I64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1375,CXArgument,ctor-call,t5-cxos/init.go,59,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1376,CXArgument,ctor-call,t5-cxos/init.go,62,RegisterPackage,ast.Slice(types.I16),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1377,CXArgument,ctor-call,t5-cxos/init.go,65,RegisterPackage,ast.Slice(types.I8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1378,CXArgument,ctor-call,t5-cxos/init.go,81,RegisterPackage,ast.Slice(types.F64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1379,CXArgument,ctor-call,t5-cxos/init.go,84,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1380,CXArgument,ctor-call,t5-cxos/init.go,87,RegisterPackage,ast.Slice(types.UI64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1381,CXArgument,ctor-call,t5-cxos/init.go,90,RegisterPackage,ast.Slice(types.UI32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1382,CXArgument,ctor-call,t5-cxos/init.go,93,RegisterPackage,ast.Slice(types.UI16),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1383,CXArgument,ctor-call,t5-cxos/init.go,96,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1384,CXArgument,ctor-call,t5-cxos/init.go,99,RegisterPackage,ast.Slice(types.I64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1385,CXArgument,ctor-call,t5-cxos/init.go,102,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1386,CXArgument,ctor-call,t5-cxos/init.go,105,RegisterPackage,ast.Slice(types.I16),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1387,CXArgument,ctor-call,t5-cxos/init.go,108,RegisterPackage,ast.Slice(types.I8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1388,CXArgument,get-call,t5-cxos/op_os.go,426,getSlice,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inputs[1].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1389,CXTypeSignature_Array,get-call,t5-cxos/op_os.go,434,getSlice,prgrm.GetCXTypeSignatureArrayFromArray(inputs[1].TypeSignature.Meta),state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid),5-gid,317,CXTypeSignature_Array phase 4-alloc
 S1390,CXArgument,get-call,t5-cxos/op_os.go,445,getSlice,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outputs[0].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
@@ -1139,3 +1115,4 @@ S1785,CXNativeFunction,ctor-def,t3-ast/opcodes.go,41,NativeFunctionOf,func Nativ
 S1786,CXNativeFunction,alloc-literal-heap,t3-ast/opcodes.go,55,NativeFunctionOf,"&CXNativeFunction{ AtomicOPCode: code, Inputs: NativeParameters(...), Outputs: ...}",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
 S1787,CXArgument,ctor-def,t3-ast/opcodes.go,66,NativeParameters,func NativeParameters,state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1788,CXArgument,make-slice,t3-ast/opcodes.go,69,NativeParameters,"make([]*CXArgument, 0, len(parameters))",state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
+S1789,CXNativeFunction,alloc-literal-heap,t3-ast/opcodes.go,52,NativeFunctionOf,"&CXNativeFunction{ AtomicOPCode: constants.OP_LIBRARY_CALL, LibraryNumber: library, ...}",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng

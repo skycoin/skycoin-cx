@@ -70,7 +70,7 @@ func NativeLinked(code int) bool {
 		return constants.OpcodeLinked(code)
 	}
 	library, function := constants.LibraryFunctionKeyParts(code)
-	return library < constants.LibraryCount && function < len(LibraryFunctionHandlers[library]) && LibraryFunctionHandlers[library][function] != nil
+	return LibraryFunctionLinked(library, function)
 }
 
 // NativeNameIndexAdd registers text as the name of code. Registering a name
