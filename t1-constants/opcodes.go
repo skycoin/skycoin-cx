@@ -743,6 +743,15 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{793, "string.BytesOfString", 2611200002, 0, 0},
 	{794, "string.StringOfBytes", 2611200002, 0, 0},
 	{795, "LibraryCall", 2611230001, 0, 0},
+	{796, "cipher.HashOfBytes", 2611250003, 0, 0},
+	{797, "cipher.HashStateNew", 2611250003, 0, 0},
+	{798, "cipher.HashStateWrite", 2611250003, 0, 0},
+	{799, "cipher.HashStateSum", 2611250003, 0, 0},
+	{800, "cipher.HashStateRelease", 2611250003, 0, 0},
+	{801, "cipher.SignatureVerify", 2611250003, 0, 0},
+	{802, "cipher.SignatureRecoverPubKey", 2611250003, 0, 0},
+	{803, "cipher.SignatureSign", 2611250003, 0, 0},
+	{804, "cipher.KeyPairGenerate", 2611250003, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -904,6 +913,18 @@ const (
 	// OP_LIBRARY_CALL calls function CXFunction.LibraryFunctionNumber of system
 	// library CXFunction.LibraryNumber, see libraries.go.
 	OP_LIBRARY_CALL = 795
+
+	// The cipher library, decision D119. Each function is its own opcode,
+	// run only when the run enables the library, see OpcodeLibraryOf.
+	OpcodeCipherHashOfBytes            = 796
+	OpcodeCipherHashStateNew           = 797
+	OpcodeCipherHashStateWrite         = 798
+	OpcodeCipherHashStateSum           = 799
+	OpcodeCipherHashStateRelease       = 800
+	OpcodeCipherSignatureVerify        = 801
+	OpcodeCipherSignatureRecoverPubKey = 802
+	OpcodeCipherSignatureSign          = 803
+	OpcodeCipherKeyPairGenerate        = 804
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OP_RESIZE = 210

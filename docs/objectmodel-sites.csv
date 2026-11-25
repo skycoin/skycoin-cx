@@ -766,8 +766,8 @@ S1340,CXTypeSignature_Array,get-call,t4-opcodes/op_slice.go,464,opSliceCopy,prgr
 S1341,CXArgument,get-call,t4-opcodes/op_testing.go,26,assert,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inputs[0].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1342,CXTypeSignature_Struct,get-call,t4-opcodes/op_testing.go,52,assert,prgrm.GetCXTypeSignatureStructFromArray(inputs[0].TypeSignature.Meta),state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid),5-gid,322,CXTypeSignature_Struct phase 4-alloc
 S1343,CXArgument,get-call,t4-opcodes/op_testing.go,58,assert,prgrm.GetCXArgFromArray(structDetails.Fields[lenFlds-1]),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1359,CXPackage,ctor-call,t5-cipher/init.go,15,RegisterPackage,"ast.MakePackage(""cipher"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1362,CXPackage,arena-add,t5-cipher/init.go,25,RegisterPackage,prgrm.AddPackage(cipherPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1359,CXPackage,ctor-call,t4-cipher/init.go,15,RegisterPackage,"ast.MakePackage(""cipher"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1362,CXPackage,arena-add,t4-cipher/init.go,25,RegisterPackage,prgrm.AddPackage(cipherPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1388,CXArgument,get-call,t5-cxos/op_os.go,426,getSlice,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inputs[1].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1389,CXTypeSignature_Array,get-call,t5-cxos/op_os.go,434,getSlice,prgrm.GetCXTypeSignatureArrayFromArray(inputs[1].TypeSignature.Meta),state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid),5-gid,317,CXTypeSignature_Array phase 4-alloc
 S1390,CXArgument,get-call,t5-cxos/op_os.go,445,getSlice,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outputs[0].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc

@@ -114,6 +114,15 @@ package constants
 // 2611240003  deprecated    134 cipher.GenerateKeyPair
 // 2611250002  deprecated    580 aff.print
 // 2611250002  deprecated    581 aff.query
+// 2611250003  assigned      796 cipher.HashOfBytes
+// 2611250003  assigned      797 cipher.HashStateNew
+// 2611250003  assigned      798 cipher.HashStateWrite
+// 2611250003  assigned      799 cipher.HashStateSum
+// 2611250003  assigned      800 cipher.HashStateRelease
+// 2611250003  assigned      801 cipher.SignatureVerify
+// 2611250003  assigned      802 cipher.SignatureRecoverPubKey
+// 2611250003  assigned      803 cipher.SignatureSign
+// 2611250003  assigned      804 cipher.KeyPairGenerate
 // 2711200001  reassignable  559 str.eq
 // 2711200001  reassignable  560 str.uneq
 // 2711200001  reassignable  582 str.lt

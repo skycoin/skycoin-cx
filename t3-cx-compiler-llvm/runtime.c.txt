@@ -220,6 +220,46 @@ int32_t cx_rt_finish(int32_t assertCode) {
 	return testFailures > 0 ? assertCode : 0;
 }
 
+// The native forms of the system library opcodes that run on vm, decision
+// D119. Each takes the block at sp, its inputs then its outputs at the
+// offsets the vm form reads, and fails as the vm form does.
+
+// cx_rt_assert ends the run as a failed assert of the vm form does, with
+// the exit code of t0-cx-core-assert and without the buffered output.
+static void cx_rt_assert(const char *message) {
+	fprintf(stderr, "assert failed: precondition violated: %s\n", message);
+	fflush(stderr);
+	exit(3);
+}
+
+// cipherHashStateTaken marks the taken states of the cipher library, as
+// t1-cipherstate does. The digest itself is only read by functions that do
+// not run on vm.
+#define CX_CIPHER_HASH_STATE_COUNT_MAX 64
+static uint8_t cipherHashStateTaken[CX_CIPHER_HASH_STATE_COUNT_MAX];
+
+void cx_rt_cipher_hash_state_new(uint8_t *block) {
+	for (int32_t handle = 0; handle < CX_CIPHER_HASH_STATE_COUNT_MAX; handle++) {
+		if (!cipherHashStateTaken[handle]) {
+			cipherHashStateTaken[handle] = 1;
+			memcpy(block, &handle, 4);
+			return;
+		}
+	}
+	cx_rt_assert("cipher hash state table is full, it holds 64");
+}
+
+void cx_rt_cipher_hash_state_release(uint8_t *block) {
+	int32_t handle;
+	memcpy(&handle, block, 4);
+	if ((uint32_t)handle >= CX_CIPHER_HASH_STATE_COUNT_MAX || !cipherHashStateTaken[handle]) {
+		char message[96];
+		snprintf(message, sizeof message, "cipher hash state %d is out of range, released or never created", handle);
+		cx_rt_assert(message);
+	}
+	cipherHashStateTaken[handle] = 0;
+}
+
 // The runtime function of every scalar opcode, as t3-cx-runtime-vm computes
 // it. Integer arithmetic wraps as in Go, so it runs on the unsigned type.
 

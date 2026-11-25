@@ -20,6 +20,9 @@ const (
 	OpcodeGroupRegexp
 	// OpcodeGroupCxfx is t6-cxfx, linked only with the cxfx tag.
 	OpcodeGroupCxfx
+	// OpcodeGroupCipher is the cipher library in t4-cipher, left out by the
+	// nocipher tag.
+	OpcodeGroupCipher
 	OpcodeGroupCount
 )
 
@@ -150,6 +153,31 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupOsCore: opcodeGroupOsCoreLinked,
 	OpcodeGroupRegexp: opcodeGroupRegexpLinked,
 	OpcodeGroupCxfx:   opcodeGroupCxfxLinked,
+	OpcodeGroupCipher: opcodeGroupCipherLinked,
+}
+
+// opcodeGroupLibrary is the system library of each group whose opcodes are
+// the functions of a library, 0 for the other groups.
+var opcodeGroupLibrary = [OpcodeGroupCount]int{
+	OpcodeGroupCipher: LibraryNumberCipher,
+}
+
+// OpcodeLibraryOf returns the system library whose function opcode code is,
+// 0 for an opcode of no library. A run calls it only when it enables the
+// library, which the loader checks once before the run (decision D119).
+func OpcodeLibraryOf(code int) int {
+	return opcodeGroupLibrary[OpcodeSignatureOf(code).OpcodeSignatureGroup]
+}
+
+// LibraryOpcodeGroup returns the opcode group that holds the functions of
+// library, OpcodeGroupNone for a library called through OP_LIBRARY_CALL.
+func LibraryOpcodeGroup(library int) OpcodeGroup {
+	for group, number := range opcodeGroupLibrary {
+		if number == library && number != 0 {
+			return OpcodeGroup(group)
+		}
+	}
+	return OpcodeGroupNone
 }
 
 // OpcodeGroupLinked reports whether this build links group.

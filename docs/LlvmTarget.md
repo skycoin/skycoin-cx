@@ -72,8 +72,20 @@ cache and links the object with each program.
 
 * A program outside the vm subset, with the message vm gives:
   `cx build: cannot run on vm: opcode outside subset append in main`.
-* A program that calls a system library. The library functions are Go, and a
-  native program has no Go runtime to call them in.
+* A program that calls a function of the file or net library. Those are
+  still called through `LibraryCall` (795), and a native program has no Go
+  runtime to call them in.
+
+## System libraries
+
+A function of a system library that is its own opcode and runs on vm, such
+as `cipher.HashStateNew` (decision D119), has a native form: a C function
+of `runtime.c.txt` that takes the block at sp, its inputs then its outputs,
+as the vm form does, `cx_rt_cipher_hash_state_new` and so on. It is
+compiled into the executable with the rest of the runtime, so nothing is
+loaded from outside. A program that uses a library the build does not
+enable becomes an executable that prints the refusal cx prints and exits
+with `CX_RUNTIME_LIBRARY_DISABLED` (12).
 
 ## Differences from vm
 

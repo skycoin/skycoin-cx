@@ -16,6 +16,7 @@ var coreImportsAllowed = map[string]bool{
 	"t0-packages":           true,
 	"t0-types":              true,
 	"t0-util":               true,
+	"t1-cipherstate":        true,
 	"t1-constants":          true,
 	"t1-cx-core-objmodel":   true,
 	"t2-cx-core-stringpool": true,

@@ -68,6 +68,11 @@ type Options struct {
 	// source line of each instruction, and the name and type of each
 	// variable kept in an alloca.
 	Debug bool
+	// RefusalLine, when set, is the line main prints before it ends with
+	// RefusalCode, without running the program: the loader of cx refuses a
+	// program that uses a system library its run does not enable (D119).
+	RefusalLine string
+	RefusalCode int32
 }
 
 // Stats counts the instructions of a module by how they were emitted.
@@ -108,23 +113,26 @@ type pendingCall struct {
 }
 
 type emitter struct {
-	image       *ir.Image
-	options     Options
-	out         bytes.Buffer
-	body        bytes.Buffer
-	cold        bytes.Buffer
-	decls       map[string]string
-	strs        map[string]string
-	stats       Stats
-	dataEnd     uint32
-	function    uint32
-	fn          *ir.Func
-	tmp         int
-	frame       []region
-	scratch     []region
-	call        pendingCall
-	result      string
-	resultOf    uint32
+	image    *ir.Image
+	options  Options
+	out      bytes.Buffer
+	body     bytes.Buffer
+	cold     bytes.Buffer
+	decls    map[string]string
+	strs     map[string]string
+	stats    Stats
+	dataEnd  uint32
+	function uint32
+	fn       *ir.Func
+	tmp      int
+	frame    []region
+	scratch  []region
+	call     pendingCall
+	result   string
+	resultOf uint32
+	// resultBlock says that the last call was a library opcode, whose outputs
+	// lie in the block at sp.
+	resultBlock bool
 	readOnly    []bool
 	callResults []string
 	debug       *debugInfo
@@ -154,6 +162,9 @@ func Emit(image *ir.Image, options Options) ([]byte, Stats, error) {
 		if err := e.emitFunction(uint32(id), fn); err != nil {
 			return nil, e.stats, fmt.Errorf("%s: %w", image.ImageFuncNames[id], err)
 		}
+	}
+	if options.RefusalLine != "" {
+		e.str(options.RefusalLine)
 	}
 	e.header()
 	e.out.Write(e.body.Bytes())
@@ -200,6 +211,10 @@ func (e *emitter) entry() {
 	fmt.Fprintf(&e.body, "define i32 @main()%s {\nentry:\n", attachment)
 	e.declare("cx_rt_start", "declare void @cx_rt_start(i32)")
 	e.line("call void @cx_rt_start(i32 %d)", e.options.StopCodes[StopDivideByZero])
+	if e.options.RefusalLine != "" {
+		e.declare("cx_rt_stop", "declare void @cx_rt_stop(i32, ptr) noreturn cold nounwind")
+		e.line("call void @cx_rt_stop(i32 %d, ptr %s)", e.options.RefusalCode, e.str(e.options.RefusalLine))
+	}
 	for i, run := range e.dataRuns() {
 		e.line("call void @llvm.memcpy.p0.p0.i64(ptr getelementptr (i8, ptr @cx_mem, i64 %d), ptr @cx_init.%d, i64 %d, i1 false)", image.ImageDataStart+uint32(run[0]), i, run[1]-run[0])
 	}
@@ -752,6 +767,9 @@ func (e *emitter) instr(pc uint32, in *ir.Instr) error {
 		return e.instrCallResult(in)
 	case ir.OpcodeLibraryCall:
 		return errors.New(LibraryCallRefusal)
+	case ir.OpcodeCipherHashStateNew, ir.OpcodeCipherHashStateRelease:
+		e.stats.StatsRuntime++
+		return e.instrLibrary(in)
 	case ir.OpcodeAddressIndexStatic, ir.OpcodeAddressIndex,
 		ir.OpcodeAddressDerefStatic, ir.OpcodeAddressDeref,
 		ir.OpcodeAddressLoad, ir.OpcodeAddressStore,
@@ -843,11 +861,15 @@ func (e *emitter) instrCall(in *ir.Instr) error {
 		e.line("%s = call %s %s(%s)", e.result, rt, e.funcName(in.InstrM), strings.Join(args, ", "))
 	}
 	e.resultOf = in.InstrM
+	e.resultBlock = false
 	e.call = pendingCall{}
 	return nil
 }
 
 func (e *emitter) instrCallResult(in *ir.Instr) error {
+	if e.resultBlock {
+		return e.instrLibraryResult(in)
+	}
 	callee := &e.image.ImageFuncs[e.resultOf]
 	for i, slot := range callee.FuncOutputs {
 		if slot.SlotOffset != in.InstrA {

@@ -7,7 +7,7 @@ import (
 )
 
 // OpcodeSignatureTableSize is one past the highest live opcode number.
-const OpcodeSignatureTableSize = 796
+const OpcodeSignatureTableSize = 805
 
 // OpcodeParameterTable holds the parameters of every opcode signature. Read only.
 var OpcodeParameterTable = [...]OpcodeParameter{
@@ -1576,6 +1576,28 @@ var OpcodeParameterTable = [...]OpcodeParameter{
 	{OpcodeParameterFormSlice, types.UI8, 0},
 	{OpcodeParameterFormSlice, types.UI8, 0},
 	{OpcodeParameterFormAtomic, types.STR, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.I32, 0},
+	{OpcodeParameterFormAtomic, types.I32, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.I32, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.I32, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.BOOL, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.BOOL, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormAtomic, types.BOOL, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
+	{OpcodeParameterFormSlice, types.UI8, 0},
 }
 
 // OpcodeParameterStructTable holds the struct types of struct parameters. Read only.
@@ -2209,6 +2231,15 @@ var OpcodeSignatureTable = [OpcodeSignatureTableSize]OpcodeSignature{
 	792: {OpcodeGroupCore, true, 1559, 1, 1},
 	793: {OpcodeGroupCore, true, 1561, 1, 1},
 	794: {OpcodeGroupCore, true, 1563, 1, 1},
+	796: {OpcodeGroupCipher, true, 1565, 1, 1},
+	797: {OpcodeGroupCipher, true, 1567, 0, 1},
+	798: {OpcodeGroupCipher, true, 1568, 2, 0},
+	799: {OpcodeGroupCipher, true, 1570, 1, 1},
+	800: {OpcodeGroupCipher, true, 1572, 1, 0},
+	801: {OpcodeGroupCipher, true, 1573, 3, 1},
+	802: {OpcodeGroupCipher, true, 1577, 2, 2},
+	803: {OpcodeGroupCipher, true, 1581, 2, 2},
+	804: {OpcodeGroupCipher, true, 1585, 0, 2},
 }
 
 // OpcodeOperatorTable is the typed form of each untyped operator by operand
@@ -3036,6 +3067,15 @@ var OpcodeNameRowTable = [OpcodeSignatureTableSize]uint16{
 	793: 703,
 	794: 704,
 	795: 705,
+	796: 706,
+	797: 707,
+	798: 708,
+	799: 709,
+	800: 710,
+	801: 711,
+	802: 712,
+	803: 713,
+	804: 714,
 }
 
 // NativeNameTable is every name a program calls a built-in by, the opcodes of
@@ -3083,15 +3123,15 @@ var NativeNameTable = [...]NativeName{
 	{"bool.print", 220},
 	{"bool.uneq", 219},
 	{"break", 14},
-	{"cipher.HashOfBytes", -262145},
-	{"cipher.HashStateNew", -262146},
-	{"cipher.HashStateRelease", -262149},
-	{"cipher.HashStateSum", -262148},
-	{"cipher.HashStateWrite", -262147},
-	{"cipher.KeyPairGenerate", -262153},
-	{"cipher.SignatureRecoverPubKey", -262151},
-	{"cipher.SignatureSign", -262152},
-	{"cipher.SignatureVerify", -262150},
+	{"cipher.HashOfBytes", 796},
+	{"cipher.HashStateNew", 797},
+	{"cipher.HashStateRelease", 800},
+	{"cipher.HashStateSum", 799},
+	{"cipher.HashStateWrite", 798},
+	{"cipher.KeyPairGenerate", 804},
+	{"cipher.SignatureRecoverPubKey", 802},
+	{"cipher.SignatureSign", 803},
+	{"cipher.SignatureVerify", 801},
 	{"continue", 15},
 	{"copy", 213},
 	{"debug", 16},

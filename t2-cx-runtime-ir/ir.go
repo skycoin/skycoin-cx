@@ -229,6 +229,15 @@ const (
 	// OpcodeLibraryCall calls function N of system library M on the block at
 	// sp, its inputs then its outputs, after checking ImageLibraryEnabled[M].
 	OpcodeLibraryCall
+	// The opcodes of the system libraries that run on vm, decision D119.
+	// Each runs on the block at sp, its inputs then its outputs at the
+	// offsets of its native function, as a call does. The loader refuses a
+	// program whose library the run does not enable, so none checks it.
+	//
+	// OpcodeCipherHashStateNew writes the i32 handle of a new hash state.
+	OpcodeCipherHashStateNew
+	// OpcodeCipherHashStateRelease frees the hash state of the i32 handle.
+	OpcodeCipherHashStateRelease
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd

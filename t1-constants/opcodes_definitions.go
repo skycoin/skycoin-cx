@@ -645,6 +645,15 @@ var OpcodeDefinitionTable = [...]OpcodeDefinition{
 	{792, "string.ByteLength", "opcodes.OpStrByteLength", "str", "i32", ""},
 	{793, "string.BytesOfString", "opcodes.OpStrBytesOfString", "str", "[]ui8", ""},
 	{794, "string.StringOfBytes", "opcodes.OpStrStringOfBytes", "[]ui8", "str", ""},
+	{796, "cipher.HashOfBytes", "cipher.OpCipherHashOfBytes", "[]ui8", "[]ui8", ""},
+	{797, "cipher.HashStateNew", "cipher.OpCipherHashStateNew", "", "i32", ""},
+	{798, "cipher.HashStateWrite", "cipher.OpCipherHashStateWrite", "i32 []ui8", "", ""},
+	{799, "cipher.HashStateSum", "cipher.OpCipherHashStateSum", "i32", "[]ui8", ""},
+	{800, "cipher.HashStateRelease", "cipher.OpCipherHashStateRelease", "i32", "", ""},
+	{801, "cipher.SignatureVerify", "cipher.OpCipherSignatureVerify", "[]ui8 []ui8 []ui8", "bool", ""},
+	{802, "cipher.SignatureRecoverPubKey", "cipher.OpCipherSignatureRecoverPubKey", "[]ui8 []ui8", "[]ui8 bool", ""},
+	{803, "cipher.SignatureSign", "cipher.OpCipherSignatureSign", "[]ui8 []ui8", "[]ui8 bool", ""},
+	{804, "cipher.KeyPairGenerate", "cipher.OpCipherKeyPairGenerate", "", "[]ui8 []ui8", ""},
 }
 
 // OpcodeDefinition is one row of OpcodeDefinitionTable.

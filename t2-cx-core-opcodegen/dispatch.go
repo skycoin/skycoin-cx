@@ -26,6 +26,7 @@ var dispatchGroups = []dispatchGroup{
 	{constants.OpcodeGroupOsCore, "t5-cx-runtime-core/core_dispatch_oscore", "core", "coreOpcodeDispatchOsCore", "!nocxos", "nocxos", "github.com/skycoin/skycoin-cx/t4-cxos-core", "cxoscore"},
 	{constants.OpcodeGroupRegexp, "t5-cx-runtime-core/core_dispatch_regexp", "core", "coreOpcodeDispatchRegexp", "!noregexp", "noregexp", "github.com/skycoin/skycoin-cx/t4-regexp", "regexp"},
 	{constants.OpcodeGroupCxfx, "t6-cxfx/cxfx_dispatch", "cxfx", "CxfxOpcodeDispatch", "cxfx", "!cxfx", "", ""},
+	{constants.OpcodeGroupCipher, "t4-cipher/cipher_dispatch", "cipher", "CipherOpcodeDispatch", "!nocipher", "nocipher", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.

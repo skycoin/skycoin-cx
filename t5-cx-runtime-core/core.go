@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/skycoin/skycoin-cx/t0-cx-core-assert"
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	// GCREACH: t3-ast owns the heap and the GC roots. core builds the program and
@@ -21,7 +22,7 @@ import (
 // CoreRegister adds the native packages of the core to prgrm, registers the
 // system libraries that libraryRegisters register and sets the opcode switch
 // to CoreOpcodeDispatch. It leaves out every other library (t5-cxos,
-// t5-cxnet, t5-cipher) and the opcodes that need a module outside the
+// t5-cxnet, t4-cipher) and the opcodes that need a module outside the
 // standard library (t6-cxfx).
 func CoreRegister(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgram)) {
 	ast.OpcodeDispatch = CoreOpcodeDispatch
@@ -105,13 +106,34 @@ func CoreLibrariesEnabledResolve(prgrm *ast.CXProgram) {
 }
 
 // CoreLibrariesMissing returns the names of the libraries enabled for prgrm
-// that this binary does not link, in number order.
-func CoreLibrariesMissing(prgrm *ast.CXProgram) []string {
+// that this binary does not link, in number order. opcodesLinked marks the
+// libraries whose functions are opcodes that the binary links, by its build
+// tags (decision D119), and the other libraries are linked when registered.
+func CoreLibrariesMissing(prgrm *ast.CXProgram, opcodesLinked [constants.LibraryCount]bool) []string {
 	var missing [constants.LibraryCount]bool
 	for library, enabled := range prgrm.ProgramLibrariesEnabled {
-		missing[library] = enabled && !ast.LibraryLinked(library)
+		missing[library] = enabled && !ast.LibraryLinked(library) && !opcodesLinked[library]
 	}
 	return CoreLibraryNames(missing)
+}
+
+// CoreLibraryRefused returns the first library, in number order, whose
+// opcodes prgrm uses and the run does not enable, and 0 when there is none.
+// The loader refuses such a program before it runs, so the run loop never
+// checks a library (decision D119).
+func CoreLibraryRefused(prgrm *ast.CXProgram) int {
+	for library, used := range prgrm.ProgramLibrariesUsed {
+		if used && !prgrm.ProgramLibrariesEnabled[library] && constants.LibraryOpcodeGroup(library) != constants.OpcodeGroupNone {
+			return library
+		}
+	}
+	return 0
+}
+
+// CoreLibraryRefusalLine is the line a refused program prints, the runtime
+// error CX_RUNTIME_LIBRARY_DISABLED without a source position.
+func CoreLibraryRefusalLine(library int) string {
+	return "error: " + ast.ErrorString(types.CX_RUNTIME_LIBRARY_DISABLED) + ", " + ast.RuntimeLibraryDisabledMessage(library)
 }
 
 // CoreLibraryNames returns the names of the libraries libraries marks, in

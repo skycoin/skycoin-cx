@@ -1,8 +1,0 @@
-error: test-cipher-hash-state-vm.cx:9, CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
-===Callstack===
->>> main()
-Expressions
- 	test-cipher-hash-state-vm.cx:9 : cipher.HashStateNew() : 0
-	test-cipher-hash-state-vm.cx:10 : cipher.HashStateNew() : 0
-	test-cipher-hash-state-vm.cx:12 : cipher.HashStateNew() : 0
-

@@ -413,7 +413,14 @@ func (s *state) builtIn(code []ir.Instr, line int, cxAtomicOp *ast.CXAtomicOpera
 		code, reason := s.printf(code, inputs, outputs)
 		return code, noFixup, false, reason, 0
 	case constants.OP_LIBRARY_CALL:
-		code, reason := s.libraryCall(code, cxAtomicOp, operator)
+		if !vm.LibraryFunctionVmLinked(operator.LibraryNumber, operator.LibraryFunctionNumber) {
+			return code, noFixup, false, ReasonLibraryFunctionOutsideSubset, 0
+		}
+		code, reason := s.libraryCall(code, cxAtomicOp, operator, ir.Instr{InstrOpcode: ir.OpcodeLibraryCall, InstrM: uint32(operator.LibraryNumber), InstrN: uint32(operator.LibraryFunctionNumber)})
+		return code, noFixup, false, reason, 0
+	}
+	if libraryOpcode := libraryOpcodeOf(opcode); libraryOpcode != ir.OpcodeInvalid {
+		code, reason := s.libraryCall(code, cxAtomicOp, operator, ir.Instr{InstrOpcode: libraryOpcode})
 		return code, noFixup, false, reason, 0
 	}
 
@@ -1076,14 +1083,23 @@ func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatur
 	return append(code, address, size, addressArg, sizeArg), ReasonNone
 }
 
-// libraryCall lowers a call of a system library function that has a vm form,
-// as call lowers a call: a block at sp holds the inputs and then the
-// outputs at the offsets of the native function, ir.OpcodeLibraryCall runs
-// the function on it, and the outputs are copied out.
-func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, callee *ast.CXFunction) ([]ir.Instr, ReasonCode) {
-	if !vm.LibraryFunctionVmLinked(callee.LibraryNumber, callee.LibraryFunctionNumber) {
-		return code, ReasonLibraryFunctionOutsideSubset
+// libraryOpcodeOf returns the image opcode of a system library opcode that
+// runs on vm, ir.OpcodeInvalid for any other opcode (decision D119).
+func libraryOpcodeOf(opcode int) ir.Opcode {
+	switch opcode {
+	case constants.OpcodeCipherHashStateNew:
+		return ir.OpcodeCipherHashStateNew
+	case constants.OpcodeCipherHashStateRelease:
+		return ir.OpcodeCipherHashStateRelease
 	}
+	return ir.OpcodeInvalid
+}
+
+// libraryCall lowers a call of a system library function that runs on vm,
+// as call lowers a call: a block at sp holds the inputs and then the
+// outputs at the offsets of the native function, call runs the function on
+// it, and the outputs are copied out.
+func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, callee *ast.CXFunction, call ir.Instr) ([]ir.Instr, ReasonCode) {
 	prgrm := s.statePrgrm
 	inputs := cxAtomicOp.GetInputs(prgrm)
 	outputs := cxAtomicOp.GetOutputs(prgrm)
@@ -1143,6 +1159,6 @@ func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, c
 		operandSet(&in, 0, value)
 		code = append(code, in)
 	}
-	code = append(code, ir.Instr{InstrOpcode: ir.OpcodeLibraryCall, InstrM: uint32(callee.LibraryNumber), InstrN: uint32(callee.LibraryFunctionNumber)})
+	code = append(code, call)
 	return s.callResults(code, outputs, outputSlots[:len(outputs)])
 }

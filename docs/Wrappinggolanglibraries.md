@@ -68,8 +68,8 @@ A system library function has no opcode row. It is called through
    next number of its library.
 
 2. **Write the handler** as for an opcode, exported, in the package of the
-   library: t5-cxos for file and process, t5-cxnet for net, t5-cipher for
-   cipher. A function that reads and writes only scalars may also have a vm
+   library: t5-cxos for file and process, t5-cxnet for net. The cipher
+   library is opcodes instead, see Conventions.md rule 16. A function that reads and writes only scalars may also have a vm
    form, `func(memory []byte, block uint32)`, which reads its inputs and then
    writes its outputs in the block from `block`.
 

@@ -22,6 +22,18 @@ import (
 // cxcorelibrarynet, cxcorelibraryprocess and cxcorelibrarycipher.
 var coreLibraryRegisters []func(prgrm *ast.CXProgram)
 
+// coreLibraryOpcodesLinked marks the libraries whose functions are opcodes
+// that this core links, by the same build tags (decision D119).
+var coreLibraryOpcodesLinked = [constants.LibraryCount]bool{
+	constants.LibraryNumberCipher: coreLibraryCipherLinked,
+}
+
+// coreOpcodeDispatch is the opcode switch of this core, the switch of
+// t5-cx-runtime-core and then the switches of the libraries it links.
+func coreOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs)
+}
+
 func main() {
 	os.Exit(int(coreRun(os.Args[1:])))
 }
@@ -49,6 +61,7 @@ func coreRun(args []string) int32 {
 	}
 
 	core.CoreRegister(core.CoreProgramMake(), coreLibraryRegisters...)
+	ast.OpcodeDispatch = coreOpcodeDispatch
 	prgrm, err := ast.Deserialize(program, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cx-core: %s\n", err)
@@ -59,7 +72,7 @@ func coreRun(args []string) int32 {
 		return types.CX_COMPILATION_ERROR
 	}
 	core.CoreLibrariesEnabledResolve(prgrm)
-	if missing := core.CoreLibrariesMissing(prgrm); len(missing) > 0 {
+	if missing := core.CoreLibrariesMissing(prgrm, coreLibraryOpcodesLinked); len(missing) > 0 {
 		fmt.Fprintf(os.Stderr, "cx-core: the program enables system libraries this core does not link: %s\n", strings.Join(missing, ", "))
 		return types.CX_COMPILATION_ERROR
 	}

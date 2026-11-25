@@ -58,13 +58,19 @@ func buildLlvm(options buildOptions) int {
 	core.CoreLibrariesEnabledResolve(prgrm)
 	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
 	prgrm.CxIrState.StringPool.StringPoolFreeze()
+	llvmOptions := buildLlvmOptions()
+	llvmOptions.Debug = options.buildOptionsDebug
 	image, _, outside := core.ExecutorLower(prgrm)
+	if library := core.CoreLibraryRefused(prgrm); library != 0 {
+		// The program is refused before it runs, as cx refuses it, so its
+		// code needs no native form.
+		llvmOptions.RefusalLine, llvmOptions.RefusalCode = core.CoreLibraryRefusalLine(library), types.CX_RUNTIME_LIBRARY_DISABLED
+		image, outside = ir.Image{ImageEntryInit: ir.ImageFuncNone, ImageEntryMain: ir.ImageFuncNone}, ""
+	}
 	if outside != "" {
 		fmt.Fprintf(os.Stderr, "cx build: cannot run on vm: %s\n", outside)
 		return types.CX_RUNTIME_NOT_IMPLEMENTED
 	}
-	llvmOptions := buildLlvmOptions()
-	llvmOptions.Debug = options.buildOptionsDebug
 	module, stats, err := llvm.Emit(&image, llvmOptions)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cx build: cannot build for llvm: %v\n", err)

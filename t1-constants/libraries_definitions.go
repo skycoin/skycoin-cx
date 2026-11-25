@@ -10,7 +10,7 @@ package constants
 // Handler is the Go function the switch of the old loop calls,
 // package.Function, with the package cxos (t5-cxos, the file and process
 // libraries, left out by the nocxos tag), cxnet (t5-cxnet) or cipher
-// (t5-cipher, left out by nocipher). HandlerVm is the vm form in the same
+// (t4-cipher, left out by nocipher). HandlerVm is the vm form in the same
 // package, "" for a function without one. Inputs and Outputs are spelled as
 // in OpcodeDefinitionTable, and und is a byte buffer, a ui8 array of any
 // length. Read only.
@@ -88,15 +88,6 @@ var LibraryFunctionDefinitionTable = [...]LibraryFunctionDefinition{
 	{LibraryNumberNet, 18, "net.UDPWriteTo", "cxnet.OpNetUDPWriteTo", "cxnet.LibraryNetUDPWriteToVm", "i32 i32 und i32", "i32"},
 	{LibraryNumberNet, 19, "net.UDPPeerResolve", "cxnet.OpNetUDPPeerResolve", "cxnet.LibraryNetUDPPeerResolveVm", "str i32", "i32"},
 	{LibraryNumberProcess, 1, "os.Run", "cxos.OpOsRun", "", "str i32 i32 str", "i32 i32 str"},
-	{LibraryNumberCipher, 1, "cipher.HashOfBytes", "cipher.OpCipherHashOfBytes", "", "[]ui8", "[]ui8"},
-	{LibraryNumberCipher, 2, "cipher.HashStateNew", "cipher.OpCipherHashStateNew", "cipher.LibraryCipherHashStateNewVm", "", "i32"},
-	{LibraryNumberCipher, 3, "cipher.HashStateWrite", "cipher.OpCipherHashStateWrite", "", "i32 []ui8", ""},
-	{LibraryNumberCipher, 4, "cipher.HashStateSum", "cipher.OpCipherHashStateSum", "", "i32", "[]ui8"},
-	{LibraryNumberCipher, 5, "cipher.HashStateRelease", "cipher.OpCipherHashStateRelease", "cipher.LibraryCipherHashStateReleaseVm", "i32", ""},
-	{LibraryNumberCipher, 6, "cipher.SignatureVerify", "cipher.OpCipherSignatureVerify", "", "[]ui8 []ui8 []ui8", "bool"},
-	{LibraryNumberCipher, 7, "cipher.SignatureRecoverPubKey", "cipher.OpCipherSignatureRecoverPubKey", "", "[]ui8 []ui8", "[]ui8 bool"},
-	{LibraryNumberCipher, 8, "cipher.SignatureSign", "cipher.OpCipherSignatureSign", "", "[]ui8 []ui8", "[]ui8 bool"},
-	{LibraryNumberCipher, 9, "cipher.KeyPairGenerate", "cipher.OpCipherKeyPairGenerate", "", "", "[]ui8 []ui8"},
 }
 
 // LibraryFunctionDefinition is one row of LibraryFunctionDefinitionTable.

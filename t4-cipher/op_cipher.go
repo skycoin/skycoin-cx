@@ -3,80 +3,41 @@
 package cipher
 
 import (
-	"fmt"
 	"hash"
 
-	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-cipherstate"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-// CipherHashStateCountMax is the size of the incremental hash table. A
-// program that holds more states at once fails with an assert.
-const CipherHashStateCountMax = 64
-
-// CipherState holds the incremental hashes in a fixed table an i32 handle
-// indexes. Each hash is made once and reset when its slot is taken again, so
-// a run allocates nothing for it.
-type CipherState struct {
-	CipherHashStateTable [CipherHashStateCountMax]hash.Hash
-	CipherHashStateTaken [CipherHashStateCountMax]bool
-	// CipherDigestScratch receives HashStateSum, so the sum allocates nothing.
-	CipherDigestScratch [cxhash.CxHashSize]byte
+// CipherHashTable holds the hash of each handle of t1-cipherstate. Each hash
+// is made once and reset when its handle is taken, so a run allocates
+// nothing for it.
+type CipherHashTable struct {
+	CipherHashTableHashes [cipherstate.HashStateCountMax]hash.Hash
+	// CipherHashTableDigestScratch receives HashStateSum, so the sum
+	// allocates nothing.
+	CipherHashTableDigestScratch [cxhash.CxHashSize]byte
 }
 
-// VIOLATION: state outside State. Owner: t5-cipher; moves to a per program state with the cxfx tables, see D45.
-var cipherState CipherState
+// VIOLATION: state outside State. Owner: t4-cipher; moves to a per program state with the cxfx tables, see D45.
+var cipherHashTable CipherHashTable
 
-// cipherStatePrepare makes every hash of the table once, before a run.
-func cipherStatePrepare() {
-	for handle := range cipherState.CipherHashStateTable {
-		if cipherState.CipherHashStateTable[handle] == nil {
-			cipherState.CipherHashStateTable[handle] = cxhash.CxHashNew()
+// cipherHashTablePrepare makes every hash of the table once, before a run.
+func cipherHashTablePrepare() {
+	for handle := range cipherHashTable.CipherHashTableHashes {
+		if cipherHashTable.CipherHashTableHashes[handle] == nil {
+			cipherHashTable.CipherHashTableHashes[handle] = cxhash.CxHashNew()
 		}
 	}
 }
 
-// cipherHashStateAssertFailure ends the program for a handle out of range or
-// naming a released or never created state.
-// VIOLATION STRHOT-326: E, the assert text of a bad handle, built only when it fails, #510.
-func cipherHashStateAssertFailure(handle int32) {
-	assert.AssertPreconditionTrue(false, fmt.Sprintf("cipher hash state %d is out of range, released or never created", handle))
-}
-
-// cipherHashStateFullAssertFailure ends the program when every state is taken.
-// VIOLATION STRHOT-327: E, the assert text of a full table, built only when it fails, #510.
-func cipherHashStateFullAssertFailure() {
-	assert.AssertPreconditionTrue(false, fmt.Sprintf("cipher hash state table is full, it holds %d", CipherHashStateCountMax))
-}
-
-// cipherHashStateGet returns the taken state handle names.
-func cipherHashStateGet(handle int32) hash.Hash {
-	if uint32(handle) >= CipherHashStateCountMax || !cipherState.CipherHashStateTaken[handle] {
-		cipherHashStateAssertFailure(handle)
-	}
-	return cipherState.CipherHashStateTable[handle]
-}
-
-// cipherHashStateNew takes a free state, reset, and returns its handle.
-func cipherHashStateNew() int32 {
-	for handle := range cipherState.CipherHashStateTaken {
-		if !cipherState.CipherHashStateTaken[handle] {
-			cipherState.CipherHashStateTaken[handle] = true
-			cipherState.CipherHashStateTable[handle].Reset()
-			return int32(handle)
-		}
-	}
-	cipherHashStateFullAssertFailure()
-	return -1
-}
-
-// cipherHashStateRelease frees the state handle names.
-func cipherHashStateRelease(handle int32) {
-	cipherHashStateGet(handle)
-	cipherState.CipherHashStateTaken[handle] = false
+// cipherHashTaken returns the hash of a taken handle.
+func cipherHashTaken(handle int32) hash.Hash {
+	cipherstate.HashStateTakenCheck(handle)
+	return cipherHashTable.CipherHashTableHashes[handle]
 }
 
 // cipherBytesView returns the elements of the []ui8 value, a view of program
@@ -126,26 +87,27 @@ func OpCipherHashOfBytes(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []a
 
 // OpCipherHashStateNew is cipher.HashStateNew, a new incremental hash.
 func OpCipherHashStateNew(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outputs[0].Set_i32(prgrm, cipherHashStateNew())
+	handle := cipherstate.HashStateNew()
+	cipherHashTable.CipherHashTableHashes[handle].Reset()
+	outputs[0].Set_i32(prgrm, handle)
 }
 
 // OpCipherHashStateWrite is cipher.HashStateWrite, which adds a []ui8 to a
 // state.
 func OpCipherHashStateWrite(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	cipherHashStateGet(inputs[0].Get_i32(prgrm)).Write(cipherBytesView(prgrm, &inputs[1]))
+	cipherHashTaken(inputs[0].Get_i32(prgrm)).Write(cipherBytesView(prgrm, &inputs[1]))
 }
 
 // OpCipherHashStateSum is cipher.HashStateSum, the digest of what was written
 // to a state. The state stays as it is and takes more writes.
 func OpCipherHashStateSum(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	state := cipherHashStateGet(inputs[0].Get_i32(prgrm))
-	digest := state.Sum(cipherState.CipherDigestScratch[:0])
+	digest := cipherHashTaken(inputs[0].Get_i32(prgrm)).Sum(cipherHashTable.CipherHashTableDigestScratch[:0])
 	cipherBytesOutput(prgrm, &outputs[0], digest)
 }
 
 // OpCipherHashStateRelease is cipher.HashStateRelease, which frees a state.
 func OpCipherHashStateRelease(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	cipherHashStateRelease(inputs[0].Get_i32(prgrm))
+	cipherstate.HashStateRelease(inputs[0].Get_i32(prgrm))
 }
 
 // OpCipherSignatureVerify is cipher.SignatureVerify(hash, signature, pubKey).
@@ -209,16 +171,4 @@ func cipherSliceOutput(prgrm *ast.CXProgram, output *ast.CXValue, data []byte, w
 		return
 	}
 	cipherBytesOutput(prgrm, output, data)
-}
-
-// LibraryCipherHashStateNewVm is cipher.HashStateNew on vm, the i32 handle at
-// block.
-func LibraryCipherHashStateNewVm(memory []byte, block uint32) {
-	types.Write_i32(memory, types.Pointer(block), cipherHashStateNew())
-}
-
-// LibraryCipherHashStateReleaseVm is cipher.HashStateRelease on vm, the i32
-// handle at block.
-func LibraryCipherHashStateReleaseVm(memory []byte, block uint32) {
-	cipherHashStateRelease(types.Read_i32(memory, types.Pointer(block)))
 }

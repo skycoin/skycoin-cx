@@ -216,7 +216,7 @@ func instrAbsoluteWrite(in *ir.Instr) (uint32, uint32, bool) {
 		return in.InstrA, in.InstrN, in.InstrMode&ir.InstrModeFrameA == 0
 	case ir.OpcodeReturn, ir.OpcodeJump, ir.OpcodeJumpIf, ir.OpcodeCallFrame, ir.OpcodeCallArg, ir.OpcodeCall,
 		ir.OpcodeTestEqual, ir.OpcodeAddressStore, ir.OpcodePrintText, ir.OpcodePrintValue, ir.OpcodePrintStr,
-		ir.OpcodeLibraryCall:
+		ir.OpcodeLibraryCall, ir.OpcodeCipherHashStateNew, ir.OpcodeCipherHashStateRelease:
 		return 0, 0, false
 	}
 	size := uint32(instrAbsoluteWriteMax)

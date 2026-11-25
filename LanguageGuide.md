@@ -982,6 +982,14 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
+A program that uses a function of `cipher` and does not enable it is
+refused before it runs, with the same code and message and no position.
+The run loop never checks a library (decision D119).
+
+```
+error: CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
+```
+
 Libraries are disabled unless `--enable` names them. The setting
 `constants.LibraryPolicyEnabledWhenImported` in
 `t1-constants/libraries.go` holds this default. Set to `true`, it
@@ -989,9 +997,10 @@ enables every library the program calls. See
 [skycoin-cx#492](https://github.com/skycoin/skycoin-cx/issues/492),
 decision D17.
 
-The compiler turns every call of a library function into one opcode,
-`LibraryCall` (795), which carries the library number and the function
-number. The numbers are in `constants.LibraryTable` and
+Every function of `cipher` is its own opcode, 796 to 804 (decision
+D119). The compiler turns every call of a function of `file`, `net` and
+`process` into one opcode, `LibraryCall` (795), which carries the library
+number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
 numbers, see [Language versions](#language-versions).
 
@@ -4320,5 +4329,22 @@ slice of strings.
 | `#{pkg(main); var(x);}` did not parse, `var` being a keyword | `#{pkg(main) var(x)}` |
 | `serialize(#{pkg(main)})` gave the whole program | gives the package after a `CXSELECT` header |
 | `aff.print` (580), `aff.query` (581) | deprecated, reassignable from `2711250001` |
+
+Serialized programs from before this version must be recompiled.
+
+## Version 2611250003, 2026-11-25
+
+The nine functions of the `cipher` library are opcodes 796 to 804, one
+each, instead of functions 1 to 9 of library 4 called through `LibraryCall`
+(795), decision D119. The source does not change. A program that uses one
+of them without `--enable=cipher` is refused before it runs, with
+`CX_RUNTIME_LIBRARY_DISABLED` (12) and no source position, instead of
+failing at the call. `cipher.HashStateNew` and `cipher.HashStateRelease`
+run on vm and build with `cx build --target=llvm`.
+
+| before | from 2611250003 |
+|---|---|
+| cipher functions 1 to 9 through `LibraryCall` | opcodes 796 to 804, deprecated function numbers reassignable from `2711250001` |
+| `error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library cipher ...` at the call | `error: CX_RUNTIME_LIBRARY_DISABLED, library cipher ...` before the run |
 
 Serialized programs from before this version must be recompiled.

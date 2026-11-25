@@ -143,6 +143,8 @@ func nativeArgCopy(arg *CXArgument) *CXArgument {
 func (cxprogram *CXProgram) AddNativeFunctionInArray(fn *CXNativeFunction) CXFunctionIndex {
 	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		cxprogram.ProgramLibrariesUsed[fn.LibraryNumber] = true
+	} else if library := constants.OpcodeLibraryOf(fn.AtomicOPCode); library != 0 {
+		cxprogram.ProgramLibrariesUsed[library] = true
 	}
 	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
 	// Now a heap literal, site S0194.

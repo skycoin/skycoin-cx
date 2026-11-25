@@ -61,7 +61,7 @@ Counts are files, not rows.
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
 | cx | `cx/packages/` | 1 | keep | `t0-packages` | Registry of built in package names |
-| cx | `cx/packages/cipher/` | 3 | keep | `t5-cipher` | CX cipher package, on by default now |
+| cx | `cx/packages/cipher/` | 3 | keep | `t4-cipher` | CX cipher package, on by default now |
 | cx | `cx/packages/cxfx/` | 15 | keep | `t6-cxfx` | GL, GLFW, OpenAL and gltext bindings behind the cxfx tag (cgo) |
 | cx | `cx/packages/cxos/` | 7 | keep | `t5-cxos` | CX os, json, time and profile packages, on by default now |
 | cx | `cx/packages/regexp/` | 3 | keep | `t4-regexp` | CX regexp package, on by default now |

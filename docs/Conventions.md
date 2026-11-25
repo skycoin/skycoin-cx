@@ -88,16 +88,24 @@ document or check script.
     [GarbageCollector.md](GarbageCollector.md).
 16. **System libraries.** File access, networking, processes and the hash and
     signatures of `sys/cipher` (see [CipherLibrary.md](CipherLibrary.md))
-    are system libraries, never rows of the opcode table. A program calls one through
-    the single opcode `LibraryCall` with a library number and a function
-    number, and the run checks at every call that the library is enabled.
+    are system libraries. Each function of a library that is hardcoded as
+    opcodes, `cipher` so far, is its own row of the opcode table, in the
+    opcode group of its library with the build tag of its package, named
+    from the library down, `constants.OpcodeCipherHashStateNew`. Nothing is
+    loaded or registered at run time (decision D119). The loader refuses a
+    program that uses an opcode of a library its run does not enable, once
+    before the run, so the run loop never checks a library. The other
+    libraries are still called through the single opcode `LibraryCall`
+    with a library number and a function number, and the run checks at
+    every call that the library is enabled.
     Library numbers (`constants.LibraryTable`) and the function numbers of
     each library (`constants.LibraryFunctionLifecycleTable`) in
     [t1-constants/libraries.go](../t1-constants/libraries.go) follow rules 7
     and 8: fixed for life, a new one takes the next number, a deleted one is
     deprecated and not reused before its reassignable version, 0 is never
     assigned. `constants.LibraryPolicyEnabledWhenImported` is the default
-    for a library `--enable` does not name. Each live function has a row of
+    for a library `--enable` does not name. Each live function called
+    through `LibraryCall` has a row of
     `constants.LibraryFunctionDefinitionTable` with its handler, vm form and
     signature, from which t2-cx-core-opcodegen writes one switch per library
     (decision D96). See the System libraries section

@@ -753,8 +753,10 @@ This document does not list the opcodes. The list is
   signature tables of `t1-constants/libraries_signatures_gen.go` and one
   switch per library in the package of its handlers, under that package's
   build tag: `LibraryFileDispatch` and `LibraryProcessDispatch` in t5-cxos,
-  `LibraryNetDispatch` in t5-cxnet and `LibraryCipherDispatch` in t5-cipher,
-  each with a `Vm` switch of its vm forms. A binary links a library with
+  `LibraryNetDispatch` in t5-cxnet, each with a `Vm` switch of its vm forms.
+  The functions of the cipher library are opcodes instead, 796 to 804 in
+  `OpcodeGroupCipher`, which `cipher.CipherOpcodeDispatch` runs (D119).
+  A binary links a library with
   `opcodes.LibraryLink`, which sets `ast.LibraryDispatches` and
   `vm.LibraryDispatchesVm` for its number. Nothing registers a library
   function. See item 16 of [Conventions.md](Conventions.md).
@@ -813,9 +815,8 @@ one loop, and vm fails on a program that does not lower.
   `processNonAtomicOperators` and `popStack` make.
 * A system library call lowers when its function has a vm form in
   `constants.LibraryFunctionDefinitionTable` and its library is linked, see
-  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`, `os.Sync`,
-  `cipher.HashStateNew`, `cipher.HashStateRelease` and every function of
-  `sys/net`. A `str` input is a pointer the vm form reads from the data
+  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`,
+  `os.Sync` and every function of `sys/net`. A `str` input is a pointer the vm form reads from the data
   segment, and an input of undefined type is a byte buffer, a `ui8` array
   lowered as its address and its byte size, two pointers that
   `OpcodeAddressOf` writes, see [Networking.md](Networking.md). It becomes
@@ -827,6 +828,11 @@ one loop, and vm fails on a program that does not lower.
   `ProgramLibrariesEnabled`, and stops with `StopLibraryDisabled` when the
   library is not enabled. Any other library function is
   `ReasonLibraryFunctionOutsideSubset`.
+* The library opcodes that run on vm, `cipher.HashStateNew` and
+  `cipher.HashStateRelease`, lower the same way with their own image opcode,
+  `OpcodeCipherHashStateNew` and `OpcodeCipherHashStateRelease`, in place of
+  `OpcodeLibraryCall`. They run in the slow path and check nothing, as the
+  loader refuses a program whose library the run does not enable (D119).
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,

@@ -14,21 +14,25 @@ and rule 16 of [Conventions.md](Conventions.md).
 
 ## Functions
 
-Every function is called through `LibraryCall` (795) with library 4 and its
-function number. The numbers are fixed for life in
-`constants.LibraryFunctionLifecycleTable`.
+Every function is its own opcode, numbers 796 to 804, in
+`constants.OpcodeDefinitionTable` and the group `OpcodeGroupCipher`
+(decision D119). The numbers are fixed for life in
+`constants.OpcodeLifecycleTable`, and the Go names of the opcodes are
+`constants.OpcodeCipherHashOfBytes` to `constants.OpcodeCipherKeyPairGenerate`.
+A program that uses one of them while the run does not enable `cipher` is
+refused before it runs, with `CX_RUNTIME_LIBRARY_DISABLED` (12).
 
-| Number | Function | Does |
+| Opcode | Function | Does |
 | --- | --- | --- |
-| 1 | `cipher.HashOfBytes(data []ui8) (digest []ui8)` | the 32 byte digest of `data` |
-| 2 | `cipher.HashStateNew() (state i32)` | a new incremental hash |
-| 3 | `cipher.HashStateWrite(state i32, data []ui8)` | adds `data` to the state |
-| 4 | `cipher.HashStateSum(state i32) (digest []ui8)` | the digest of what was written. The state keeps it and takes more writes |
-| 5 | `cipher.HashStateRelease(state i32)` | frees the state |
-| 6 | `cipher.SignatureVerify(hash []ui8, signature []ui8, pubKey []ui8) (valid bool)` | whether `signature` is a signature of `hash` by `pubKey` |
-| 7 | `cipher.SignatureRecoverPubKey(hash []ui8, signature []ui8) (pubKey []ui8, recovered bool)` | the public key that made `signature` |
-| 8 | `cipher.SignatureSign(hash []ui8, secKey []ui8) (signature []ui8, signed bool)` | the signature of `hash` by `secKey` |
-| 9 | `cipher.KeyPairGenerate() (pubKey []ui8, secKey []ui8)` | a new random key pair |
+| 796 | `cipher.HashOfBytes(data []ui8) (digest []ui8)` | the 32 byte digest of `data` |
+| 797 | `cipher.HashStateNew() (state i32)` | a new incremental hash |
+| 798 | `cipher.HashStateWrite(state i32, data []ui8)` | adds `data` to the state |
+| 799 | `cipher.HashStateSum(state i32) (digest []ui8)` | the digest of what was written. The state keeps it and takes more writes |
+| 800 | `cipher.HashStateRelease(state i32)` | frees the state |
+| 801 | `cipher.SignatureVerify(hash []ui8, signature []ui8, pubKey []ui8) (valid bool)` | whether `signature` is a signature of `hash` by `pubKey` |
+| 802 | `cipher.SignatureRecoverPubKey(hash []ui8, signature []ui8) (pubKey []ui8, recovered bool)` | the public key that made `signature` |
+| 803 | `cipher.SignatureSign(hash []ui8, secKey []ui8) (signature []ui8, signed bool)` | the signature of `hash` by `secKey` |
+| 804 | `cipher.KeyPairGenerate() (pubKey []ui8, secKey []ui8)` | a new random key pair |
 
 A hash is 32 bytes, a public key 33 (compressed), a secret key 32 and a
 signature 65, 64 bytes of signature and the recovery byte, as Skycoin
@@ -67,7 +71,8 @@ are checked in `t0-cxhash/cxhash_test.go` and `tests/test-cipher-library.cx`.
 Signatures still sign a 32 byte digest, which is now a BLAKE3-256 digest.
 
 An incremental state is an `i32` handle into a fixed table of 64 states,
-`CipherHashStateCountMax` in `t5-cipher`. The table is made before the run
+`HashStateCountMax` in `t1-cipherstate`, which the old loop and the vm
+share. The table is made before the run
 and a state is reset when it is taken again, so a run allocates nothing for
 it. A handle out of range, released or never returned, and a 65th state
 held at once, are asserts. The table belongs to the process, as the cxfx
@@ -103,7 +108,7 @@ Measured on an Intel i7-3770S. The run is `BenchmarkRunCipher` in
 `t11-cx`, a run of the old loop divided by its 100 calls, which includes
 about 2000 ns per call of run start and loop, its `LoopWithoutCalls`. The
 Go call is `BenchmarkCxHashOfBytes` in `t0-cxhash` and
-`BenchmarkCipherSignatureVerify` in `t5-cipher`.
+`BenchmarkCipherSignatureVerify` in `t4-cipher`.
 
 | Call | Run, ns/call | Go call, ns/op | Go allocations per call |
 | --- | --- | --- | --- |
@@ -115,10 +120,14 @@ Go call is `BenchmarkCxHashOfBytes` in `t0-cxhash` and
 ## The vm
 
 The vm has no heap. A slice lives in the heap, the lowering rejects a slice
-operand (`ReasonOperandHeap`, `ReasonOperandNotScalar`), and a vm library
-function reads only the scalars of its block. So `HashStateNew` and
-`HashStateRelease`, which take and return only an `i32`, have vm forms, and
-the other seven run on the old loop only. A program that calls one of them
+operand (`ReasonOperandHeap`, `ReasonOperandNotScalar`), and a library
+opcode on vm reads only the scalars of its block. So `HashStateNew` and
+`HashStateRelease`, which take and return only an `i32`, are the image
+opcodes `ir.OpcodeCipherHashStateNew` and `ir.OpcodeCipherHashStateRelease`,
+which the vm runs in its switch, and the other seven run on the old loop
+only. The native form of the two is a C function of the LLVM runtime,
+`cx_rt_cipher_hash_state_new` and `cx_rt_cipher_hash_state_release`, so a
+program that uses only them builds with `cx build --target=llvm`. A program that calls one of them
 does not lower and runs on the old loop under `--executor=auto`. The vm
 runs them once it has a heap or can pass a slice as a view of the heap of
 the old loop.
@@ -136,3 +145,10 @@ standard library a core links, see decision D75.
 `cipher.GenerateKeyPair`, opcode 134, returned the structs `cipher.PubKey`
 and `cipher.SecKey`. It is deprecated, reassignable from `2711240001`, and
 the structs are gone. `cipher.KeyPairGenerate` returns the keys as `[]ui8`.
+
+## Before 2611250003
+
+The nine functions were functions 1 to 9 of library 4, called through
+`LibraryCall` (795). Those numbers are deprecated, reassignable from
+`2711250001`. A call into the library when the run did not enable it was a
+runtime error at the call, and is now a refusal before the run.
