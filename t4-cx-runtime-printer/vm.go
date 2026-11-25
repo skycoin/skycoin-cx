@@ -23,6 +23,11 @@ var printerVmStopMessages = [vm.StopCount]string{
 	vm.StopAddressInvalid: "address outside the stack and data segment",
 }
 
+// PrinterVmStopMessage is what vm prints after the error string for stop.
+func PrinterVmStopMessage(stop vm.Stop) string {
+	return printerVmStopMessages[stop]
+}
+
 // printerVmStopLine returns the file and line of the instruction machine
 // stopped at, "" and 0 when it has none, as GetPreviousCXLine gives them.
 func printerVmStopLine(machine *vm.Machine) (string, int) {

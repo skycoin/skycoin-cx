@@ -28,6 +28,8 @@ type buildOptions struct {
 	buildOptionsOutput  string
 	buildOptionsCore    string
 	buildOptionsHelp    bool
+	buildOptionsTarget  string
+	buildOptionsStats   bool
 	buildOptionsCompile []string
 }
 
@@ -55,6 +57,9 @@ func buildRun(args []string) int {
 	}
 	if !parseProgram(compileOptions, fileNames, sourceCode) {
 		return types.CX_COMPILATION_ERROR
+	}
+	if options.buildOptionsTarget == buildTargetLlvm {
+		return buildLlvm(options)
 	}
 
 	var missing []string
@@ -133,6 +138,11 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 			target = &options.buildOptionsOutput
 		case "core":
 			target = &options.buildOptionsCore
+		case "target":
+			target = &options.buildOptionsTarget
+		case "llvm-stats":
+			options.buildOptionsStats = true
+			continue
 		default:
 			options.buildOptionsCompile = append(options.buildOptionsCompile, arg)
 			continue
@@ -148,6 +158,13 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 	}
 	if options.buildOptionsOutput == "" {
 		return options, "no output file, give one with -o"
+	}
+	switch options.buildOptionsTarget {
+	case "":
+		options.buildOptionsTarget = buildTargetCore
+	case buildTargetCore, buildTargetLlvm:
+	default:
+		return options, fmt.Sprintf("unknown --target %q, want %s or %s", options.buildOptionsTarget, buildTargetCore, buildTargetLlvm)
 	}
 	return options, ""
 }
@@ -203,7 +220,7 @@ func buildFileFail(fileError *util.FileError) int {
 }
 
 func buildUsagePrint() {
-	fmt.Printf(`Usage: cx build [cx flags] source-files -o output [--core path]
+	fmt.Printf(`Usage: cx build [cx flags] source-files -o output [--core path] [--target core|llvm]
 
 Compiles the program and writes output, one executable file that holds the
 core binary, the serialized program and a trailer. The core runs the program
@@ -214,6 +231,11 @@ and passes its own command line arguments to it as os.Args.
                     core next to cx that links the libraries the program
                     calls and --enable enables, %s for none,
                     %s-file-net for file and net.
+--target name       core, the default, appends the program to a core. llvm
+                    writes the program as LLVM IR to output. It needs a
+                    program that runs on vm and calls no system library.
+--llvm-stats        With --target=llvm, print how each scalar opcode was
+                    emitted, inline or as a call into the runtime.
 
 The core has no parser. It links a system library only when the program
 calls it and --enable enables it, and only the cipher library brings a

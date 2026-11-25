@@ -58,6 +58,12 @@ func main() {
 		"t1-constants/opcodes_signatures_gen.go":   gen.signaturesFile(),
 		"t1-constants/libraries_signatures_gen.go": libraries.signaturesFile(),
 	}
+	llvmRowList, err := llvmRows()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "opcodegen:", err)
+		os.Exit(1)
+	}
+	files[llvmFile] = llvmFileSource(llvmRowList)
 	for path, source := range gen.dispatchFiles() {
 		files[path] = source
 	}

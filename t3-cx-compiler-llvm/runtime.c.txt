@@ -1,0 +1,371 @@
+// Runtime of the LLVM target of cx build. It prints the way the cx vm prints,
+// see t3-cx-runtime-vm/vm_loop.go, and holds the runtime function of every
+// scalar opcode, which an opcode without a template calls. A native build
+// compiles it with the emitted module. It allocates nothing: the output
+// buffer is static, as the vm output buffer is sized before the run.
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+static char out[1 << 16];
+static size_t outLen;
+static uint32_t testFailures;
+static int32_t divideCode;
+
+static void flush(void) {
+	fwrite(out, 1, outLen, stdout);
+	outLen = 0;
+}
+
+static void put(const char *s, size_t n) {
+	while (n > 0) {
+		if (outLen == sizeof out)
+			flush();
+		size_t room = sizeof out - outLen;
+		size_t k = n < room ? n : room;
+		memcpy(out + outLen, s, k);
+		outLen += k;
+		s += k;
+		n -= k;
+	}
+}
+
+static void putc1(char c) { put(&c, 1); }
+
+static void putI64(int64_t v) {
+	char b[24];
+	put(b, (size_t)snprintf(b, sizeof b, "%lld", (long long)v));
+}
+
+static void putU64(uint64_t v) {
+	char b[24];
+	put(b, (size_t)snprintf(b, sizeof b, "%llu", (unsigned long long)v));
+}
+
+// putFloat writes v as strconv.AppendFloat(v, 'g', -1, bits) does: the
+// shortest digits that read back as the same value, the %e form when the
+// decimal exponent is below -4 or at least 6.
+static void putFloat(double v, int bits) {
+	if (isnan(v)) {
+		put("NaN", 3);
+		return;
+	}
+	if (isinf(v)) {
+		put(v > 0 ? "+Inf" : "-Inf", 4);
+		return;
+	}
+	char e[64];
+	int prec;
+	for (prec = 1; prec <= 17; prec++) {
+		snprintf(e, sizeof e, "%.*e", prec - 1, v);
+		if (bits == 32 ? strtof(e, NULL) == (float)v : strtod(e, NULL) == v)
+			break;
+	}
+	// e is [-]d[.ddd]e[+-]xx
+	char digits[32];
+	int nd = 0, neg = 0;
+	const char *p = e;
+	if (*p == '-') {
+		neg = 1;
+		p++;
+	}
+	for (; *p && *p != 'e'; p++)
+		if (*p >= '0' && *p <= '9')
+			digits[nd++] = *p;
+	int exp = atoi(p + 1);
+	while (nd > 1 && digits[nd - 1] == '0')
+		nd--;
+	if (v == 0)
+		nd = 1, exp = 0;
+	if (neg)
+		putc1('-');
+	if (exp < -4 || exp >= 6) {
+		putc1(digits[0]);
+		if (nd > 1) {
+			putc1('.');
+			put(digits + 1, (size_t)nd - 1);
+		}
+		char x[8];
+		put(x, (size_t)snprintf(x, sizeof x, "e%c%02d", exp < 0 ? '-' : '+', exp < 0 ? -exp : exp));
+		return;
+	}
+	int dp = exp + 1;
+	if (dp <= 0) {
+		put("0.", 2);
+		for (int i = 0; i < -dp; i++)
+			putc1('0');
+		put(digits, (size_t)nd);
+		return;
+	}
+	for (int i = 0; i < dp; i++)
+		putc1(i < nd ? digits[i] : '0');
+	if (nd > dp) {
+		putc1('.');
+		put(digits + dp, (size_t)(nd - dp));
+	}
+}
+
+// cx_rt_start takes the exit code of a division by zero.
+void cx_rt_start(int32_t divide) {
+	divideCode = divide;
+#ifdef _WIN32
+	// The vm writes bytes, so a new line stays one byte.
+	_setmode(_fileno(stdout), _O_BINARY);
+#endif
+}
+
+void cx_rt_print_text(const char *s, int32_t n) { put(s, (size_t)n); }
+
+void cx_rt_print_value_bool(int8_t v, int32_t verb) {
+	(void)verb;
+	if (v)
+		put("true", 4);
+	else
+		put("false", 5);
+}
+void cx_rt_print_value_i8(int8_t v, int32_t verb) { (void)verb, putI64(v); }
+void cx_rt_print_value_i16(int16_t v, int32_t verb) { (void)verb, putI64(v); }
+void cx_rt_print_value_i32(int32_t v, int32_t verb) { (void)verb, putI64(v); }
+void cx_rt_print_value_i64(int64_t v, int32_t verb) { (void)verb, putI64(v); }
+void cx_rt_print_value_ui8(uint8_t v, int32_t verb) { (void)verb, putU64(v); }
+void cx_rt_print_value_ui16(uint16_t v, int32_t verb) { (void)verb, putU64(v); }
+void cx_rt_print_value_ui32(uint32_t v, int32_t verb) { (void)verb, putU64(v); }
+void cx_rt_print_value_ui64(uint64_t v, int32_t verb) { (void)verb, putU64(v); }
+void cx_rt_print_value_f32(float v, int32_t verb) {
+	if (verb == 'f') {
+		char b[400];
+		put(b, (size_t)snprintf(b, sizeof b, "%.7f", (double)v));
+		return;
+	}
+	putFloat(v, 32);
+}
+void cx_rt_print_value_f64(double v, int32_t verb) {
+	if (verb == 'f') {
+		char b[400];
+		put(b, (size_t)snprintf(b, sizeof b, "%.16f", v));
+		return;
+	}
+	putFloat(v, 64);
+}
+
+static uint64_t readPtr(const uint8_t *mem, uint64_t at, uint32_t ptrSize) {
+	uint64_t v = 0;
+	memcpy(&v, mem + at, ptrSize);
+	return v;
+}
+
+// strBytes finds the bytes of the str object at address object as
+// memoryStrRead does, the object header being a mark byte, a forwarding
+// pointer and the object size. It returns 0 for an object past end.
+static int strBytes(const uint8_t *mem, uint32_t end, uint32_t ptrSize, uint64_t object, const uint8_t **s, uint64_t *n) {
+	uint64_t header = 1 + 2 * (uint64_t)ptrSize;
+	uint64_t invalid = ptrSize == 4 ? 0xffffffffu : ~0ull;
+	*s = NULL, *n = 0;
+	if (object == 0 || object == invalid)
+		return 1;
+	if (object + header > end)
+		return 0;
+	uint64_t size = readPtr(mem, object + header - ptrSize, ptrSize);
+	if (size < header || object + size > end)
+		return 0;
+	*s = mem + object + header, *n = size - header;
+	return 1;
+}
+
+// cx_rt_print_str prints the str at object, with a new line for mode 1,
+// ir.PrintStrModeLine. It returns 0 for a str outside memory.
+int32_t cx_rt_print_str(const uint8_t *mem, uint32_t end, uint32_t ptrSize, uint32_t object, int32_t mode) {
+	const uint8_t *s;
+	uint64_t n;
+	if (!strBytes(mem, end, ptrSize, object, &s, &n))
+		return 0;
+	put((const char *)s, n);
+	if (mode == 1)
+		putc1('\n');
+	return 1;
+}
+
+void cx_rt_test_equal(const uint8_t *a, int32_t n, const uint8_t *b, int32_t m, const uint8_t *mem, uint32_t end, uint32_t ptrSize, uint32_t message, const char *where) {
+	if (n == m && memcmp(a, b, (size_t)n) == 0)
+		return;
+	testFailures++;
+	const uint8_t *s;
+	uint64_t len;
+	put(where, strlen(where));
+	put(": result was not equal to the expected value", 44);
+	if (strBytes(mem, end, ptrSize, message, &s, &len) && len > 0) {
+		put("; ", 2);
+		put((const char *)s, len);
+	}
+	putc1('\n');
+}
+
+void cx_rt_stop(int32_t code, const char *text) {
+	put(text, strlen(text));
+	putc1('\n');
+	flush();
+	fflush(stdout);
+	exit(code);
+}
+
+int32_t cx_rt_finish(int32_t assertCode) {
+	flush();
+	fflush(stdout);
+	return testFailures > 0 ? assertCode : 0;
+}
+
+// The runtime function of every scalar opcode, as t3-cx-runtime-vm computes
+// it. Integer arithmetic wraps as in Go, so it runs on the unsigned type.
+
+#define CX_INTEGER(N, T, U, BITS, PRINT)                                                    \
+	T cx_rt_##N##_add(T a, T b) { return (T)((U)a + (U)b); }                                \
+	T cx_rt_##N##_sub(T a, T b) { return (T)((U)a - (U)b); }                                \
+	T cx_rt_##N##_mul(T a, T b) { return (T)((U)a * (U)b); }                                \
+	T cx_rt_##N##_max(T a, T b) { return b > a ? b : a; }                                   \
+	T cx_rt_##N##_min(T a, T b) { return b < a ? b : a; }                                   \
+	int8_t cx_rt_##N##_eq(T a, T b) { return a == b; }                                      \
+	int8_t cx_rt_##N##_uneq(T a, T b) { return a != b; }                                    \
+	int8_t cx_rt_##N##_lt(T a, T b) { return a < b; }                                       \
+	int8_t cx_rt_##N##_lteq(T a, T b) { return a <= b; }                                    \
+	int8_t cx_rt_##N##_gt(T a, T b) { return a > b; }                                       \
+	int8_t cx_rt_##N##_gteq(T a, T b) { return a >= b; }                                    \
+	T cx_rt_##N##_bitand(T a, T b) { return (T)((U)a & (U)b); }                             \
+	T cx_rt_##N##_bitor(T a, T b) { return (T)((U)a | (U)b); }                              \
+	T cx_rt_##N##_bitxor(T a, T b) { return (T)((U)a ^ (U)b); }                             \
+	T cx_rt_##N##_bitclear(T a, T b) { return (T)((U)a & ~(U)b); }                          \
+	T cx_rt_##N##_bitshl(T a, T b) { return (U)b >= BITS ? 0 : (T)((U)a << (U)b); }         \
+	void cx_rt_##N##_print(T a) { PRINT(a), putc1('\n'); }
+
+#define CX_SIGNED(N, T, U, BITS)                                                            \
+	CX_INTEGER(N, T, U, BITS, putI64)                                                       \
+	T cx_rt_##N##_div(T a, T b, const char *stop) {                                         \
+		if (b == 0)                                                                         \
+			cx_rt_stop(divideCode, stop);                                                            \
+		return b == -1 ? (T)(0 - (U)a) : a / b;                                             \
+	}                                                                                       \
+	T cx_rt_##N##_mod(T a, T b, const char *stop) {                                         \
+		if (b == 0)                                                                         \
+			cx_rt_stop(divideCode, stop);                                                            \
+		return b == -1 ? 0 : a % b;                                                         \
+	}                                                                                       \
+	T cx_rt_##N##_neg(T a) { return (T)(0 - (U)a); }                                        \
+	T cx_rt_##N##_abs(T a) { return a < 0 ? (T)(0 - (U)a) : a; }                            \
+	T cx_rt_##N##_bitshr(T a, T b) { return (U)b >= BITS ? (a < 0 ? -1 : 0) : (T)(a >> (U)b); }
+
+#define CX_UNSIGNED(N, T, BITS)                                                             \
+	CX_INTEGER(N, T, T, BITS, putU64)                                                       \
+	T cx_rt_##N##_div(T a, T b, const char *stop) {                                         \
+		if (b == 0)                                                                         \
+			cx_rt_stop(divideCode, stop);                                                            \
+		return a / b;                                                                       \
+	}                                                                                       \
+	T cx_rt_##N##_mod(T a, T b, const char *stop) {                                         \
+		if (b == 0)                                                                         \
+			cx_rt_stop(divideCode, stop);                                                            \
+		return a % b;                                                                       \
+	}                                                                                       \
+	T cx_rt_##N##_bitshr(T a, T b) { return b >= BITS ? 0 : (T)(a >> b); }
+
+CX_SIGNED(i8, int8_t, uint8_t, 8)
+CX_SIGNED(i16, int16_t, uint16_t, 16)
+CX_SIGNED(i32, int32_t, uint32_t, 32)
+CX_SIGNED(i64, int64_t, uint64_t, 64)
+CX_UNSIGNED(ui8, uint8_t, 8)
+CX_UNSIGNED(ui16, uint16_t, 16)
+CX_UNSIGNED(ui32, uint32_t, 32)
+CX_UNSIGNED(ui64, uint64_t, 64)
+
+int8_t cx_rt_bool_not(int8_t a) { return !a; }
+int8_t cx_rt_bool_and(int8_t a, int8_t b) { return a && b; }
+int8_t cx_rt_bool_or(int8_t a, int8_t b) { return a || b; }
+int8_t cx_rt_bool_eq(int8_t a, int8_t b) { return !a == !b; }
+int8_t cx_rt_bool_uneq(int8_t a, int8_t b) { return !a != !b; }
+void cx_rt_bool_print(int8_t a) {
+	if (a)
+		put("true\n", 5);
+	else
+		put("false\n", 6);
+}
+
+// goMax and goMin are math.Max and math.Min, whose infinity, NaN and signed
+// zero cases differ from fmax and fmin.
+static double goMax(double x, double y) {
+	if (isinf(x) && x > 0)
+		return x;
+	if (isinf(y) && y > 0)
+		return y;
+	if (isnan(x) || isnan(y))
+		return NAN;
+	if (x == 0 && x == y)
+		return signbit(x) ? y : x;
+	return x > y ? x : y;
+}
+
+static double goMin(double x, double y) {
+	if (isinf(x) && x < 0)
+		return x;
+	if (isinf(y) && y < 0)
+		return y;
+	if (isnan(x) || isnan(y))
+		return NAN;
+	if (x == 0 && x == y)
+		return signbit(x) ? x : y;
+	return x < y ? x : y;
+}
+
+// The vm computes the f32 mod, max and min in float64, as math.Mod, Max and
+// Min take it, and fmod is math.Mod.
+#define CX_FLOAT(N, T, BITS)                                                                \
+	T cx_rt_##N##_add(T a, T b) { return a + b; }                                           \
+	T cx_rt_##N##_sub(T a, T b) { return a - b; }                                           \
+	T cx_rt_##N##_mul(T a, T b) { return a * b; }                                           \
+	T cx_rt_##N##_div(T a, T b) { return a / b; }                                           \
+	T cx_rt_##N##_mod(T a, T b) { return (T)fmod(a, b); }                                   \
+	T cx_rt_##N##_neg(T a) { return -a; }                                                   \
+	T cx_rt_##N##_abs(T a) { return (T)fabs(a); }                                           \
+	T cx_rt_##N##_max(T a, T b) { return (T)goMax(a, b); }                                  \
+	T cx_rt_##N##_min(T a, T b) { return (T)goMin(a, b); }                                  \
+	int8_t cx_rt_##N##_eq(T a, T b) { return a == b; }                                      \
+	int8_t cx_rt_##N##_uneq(T a, T b) { return a != b; }                                    \
+	int8_t cx_rt_##N##_lt(T a, T b) { return a < b; }                                       \
+	int8_t cx_rt_##N##_lteq(T a, T b) { return a <= b; }                                    \
+	int8_t cx_rt_##N##_gt(T a, T b) { return a > b; }                                       \
+	int8_t cx_rt_##N##_gteq(T a, T b) { return a >= b; }                                    \
+	void cx_rt_##N##_print(T a) { putFloat(a, BITS), putc1('\n'); }
+
+CX_FLOAT(f32, float, 32)
+CX_FLOAT(f64, double, 64)
+
+// The conversions. A float out of the range of an integer type is
+// implementation defined in Go and undefined in C, and both give some value.
+#define CX_CONVERT(FROM, F, TO, T) \
+	T cx_rt_##FROM##_##TO(F a) { return (T)a; }
+
+#define CX_CONVERT_FROM(FROM, F)                                                            \
+	CX_CONVERT(FROM, F, i8, int8_t)                                                         \
+	CX_CONVERT(FROM, F, i16, int16_t)                                                       \
+	CX_CONVERT(FROM, F, i32, int32_t)                                                       \
+	CX_CONVERT(FROM, F, i64, int64_t)                                                       \
+	CX_CONVERT(FROM, F, ui8, uint8_t)                                                       \
+	CX_CONVERT(FROM, F, ui16, uint16_t)                                                     \
+	CX_CONVERT(FROM, F, ui32, uint32_t)                                                     \
+	CX_CONVERT(FROM, F, ui64, uint64_t)                                                     \
+	CX_CONVERT(FROM, F, f32, float)                                                         \
+	CX_CONVERT(FROM, F, f64, double)
+
+CX_CONVERT_FROM(i8, int8_t)
+CX_CONVERT_FROM(i16, int16_t)
+CX_CONVERT_FROM(i32, int32_t)
+CX_CONVERT_FROM(i64, int64_t)
+CX_CONVERT_FROM(ui8, uint8_t)
+CX_CONVERT_FROM(ui16, uint16_t)
+CX_CONVERT_FROM(ui32, uint32_t)
+CX_CONVERT_FROM(ui64, uint64_t)
+CX_CONVERT_FROM(f32, float)
+CX_CONVERT_FROM(f64, double)
