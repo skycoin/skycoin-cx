@@ -98,6 +98,15 @@ before the run:
   `GCRootTableFrames` for a full call stack.
 - the scratch, `GCState`, by `GCStatePrepare`.
 
+An embedding program that loads programs one after another calls
+`ast.ProgramMemoryRelease` on a program it is done with. Its memory and
+scratch go to a reserve that the next `EnsureMinimumHeapSize` takes, so the
+process allocates them once instead of once per load (D106). The reserve is
+not cleared. The heap clears the bytes it grows into, and a collection leaves
+the bitmaps clear, so only scratch from a collection that did not finish is
+dropped. The REPL, the t11-cx tests and the playground release each
+program before the next.
+
 | Scratch | Size | Use |
 | --- | --- | --- |
 | `GCStateStarts` | a bit per byte of the heap cap, cap/8 bytes | where each object starts, for the object a pointer points into. It replaces the sorted list of object addresses |
@@ -174,9 +183,11 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 
 ### Allocation, which adds to the pressure
 
-- t3-ast/ast_memory.go `EnsureMinimumHeapSize` starts the pressure,
-  :110 to :113 `AllocateSeq` grows the heap and adds to it, :130
-  `AllocateStr`, :142 `AllocateStrAt`, :152 `AllocateStrBytesAt`
+- t3-ast/ast_memory.go `EnsureMinimumHeapSize` starts the pressure, :93
+  to :94 `memoryReserveTake` and :120 to :127 `ProgramMemoryRelease` hand
+  the collector scratch between programs, :176 to :179 `AllocateSeq` grows
+  the heap and adds to it, :196 `AllocateStr`, :208 `AllocateStrAt`, :218
+  `AllocateStrBytesAt`
 - t3-ast/ast_cxvalue.go:219 `CXValue.Set_str`, used by the system library
   opcodes, :227 `Set_str_bytes` and :235 `Set_str_concat`, the path of every
   other opcode that writes a str

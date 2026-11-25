@@ -21,7 +21,9 @@ the run and of a `Callback` loop to the largest arity of an expression and
 the format buffer that print, printf, sprintf and the str conversions append
 to (`RunBuffersPrepare`).
 `RunCompiled` calls it as well, and it allocates nothing once the program is
-prepared.
+prepared. A program that `ast.ProgramMemoryRelease` releases leaves its
+memory and collector scratch to the next program prepared in the process, so
+loading programs one after another allocates and clears them once (D106).
 
 ## Tests
 

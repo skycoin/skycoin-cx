@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/skycoin/skycoin-cx/t2-globals"            // thin: only FoundCompileErrors; no depth gain
-	"github.com/skycoin/skycoin-cx/t3-ast"                // thin: only InREPL, SourceFileGidNil; no depth gain
+	"github.com/skycoin/skycoin-cx/t3-ast"                // thin: only InREPL, ProgramMemoryRelease, SourceFileGidNil; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer" // thin: only PrinterCompileErrorsPrint, PrinterRuntimeErrorPrint; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-execute"            // thin: only RunCompiled; no depth gain
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"        // thin: only MakeProgram, RegisterPackages; no depth gain
@@ -129,6 +129,7 @@ func unsafeEval(code string) (out string) {
 		// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
 		// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 		// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0005 S0006.
+		ast.ProgramMemoryRelease(actions.AST)
 		actions.AST = cxinit.MakeProgram()
 		cxinit.RegisterPackages(actions.AST)
 		return fmt.Sprintf("%s", err)
@@ -140,6 +141,7 @@ func unsafeEval(code string) (out string) {
 	// VIOLATION: init chaining. Init 7-8 again, a fresh program on REPL reset.
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0007 S0008.
+	ast.ProgramMemoryRelease(actions.AST)
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
 	return out

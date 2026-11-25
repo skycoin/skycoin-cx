@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute"
 )
@@ -40,6 +41,7 @@ func BenchmarkRunGC(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
+				ast.ProgramMemoryRelease(actions.AST)
 				compileRunProgram(b, p)
 				execute.RunPrepare(actions.AST)
 				b.StartTimer()

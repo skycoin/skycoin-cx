@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"testing"
+	"unsafe"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -122,5 +123,92 @@ func TestRunHeapCapExceeded(t *testing.T) {
 	}
 	if loaded.Heap.Max != heapCap {
 		t.Fatalf("deserialized heap cap %d, want %d", loaded.Heap.Max, heapCap)
+	}
+}
+
+// runHeapZeroSource reads a slice resized past the initial heap, which grows
+// the heap, and the bytes the heap grows into must be zero.
+const runHeapZeroSource = `package main
+
+func main() {
+	var s []i32
+	s = resize(s, 1000000)
+	var sum i32
+	for i := 0; i < 1000000; i++ {
+		sum = sum + s[i]
+	}
+	printf("%d %d\n", len(s), sum)
+}
+`
+
+// runHeapOutput compiles and runs the test program path, or "zero" for
+// runHeapZeroSource, into a fresh actions.AST and returns what it printed.
+// poison fills the memory that the previous program leaves to the reserve
+// with 0xa5 first.
+func runHeapOutput(t *testing.T, path string, poison bool) string {
+	source := runHeapZeroSource
+	if path != "zero" {
+		text, err := os.ReadFile(filepath.Join("..", "tests", path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		source = string(text)
+	}
+	var reserved *byte
+	if poison {
+		memory := actions.AST.Memory[:cap(actions.AST.Memory)]
+		for i := range memory {
+			memory[i] = 0xa5
+		}
+		reserved = unsafe.SliceData(memory)
+	}
+	ast.ProgramMemoryRelease(actions.AST)
+	out, err := os.CreateTemp(t.TempDir(), "stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer out.Close()
+	stdout := os.Stdout
+	os.Stdout = out
+	defer func() { os.Stdout = stdout }()
+	compileRunProgram(t, runBenchProgram{name: path, source: source})
+	execute.RunPrepare(actions.AST)
+	if poison && unsafe.SliceData(actions.AST.Memory) != reserved {
+		t.Fatalf("%s: RunPrepare did not take the released memory", path)
+	}
+	if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = stdout
+	text, err := os.ReadFile(out.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(text)
+}
+
+// TestProgramMemoryRelease fails when a program prepared with the memory a
+// released program left prints other output than with fresh memory (D106).
+// The released memory is not cleared, so the heap clears what it grows into.
+func TestProgramMemoryRelease(t *testing.T) {
+	initProgram()
+	for _, path := range []string{"zero", "test-gc.cx", "test-slices.cx", "test-gc-nested.cx", "test-array.cx"} {
+		t.Run(path, func(t *testing.T) {
+			want := runHeapOutput(t, path, false)
+			if path == "zero" && want != "1000000 0\n" {
+				t.Fatalf("output %q, want %q", want, "1000000 0\n")
+			}
+			runHeapOutput(t, "test-gc.cx", false)
+			if got := runHeapOutput(t, path, true); got != want {
+				t.Errorf("output with released memory:\n%s\nwant:\n%s", got, want)
+			}
+			if got := runHeapOutput(t, path, false); got != want {
+				t.Errorf("output after a released program:\n%s\nwant:\n%s", got, want)
+			}
+		})
+	}
+	ast.ProgramMemoryRelease(actions.AST)
+	if actions.AST.Memory != nil {
+		t.Error("a released program keeps its memory")
 	}
 }

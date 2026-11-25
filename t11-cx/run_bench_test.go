@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -191,6 +192,7 @@ func BenchmarkRun(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
+				ast.ProgramMemoryRelease(actions.AST)
 				compileRunProgram(b, p)
 				execute.RunPrepare(actions.AST)
 				b.StartTimer()
@@ -397,6 +399,42 @@ func TestRunNoGC(t *testing.T) {
 			if after.NumGC != before.NumGC {
 				t.Errorf("%s: %d Go GC cycles during the run, want 0", p.name, after.NumGC-before.NumGC)
 			}
+		})
+	}
+}
+
+// BenchmarkLoad compiles, prepares and runs a program end to end, as an
+// embedding program loads one after another, and reports each stage.
+func BenchmarkLoad(b *testing.B) {
+	initProgram()
+	for _, programPath := range []string{"examples/hello-world.cx", "test-array.cx", "test-slices.cx"} {
+		source, err := os.ReadFile(filepath.Join("..", "tests", programPath))
+		if err != nil {
+			b.Fatal(err)
+		}
+		name := filepath.Base(programPath)
+		b.Run(name, func(b *testing.B) {
+			discardStdout(b)
+			b.ReportAllocs()
+			var compile, prepare, run time.Duration
+			for i := 0; i < b.N; i++ {
+				ast.ProgramMemoryRelease(actions.AST)
+				compileStart := time.Now()
+				compileRunSources(b, []string{name}, []string{string(source)})
+				prepareStart := time.Now()
+				execute.RunPrepare(actions.AST)
+				runStart := time.Now()
+				if err := execute.RunCompiled(actions.AST, 0, nil); err != nil {
+					b.Fatal(err)
+				}
+				runEnd := time.Now()
+				compile += prepareStart.Sub(compileStart)
+				prepare += runStart.Sub(prepareStart)
+				run += runEnd.Sub(runStart)
+			}
+			b.ReportMetric(float64(compile.Nanoseconds())/float64(b.N), "compile-ns/op")
+			b.ReportMetric(float64(prepare.Nanoseconds())/float64(b.N), "prepare-ns/op")
+			b.ReportMetric(float64(run.Nanoseconds())/float64(b.N), "run-ns/op")
 		})
 	}
 }
