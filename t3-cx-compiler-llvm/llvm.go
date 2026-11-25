@@ -14,7 +14,6 @@ package llvm
 import (
 	"bytes"
 	_ "embed"
-	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -30,10 +29,6 @@ import (
 //
 //go:embed runtime.c.txt
 var RuntimeC []byte
-
-// LibraryCallRefusal is the error of an image that calls a system library,
-// whose functions are Go and have no native form.
-const LibraryCallRefusal = "a system library call has no native form"
 
 // RuntimeFileName is the name the runtime source is written under.
 const RuntimeFileName = "cx_runtime.c"
@@ -769,8 +764,6 @@ func (e *emitter) instr(pc uint32, in *ir.Instr) error {
 		return e.instrCall(in)
 	case ir.OpcodeCallResult:
 		return e.instrCallResult(in)
-	case ir.OpcodeLibraryCall:
-		return errors.New(LibraryCallRefusal)
 	case ir.OpcodeAddressIndexStatic, ir.OpcodeAddressIndex,
 		ir.OpcodeAddressDerefStatic, ir.OpcodeAddressDeref,
 		ir.OpcodeAddressLoad, ir.OpcodeAddressStore,

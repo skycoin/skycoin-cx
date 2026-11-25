@@ -900,12 +900,6 @@ func (machine *Machine) slow() Stop {
 			return machine.slowStop(StopAddressInvalid)
 		}
 		return machine.printBytes(str, ir.PrintStrMode(in.InstrN))
-	case ir.OpcodeLibraryCall:
-		if !machine.MachineImage.ImageLibraryEnabled[in.InstrM] {
-			return machine.slowStop(StopLibraryDisabled)
-		}
-		// The lowering emits the call only for a vm form of a linked library.
-		LibraryDispatchesVm[in.InstrM](in.InstrN, mem, machine.MachineStackPointer)
 	case ir.OpcodeCipherHashStateNew:
 		wI32(mem, machine.MachineStackPointer, cipherstate.HashStateNew())
 	case ir.OpcodeCipherHashStateRelease:

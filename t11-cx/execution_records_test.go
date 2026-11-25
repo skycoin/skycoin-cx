@@ -25,7 +25,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-textsections"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	llvm "github.com/skycoin/skycoin-cx/t3-cx-compiler-llvm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
 	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
@@ -940,8 +939,6 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 	buildArgs = append(buildArgs, "-o", output)
 	build := executionRecordProcess(harness.t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 	switch {
-	case build.exitCode != types.CX_SUCCESS && bytes.Contains(build.stderr, []byte(llvm.LibraryCallRefusal)):
-		return executionRecordFormOutcome{note: "calls a system library"}
 	case build.exitCode != types.CX_SUCCESS:
 		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=llvm failed"}
 	}

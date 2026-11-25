@@ -106,7 +106,7 @@ document or check script.
     assigned. `constants.LibraryPolicyEnabledWhenImported` is the default
     for a library `--enable` does not name. Each live function called
     through `LibraryCall` has a row of
-    `constants.LibraryFunctionDefinitionTable` with its handler, vm form and
+    `constants.LibraryFunctionDefinitionTable` with its handler and
     signature, from which t2-cx-core-opcodegen writes one switch per library
     (decision D96). See the System libraries section
     of [LanguageGuide.md](../LanguageGuide.md#system-libraries) and #492.

@@ -340,9 +340,11 @@ memory prints `<invalid address>`, so the dump never panics.
 A call into a system library that the run did not enable ends the program in
 the same way. It prints `CX_RUNTIME_LIBRARY_DISABLED` with the message
 `library <name> is not enabled, enable it with --enable=<name>` and exits with
-`CX_RUNTIME_LIBRARY_DISABLED` (12). On the old loop the sandbox check panics
-with an `ast.RuntimeLibraryDisabled`, which `RuntimeError` records. On vm it
-is the stop `vm.StopLibraryDisabled`. See the System libraries section of
+`CX_RUNTIME_LIBRARY_DISABLED` (12). A program that uses an operation of the
+file, net or cipher library that the run does not enable is refused before
+it runs, with no source position (D119). For `os.Run` the sandbox check of
+the old loop panics with an `ast.RuntimeLibraryDisabled`, which
+`RuntimeError` records. See the System libraries section of
 [LanguageGuide.md](../LanguageGuide.md#system-libraries).
 
 A compile error is data too. The compiler appends a `CompileErrorRecord`, a

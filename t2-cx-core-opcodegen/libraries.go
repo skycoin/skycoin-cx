@@ -51,18 +51,12 @@ func librariesGenerate() (*librariesGenerated, error) {
 		} else {
 			previous = order
 		}
-		for index, handler := range []string{row.Handler, row.HandlerVm} {
-			if index == 1 && handler == "" {
-				continue
-			}
-			pkg, function, ok := strings.Cut(handler, ".")
-			if !ok || pkg != packages[row.LibraryNumber] || function == "" || function[0] < 'A' || function[0] > 'Z' {
-				return nil, fmt.Errorf("library definition %q: handler %q is not an exported function of package %s", row.Name, handler, packages[row.LibraryNumber])
-			}
+		pkg, function, ok := strings.Cut(row.Handler, ".")
+		if !ok || pkg != packages[row.LibraryNumber] || function == "" || function[0] < 'A' || function[0] > 'Z' {
+			return nil, fmt.Errorf("library definition %q: handler %q is not an exported function of package %s", row.Name, row.Handler, packages[row.LibraryNumber])
 		}
 		signature := constants.LibraryFunctionSignature{
 			LibraryFunctionSignatureDefined:        true,
-			LibraryFunctionSignatureVm:             row.HandlerVm != "",
 			LibraryFunctionSignatureParameterFirst: uint16(len(gen.parameters)),
 		}
 		inputs, err := gen.parametersParse(codes, row.Inputs)
@@ -143,7 +137,7 @@ func (gen *librariesGenerated) signaturesFile() []byte {
 			if !found {
 				continue
 			}
-			fmt.Fprintf(&b, "\t\t%d: {true, %t, %d, %d, %d},\n", number, signature.LibraryFunctionSignatureVm, signature.LibraryFunctionSignatureParameterFirst, signature.LibraryFunctionSignatureInputCount, signature.LibraryFunctionSignatureOutputCount)
+			fmt.Fprintf(&b, "\t\t%d: {true, %d, %d, %d},\n", number, signature.LibraryFunctionSignatureParameterFirst, signature.LibraryFunctionSignatureInputCount, signature.LibraryFunctionSignatureOutputCount)
 		}
 		b.WriteString("\t},\n")
 	}
@@ -153,10 +147,8 @@ func (gen *librariesGenerated) signaturesFile() []byte {
 
 const libraryDispatchParameters = "(prgrm *ast.CXProgram, function int, inputs []ast.CXValue, outputs []ast.CXValue) bool"
 
-const libraryDispatchVmParameters = "(function uint32, memory []byte, block uint32) bool"
-
-// dispatchFiles returns the switch file of each library, with the switch
-// of the old loop and the switch of the vm forms.
+// dispatchFiles returns the switch file of each library, the switch of the
+// old loop.
 func (gen *librariesGenerated) dispatchFiles() map[string][]byte {
 	files := map[string][]byte{}
 	for _, dispatch := range libraryDispatches {
@@ -174,20 +166,7 @@ func (gen *librariesGenerated) dispatchFiles() map[string][]byte {
 				fmt.Fprintf(&b, "\tcase %d:\n\t\t%s(prgrm, inputs, outputs)\n", row.Number, handler)
 			}
 		}
-		b.WriteString("\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n\n")
-		fmt.Fprintf(&b, "// %sVm runs the vm form of function of the %s library\n// on the block of its operands and reports false for a number without one.\n", dispatch.function, name)
-		var cases bytes.Buffer
-		for _, row := range constants.LibraryFunctionDefinitionTable {
-			if row.LibraryNumber == dispatch.library && row.HandlerVm != "" {
-				_, handler, _ := strings.Cut(row.HandlerVm, ".")
-				fmt.Fprintf(&cases, "\tcase %d:\n\t\t%s(memory, block)\n", row.Number, handler)
-			}
-		}
-		if cases.Len() == 0 {
-			fmt.Fprintf(&b, "func %sVm%s {\n\treturn false\n}\n", dispatch.function, libraryDispatchVmParameters)
-		} else {
-			fmt.Fprintf(&b, "func %sVm%s {\n\tswitch function {\n%s\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n", dispatch.function, libraryDispatchVmParameters, cases.String())
-		}
+		b.WriteString("\tdefault:\n\t\treturn false\n\t}\n\treturn true\n}\n")
 		files[dispatch.path] = b.Bytes()
 	}
 	return files

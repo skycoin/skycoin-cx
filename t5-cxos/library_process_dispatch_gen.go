@@ -23,9 +23,3 @@ func LibraryProcessDispatch(prgrm *ast.CXProgram, function int, inputs []ast.CXV
 	}
 	return true
 }
-
-// LibraryProcessDispatchVm runs the vm form of function of the process library
-// on the block of its operands and reports false for a number without one.
-func LibraryProcessDispatchVm(function uint32, memory []byte, block uint32) bool {
-	return false
-}

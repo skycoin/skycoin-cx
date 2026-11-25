@@ -6,7 +6,6 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 )
 
 // Every opcode name sits on its live row of OpcodeLifecycleTable, and no
@@ -80,7 +79,7 @@ func TestLibraryFunctionsMatchLifecycleTable(t *testing.T) {
 		if !live && native != nil {
 			t.Errorf("library %d function %d %q: native %+v without a live linked row", row.LibraryNumber, row.Number, row.Name, native)
 		}
-		if row.VersionDeprecated != 0 && ast.LibraryLinked(row.LibraryNumber) && (ast.LibraryDispatches[row.LibraryNumber](prgrm, row.Number, nil, nil) || vm.LibraryDispatchesVm[row.LibraryNumber](uint32(row.Number), nil, 0)) {
+		if row.VersionDeprecated != 0 && ast.LibraryLinked(row.LibraryNumber) && ast.LibraryDispatches[row.LibraryNumber](prgrm, row.Number, nil, nil) {
 			t.Errorf("library %d function %d %q: deprecated, ran in the switch", row.LibraryNumber, row.Number, row.Name)
 		}
 	}
@@ -89,7 +88,7 @@ func TestLibraryFunctionsMatchLifecycleTable(t *testing.T) {
 			continue
 		}
 		for _, function := range []int{0, constants.LibraryFunctionTableSize} {
-			if ast.LibraryDispatches[library](prgrm, function, nil, nil) || vm.LibraryDispatchesVm[library](uint32(function), nil, 0) {
+			if ast.LibraryDispatches[library](prgrm, function, nil, nil) {
 				t.Errorf("library %d function %d ran in the switch", library, function)
 			}
 		}

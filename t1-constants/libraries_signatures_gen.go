@@ -24,6 +24,6 @@ var LibraryParameterTable = [...]OpcodeParameter{
 // library and then number. Read only.
 var LibraryFunctionSignatureTable = [LibraryCount][LibraryFunctionTableSize]LibraryFunctionSignature{
 	LibraryNumberProcess: {
-		1: {true, false, 0, 4, 3},
+		1: {true, 0, 4, 3},
 	},
 }

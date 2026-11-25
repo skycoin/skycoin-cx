@@ -218,8 +218,7 @@ func instrAbsoluteWrite(in *ir.Instr) (uint32, uint32, bool) {
 	case ir.OpcodeZero:
 		return in.InstrA, in.InstrN, in.InstrMode&ir.InstrModeFrameA == 0
 	case ir.OpcodeReturn, ir.OpcodeJump, ir.OpcodeJumpIf, ir.OpcodeCallFrame, ir.OpcodeCallArg, ir.OpcodeCall,
-		ir.OpcodeTestEqual, ir.OpcodeAddressStore, ir.OpcodePrintText, ir.OpcodePrintValue, ir.OpcodePrintStr,
-		ir.OpcodeLibraryCall:
+		ir.OpcodeTestEqual, ir.OpcodeAddressStore, ir.OpcodePrintText, ir.OpcodePrintValue, ir.OpcodePrintStr:
 		return 0, 0, false
 	}
 	size := uint32(instrAbsoluteWriteMax)

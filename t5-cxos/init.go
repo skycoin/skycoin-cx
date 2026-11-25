@@ -16,5 +16,5 @@ func RegisterPackage(prgrm *ast.CXProgram) {
 
 // LibraryProcessRegister links the process library, os.Run.
 func LibraryProcessRegister(prgrm *ast.CXProgram) {
-	opcodes.LibraryLink(constants.LibraryNumberProcess, LibraryProcessDispatch, LibraryProcessDispatchVm)
+	opcodes.LibraryLink(constants.LibraryNumberProcess, LibraryProcessDispatch)
 }

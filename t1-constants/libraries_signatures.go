@@ -2,11 +2,9 @@ package constants
 
 // LibraryFunctionSignature is the signature of one system library function.
 // Its inputs and then its outputs are the rows of LibraryParameterTable from
-// ParameterFirst on. Defined is false for a number without a definition row,
-// and Vm is true for a function with a vm form.
+// ParameterFirst on. Defined is false for a number without a definition row.
 type LibraryFunctionSignature struct {
 	LibraryFunctionSignatureDefined        bool
-	LibraryFunctionSignatureVm             bool
 	LibraryFunctionSignatureParameterFirst uint16
 	LibraryFunctionSignatureInputCount     uint8
 	LibraryFunctionSignatureOutputCount    uint8

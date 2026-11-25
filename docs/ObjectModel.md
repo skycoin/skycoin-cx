@@ -427,8 +427,8 @@ type CxIrStateManagerLen struct {
 * The program's runtime data, `Memory`, the segments and the call stack,
   stays in `CXProgram`. Its arena slices become the managers.
 * The opcode and library function tables are constant data in t1-constants
-  (decisions D21 and D96). `ast.OpcodeDispatch`, `ast.LibraryDispatches` and
-  `vm.LibraryDispatchesVm`, which say which switches a binary links, are
+  (decisions D21 and D96). `ast.OpcodeDispatch` and `ast.LibraryDispatches`,
+  which say which switches a binary links, are
   package state today. Moving them into
   `CxIrState` is part of the `CXNativeFunction` allocation phase.
 

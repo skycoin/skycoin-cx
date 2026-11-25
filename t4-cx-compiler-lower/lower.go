@@ -18,7 +18,6 @@ import (
 	// GCREACH: t3-ast owns the heap and the GC roots. Lowering rejects heap operands,
 	// so vm code never reaches the GC, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 )
 
 // ReasonCode says why a function did not lower.
@@ -65,8 +64,8 @@ const (
 	// ReasonOperandOutsideFrame is a stack operand that does not fit the frame
 	// of its function.
 	ReasonOperandOutsideFrame
-	// ReasonLibraryFunctionOutsideSubset is a call of a system library function
-	// that has no vm form, see vm.LibraryFunctionVmLinked.
+	// ReasonLibraryFunctionOutsideSubset is a call through LibraryCall, os.Run
+	// of the process library, which does not run on vm.
 	ReasonLibraryFunctionOutsideSubset
 	// ReasonCount is one past the last reason.
 	ReasonCount
@@ -179,7 +178,7 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageFuncNames = make([]string, len(prgrm.CXFunctions))
 	image.ImageEntryInit = ir.ImageFuncNone
 	image.ImageEntryMain = ir.ImageFuncNone
-	image.ImageLibraryEnabled = prgrm.ProgramLibrariesEnabled
+
 	image.ImageOperationsEnabled = prgrm.ProgramOperationsEnabled
 
 	if packageIndex, found := prgrm.Packages[prgrm.CxIrState.CxIrStateNameMain]; found {
@@ -414,11 +413,9 @@ func (s *state) builtIn(code []ir.Instr, line int, cxAtomicOp *ast.CXAtomicOpera
 		code, reason := s.printf(code, inputs, outputs)
 		return code, noFixup, false, reason, 0
 	case constants.OP_LIBRARY_CALL:
-		if !vm.LibraryFunctionVmLinked(operator.LibraryNumber, operator.LibraryFunctionNumber) {
-			return code, noFixup, false, ReasonLibraryFunctionOutsideSubset, 0
-		}
-		code, reason := s.libraryCall(code, cxAtomicOp, operator, ir.Instr{InstrOpcode: ir.OpcodeLibraryCall, InstrM: uint32(operator.LibraryNumber), InstrN: uint32(operator.LibraryFunctionNumber)})
-		return code, noFixup, false, reason, 0
+		// os.Run of the process library, the one function still called
+		// through LibraryCall, takes and returns a str and never lowers.
+		return code, noFixup, false, ReasonLibraryFunctionOutsideSubset, 0
 	}
 	if libraryOpcode := libraryOpcodeOf(opcode); libraryOpcode != ir.OpcodeInvalid {
 		code, reason := s.libraryCall(code, cxAtomicOp, operator, ir.Instr{InstrOpcode: libraryOpcode})

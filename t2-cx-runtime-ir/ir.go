@@ -114,10 +114,6 @@ type Image struct {
 	ImageLocalNames  []string
 	ImageReadOnly    []Span
 
-	// ImageLibraryEnabled marks the system libraries the run may call, by
-	// library number, as CXProgram.ProgramLibrariesEnabled.
-	ImageLibraryEnabled [constants.LibraryCount]bool
-
 	// ImageOperationsEnabled holds the library opcodes the run may call, as
 	// CXProgram.ProgramOperationsEnabled. The loader refuses an image that
 	// uses one outside it, so no instruction checks it (decision D119).
@@ -231,9 +227,6 @@ const (
 	// OpcodePrintStr writes the bytes of the str at A to the output. N is a
 	// PrintStrMode.
 	OpcodePrintStr
-	// OpcodeLibraryCall calls function N of system library M on the block at
-	// sp, its inputs then its outputs, after checking ImageLibraryEnabled[M].
-	OpcodeLibraryCall
 	// The opcodes of the system libraries that run on vm, decision D119.
 	// Each runs on the block at sp, its inputs then its outputs at the
 	// offsets of its native function, as a call does. The loader refuses a

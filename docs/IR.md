@@ -754,14 +754,12 @@ This document does not list the opcodes. The list is
   form and signature (decision D96). t2-cx-core-opcodegen writes the library
   signature tables of `t1-constants/libraries_signatures_gen.go` and one
   switch per library in the package of its handlers, under that package's
-  build tag: `LibraryProcessDispatch` in t5-cxos, with a `Vm` switch of its
-  vm forms. The functions of the cipher, net and file libraries are opcodes
+  build tag, `LibraryProcessDispatch` in t5-cxos. The functions of the cipher, net and file libraries are opcodes
   instead, 796 to 875 in `OpcodeGroupCipher`, `OpcodeGroupNet` and
   `OpcodeGroupFile`, which `cipher.CipherOpcodeDispatch`,
   `cxnet.NetOpcodeDispatch` and `cxos.FileOpcodeDispatch` run (D119).
-  A binary links a library with
-  `opcodes.LibraryLink`, which sets `ast.LibraryDispatches` and
-  `vm.LibraryDispatchesVm` for its number. Nothing registers a library
+  A binary links the process library with `opcodes.LibraryLink`, which
+  sets `ast.LibraryDispatches` for its number. Nothing registers a library
   function. See item 16 of [Conventions.md](Conventions.md).
 * A renamed opcode has its new name only.
   `constants.OpcodeRenameTable` keeps the old names, and the compiler
@@ -816,25 +814,21 @@ one loop, and vm fails on a program that does not lower.
   pointer), one `OpcodeCallArg` per input, `OpcodeCall`, then one
   `OpcodeCallResult` per output the caller receives, the same copies
   `processNonAtomicOperators` and `popStack` make.
-* A system library call lowers when its function has a vm form in
-  `constants.LibraryFunctionDefinitionTable` and its library is linked, see
-  `vm.LibraryFunctionVmLinked`. No function called through it has a vm form today. A `str` input is a pointer the vm form reads from the data
-  segment, and an input of undefined type is a byte buffer, a `ui8` array
-  lowered as its address and its byte size, two pointers that
-  `OpcodeAddressOf` writes, see [Networking.md](Networking.md). It becomes
-  `OpcodeCallFrame` for a block of the inputs then the outputs, packed as
-  `ast.NativeFunctionOf` lays them out, one `OpcodeCallArg` per input,
-  `OpcodeLibraryCall` with the library in M and the function in N, then
-  `OpcodeCallResult` per output. `OpcodeLibraryCall` runs in the slow path.
-  It checks `ImageLibraryEnabled[M]`, which `lower.Program` copies from
-  `ProgramLibrariesEnabled`, and stops with `StopLibraryDisabled` when the
-  library is not enabled. Any other library function is
-  `ReasonLibraryFunctionOutsideSubset`.
+* A call through `LibraryCall`, `os.Run` of the process library, does not
+  lower, `ReasonLibraryFunctionOutsideSubset`. The image has no library call
+  opcode (D119).
 * The library opcodes that run on vm, `cipher.HashStateNew`,
   `cipher.HashStateRelease`, every function of `sys/net`, `os.Close`,
-  `os.Seek` and `os.Sync`, lower the same way with their own image opcode,
-  `OpcodeCipherHashStateNew` to `OpcodeFileSync`, in place of `OpcodeLibraryCall`. They run in the slow path and check nothing, as the
-  loader refuses a program whose library the run does not enable (D119).
+  `os.Seek` and `os.Sync`, each lower to their own image opcode,
+  `OpcodeCipherHashStateNew` to `OpcodeFileSync`. A block at sp holds the
+  inputs then the outputs, packed as `ast.NativeFunctionOf` lays them out,
+  with `OpcodeCallFrame`, one `OpcodeCallArg` per input, the opcode, then
+  `OpcodeCallResult` per output. A `str` input is a pointer read from the
+  data segment, and an input of undefined type is a byte buffer, a `ui8`
+  array lowered as its address and its byte size, two pointers that
+  `OpcodeAddressOf` writes, see [Networking.md](Networking.md). They run in
+  the slow path and check nothing, as the loader refuses a program that
+  uses an operation the run does not enable (D119).
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,

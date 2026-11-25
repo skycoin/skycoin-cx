@@ -55,7 +55,7 @@ func (block *netBlock) blockBuffer() []byte {
 // blockAddress returns the host of a str input and the i32 port after it,
 // joined as Go's net package takes them.
 func (block *netBlock) blockAddress() string {
-	text, _ := LibraryStrView(block.blockMemory, block.blockOffset)
+	text, _ := memoryStrRead(block.blockMemory, block.blockOffset, uint32(len(block.blockMemory)))
 	block.blockOffset += machinePointerSize
 	return net.JoinHostPort(string(text), strconv.Itoa(int(block.blockI32())))
 }
