@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -17,6 +17,10 @@ GUI_TAGS := cxfx
 # core each, cx-core for none and cx-core-file-net for file,net.
 CORE_LIBRARY_SETS := none file net process file,net file,process net,process file,net,process \
 	cipher file,cipher net,cipher process,cipher file,net,cipher file,process,cipher net,process,cipher file,net,process,cipher
+
+# The golangci-lint of skycoin/skycoin and skycoin/skywire, and govulncheck.
+GOLANGCI_LINT_VERSION := v2.15.0
+GOVULNCHECK_VERSION := v1.10.0
 
 # names-csv output file and extra repository paths to scan.
 NAMES_CSV ?= bin/names.csv
@@ -73,6 +77,12 @@ test-gui: ## Build cx with cxfx and run the gui CX program tests, under xvfb-run
 	go build -tags="$(TAGS) $(GUI_TAGS)" -o ./bin/cx-gui$(EXE) ./t11-cx
 	go build -o ./bin/cxtest ./t1-cxtest
 	$(if $(DISPLAY),,xvfb-run -a) ./bin/cxtest --cxpath=$(CURDIR)/bin/cx-gui$(EXE) --wdir=./tests --log=fail,stderr --enable-tests=gui
+
+lint: ## golangci-lint with .golangci.yml, the version the lint job of CI pins
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run -c .golangci.yml ./...
+
+vulncheck: ## govulncheck of the module and the Go standard library
+	go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
 llvm-clang: ## Print the clang that cx build --target=llvm and the native form of the execution records use, see docs/LlvmTarget.md
 	@command -v "$${CX_CLANG:-clang}" >/dev/null && "$${CX_CLANG:-clang}" --version | head -n 1 || echo "no clang, the native form of the execution records is not run"
