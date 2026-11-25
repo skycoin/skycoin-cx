@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"testing"
 
@@ -199,7 +200,11 @@ func llvmTestNative(t *testing.T, cc string, image *ir.Image, options llvm.Optio
 	if err := os.WriteFile(runtime, llvm.RuntimeC, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if out, err := exec.Command(cc, "-O2", "-w", "-o", exe, ll, runtime, "-lm").CombinedOutput(); err != nil {
+	args := []string{"-O2", "-w", "-o", exe, ll, runtime}
+	if goruntime.GOOS != "windows" {
+		args = append(args, "-lm")
+	}
+	if out, err := exec.Command(cc, args...).CombinedOutput(); err != nil {
 		t.Fatalf("%s: %v\n%s", cc, err, out)
 	}
 	out, err := exec.Command(exe).Output()
