@@ -59,7 +59,8 @@ func TestBuildOutputDefault(t *testing.T) {
 		t.Chdir(dir)
 	}
 	for _, sources := range [][]string{{"prog"}, {"project"}, {"project", "fib.cx"}, {"project", "taken"}, {"taken.cx"}} {
-		if runtime.GOOS == "windows" && sources[0] == "taken.cx" {
+		// On Windows the output gets .exe, so it is not the directory.
+		if runtime.GOOS == "windows" && len(sources) == 1 && (sources[0] == "taken.cx" || sources[0] == "project") {
 			continue
 		}
 		if got, problem := buildOutputDefault(sources); problem == "" {
