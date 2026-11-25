@@ -12,9 +12,9 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
 	"github.com/skycoin/skycoin-cx/t4-execute"
 	"github.com/skycoin/skycoin-cx/t4-opcodes"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
 )
 
 // The --executor values. auto runs a program on vm when every function

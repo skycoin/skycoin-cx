@@ -7,9 +7,7 @@ import (
 	"strconv"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	"github.com/skycoin/skycoin-cx/t4-opcodes"
 )
 
 // PrinterErrorHeader returns "error: file:line", the start of an error.
@@ -44,12 +42,6 @@ func printerHeapBytes(prgrm *ast.CXProgram, heapOffset types.Pointer) []byte {
 		return types.Read_obj_data(prgrm.Memory, heapOffset)
 	}
 	return nil
-}
-
-// PrinterOpcodesRegister registers the debug opcode, which prints the call
-// stack, on the global opcode tables.
-func PrinterOpcodesRegister(prgrm *ast.CXProgram) {
-	opcodes.RegisterOpCode(prgrm, constants.OP_DEBUG_PRINT_STACK, "debug", PrinterOpDebugPrintStack, nil, nil)
 }
 
 func PrinterOpDebugPrintStack(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {

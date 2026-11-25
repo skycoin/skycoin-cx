@@ -151,10 +151,10 @@ STRHOT-137 B open t5-cxos/op_os.go opOsRun
 STRHOT-138 B open t5-cxos/op_os.go splitCommand
 STRHOT-139 B open t5-cxos/op_profile.go opStartProfile
 STRHOT-140 B open t5-cxos/op_profile.go opStopProfile
-STRHOT-141 O removed t5-regexp/op_regexp.go expOffset not on the run path at dfcc46ab
-STRHOT-142 B open t5-regexp/op_regexp.go regexpCompile
-STRHOT-143 B open t5-regexp/op_regexp.go OpRegexpCompile
-STRHOT-144 B open t5-regexp/op_regexp.go OpRegexpFind
+STRHOT-141 O removed t4-regexp/op_regexp.go expOffset not on the run path at dfcc46ab
+STRHOT-142 B open t4-regexp/op_regexp.go regexpCompile
+STRHOT-143 B open t4-regexp/op_regexp.go OpRegexpCompile
+STRHOT-144 B open t4-regexp/op_regexp.go OpRegexpFind
 STRHOT-145 B removed t5-tcp/op_tcp.go errString deleted with the blocking tcp functions, #508
 STRHOT-146 B removed t5-tcp/op_tcp.go opTCPDial deleted with the blocking tcp functions, #508
 STRHOT-147 B removed t5-tcp/op_tcp.go opTCPAccept deleted with the blocking tcp functions, #508
@@ -276,8 +276,8 @@ STRHOT-262 E removed t3-ast/error.go ErrorHeader not on the run path at dfcc46ab
 STRHOT-263 E removed t3-ast/error.go ErrorString not on the run path at dfcc46ab
 STRHOT-264 E removed t3-ast/error.go RuntimeErrorInfo not on the run path at dfcc46ab
 STRHOT-265 B open t3-ast/serialize.go Deserialize
-STRHOT-266 P removed t5-cx-runtime-printer/stack.go printerStackValueHeader folded into printerStackValueLine, which appends bytes
-STRHOT-267 P removed t5-cx-runtime-printer/stack.go PrinterStackPrint appends names viewed from the string pool and the built-in name tables, #412
+STRHOT-266 P removed t4-cx-runtime-printer/stack.go printerStackValueHeader folded into printerStackValueLine, which appends bytes
+STRHOT-267 P removed t4-cx-runtime-printer/stack.go PrinterStackPrint appends names viewed from the string pool and the built-in name tables, #412
 STRHOT-268 B open t0-util/file_error.go fileErrorFromFileSystemError
 STRHOT-269 B open t0-util/program_path.go ProgramFileSystemPathFromBytes
 STRHOT-270 B open t0-util/program_path.go ProgramSandboxFileCreate
@@ -326,12 +326,12 @@ STRHOT-312 E open t3-ast/serialize.go serializeUnusedManagersCheck
 STRHOT-313 E open t3-ast/sourcefilemng.go *SourceFileMng.SourceFilePath
 STRHOT-314 P removed t3-ast/tostring.go printPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
 STRHOT-315 P removed t3-ast/tostring.go printStructPointer appends bytes to the format buffer, AppendPrintableValue in print_value.go, #407
-STRHOT-316 E open t4-opcodes/libraries.go opLibraryCall
+STRHOT-316 E removed t4-opcodes/libraries.go opLibraryCall removed with the opcode registration (D21)
 STRHOT-317 B open t4-opcodes/op_aff.go affFunction
 STRHOT-318 O removed t4-opcodes/op_str.go OpStrBytesOfString fixed, byte views of CX memory and the format buffer
 STRHOT-319 O removed t4-opcodes/op_str.go OpStrStringOfBytes fixed, byte views of CX memory and the format buffer
-STRHOT-320 P removed t5-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412
-STRHOT-321 E open t5-regexp/op_regexp.go OpRegexpMustCompile
+STRHOT-320 P removed t4-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412
+STRHOT-321 E open t4-regexp/op_regexp.go OpRegexpMustCompile
 STRHOT-322 B cxfx t0-util/program_text.go ProgramTextStringView O fixed, only the t6-cxfx GLFW, gltext and file boundaries call it, D92
 STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure
 STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure

@@ -27,8 +27,8 @@ build: ## Build cx and the cx build cores, cx-core and one per system library se
 	@for set in $(CORE_LIBRARY_SETS); do \
 		suffix=$$(echo "-$$set" | sed "s/^-none$$//; s/,/-/g"); \
 		tags=$$(echo "$$set" | sed "s/^none$$//; s/[a-z][a-z]*/cxcorelibrary&/g; s/,/ /g"); \
-		echo go build -tags=\"$(TAGS) $$tags\" -o ./bin/cx-core$$suffix$(EXE) ./t7-cx-core-run; \
-		go build -tags="$(TAGS) $$tags" -o ./bin/cx-core$$suffix$(EXE) ./t7-cx-core-run || exit 1; \
+		echo go build -tags=\"$(TAGS) $$tags\" -o ./bin/cx-core$$suffix$(EXE) ./t6-cx-core-run; \
+		go build -tags="$(TAGS) $$tags" -o ./bin/cx-core$$suffix$(EXE) ./t6-cx-core-run || exit 1; \
 	done
 
 build-gui: ## Build cx with the cxfx GL/GLFW/OpenAL package (needs cgo and X11/GL headers)

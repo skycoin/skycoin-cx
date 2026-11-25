@@ -266,16 +266,14 @@ S0383,CXArgument,get-call,t3-ast/mem_offset.go,382,GetFinalOffset,prgrm.GetCXArg
 S0384,CXTypeSignature,get-call,t3-ast/mem_offset.go,405,CalculateDereference_Slice,prgrm.GetCXTypeSignatureFromArray(drfsStruct.arg.Indexes[drfsStruct.idxCounter]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0385,CXTypeSignature,get-call,t3-ast/mem_offset.go,431,CalculateDereference_Array,prgrm.GetCXTypeSignatureFromArray(drfsStruct.arg.Indexes[drfsStruct.idxCounter]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0386,CXArgument,get-call,t3-ast/mem_slice.go,30,GetSliceOffset,prgrm.GetCXArgFromArray(CXArgumentIndex(argTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S0387,CXNativeFunction,ptr-global,t3-ast/opcodes.go,42,package var,Natives = map[int]*CXNativeFunction{},"state.CXNativeFunctionMng, keyed by opcode",4-alloc,356,CXNativeFunction phase 2-mng
-S0388,CXNativeFunction,ptr-global,t3-ast/opcodes.go,45,package var,Operators []*CXNativeFunction,"state.CXNativeFunctionMng, keyed by opcode",4-alloc,356,CXNativeFunction phase 2-mng
 S0461,CXProgram,ctor-def,t3-ast/serialize.go,47,Deserialize,func Deserialize,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0462,CXProgram,alloc-literal-heap,t3-ast/serialize.go,60,Deserialize,&CXProgram{CxIrState: &CxIrState{}},state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S0465,CXTypeSignature,get-call,t5-cx-runtime-printer/stack.go,33,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S0466,CXPackage,get-call,t5-cx-runtime-printer/stack.go,40,CXProgram.PrintStack,cxprogram.GetPackageFromArray(input.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0469,CXAtomicOperator,get-call,t5-cx-runtime-printer/stack.go,70,CXProgram.PrintStack,cxprogram.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S0470,CXFunction,get-call,t5-cx-runtime-printer/stack.go,77,CXProgram.PrintStack,cxprogram.GetFunctionFromArray(cxAtomicOp.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S0471,CXTypeSignature,get-call,t5-cx-runtime-printer/stack.go,81,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S0472,CXPackage,get-call,t5-cx-runtime-printer/stack.go,89,CXProgram.PrintStack,cxprogram.GetPackageFromArray(input.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
+S0465,CXTypeSignature,get-call,t4-cx-runtime-printer/stack.go,33,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
+S0466,CXPackage,get-call,t4-cx-runtime-printer/stack.go,40,CXProgram.PrintStack,cxprogram.GetPackageFromArray(input.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
+S0469,CXAtomicOperator,get-call,t4-cx-runtime-printer/stack.go,70,CXProgram.PrintStack,cxprogram.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
+S0470,CXFunction,get-call,t4-cx-runtime-printer/stack.go,77,CXProgram.PrintStack,cxprogram.GetFunctionFromArray(cxAtomicOp.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
+S0471,CXTypeSignature,get-call,t4-cx-runtime-printer/stack.go,81,CXProgram.PrintStack,cxprogram.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
+S0472,CXPackage,get-call,t4-cx-runtime-printer/stack.go,89,CXProgram.PrintStack,cxprogram.GetPackageFromArray(input.Package),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0476,CXPackage,get-call,t3-ast/tostring.go,37,buildStrImports,prgrm.GetPackageFromArray(impIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0477,CXTypeSignature,get-call,t3-ast/tostring.go,56,buildStrGlobals,prgrm.GetCXTypeSignatureFromArray(glblIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0478,CXTypeSignature,get-call,t3-ast/tostring.go,77,buildStrStructs,prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
@@ -814,21 +812,10 @@ S1340,CXTypeSignature_Array,get-call,t4-opcodes/op_slice.go,464,opSliceCopy,prgr
 S1341,CXArgument,get-call,t4-opcodes/op_testing.go,26,assert,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(inputs[0].TypeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1342,CXTypeSignature_Struct,get-call,t4-opcodes/op_testing.go,52,assert,prgrm.GetCXTypeSignatureStructFromArray(inputs[0].TypeSignature.Meta),state.CXTypeSignature_StructMng.CXTypeSignature_StructGet(gid),5-gid,322,CXTypeSignature_Struct phase 4-alloc
 S1343,CXArgument,get-call,t4-opcodes/op_testing.go,58,assert,prgrm.GetCXArgFromArray(structDetails.Fields[lenFlds-1]),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1344,CXArgument,make-slice,t4-opcodes/opcodes.go,42,RegisterOpCode,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
-S1345,CXArgument,make-slice,t4-opcodes/opcodes.go,47,RegisterOpCode,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
-S1346,CXNativeFunction,ctor-call,t4-opcodes/opcodes.go,51,RegisterOpCode,"MakeNativeFunction(prgrm, code, inputs, outputs)",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
 S1347,CXNativeFunction,ctor-def,t4-opcodes/opcodes.go,78,MakeNativeFunction,func MakeNativeFunction,state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
 S1348,CXNativeFunction,alloc-literal-heap,t4-opcodes/opcodes.go,81,MakeNativeFunction,"&ast.CXNativeFunction{ AtomicOPCode: opCode, Inputs: []*ast.CXArgument{}, Outputs: []*ast....",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
 S1349,CXArgument,make-slice,t4-opcodes/opcodes.go,85,MakeNativeFunction,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1350,CXArgument,make-slice,t4-opcodes/opcodes.go,88,MakeNativeFunction,[]*ast.CXArgument{},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
-S1351,CXNativeFunction,make-slice,t4-opcodes/opcodes_init.go,26,RegisterOpcodes,"make([]*ast.CXNativeFunction, ast.OPERATOR_HANDLER_COUNT)",state.CXNativeFunctionMng (manager storage) or []CXNativeFunctionGid,4-alloc,356,CXNativeFunction phase 2-mng
-S1352,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,79,RegisterOpcodes,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1353,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,83,RegisterOpcodes,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1354,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,86,RegisterOpcodes,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1355,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,89,RegisterOpcodes,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1356,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,92,RegisterOpcodes,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1357,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,503,RegisterOpcodes,ast.Slice(types.AFF),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1358,CXArgument,ctor-call,t4-opcodes/opcodes_init.go,506,RegisterOpcodes,ast.Slice(types.AFF),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1359,CXPackage,ctor-call,t5-cipher/init.go,15,RegisterPackage,"ast.MakePackage(""cipher"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1362,CXPackage,arena-add,t5-cipher/init.go,25,RegisterPackage,prgrm.AddPackage(cipherPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1368,CXArgument,ctor-call,t5-cxos/init.go,38,RegisterPackage,ast.Slice(types.F64),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
@@ -871,53 +858,21 @@ S1405,CXArgument,make-slice,t5-cxpartialparsing/cxpartialparsing.y,362,yyParserI
 S1406,CXArgument,make-slice,t5-cxpartialparsing/cxpartialparsing.y,369,yyParserImpl.Parse,[]*ast.CXArgument{arg},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1408,CXArgument,arena-add,t5-cxpartialparsing/cxpartialparsing.y,403,yyParserImpl.Parse,Program.AddPointerArgsToCXArgsArray(yyDollar[2].arguments),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1409,CXArgument,arena-add,t5-cxpartialparsing/cxpartialparsing.y,406,yyParserImpl.Parse,Program.AddPointerArgsToCXArgsArray(yyDollar[3].arguments),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1410,CXPackage,ctor-call,t5-regexp/init.go,14,RegisterPackage,"ast.MakePackage(""regexp"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1411,CXPackage,arena-add,t5-regexp/init.go,17,RegisterPackage,prgrm.AddPackage(regexpPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1412,CXPackage,get-call,t5-regexp/init.go,20,RegisterPackage,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1413,CXStruct,ctor-call,t5-regexp/init.go,24,RegisterPackage,"ast.MakeStruct(""Regexp"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
-S1415,CXArgument,ctor-call,t5-regexp/init.go,34,RegisterPackage,"ast.MakeStructParameter(prgrm, ""regexp"", ""Regexp"", ""r"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1416,CXArgument,ctor-call,t5-regexp/init.go,37,RegisterPackage,"ast.MakeStructParameter(prgrm, ""regexp"", ""Regexp"", ""r"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1417,CXArgument,ctor-call,t5-regexp/init.go,40,RegisterPackage,"ast.MakeStructParameter(prgrm, ""regexp"", ""Regexp"", ""r"")",state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1418,CXProgram,alloc-literal-heap,t5-regexp/op_regexp_test.go,16,newTestProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex), CurrentPackage: -1, CallSta...",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S1419,CXCall,make-slice,t5-regexp/op_regexp_test.go,21,newTestProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
-S1420,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,38,strValue,&ast.CXTypeSignature{Offset: offset},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1421,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,46,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 100},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1422,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,50,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1423,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,53,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 400},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1424,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,73,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1425,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,76,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1426,CXTypeSignature,alloc-literal-heap,t5-regexp/op_regexp_test.go,93,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1410,CXPackage,ctor-call,t4-regexp/init.go,14,RegisterPackage,"ast.MakePackage(""regexp"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1411,CXPackage,arena-add,t4-regexp/init.go,17,RegisterPackage,prgrm.AddPackage(regexpPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1412,CXPackage,get-call,t4-regexp/init.go,20,RegisterPackage,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
+S1413,CXStruct,ctor-call,t4-regexp/init.go,24,RegisterPackage,"ast.MakeStruct(""Regexp"")",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
+S1418,CXProgram,alloc-literal-heap,t4-regexp/op_regexp_test.go,16,newTestProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex), CurrentPackage: -1, CallSta...",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
+S1419,CXCall,make-slice,t4-regexp/op_regexp_test.go,21,newTestProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
+S1420,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,38,strValue,&ast.CXTypeSignature{Offset: offset},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1421,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,46,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 100},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1422,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,50,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1423,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,53,TestRegexpCallsDoNotGrowProgram,&ast.CXTypeSignature{Offset: 400},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1424,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,73,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1425,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,76,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
+S1426,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,93,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1427,CXPackage,ctor-call,t5-cxnet/init.go,19,RegisterPackage,"ast.MakePackage(""net"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1428,CXPackage,arena-add,t5-cxnet/init.go,22,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1431,CXArgument,ctor-call,t6-cxfx/init.go,28,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1432,CXArgument,ctor-call,t6-cxfx/init.go,31,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1433,CXArgument,ctor-call,t6-cxfx/init.go,34,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1434,CXArgument,ctor-call,t6-cxfx/init.go,67,RegisterPackage,ast.Slice(types.UI32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1435,CXArgument,ctor-call,t6-cxfx/init.go,105,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1436,CXArgument,ctor-call,t6-cxfx/init.go,108,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1437,CXArgument,ctor-call,t6-cxfx/init.go,113,RegisterPackage,ast.Slice(types.UI32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1438,CXArgument,ctor-call,t6-cxfx/init.go,145,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1439,CXArgument,ctor-call,t6-cxfx/init.go,148,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1440,CXArgument,ctor-call,t6-cxfx/init.go,151,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1441,CXArgument,ctor-call,t6-cxfx/init.go,154,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1442,CXArgument,ctor-call,t6-cxfx/init.go,157,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1443,CXArgument,ctor-call,t6-cxfx/init.go,160,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1444,CXArgument,ctor-call,t6-cxfx/init.go,163,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1445,CXArgument,ctor-call,t6-cxfx/init.go,166,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1446,CXArgument,ctor-call,t6-cxfx/init.go,169,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1447,CXArgument,ctor-call,t6-cxfx/init.go,172,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1448,CXArgument,ctor-call,t6-cxfx/init.go,175,RegisterPackage,ast.Slice(types.F32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1449,CXArgument,ctor-call,t6-cxfx/init.go,180,RegisterPackage,ast.Slice(types.UNDEFINED),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1450,CXArgument,ctor-call,t6-cxfx/init.go,256,RegisterPackage,ast.Slice(types.UI8),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1451,CXArgument,ctor-call,t6-cxfx/init.go,263,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1452,CXArgument,ctor-call,t6-cxfx/init.go,270,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1453,CXArgument,ctor-call,t6-cxfx/init.go,273,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1454,CXArgument,ctor-call,t6-cxfx/init.go,277,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1455,CXArgument,ctor-call,t6-cxfx/init.go,280,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1456,CXArgument,ctor-call,t6-cxfx/init.go,285,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1457,CXArgument,ctor-call,t6-cxfx/init.go,289,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1458,CXArgument,ctor-call,t6-cxfx/init.go,294,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S1459,CXArgument,ctor-call,t6-cxfx/init.go,298,RegisterPackage,ast.Slice(types.I32),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1460,CXProgram,ctor-def,t7-init/init.go,31,MakeProgram,func MakeProgram,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1461,CXProgram,alloc-literal-heap,t7-init/init.go,37,MakeProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex, 0), CXFunctions: make([]ast....",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1462,CXFunction,make-slice,t7-init/init.go,41,MakeProgram,"make([]ast.CXFunction, 0)",state.CXFunctionMng (manager storage) or []CXFunctionGid,4-alloc,351,CXFunction phase 2-mng
@@ -1180,3 +1135,7 @@ S1781,CXProgram,drop,t11-cx/run_bench_test.go,112,compileRunProgram,actions.AST 
 S1782,CXArgument,get-call,t3-ast/ast_cxprogram.go,413,CXProgram.ReleaseCXArgWithDebug,cxprogram.GetCXArg(index),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1783,CXTypeSignature,get-call,t3-ast/ast_cxprogram.go,437,CXProgram.ReleaseCXArgUnlessNamed,cxprogram.GetCXTypeSignatureFromArray(typeSigIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S1784,CXArgument,get-call,t3-ast/ast_cxtype_signature.go,716,CXTypeSignature.GetStructType,prgrm.GetCXArg(CXArgumentIndex(typeSignature.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
+S1785,CXNativeFunction,ctor-def,t3-ast/opcodes.go,41,NativeFunctionOf,func NativeFunctionOf,state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
+S1786,CXNativeFunction,alloc-literal-heap,t3-ast/opcodes.go,55,NativeFunctionOf,"&CXNativeFunction{ AtomicOPCode: code, Inputs: NativeParameters(...), Outputs: ...}",state.CXNativeFunctionMng.CXNativeFunctionAlloc(),4-alloc,356,CXNativeFunction phase 2-mng
+S1787,CXArgument,ctor-def,t3-ast/opcodes.go,66,NativeParameters,func NativeParameters,state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
+S1788,CXArgument,make-slice,t3-ast/opcodes.go,69,NativeParameters,"make([]*CXArgument, 0, len(parameters))",state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng

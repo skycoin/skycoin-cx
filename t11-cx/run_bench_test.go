@@ -15,8 +15,7 @@ import (
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute"
-	"github.com/skycoin/skycoin-cx/t4-opcodes"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
 )
 
@@ -162,7 +161,6 @@ func compileRunSources(tb testing.TB, names []string, sources []string) {
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S1780 S1781.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
-	opcodes.RegisterOpcodes(actions.AST)
 	globals.FoundCompileErrors = false
 	globals.HeapOffset = 0
 	if err := compileSourceStrings(names, sources); err != nil {

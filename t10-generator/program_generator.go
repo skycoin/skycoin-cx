@@ -254,7 +254,7 @@ func getRandInp(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, opCode int,
 // addNewExpression appends an expression of type expressionType to fn, with
 // random inputs, and returns a signature reading its output.
 func addNewExpression(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, expressionType int) cxast.CXTypeSignatureIndex {
-	native := cxast.Natives[expressionType]
+	native := cxast.NativeFunctionOf(prgrm, expressionType)
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 	// Now a constructor call, site S0040.
 	newExprCXLine := cxast.MakeCXLineExpression(prgrm, cxast.SourceFileGidNil, -1, stringpool.StringGidNil)
@@ -300,9 +300,9 @@ func getRandOut(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, outType typ
 	return newSlot(prgrm, fn, options[rand.Intn(len(options))], outType)
 }
 
-func GetFunctionSet(fnNames []string) (fns []*cxast.CXNativeFunction) {
+func GetFunctionSet(prgrm *cxast.CXProgram, fnNames []string) (fns []*cxast.CXNativeFunction) {
 	for _, fnName := range fnNames {
-		fn := cxast.Natives[nativeCode(fnName)]
+		fn := cxast.NativeFunctionOf(prgrm, nativeCode(fnName))
 		if fn == nil {
 			panic("standard library function not found.")
 		}
@@ -318,7 +318,7 @@ func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 	var cxProgram *cxast.CXProgram
 
 	// Needed for AddNativeExpressionToFunction
-	// because of dependency on cxast.OpNames
+	// because of dependency on cxast.NativeNames
 	cxparsingcompletor.InitCXCore()
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a constructor call, site S0046.
@@ -349,7 +349,7 @@ func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 		t.Errorf("want no error, got %v", err)
 	}
 	functionSetNames := []string{"i32.add", "i32.mul", "i32.sub", "i32.eq", "i32.uneq", "i32.gt", "i32.gteq", "i32.lt", "i32.lteq", "bool.not", "bool.or", "bool.and", "bool.uneq", "bool.eq", "i32.neg", "i32.abs", "i32.bitand", "i32.bitor", "i32.bitxor", "i32.bitclear", "i32.bitshl", "i32.bitshr", "i32.max", "i32.min", "i32.rand"}
-	fns := GetFunctionSet(functionSetNames)
+	fns := GetFunctionSet(cxProgram, functionSetNames)
 
 	fn, _ := cxProgram.GetFunction(cxProgram.CXProgramNameIntern("TestFunction"), cxProgram.CxIrState.CxIrStateNameMain)
 	pkg, _ := cxProgram.GetPackage(cxProgram.CxIrState.CxIrStateNameMain)
@@ -371,7 +371,7 @@ func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 }
 
 // nativeCode returns the code of the built-in name, or 0 when none is
-// registered.
+// linked.
 func nativeCode(name string) int {
 	entry, _ := cxast.NativeNames.NativeNameIndexText(name)
 	return entry.NativeNameEntryCode

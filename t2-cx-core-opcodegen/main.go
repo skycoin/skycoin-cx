@@ -50,6 +50,9 @@ func main() {
 	files := map[string][]byte{
 		"t1-constants/opcodes_signatures_gen.go": gen.signaturesFile(),
 	}
+	for path, source := range gen.dispatchFiles() {
+		files[path] = source
+	}
 	failed := false
 	paths := make([]string, 0, len(files))
 	for path := range files {

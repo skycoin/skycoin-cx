@@ -362,7 +362,7 @@ or lexer message that has no code of its own is the operand of
 A runtime error is data until the run has returned. The old loop records the
 exit code, the panic value and the call stack position in a
 `RuntimeErrorRecord` in `CXProgram.RuntimeError`, and vm returns a `Stop`. Package
-`t5-cx-runtime-printer` then prints the text and the caller exits with the
+`t4-cx-runtime-printer` then prints the text and the caller exits with the
 code, see #413. The old loop still unwinds by panic to the one recover at
 the run boundary, which the phases of #196 remove.
 

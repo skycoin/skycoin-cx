@@ -267,7 +267,7 @@ that [docs/ObjectModel.md](docs/ObjectModel.md) and
 Every Go package, binaries included, sits one level below the root as
 `t<N>-<name>`, where N is its tier in the import graph. A tier N package
 imports only packages of lower tiers. `t11-cx` is the cx binary,
-`t7-cx-core-run` the `cx build` core and `t1-cxtest` the CX program test
+`t6-cx-core-run` the `cx build` core and `t1-cxtest` the CX program test
 runner. `tests/` holds the CX test programs, `lib/` CX libraries and
 `t0-benchmarks/` the benchmarks. `CLEANUP.md` lists every file of the former
 CX repositories with a keep, merge or delete recommendation.

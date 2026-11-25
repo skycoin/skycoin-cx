@@ -31,24 +31,27 @@ func RegisterLibraryFunction(prgrm *ast.CXProgram, library int, name string, han
 	}
 	(*handlers)[function] = handler
 
-	key := ast.LibraryFunctionKey(library, function)
-	ast.NativeNames.NativeNameIndexAdd(key, name)
+	ast.NativeNames.NativeNameIndexChanged()
 	if inputs == nil {
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
-		// Now a slice of objects, as RegisterOpCode makes it.
+		// Now a slice of objects, as MakeNativeFunction makes it.
 		inputs = []*ast.CXArgument{}
 	}
 	if outputs == nil {
 		// OBJMODEL: state.CXArgumentMng (manager storage) or []CXArgumentGid, phase 4 #326.
-		// Now a slice of objects, as RegisterOpCode makes it.
+		// Now a slice of objects, as MakeNativeFunction makes it.
 		outputs = []*ast.CXArgument{}
 	}
 	// OBJMODEL: state.CXNativeFunctionMng.CXNativeFunctionAlloc(), phase 4 #356.
-	// Now a constructor call, as RegisterOpCode makes it.
+	// Now a constructor call, as MakeNativeFunction makes it.
 	native := MakeNativeFunction(prgrm, constants.OP_LIBRARY_CALL, inputs, outputs)
 	native.LibraryNumber = library
 	native.LibraryFunctionNumber = function
-	ast.Natives[key] = native
+	natives := &ast.LibraryFunctionNatives[library]
+	if function >= len(*natives) {
+		*natives = append(*natives, make([]*ast.CXNativeFunction, function+1-len(*natives))...)
+	}
+	(*natives)[function] = native
 }
 
 // RegisterLibraryFunctionVm registers handler as the vm form of the function
@@ -60,20 +63,4 @@ func RegisterLibraryFunctionVm(library int, name string, handler vm.LibraryFunct
 		*handlers = append(*handlers, make([]vm.LibraryFunctionVm, function+1-len(*handlers))...)
 	}
 	(*handlers)[function] = handler
-}
-
-// registerLibraryCall gives constants.OP_LIBRARY_CALL a handler but no name,
-// so no program calls it by name. The loop runs library calls itself, see
-// processBuiltInOperators, so the handler is never reached.
-func registerLibraryCall() {
-	code := constants.OP_LIBRARY_CALL
-	if code >= len(ast.OpcodeHandlers) {
-		ast.OpcodeHandlers = append(ast.OpcodeHandlers, make([]ast.OpcodeHandler, code+1-len(ast.OpcodeHandlers))...)
-	}
-	ast.OpcodeHandlers[code] = opLibraryCall
-}
-
-// VIOLATION STRHOT-316: E, error or assert text, built on a failure branch only, #412.
-func opLibraryCall(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	coreassert.AssertInvariantTrue(false, "LibraryCall reached its opcode handler, the loop runs it")
 }

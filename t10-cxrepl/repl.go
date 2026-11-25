@@ -14,8 +14,8 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t2-globals"            // thin: only FoundCompileErrors; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"                // thin: only InREPL, SourceFileGidNil; no depth gain
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer" // thin: only PrinterCompileErrorsPrint, PrinterRuntimeErrorPrint; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-execute"            // thin: only RunCompiled; no depth gain
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer" // thin: only PrinterCompileErrorsPrint, PrinterRuntimeErrorPrint; no depth gain
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"        // thin: only MakeProgram, RegisterPackages; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t4-actions"                               // thin: only AST, LineNo; no depth gain
@@ -146,7 +146,7 @@ func unsafeEval(code string) (out string) {
 }
 
 // Eval runs code as a CX program and returns its output. The caller must
-// first run the init in t11-cx Run: InitConstants, MakeProgram, RegisterPackages, RegisterOpcodes.
+// first run the init in t11-cx Run: InitConstants, MakeProgram, RegisterPackages.
 func Eval(code string) string {
 	runtime.GOMAXPROCS(2)
 	ch := make(chan string, 1)

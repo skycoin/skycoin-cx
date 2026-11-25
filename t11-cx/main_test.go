@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t4-opcodes"
 	"github.com/skycoin/skycoin-cx/t5-cxnet"
 	"github.com/skycoin/skycoin-cx/t5-cxos"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
@@ -53,5 +52,4 @@ func initProgram() {
 	// Also state.CXProgramMng.CXProgramRelease(gid), phase 4 #371. Site S0064 S0065.
 	actions.AST = cxinit.MakeProgram()
 	cxinit.RegisterPackages(actions.AST)
-	opcodes.RegisterOpcodes(actions.AST)
 }

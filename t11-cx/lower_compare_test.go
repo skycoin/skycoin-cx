@@ -26,7 +26,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-execute"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // lowerCompareProgramEnv names the program a child of TestLowerCompare

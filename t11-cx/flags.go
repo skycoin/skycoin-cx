@@ -11,8 +11,8 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t1-netbatch"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core" // thin: only ExecutorAuto; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cxnet"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorAuto; no depth gain
 )
 
 type cxCmdFlags struct {

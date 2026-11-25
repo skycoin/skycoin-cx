@@ -14,7 +14,7 @@ import (
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-execute"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // runNetSource updates, reads every data entry and writes one byte back, on

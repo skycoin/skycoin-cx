@@ -1,6 +1,6 @@
 // Package core is the minimum interpreter core that cx build puts in front of
-// a serialized program: the opcode set it registers, the trailer that marks
-// the appended program, and the executors. It uses no module outside the Go
+// a serialized program: the opcode set it links, the trailer that marks the
+// appended program, and the executors. It uses no module outside the Go
 // standard library and has no parser. A core that links the cipher library
 // links the cipher package of Skycoin with it.
 package core
@@ -11,32 +11,28 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
-	// GCREACH: t3-ast owns the heap and the GC roots. core builds the program and its
-	// opcode table and allocates nothing, see docs/GarbageCollector.md.
+	// GCREACH: t3-ast owns the heap and the GC roots. core builds the program and
+	// allocates nothing, see docs/GarbageCollector.md.
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	"github.com/skycoin/skycoin-cx/t4-opcodes"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
-	cxoscore "github.com/skycoin/skycoin-cx/t5-cxos-core"
-	"github.com/skycoin/skycoin-cx/t5-regexp"
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
+	"github.com/skycoin/skycoin-cx/t4-regexp"
 )
 
-// CoreRegister adds the native packages of the core to prgrm and their
-// opcodes to the global tables, and the system libraries that
-// libraryRegisters register. It leaves out every other library (t5-cxos,
-// t5-cxnet, t5-cipher) and every opcode that needs a module outside the
-// standard library (t6-cxfx). The built-in opcodes come last, as in cx.
+// CoreRegister adds the native packages of the core to prgrm, registers the
+// system libraries that libraryRegisters register and sets the opcode switch
+// to CoreOpcodeDispatch. It leaves out every other library (t5-cxos,
+// t5-cxnet, t5-cipher) and the opcodes that need a module outside the
+// standard library (t6-cxfx).
 func CoreRegister(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgram)) {
-	cxoscore.RegisterPackage(prgrm)
-	printer.PrinterOpcodesRegister(prgrm)
+	ast.OpcodeDispatch = CoreOpcodeDispatch
 	printer.PrinterCompileErrorsRegister(prgrm)
 	regexp.RegisterPackage(prgrm)
 	for _, register := range libraryRegisters {
 		register(prgrm)
 	}
-	opcodes.RegisterOpcodes(prgrm)
 }
 
-// CoreProgramMake returns an empty program to register the opcodes in. A
+// CoreProgramMake returns an empty program to register the libraries in. A
 // program to run comes from ast.Deserialize instead.
 func CoreProgramMake() *ast.CXProgram {
 	state := &ast.CxIrState{}
@@ -49,23 +45,14 @@ func CoreProgramMake() *ast.CXProgram {
 	}
 }
 
-// CoreOpcodeSet returns the numbers of the opcodes CoreRegister registers. It
-// registers them into the empty global tables and empties them again, so it
-// runs before anything else registers an opcode.
-func CoreOpcodeSet() map[int]bool {
-	assert.AssertPreconditionTrue(len(ast.OpcodeHandlers) == 0 && ast.NativeNames.NativeNameIndexLen() == 0, "CoreOpcodeSet after opcodes were registered")
-	CoreRegister(CoreProgramMake())
-	set := map[int]bool{}
-	for code, handler := range ast.OpcodeHandlers {
-		if handler != nil {
-			set[code] = true
-		}
+// CoreOpcodeLinked reports whether the core runs opcode code: LibraryCall,
+// which the loop runs, or an opcode with a handler outside t6-cxfx that the
+// build tags link. The core is built with the tags of cx, so cx can ask.
+func CoreOpcodeLinked(code int) bool {
+	if code == constants.OP_LIBRARY_CALL {
+		return true
 	}
-	ast.OpcodeHandlers = nil
-	ast.NativeNames.NativeNameIndexReset()
-	ast.Natives = map[int]*ast.CXNativeFunction{}
-	ast.Operators = nil
-	return set
+	return constants.OpcodeHandled(code) && constants.OpcodeLinked(code) && constants.OpcodeSignatureOf(code).OpcodeSignatureGroup != constants.OpcodeGroupCxfx
 }
 
 // CoreOpcodesUsed returns the sorted numbers of the opcodes prgrm can call,
@@ -85,11 +72,11 @@ func CoreOpcodesUsed(prgrm *ast.CXProgram) []int {
 }
 
 // CoreOpcodesMissing returns the names of the opcodes prgrm uses that the
-// global tables have no handler for, sorted by number.
+// core does not link, sorted by number.
 func CoreOpcodesMissing(prgrm *ast.CXProgram) []string {
 	var missing []string
 	for _, code := range CoreOpcodesUsed(prgrm) {
-		if code >= len(ast.OpcodeHandlers) || ast.OpcodeHandlers[code] == nil {
+		if !CoreOpcodeLinked(code) {
 			missing = append(missing, CoreOpcodeName(code))
 		}
 	}

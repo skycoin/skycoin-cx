@@ -96,7 +96,7 @@ the check stays two loads so `TestRunVmAllocs` stays 0.
 | t4-cx-compiler-lower | yes | no. It reads the program and rejects heap operands |
 | t4-execute, the old loop | yes | the tick, and allocation through its opcodes |
 | t4-opcodes | yes | allocation, in 17 of its 22 files |
-| t6-cx-runtime-core, the executor | yes | through the old loop |
+| t5-cx-runtime-core, the executor | yes | through the old loop |
 
 `make check-gcreach` fails when t2-cx-runtime-ir or t3-cx-runtime-vm imports
 t3-ast or t2-cx-runtime-gc.
@@ -117,7 +117,7 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 
 - t4-cx-compiler-lower/lower.go:20, lower_printf.go:12. Reads only
 - t4-execute/execute.go:11, callback.go:9
-- t6-cx-runtime-core/core.go:15, executor.go:12
+- t5-cx-runtime-core/core.go:15, executor.go:12
 - t4-opcodes, allocating: op_aff.go:11, op_f32.go:10, op_f64.go:10,
   op_fmt.go:11, op_i8.go:9, op_i16.go:9, op_i32.go:9, op_i64.go:9,
   op_serialize.go:8, op_slice.go:8, op_stdin.go:10, op_str.go:12,
@@ -143,7 +143,7 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
   `QueryCaller`, `QueryProgram` and `OpAffQuery`
 - t4-opcodes/op_serialize.go:24 `OpSerialize`
 - t4-opcodes/op_str.go:159 `OpStrBytesOfString`
-- t5-regexp/op_regexp.go:32 `regexpCompile`
+- t4-regexp/op_regexp.go:32 `regexpCompile`
 - t6-cxfx/event.go:64, op_glfw_desktop.go:237, op_openal.go:47,
   op_opengl.go:464
 
@@ -175,21 +175,21 @@ allocator ran the collector itself.
 - `AllocateStrAt` (t3-ast/ast_memory.go:141) protected one such address by
   storing it in `Heap.Pinned` at line 142, and nothing else was protected.
 - t0-types held a function variable `Allocator` (t0-types/types.go:149), which
-  t11-cx/main.go:94 and t7-cx-core-run/main.go:27 set to `ast.AllocateSeq`,
+  t11-cx/main.go:94 and t6-cx-core-run/main.go:27 set to `ast.AllocateSeq`,
   so the lowest tier reached the collector through a hook.
 - `MarkAndCompact` took the whole `*CXProgram`. It read the globals through
   `gcGlobalRoots` (t3-ast/gc_type.go:276), walked `CallStack` and each
   function's `ListOfSlots` and `ListOfPointers` (t3-ast/cxfunction_def.go:57
   and :48) through `gcFrameRoots` (t3-ast/gc_type.go:241), and kept its
   scratch memory in `HeapSegmentStruct` (t3-ast/ast_cxprogram.go:31).
-- The old loop (t4-execute), t4-opcodes, t5-cxos, t5-regexp, t5-cxnet, t6-cxfx
-  and t6-cx-runtime-core all reached the collector through allocation. The vm
+- The old loop (t4-execute), t4-opcodes, t5-cxos, t4-regexp, t5-cxnet, t6-cxfx
+  and t5-cx-runtime-core all reached the collector through allocation. The vm
   (t3-cx-runtime-vm) and the IR base (t2-cx-runtime-ir) did not.
 
 ```
-t11-cx, t7-cx-core-run ----- set types.Allocator = ast.AllocateSeq
+t11-cx, t6-cx-core-run ----- set types.Allocator = ast.AllocateSeq
         |
-t6-cx-runtime-core
+t5-cx-runtime-core
    |            \
    |             t4-cx-compiler-lower --> t2-cx-runtime-ir   (GC free)
    |                                           ^
@@ -234,14 +234,14 @@ the collector between steps.
   `types.AllocWrite_str_data` are removed. The unused `DisplaceReferences` is
   removed with the old collector file.
 - Only t3-ast may import t2-cx-runtime-gc. The old loop, t4-opcodes, t5-cxos,
-  t5-regexp, t5-cxnet and t6-cxfx still allocate through t3-ast, which adds to
+  t4-regexp, t5-cxnet and t6-cxfx still allocate through t3-ast, which adds to
   the pressure but never collects. The vm and the IR base still reach nothing,
   and `make check-gcreach` enforces both rules.
 
 ```
-t11-cx, t7-cx-core-run
+t11-cx, t6-cx-core-run
         |
-t6-cx-runtime-core
+t5-cx-runtime-core
    |            \
    |             t4-cx-compiler-lower --> t2-cx-runtime-ir   (GC free)
    |                                           ^
@@ -336,7 +336,7 @@ references and keep the tick to collect cycles. The lead decides.
 - a reach has no comment containing `GCREACH:` directly above it or in the
   doc comment of its function.
 
-A reach is an import of t3-ast in t4-execute, t6-cx-runtime-core,
+A reach is an import of t3-ast in t4-execute, t5-cx-runtime-core,
 t4-cx-compiler-lower or t4-opcodes, a call of `GarbageCollectorCheck`,
 `GarbageCollectorTrigger`, `GarbageCollectorCollect`, `AllocateSeq`,
 `AllocateStr`, `AllocateStrAt`, `AllocateStrBytesAt`, `EscapedAllocate`, `SliceResizeEx`,

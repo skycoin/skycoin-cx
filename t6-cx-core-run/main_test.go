@@ -27,11 +27,11 @@ var coreImportsAllowed = map[string]bool{
 	"t4-cx-compiler-lower":  true,
 	"t4-execute":            true,
 	"t4-opcodes":            true,
-	"t5-cx-runtime-printer": true,
-	"t5-cxos-core":          true,
-	"t5-regexp":             true,
-	"t6-cx-runtime-core":    true,
-	"t7-cx-core-run":        true,
+	"t4-cx-runtime-printer": true,
+	"t4-cxos-core":          true,
+	"t4-regexp":             true,
+	"t5-cx-runtime-core":    true,
+	"t6-cx-core-run":        true,
 }
 
 // coreStandardDenied are packages of the Go standard library the core must not

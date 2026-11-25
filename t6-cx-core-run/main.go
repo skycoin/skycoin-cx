@@ -13,8 +13,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t3-ast"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer" // thin: only PrinterCompileErrorsRegister; no depth gain
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer" // thin: only PrinterCompileErrorsRegister; no depth gain
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // coreLibraryRegisters register the system libraries linked into this core.

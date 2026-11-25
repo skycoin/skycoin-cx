@@ -34,11 +34,12 @@ The `cx` command (`t11-cx/main.go`) builds the program in this order.
 2. `cxinit.MakeProgram` (`t7-init/init.go`) returns an empty
    `*ast.CXProgram` and stores it in the package variable `actions.AST`.
    Every later stage writes into `actions.AST`.
-3. `cxinit.RegisterPackages` registers the native packages `cipher`,
-   `cxfx`, `cxos`, `regexp` and `tcp`, then `opcodes.RegisterOpcodes`
-   (`t4-opcodes/opcodes_init.go`) registers the built-in opcodes. Both
-   fill the global tables `ast.Natives`, `ast.NativeNames` and
-   `ast.OpcodeHandlers`. The compiler finds a built-in by the name Gids of
+3. `cxinit.RegisterPackages` adds the native packages and registers the
+   system libraries `cipher`, `cxos` and `tcp`, and sets `ast.OpcodeDispatch`
+   to the opcode switch. The opcodes are fixed when cx is compiled: their
+   names, handlers and signatures are the rows of
+   `constants.OpcodeDefinitionTable`, and `ast.NativeNames` is built from
+   the generated `constants.NativeNameTable` (decision D21). The compiler finds a built-in by the name Gids of
    its parts with `CXProgram.CXProgramNativeFind`, which compares the bytes
    of a name with the sorted names of `ast.NativeNames` once and caches the
    result by Gids in `CxIrState.CxIrStateNativeNames`. Constants such as
@@ -166,10 +167,11 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
 
 `CXFunctions` holds more than the user's functions. Every expression that
 calls a native operator gets its own copy of the native, made by
-`CXProgram.AddNativeFunctionInArray` from the `ast.CXNativeFunction` in
-`ast.Natives[opcode]`. The copy has `AtomicOPCode` set and no
-`Expressions`. A system library function is the native in
-`ast.Natives[ast.LibraryFunctionKey(library, function)]`, a negative key that
+`CXProgram.AddNativeFunctionInArray` from `ast.NativeFunctionOf(prgrm, opcode)`,
+which makes it from `constants.OpcodeSignatureTable`. The copy has
+`AtomicOPCode` set and no `Expressions`. A system library function is the
+native `ast.NativeFunctionOf(prgrm, ast.LibraryFunctionKey(library, function))`
+returns from `ast.LibraryFunctionNatives`, a negative key that
 is also its code in `ast.NativeNames`. Its copy has `AtomicOPCode`
 `OP_LIBRARY_CALL` and the two library numbers, and adding it marks the
 library in `CXProgram.ProgramLibrariesUsed`.
@@ -227,7 +229,8 @@ A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
   variable declaration. It has one output and no inputs, and the VM
   zeroes the output's bytes (`wipeDeclarationMemory`).
 * A `CXFunction` with `AtomicOPCode != 0`. The expression is a native
-  operation and the opcode selects `ast.OpcodeHandlers[AtomicOPCode]`.
+  operation and `ast.OpcodeDispatch` runs `AtomicOPCode` through the generated
+  switch.
   For `OP_LIBRARY_CALL` the loop first checks
   `CXProgram.ProgramLibrariesEnabled[LibraryNumber]`, one indexed load and
   compare, then calls
@@ -403,7 +406,7 @@ builds.
 3. A declaration zeroes its output and increments `Line`.
 4. A native fills two `[]CXValue` with the operands' type signature,
    size, final offset and type in `processBuiltInOperators`, calls
-   `OpcodeHandlers[AtomicOPCode]`, and increments `Line`.
+   `OpcodeDispatch(prgrm, AtomicOPCode, inputs, outputs)`, and increments `Line`.
 5. A user call (`processNonAtomicOperators`) increments `CallCounter`,
    sets the new frame at `Stack.Pointer`, adds `Operator.Size` to
    `Stack.Pointer`, zeroes the frame and copies the inputs into the
@@ -453,7 +456,7 @@ types but not offsets or opcode numbers.
 
 The listing below came from a throwaway test that runs the same steps as
 `cx` (`InitConstants`, `MakeProgram`, `RegisterPackages`,
-`RegisterOpcodes`, `ParseSourceStrings`, `AddInitFunction`) and walks
+`ParseSourceStrings`, `AddInitFunction`) and walks
 `CXFunction.Expressions`, `CXAtomicOps`, `CXLines` and `CXTypeSignatures`.
 
 Segments after compiling. `Stack.Size` 1048576, `Data.StartsAt` 1048576,
@@ -632,7 +635,7 @@ after one, so a program only loads in a build with its pointer size
 ### Built programs
 
 `cx build` (`t11-cx/build.go`) writes one executable file: the core binary
-of `t7-cx-core-run`, then the serialized program with its memory and no
+of `t6-cx-core-run`, then the serialized program with its memory and no
 compression, then a 32 byte trailer, little endian.
 
 | Offset from the trailer start | Size | Field |
@@ -646,16 +649,16 @@ compression, then a 32 byte trailer, little endian.
 The serialized form has no total length, so the trailer gives both the
 offset and the length, and the offset plus the length plus 32 must be the
 file size. `core.CoreTrailerAppend` writes it and `core.CoreTrailerRead`
-(`t6-cx-runtime-core/trailer.go`) reads it from `os.Executable()` when the
+(`t5-cx-runtime-core/trailer.go`) reads it from `os.Executable()` when the
 core starts. A file without the magic is no built program, and the core
 prints a message and exits with `CX_COMPILATION_ERROR`. A trailer that does
 not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
 
 `core.CoreRegister` registers the opcodes of the core, the built-in ones,
 `LibraryCall` and those of `sys/regexp`, `sys/time` and `os.Exit`
-(`t5-cxos-core`), and the system libraries the core links. A library is
+(`t4-cxos-core`), and the system libraries the core links. A library is
 linked by the build tag `cxcorelibraryfile`, `cxcorelibrarynet`,
-`cxcorelibraryprocess` or `cxcorelibrarycipher`, whose file in `t7-cx-core-run` adds its register
+`cxcorelibraryprocess` or `cxcorelibrarycipher`, whose file in `t6-cx-core-run` adds its register
 function. `make build` builds a core for every set, named by
 `buildCoreFileName`, `cx-core-file-net` for file and net. `cx build` keeps
 the enabled libraries the program calls, records them in the serialized
@@ -683,24 +686,25 @@ This document does not list the opcodes. The list is
   `OP_IDENTITY` (1) to `OP_BOOL_NOT` (133). `END_OF_NAMED_OPCODES` (134)
   and the `START_OF_*` and `END_OF_*` markers bound ranges and are not
   opcodes.
-* Every other opcode is registered by name through
-  `opcodes.RegisterFunction` or `opcodes.RegisterOperator`, in
-  [t4-opcodes/opcodes_init.go](../t4-opcodes/opcodes_init.go) and the
-  `RegisterPackage` functions of `t5-cipher`, `t5-cxos`, `t5-cxos-core`,
-  `t5-regexp`, `t5-cxnet` and `t6-cxfx`. `opcodes.OpcodeNumber` looks the number up with
-  `constants.OpcodeLifecycleLiveByName`.
-* `opcodes.RegisterOpCode` asserts that the number is a live row with that
-  name, then fills `ast.OpcodeHandlers`, `ast.NativeNames` and `ast.Natives`. A deprecated row gets no handler and leaves a gap.
-* `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has a handler slot but
-  no name, so no program calls it by name. The system library functions are
+* Every live opcode has a row in `constants.OpcodeDefinitionTable`
+  ([t1-constants/opcodes_definitions.go](../t1-constants/opcodes_definitions.go))
+  with its handler, signature and typed operator form. `make
+  generate-opcodes` runs t2-cx-core-opcodegen, which writes the signature,
+  operator and name tables of `t1-constants/opcodes_signatures_gen.go` and
+  the opcode switch: `CoreOpcodeDispatch` in t5-cx-runtime-core, with the
+  `nocxos` and `noregexp` groups in their own files, and `CxfxOpcodeDispatch`
+  in t6-cxfx under the `cxfx` tag. Each case calls the handler directly.
+  Nothing registers an opcode at startup and a deprecated row has no case.
+* `LibraryCall` (795, `constants.OP_LIBRARY_CALL`) has no definition row
+  and no name, so no program calls it by name, and the loop runs it. The system library functions are
   registered through `opcodes.RegisterLibraryFunction`, with their own
   numbers in `constants.LibraryFunctionLifecycleTable`, and compile to
   `LibraryCall`. See item 16 of [Conventions.md](Conventions.md).
-* A renamed opcode is registered under its new name only.
+* A renamed opcode has its new name only.
   `constants.OpcodeRenameTable` keeps the old names, and the compiler
   turns a call by an old name into a compile error that names the new one.
-* The typed operators are also reachable through `ast.Operators` by
-  `ast.GetTypedOperatorOffset(typeCode, opcode)`, which is how
+* The typed operators are also reachable through
+  `constants.OpcodeOperatorOf(typeCode, opcode)`, which is how
   `ProcessTypedOperator` turns `add` (82) into `i32.add` (383).
 
 Before [#297](https://github.com/skycoin/skycoin-cx/pull/297) the

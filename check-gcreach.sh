@@ -30,7 +30,7 @@ find . -path ./vendor -prune -o -path ./.git -prune -o -path ./.claude -prune -o
 	xargs awk -v list="$list" '
 function reach(line) {
 	if (line ~ /"github\.com\/skycoin\/skycoin-cx\/t3-ast"/)
-		return FILENAME ~ /^(t4-execute|t6-cx-runtime-core|t4-cx-compiler-lower|t4-opcodes)\//
+		return FILENAME ~ /^(t4-execute|t5-cx-runtime-core|t4-cx-compiler-lower|t4-opcodes)\//
 	if (line ~ /"github\.com\/skycoin\/skycoin-cx\/t2-cx-runtime-gc"/)
 		return 0
 	if (line ~ /^func (\([^)]*\) )?(GarbageCollectorCheck|GarbageCollectorTrigger|AllocateSeq|AllocateStr|AllocateStrAt|AllocateStrBytesAt|EscapedAllocate|SliceResizeEx|ResizeMemory|gcFrameRoots|gcGlobalRoots)\(/)

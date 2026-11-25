@@ -47,6 +47,8 @@ func errorCode(r interface{}) int {
 		return int(v)
 	case RuntimeLibraryDisabled:
 		return types.CX_RUNTIME_LIBRARY_DISABLED
+	case RuntimeOpcodeUnlinked:
+		return types.CX_RUNTIME_NOT_IMPLEMENTED
 	default:
 		return types.CX_RUNTIME_ERROR
 	}

@@ -182,8 +182,8 @@ func processBuiltInOperators(prgrm *CXProgram, expr *CXExpression, cxAtomicOp *C
 
 	if cxAtomicOpOperator.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		libraryCall(prgrm, cxAtomicOpOperator, inputValues, outputValues)
-	} else {
-		OpcodeHandlers[cxAtomicOpOperator.AtomicOPCode](prgrm, inputValues, outputValues)
+	} else if !OpcodeDispatch(prgrm, cxAtomicOpOperator.AtomicOPCode, inputValues, outputValues) {
+		panic(RuntimeOpcodeUnlinked(cxAtomicOpOperator.AtomicOPCode))
 	}
 
 	// Expr points into fn.Expressions and is valid for this step only.

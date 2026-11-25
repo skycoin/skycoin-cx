@@ -14,7 +14,7 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // buildTestRunFlags are the cx flags, without dashes, that only change how
@@ -34,7 +34,7 @@ func buildTestCore(t *testing.T, dir string, libraries ...string) string {
 	for _, library := range libraries {
 		tags = append(tags, "cxcorelibrary"+library)
 	}
-	cmd := exec.Command("go", "build", "-o", path, "-tags", strings.Join(tags, ","), "../t7-cx-core-run")
+	cmd := exec.Command("go", "build", "-o", path, "-tags", strings.Join(tags, ","), "../t6-cx-core-run")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("go build of the core %v: %v\n%s", libraries, err, out)
 	}

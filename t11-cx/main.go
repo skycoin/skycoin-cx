@@ -6,17 +6,16 @@ import (
 	"runtime"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t0-util"    // thin: only CXCreateFile, CXLogFile, CXOpenFile, ProgramSandboxRootOpen; no depth gain
-	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only RegisterOpcodes; no depth gain
+	"github.com/skycoin/skycoin-cx/t0-util" // thin: only CXCreateFile, CXLogFile, CXOpenFile, ProgramSandboxRootOpen; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t1-profiling"
 	repl "github.com/skycoin/skycoin-cx/t10-cxrepl" // thin: only Repl, ReplTargetFn; only user of cxrepl, could merge it here, max tier 11 to 10
 	"github.com/skycoin/skycoin-cx/t2-globals"      // thin: only DBG_GOLANG_STACK_TRACE; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-actions"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core" // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cxnet"                // thin: only InitConstants and LibraryNetRunStart; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cxos"                 // thin: only InitConstants; no depth gain
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core" // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
 	"github.com/skycoin/skycoin-cx/t6-cxfx"                 // thin: only InitConstants; no depth gain
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"          // thin: only MakeProgram, RegisterPackages; no depth gain
 )
@@ -245,7 +244,6 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 	// Init 8: native packages in the program and the global opcode tables
 	cxinit.RegisterPackages(actions.AST)
 	// Init 9: built-in opcode and operator tables
-	opcodes.RegisterOpcodes(actions.AST)
 
 	enabled, problem := librariesEnabledParse(options.enable)
 	if problem != "" {

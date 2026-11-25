@@ -113,7 +113,7 @@ func generateSampleProgramFromCXEvolves(t *testing.T, withLiteral bool) *cxast.C
 		t.Errorf("want no error, got %v", err)
 	}
 	functionSetNames := []string{"i32.add", "i32.mul", "i32.sub", "i32.eq", "i32.uneq", "i32.gt", "i32.gteq", "i32.lt", "i32.lteq", "bool.not", "bool.or", "bool.and", "bool.uneq", "bool.eq", "i32.neg", "i32.abs", "i32.bitand", "i32.bitor", "i32.bitxor", "i32.bitclear", "i32.bitshl", "i32.bitshr", "i32.max", "i32.min", "i32.rand"}
-	fns := cxgenerator.GetFunctionSet(functionSetNames)
+	fns := cxgenerator.GetFunctionSet(cxProgram, functionSetNames)
 
 	fn, _ := cxProgram.GetFunction(cxProgram.CXProgramNameIntern("TestFunction"), cxProgram.CxIrState.CxIrStateNameMain)
 	pkg, _ := cxProgram.GetPackage(cxProgram.CxIrState.CxIrStateNameMain)

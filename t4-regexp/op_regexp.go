@@ -9,7 +9,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
-// VIOLATION: state outside State. Owner: t5-regexp; moves to RegexpMng in phase 1.
+// VIOLATION: state outside State. Owner: t4-regexp; moves to RegexpMng in phase 1.
 var regexps map[string]*regexp.Regexp = make(map[string]*regexp.Regexp, 0)
 
 // expOffset returns the offset of the `exp` field of the CX `regexp.Regexp`

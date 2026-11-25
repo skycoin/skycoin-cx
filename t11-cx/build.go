@@ -11,7 +11,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-util"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // buildCommand is the first argument of cx that builds an executable, see
@@ -43,7 +43,6 @@ func buildRun(args []string) int {
 	if problem != "" {
 		return buildFail(problem + ", see cx build --help")
 	}
-	coreOpcodes := core.CoreOpcodeSet()
 	compileOptions, cxArgs, sourceCode, fileNames, start := runStart(options.buildOptionsCompile)
 	if !start {
 		return types.CX_SUCCESS
@@ -60,7 +59,7 @@ func buildRun(args []string) int {
 
 	var missing []string
 	for _, code := range core.CoreOpcodesUsed(actions.AST) {
-		if !coreOpcodes[code] {
+		if !core.CoreOpcodeLinked(code) {
 			missing = append(missing, core.CoreOpcodeName(code))
 		}
 	}

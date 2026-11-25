@@ -9,8 +9,8 @@ package constants
 // OP_LIBRARY_CALL has no row, the loop runs it and no program names it.
 //
 // Handler is the Go function the switch calls, package.Function, with the
-// package one of opcodes (t4-opcodes), printer (t5-cx-runtime-printer),
-// cxoscore (t5-cxos-core, left out by the nocxos tag), regexp (t5-regexp,
+// package one of opcodes (t4-opcodes), printer (t4-cx-runtime-printer),
+// cxoscore (t4-cxos-core, left out by the nocxos tag), regexp (t4-regexp,
 // left out by noregexp) or cxfx (t6-cxfx, only with the cxfx tag). An empty
 // Handler is an opcode the compiler replaces, such as the jumps and the
 // untyped operators. Inputs and Outputs are type names separated by spaces,

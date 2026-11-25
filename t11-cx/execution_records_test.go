@@ -26,8 +26,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
-	core "github.com/skycoin/skycoin-cx/t6-cx-runtime-core"
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
+	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
 )
 
 // executionRecordsFileName is the record file in tests/, see

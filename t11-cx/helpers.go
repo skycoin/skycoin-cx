@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only AssertFailed, RegisterOpcodes; no depth gain
+	"github.com/skycoin/skycoin-cx/t4-opcodes" // thin: only AssertFailed; no depth gain
 
 	"github.com/skycoin/skycoin-cx/t0-util" // thin: only CXCreateFile, CXLogFile, CXOpenFile; no depth gain
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -20,7 +20,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t2-globals"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t5-cx-runtime-printer"
+	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"             // thin: only MakeProgram, RegisterPackages; no depth gain
 	cxgo "github.com/skycoin/skycoin-cx/t8-cxparsingcompletor" // thin: only Tokenize; no depth gain
 	cxparsing "github.com/skycoin/skycoin-cx/t9-cxparsing"     // thin: only AddInitFunction, ErrCompilation, ParseSourceStrings; no depth gain

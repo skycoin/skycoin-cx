@@ -11,12 +11,12 @@ type OpcodeGroup uint8
 // Opcode groups. OpcodeGroupNone is a number without a definition row.
 const (
 	OpcodeGroupNone OpcodeGroup = iota
-	// OpcodeGroupCore is t4-opcodes and t5-cx-runtime-printer, and the rows
+	// OpcodeGroupCore is t4-opcodes and t4-cx-runtime-printer, and the rows
 	// without a handler.
 	OpcodeGroupCore
-	// OpcodeGroupOsCore is t5-cxos-core, left out by the nocxos tag.
+	// OpcodeGroupOsCore is t4-cxos-core, left out by the nocxos tag.
 	OpcodeGroupOsCore
-	// OpcodeGroupRegexp is t5-regexp, left out by the noregexp tag.
+	// OpcodeGroupRegexp is t4-regexp, left out by the noregexp tag.
 	OpcodeGroupRegexp
 	// OpcodeGroupCxfx is t6-cxfx, linked only with the cxfx tag.
 	OpcodeGroupCxfx
@@ -142,4 +142,29 @@ func LibraryFunctionKey(library int, function int) int {
 // LibraryFunctionKeyParts returns the library and function numbers of key.
 func LibraryFunctionKeyParts(key int) (library int, function int) {
 	return -key >> libraryFunctionKeyShift, -key & (1<<libraryFunctionKeyShift - 1)
+}
+
+// opcodeGroupLinked says which groups this build links, by its build tags.
+var opcodeGroupLinked = [OpcodeGroupCount]bool{
+	OpcodeGroupCore:   true,
+	OpcodeGroupOsCore: opcodeGroupOsCoreLinked,
+	OpcodeGroupRegexp: opcodeGroupRegexpLinked,
+	OpcodeGroupCxfx:   opcodeGroupCxfxLinked,
+}
+
+// OpcodeGroupLinked reports whether this build links group.
+func OpcodeGroupLinked(group OpcodeGroup) bool {
+	return opcodeGroupLinked[group]
+}
+
+// OpcodeLinked reports whether opcode code has a definition row and this
+// build links its group, so the compiler knows its name.
+func OpcodeLinked(code int) bool {
+	return opcodeGroupLinked[OpcodeSignatureOf(code).OpcodeSignatureGroup]
+}
+
+// OpcodeHandled reports whether opcode code has a handler the opcode switch
+// calls. The compiler replaces the opcodes without one.
+func OpcodeHandled(code int) bool {
+	return OpcodeSignatureOf(code).OpcodeSignatureHandled
 }

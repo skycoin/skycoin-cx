@@ -10,8 +10,13 @@ import (
 // VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
 var LibraryFunctionHandlers [constants.LibraryCount][]OpcodeHandler
 
+// LibraryFunctionNatives holds the native function of each library function
+// LibraryFunctionHandlers has, for the compiler.
+// VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
+var LibraryFunctionNatives [constants.LibraryCount][]*CXNativeFunction
+
 // LibraryFunctionKey returns the key of a library function in NativeNames
-// and Natives. It is negative, so it never meets an opcode number.
+// and NativeFunctionOf. It is negative, so it never meets an opcode number.
 func LibraryFunctionKey(library int, function int) int {
 	return constants.LibraryFunctionKey(library, function)
 }
@@ -31,7 +36,7 @@ func (fn *CXFunction) BuiltInName() string {
 		row, _ := constants.LibraryFunctionLiveByNumber(fn.LibraryNumber, fn.LibraryFunctionNumber)
 		return row.Name
 	}
-	return NativeNames.NativeNameIndexCodeText(fn.AtomicOPCode)
+	return constants.OpcodeNameOf(fn.AtomicOPCode)
 }
 
 // BuiltInNameBytes returns the bytes of BuiltInName without building a
@@ -40,7 +45,7 @@ func (fn *CXFunction) BuiltInNameBytes() []byte {
 	if fn.AtomicOPCode == constants.OP_LIBRARY_CALL {
 		return constants.LibraryFunctionLiveNameBytes(fn.LibraryNumber, fn.LibraryFunctionNumber)
 	}
-	return NativeNames.NativeNameIndexCodeBytes(fn.AtomicOPCode)
+	return constants.OpcodeNameBytesOf(fn.AtomicOPCode)
 }
 
 // RuntimeLibraryDisabled is the panic value of a call into a system library
