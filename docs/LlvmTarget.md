@@ -14,7 +14,10 @@ or for another target triple. Any other output also gets the IR beside it,
 `.ll` in place of `.exe`, and the executable that clang compiles from it and
 the C runtime (decision D9). `CX_CLANG` names the clang to run, `clang` on
 the `PATH` by default. `--llvm-stats` prints how each scalar opcode of the
-program was emitted.
+program was emitted. `--llvm-debug` adds DWARF debug information: a subprogram
+per function, the source line of each instruction, and the name and type of
+each variable kept in a register, from `ImageLocals`, so a debugger such as
+gdb or lldb shows CX names.
 
 ## What it compiles
 

@@ -16,6 +16,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 	llvm "github.com/skycoin/skycoin-cx/t3-cx-compiler-llvm"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
+	"github.com/skycoin/skycoin-cx/t4-actions"
+	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 )
 
 // TestLlvmOpcodeFacts checks that the generated table of the LLVM target
@@ -240,5 +242,47 @@ func TestLlvmScalarOpcodes(t *testing.T) {
 				t.Errorf("native differs from vm at line %d: %q, vm %q", line, gotLine, wantLine)
 			}
 		})
+	}
+}
+
+// TestLlvmDebug builds a program with debug information and checks that it
+// names the variables from ImageLocals and runs as vm does. It needs clang.
+func TestLlvmDebug(t *testing.T) {
+	cc := llvmTestClang(t)
+	initProgram()
+	compileRunSources(t, []string{"debug.cx"}, []string{`package main
+
+func add(a i32, b i32) (c i32) {
+	var twice i32
+	twice = a * 2
+	c = twice + b
+}
+
+func main() {
+	var total i32
+	var ratio f64
+	total = add(20, 2)
+	ratio = 1.5D
+	i32.print(total)
+	f64.print(ratio)
+}
+`})
+	image, failures := lower.Program(actions.AST)
+	if len(failures) > 0 {
+		t.Fatalf("does not lower: %+v", failures)
+	}
+	options := buildLlvmOptions()
+	options.Debug = true
+	module, _, err := llvm.Emit(&image, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`!DILocalVariable(name: "total"`, `!DILocalVariable(name: "ratio"`, `!DISubprogram(name: "add"`, `!DIBasicType(name: "f64", size: 64, encoding: DW_ATE_float)`} {
+		if !bytes.Contains(module, []byte(want)) {
+			t.Errorf("module has no %s", want)
+		}
+	}
+	if got, want := llvmTestNative(t, cc, &image, options), llvmTestVm(t, &image); !bytes.Equal(got, want) {
+		t.Errorf("native prints %q, vm %q", got, want)
 	}
 }

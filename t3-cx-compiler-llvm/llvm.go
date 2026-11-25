@@ -64,6 +64,10 @@ type Options struct {
 	// FallbackOnly calls the runtime function of every scalar opcode, also
 	// of one with a template, to check the two against each other.
 	FallbackOnly bool
+	// Debug adds DWARF debug information: a subprogram per function, the
+	// source line of each instruction, and the name and type of each
+	// variable kept in an alloca.
+	Debug bool
 }
 
 // Stats counts the instructions of a module by how they were emitted.
@@ -123,6 +127,7 @@ type emitter struct {
 	resultOf    uint32
 	readOnly    []bool
 	callResults []string
+	debug       *debugInfo
 }
 
 // Emit returns the LLVM IR module of image, or an error for an instruction
@@ -138,6 +143,9 @@ func Emit(image *ir.Image, options Options) ([]byte, Stats, error) {
 		stats:   Stats{StatsInline: map[ir.Opcode]int{}, StatsFallback: map[ir.Opcode]int{}},
 	}
 	e.readOnlyMark()
+	if options.Debug {
+		e.debug = debugInfoNew()
+	}
 	for id := range image.ImageFuncs {
 		fn := &image.ImageFuncs[id]
 		if len(fn.FuncCode) == 0 {
@@ -159,6 +167,7 @@ func Emit(image *ir.Image, options Options) ([]byte, Stats, error) {
 		e.out.WriteString(e.decls[name] + "\n")
 	}
 	e.out.WriteString("\n!0 = !{!\"branch_weights\", i32 1, i32 1048576}\n")
+	e.debugModule()
 	return e.out.Bytes(), e.stats, nil
 }
 
@@ -186,23 +195,28 @@ func (e *emitter) header() {
 
 func (e *emitter) entry() {
 	image := e.image
-	e.out.WriteString("define i32 @main() {\nentry:\n")
+	e.body.Reset()
+	attachment := e.debugEntry()
+	fmt.Fprintf(&e.body, "define i32 @main()%s {\nentry:\n", attachment)
 	e.declare("cx_rt_start", "declare void @cx_rt_start(i32)")
-	fmt.Fprintf(&e.out, "  call void @cx_rt_start(i32 %d)\n", e.options.StopCodes[StopDivideByZero])
+	e.line("call void @cx_rt_start(i32 %d)", e.options.StopCodes[StopDivideByZero])
 	for i, run := range e.dataRuns() {
-		fmt.Fprintf(&e.out, "  call void @llvm.memcpy.p0.p0.i64(ptr getelementptr (i8, ptr @cx_mem, i64 %d), ptr @cx_init.%d, i64 %d, i1 false)\n", image.ImageDataStart+uint32(run[0]), i, run[1]-run[0])
+		e.line("call void @llvm.memcpy.p0.p0.i64(ptr getelementptr (i8, ptr @cx_mem, i64 %d), ptr @cx_init.%d, i64 %d, i1 false)", image.ImageDataStart+uint32(run[0]), i, run[1]-run[0])
 	}
 	e.declare("llvm.memcpy", "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)")
 	fp := uint32(0)
 	if image.ImageEntryInit != ir.ImageFuncNone {
-		fmt.Fprintf(&e.out, "  call %s %s(i32 0, i32 0)\n", e.retType(&image.ImageFuncs[image.ImageEntryInit]), e.funcName(image.ImageEntryInit))
+		e.line("call %s %s(i32 0, i32 0)", e.retType(&image.ImageFuncs[image.ImageEntryInit]), e.funcName(image.ImageEntryInit))
 		fp = image.ImageFuncs[image.ImageEntryInit].FuncFrameSize
 	}
 	if image.ImageEntryMain != ir.ImageFuncNone {
-		fmt.Fprintf(&e.out, "  call %s %s(i32 %d, i32 0)\n", e.retType(&image.ImageFuncs[image.ImageEntryMain]), e.funcName(image.ImageEntryMain), fp)
+		e.line("call %s %s(i32 %d, i32 0)", e.retType(&image.ImageFuncs[image.ImageEntryMain]), e.funcName(image.ImageEntryMain), fp)
 	}
 	e.declare("cx_rt_finish", "declare i32 @cx_rt_finish(i32)")
-	fmt.Fprintf(&e.out, "  %%code = call i32 @cx_rt_finish(i32 %d)\n  ret i32 %%code\n}\n\n", e.options.AssertCode)
+	e.line("%%code = call i32 @cx_rt_finish(i32 %d)", e.options.AssertCode)
+	e.line("ret i32 %%code")
+	e.body.WriteString("}\n\n")
+	e.out.Write(e.body.Bytes())
 }
 
 func llvmBytes(data []byte) string {
@@ -307,6 +321,9 @@ func (e *emitter) newLabel(prefix string) string {
 func (e *emitter) line(format string, args ...any) {
 	e.body.WriteString("  ")
 	fmt.Fprintf(&e.body, format, args...)
+	if e.debug != nil && e.debug.debugCurrent != 0 {
+		fmt.Fprintf(&e.body, ", !dbg !%d", e.debug.debugCurrent)
+	}
 	e.body.WriteByte('\n')
 }
 
@@ -570,7 +587,8 @@ func (e *emitter) emitFunction(id uint32, fn *ir.Func) error {
 	for i, slot := range fn.FuncInputs {
 		params = append(params, fmt.Sprintf("%s %%in%d", valueType(slot.SlotSize), i))
 	}
-	fmt.Fprintf(&e.body, "define internal %s %s(%s) nounwind {\nentry:\n", e.retType(fn), e.funcName(id), strings.Join(params, ", "))
+	attachment := e.debugFunction(id, fn)
+	fmt.Fprintf(&e.body, "define internal %s %s(%s) nounwind%s {\nentry:\n", e.retType(fn), e.funcName(id), strings.Join(params, ", "), attachment)
 	e.line("%%fp64 = zext i32 %%fp to i64")
 	e.line("%%fpp = getelementptr inbounds i8, ptr @cx_mem, i64 %%fp64")
 	e.line("%%sp = add i32 %%fp, %d", fn.FuncFrameSize)
@@ -590,6 +608,7 @@ func (e *emitter) emitFunction(id uint32, fn *ir.Func) error {
 		e.line("%s = alloca [%d x i8], align 8", r.regionName, r.regionEnd-r.regionStart)
 		e.line("call void @llvm.memset.p0.i64(ptr %s, i8 0, i64 %d, i1 false)", r.regionName, r.regionEnd-r.regionStart)
 	}
+	e.debugLocals(fn)
 	for i, slot := range fn.FuncInputs {
 		p, err := e.ptrAt(slot.SlotOffset, true, slot.SlotSize)
 		if err != nil {
@@ -623,6 +642,7 @@ func (e *emitter) emitFunction(id uint32, fn *ir.Func) error {
 			}
 			fmt.Fprintf(&e.body, "pc%d:\n", pc)
 		}
+		e.debugPc(upc)
 		in := &fn.FuncCode[pc]
 		terminated = in.InstrOpcode == ir.OpcodeReturn || in.InstrOpcode == ir.OpcodeJump || in.InstrOpcode == ir.OpcodeJumpIf
 		if err := e.instr(upc, in); err != nil {
@@ -631,6 +651,9 @@ func (e *emitter) emitFunction(id uint32, fn *ir.Func) error {
 	}
 	e.body.Write(e.cold.Bytes())
 	e.body.WriteString("}\n\n")
+	if e.debug != nil {
+		e.debug.debugCurrent = 0
+	}
 	return nil
 }
 

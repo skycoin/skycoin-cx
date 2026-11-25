@@ -30,6 +30,7 @@ type buildOptions struct {
 	buildOptionsHelp    bool
 	buildOptionsTarget  string
 	buildOptionsStats   bool
+	buildOptionsDebug   bool
 	buildOptionsCompile []string
 }
 
@@ -143,6 +144,9 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 		case "llvm-stats":
 			options.buildOptionsStats = true
 			continue
+		case "llvm-debug":
+			options.buildOptionsDebug = true
+			continue
 		default:
 			options.buildOptionsCompile = append(options.buildOptionsCompile, arg)
 			continue
@@ -238,6 +242,9 @@ and passes its own command line arguments to it as os.Args.
                     program that runs on vm and calls no system library.
 --llvm-stats        With --target=llvm, print how each scalar opcode was
                     emitted, inline or as a call into the runtime.
+--llvm-debug        With --target=llvm, add DWARF debug information: the
+                    source line of each instruction and the name and type
+                    of each variable kept in a register.
 
 The core has no parser. It links a system library only when the program
 calls it and --enable enables it, and only the cipher library brings a

@@ -63,7 +63,9 @@ func buildLlvm(options buildOptions) int {
 		fmt.Fprintf(os.Stderr, "cx build: cannot run on vm: %s\n", outside)
 		return types.CX_RUNTIME_NOT_IMPLEMENTED
 	}
-	module, stats, err := llvm.Emit(&image, buildLlvmOptions())
+	llvmOptions := buildLlvmOptions()
+	llvmOptions.Debug = options.buildOptionsDebug
+	module, stats, err := llvm.Emit(&image, llvmOptions)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cx build: cannot build for llvm: %v\n", err)
 		return types.CX_RUNTIME_NOT_IMPLEMENTED
@@ -82,7 +84,7 @@ func buildLlvm(options buildOptions) int {
 	if err := os.WriteFile(modulePath, module, 0o644); err != nil {
 		return buildFail(err.Error())
 	}
-	return buildLlvmNative(modulePath, output)
+	return buildLlvmNative(modulePath, output, options.buildOptionsDebug)
 }
 
 // buildLlvmExtension ends the file name of LLVM IR.
@@ -107,7 +109,7 @@ func buildLlvmClang() string {
 
 // buildLlvmNative compiles the module at modulePath and links it with the
 // C runtime into the executable output.
-func buildLlvmNative(modulePath string, output string) int {
+func buildLlvmNative(modulePath string, output string, debug bool) int {
 	clang := buildLlvmClang()
 	if clang == "" {
 		return buildFail(fmt.Sprintf("wrote %s but found no clang to compile it into %s, install clang, set %s or give an output ending in .ll", modulePath, output, buildLlvmClangEnv))
@@ -122,6 +124,9 @@ func buildLlvmNative(modulePath string, output string) int {
 		return buildFail(err.Error())
 	}
 	args := []string{"-O2", "-w", "-o", output, modulePath, runtimePath}
+	if debug {
+		args = append(args, "-g")
+	}
 	if runtime.GOOS != "windows" {
 		// The MSVC C library holds the math functions, elsewhere libm does.
 		args = append(args, "-lm")
