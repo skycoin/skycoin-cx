@@ -95,7 +95,7 @@ func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {
 		actions.AST.CxIrState.CxIrStateManagerGrowBoundary()
 
 		/*
-			Because of an unkown reason, sometimes some CX programs
+			Because of an unknown reason, sometimes some CX programs
 			throw an error related to a premature EOF (particularly in Windows).
 			Adding a newline character solves this.
 		*/

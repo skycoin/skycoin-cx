@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -147,7 +146,7 @@ func printTokenize(options cxCmdFlags, fileNames []string) {
 		}
 		defer r.Close()
 
-		bytesRead, err := ioutil.ReadFile(sourceFilename)
+		bytesRead, err := os.ReadFile(sourceFilename)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "ProgramError reading:", sourceFilename, err)
 			return

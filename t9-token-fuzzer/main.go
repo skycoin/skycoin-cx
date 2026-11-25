@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strconv"
@@ -17,7 +16,6 @@ var tchunks int = 100
 func lower(ch rune) rune     { return ('a' - 'A') | ch } // returns lower-case ch iff ch is ASCII letter
 func isLetter(ch rune) bool  { return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' }
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
-func isHex(ch rune) bool     { return '0' <= ch && ch <= '9' || 'a' <= lower(ch) && lower(ch) <= 'f' }
 
 func randomString(length int, notIdent bool) string {
 	result := ""
@@ -271,6 +269,6 @@ func main() {
 	for i := 0; i <= sidx; i++ {
 		src2 += src[i]
 	}
-	ioutil.WriteFile(outfile, []byte(src2), 0644)
+	os.WriteFile(outfile, []byte(src2), 0644)
 	fmt.Printf("Completed. Total size: %d bytes.\n", len(src2))
 }

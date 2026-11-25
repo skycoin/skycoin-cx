@@ -129,7 +129,6 @@ type emitter struct {
 	// lie in the block at sp.
 	resultBlock bool
 	readOnly    []bool
-	callResults []string
 	debug       *debugInfo
 }
 

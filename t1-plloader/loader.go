@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -225,7 +224,7 @@ func fileStructFromFile(file *os.File) (File, error) {
 		return File{}, errors.New("file struct: nil file")
 	}
 	fileName := filepath.Base(file.Name())
-	fileBytes, err := ioutil.ReadFile(file.Name())
+	fileBytes, err := os.ReadFile(file.Name())
 	if err != nil {
 		return File{}, fmt.Errorf("%s: read: %w", file.Name(), err)
 	}

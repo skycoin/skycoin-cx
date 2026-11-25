@@ -47,7 +47,7 @@ func TestDeclarationExtractor_ReplaceCommentsWithWhitespaces(t *testing.T) {
 			commentReplaced := declaration_extractor.ReplaceCommentsWithWhitespaces(srcBytes)
 
 			if len(srcBytes) != len(commentReplaced) {
-				t.Errorf("Length not the same: orginal %vbytes, replaced %vbytes", len(srcBytes), len(commentReplaced))
+				t.Errorf("Length not the same: original %vbytes, replaced %vbytes", len(srcBytes), len(commentReplaced))
 			}
 
 			srcLines := bytes.Count(srcBytes, []byte("\n")) + 1
@@ -104,7 +104,7 @@ func TestDeclarationExtractor_ReplaceStringContentsWithWhitespaces(t *testing.T)
 			stringContentsReplaced, gotErr := declaration_extractor.ReplaceStringContentsWithWhitespaces(srcBytes)
 
 			if len(srcBytes) != len(stringContentsReplaced) {
-				t.Errorf("Length not the same: orginal %vbytes, replaced %vbytes", len(srcBytes), len(stringContentsReplaced))
+				t.Errorf("Length not the same: original %vbytes, replaced %vbytes", len(srcBytes), len(stringContentsReplaced))
 			}
 
 			srcLines := bytes.Count(srcBytes, []byte("\n")) + 1

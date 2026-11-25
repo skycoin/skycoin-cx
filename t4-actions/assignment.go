@@ -868,7 +868,7 @@ func checkIfFunctionCallNeedsAnOutput(prgrm *ast.CXProgram, fromExpressionOperat
 // Input arguments description:
 //
 //	prgrm - a CXProgram that contains all the data and array of the program.
-//	toExprs, fromExprs - array of expressions where the assingment
+//	toExprs, fromExprs - array of expressions where the assignment
 //			  		  	 expression will be added.
 //	assignOp - the assignment operator, "=", ":=", ">>=","<<=",
 //			   "+=","-=","*=","/=","%=","&=","^=", and "|=".

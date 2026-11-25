@@ -119,6 +119,6 @@ func DeclareImportAt(prgrm *ast.CXProgram, impName string, currentFile ast.Sourc
 		prgrm.CurrentPackage = ast.CXPackageIndex(pkg.Index)
 	} else {
 		// This should never happen.
-		panic(fmt.Sprintf("error: %s:%d: unkown error when trying to read package '%s'", prgrm.CXProgramSourceFileText(currentFile), lineNo, ident))
+		panic(fmt.Sprintf("error: %s:%d: unknown error when trying to read package '%s'", prgrm.CXProgramSourceFileText(currentFile), lineNo, ident))
 	}
 }

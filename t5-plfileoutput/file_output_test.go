@@ -11,10 +11,6 @@ import (
 
 func TestFile_Output_GetImportFiles(t *testing.T) {
 
-	type pkg struct {
-		pkgName string
-		imports []string
-	}
 	tests := []struct {
 		scenario    string
 		programName string

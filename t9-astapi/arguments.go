@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/skycoin/skycoin-cx/t0-types" // thin: only Code; no depth gain
-	"github.com/skycoin/skycoin-cx/t3-ast"
 	cxast "github.com/skycoin/skycoin-cx/t3-ast"
 	cxparseractions "github.com/skycoin/skycoin-cx/t4-actions" // thin: only AST, WritePrimary; no depth gain
 )
@@ -259,7 +258,7 @@ func MakeInputExpressionAPointer(cxprogram *cxast.CXProgram, functionName string
 		return err
 	}
 
-	if expr.Type == ast.CX_LINE {
+	if expr.Type == cxast.CX_LINE {
 		return errors.New("Expression is a CXLine")
 	}
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -316,7 +315,7 @@ func MakeOutputExpressionAPointer(cxprogram *cxast.CXProgram, functionName strin
 		return err
 	}
 
-	if expr.Type == ast.CX_LINE {
+	if expr.Type == cxast.CX_LINE {
 		return errors.New("Expression is a CXLine")
 	}
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.

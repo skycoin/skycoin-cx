@@ -152,12 +152,6 @@ var definitions []Type = []Type{
 	{"invalid type", 0, false},
 }
 
-func debugPanicIf(condition bool, error int) {
-	if condition {
-		panic(error)
-	}
-}
-
 func panicIf(condition bool, error int) {
 	if condition {
 		panic(error)

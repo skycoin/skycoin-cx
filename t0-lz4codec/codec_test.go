@@ -28,7 +28,9 @@ func newCodec(t *testing.T, cfg lz4codec.Config) *lz4codec.Codec {
 
 func goldenInputs() map[string][]byte {
 	random := make([]byte, 4096)
-	rand.New(rand.NewSource(1)).Read(random)
+	if _, err := rand.New(rand.NewSource(1)).Read(random); err != nil {
+		panic(err)
+	}
 	return map[string][]byte{
 		"short":  []byte("abc"),
 		"random": random,

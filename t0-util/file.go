@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -75,7 +74,7 @@ func CXReadFile(path string) ([]byte, error) {
 		fmt.Printf("Reading file : '%s', '%s'\n", workingDir, path)
 	}
 
-	bytes, err := ioutil.ReadFile(cxPath(path))
+	bytes, err := os.ReadFile(cxPath(path))
 
 	if logFile && err != nil {
 		fmt.Printf("Failed to read file : '%s', '%s', err '%v'\n", workingDir, path, err)
