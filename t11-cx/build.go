@@ -76,7 +76,11 @@ func buildRun(args []string) int {
 	if err != nil {
 		return buildFail(err.Error())
 	}
-	libraries := core.CoreLibraryNames(actions.AST.ProgramLibrariesEnabled)
+	active := core.CoreLibrariesActive(actions.AST)
+	for library, used := range actions.AST.ProgramLibrariesUsed {
+		active[library] = active[library] && used
+	}
+	libraries := core.CoreLibraryNames(active)
 	corePath, problem := buildCorePath(options.buildOptionsCore, libraries)
 	if problem != "" {
 		return buildFail(problem)

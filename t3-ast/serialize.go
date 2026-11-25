@@ -426,6 +426,7 @@ func serializeProgramFields(prgrm *CXProgram, encoder *serializeEncoder) error {
 	encoder.serializeEncoderBool(prgrm.Terminated)
 	serializeLibraries(encoder, &prgrm.ProgramLibrariesUsed)
 	serializeLibraries(encoder, &prgrm.ProgramLibrariesEnabled)
+	serializeOpcodeSet(encoder, &prgrm.ProgramOperationsEnabled)
 
 	encoder.serializeEncoderLength(len(prgrm.SysInitExprs), prgrm.SysInitExprs == nil)
 	for i := range prgrm.SysInitExprs {
@@ -484,6 +485,7 @@ func deserializeProgramFields(prgrm *CXProgram, decoder *serializeDecoder) []ser
 	prgrm.Terminated = decoder.serializeDecoderBool()
 	deserializeLibraries(decoder, &prgrm.ProgramLibrariesUsed)
 	deserializeLibraries(decoder, &prgrm.ProgramLibrariesEnabled)
+	deserializeOpcodeSet(decoder, &prgrm.ProgramOperationsEnabled)
 
 	if length := decoder.serializeDecoderLength(5); length >= 0 {
 		prgrm.SysInitExprs = make([]CXExpression, length)
@@ -1231,5 +1233,26 @@ func deserializeLibraries(decoder *serializeDecoder, libraries *[constants.Libra
 	}
 	for library := range libraries {
 		libraries[library] = decoder.serializeDecoderBool()
+	}
+}
+
+// serializeOpcodeSet writes set as its number of words and the words.
+func serializeOpcodeSet(encoder *serializeEncoder, set *constants.OpcodeSet) {
+	encoder.serializeEncoderUint(uint64(len(set)))
+	for _, word := range set {
+		encoder.serializeEncoderUint(word)
+	}
+}
+
+// deserializeOpcodeSet reads a set that serializeOpcodeSet wrote. A program
+// with another opcode table size fails.
+// VIOLATION STRHOT-351: B, the serializer, compiler code run by an opcode, #412.
+func deserializeOpcodeSet(decoder *serializeDecoder, set *constants.OpcodeSet) {
+	if count := decoder.serializeDecoderUint(); decoder.serializeDecoderError == nil && count != uint64(len(set)) {
+		decoder.serializeDecoderFailf("an opcode set of %d words, this cx has %d", count, len(set))
+		return
+	}
+	for word := range set {
+		set[word] = decoder.serializeDecoderUint()
 	}
 }

@@ -990,6 +990,23 @@ The run loop never checks a library (decision D119).
 error: CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
 ```
 
+An entry of `--enable` is a library, which enables every operation of
+the library, or one operation, the library name and the function name
+after its package, such as `cipher.HashStateNew`. A list mixes both,
+`--enable=file,cipher.HashStateNew,cipher.HashStateRelease`, and an entry
+that names neither is an error. A program that uses an operation of
+`cipher` that is not enabled, while other operations of the library are,
+is refused before it runs and the message names the operation.
+
+```
+error: CX_RUNTIME_LIBRARY_DISABLED, operation cipher.HashStateRelease is not enabled, enable it with --enable=cipher.HashStateRelease
+```
+
+The enabled operations are a fixed size bit set over the opcode table,
+`constants.OpcodeSet`, which the program, its image and a built program
+carry. A native executable of `cx build --target=llvm` takes the set when
+it is built, so it never runs an operation that is not enabled.
+
 Libraries are disabled unless `--enable` names them. The setting
 `constants.LibraryPolicyEnabledWhenImported` in
 `t1-constants/libraries.go` holds this default. Set to `true`, it

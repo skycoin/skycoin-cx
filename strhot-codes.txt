@@ -361,3 +361,4 @@ STRHOT-347 B open t1-netbatch/socket.go netTCPDialRun
 STRHOT-348 B open t1-netbatch/replay.go netPayloadQuote
 STRHOT-349 B open t0-util/program_path.go ProgramSandboxFileOpenReadWrite
 STRHOT-350 B open t0-util/program_path.go ProgramSandboxFileRemove
+STRHOT-351 B open t3-ast/serialize.go deserializeOpcodeSet

@@ -117,6 +117,11 @@ type Image struct {
 	// ImageLibraryEnabled marks the system libraries the run may call, by
 	// library number, as CXProgram.ProgramLibrariesEnabled.
 	ImageLibraryEnabled [constants.LibraryCount]bool
+
+	// ImageOperationsEnabled holds the library opcodes the run may call, as
+	// CXProgram.ProgramOperationsEnabled. The loader refuses an image that
+	// uses one outside it, so no instruction checks it (decision D119).
+	ImageOperationsEnabled constants.OpcodeSet
 }
 
 // ImageDataEnd returns the first byte after the data segment, where the

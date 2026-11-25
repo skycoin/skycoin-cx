@@ -245,12 +245,13 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 	cxinit.RegisterPackages(actions.AST)
 	// Init 9: built-in opcode and operator tables
 
-	enabled, problem := librariesEnabledParse(options.enable)
+	enabled, operations, problem := librariesEnabledParse(options.enable)
 	if problem != "" {
 		fmt.Fprintln(os.Stderr, problem)
 		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 	actions.AST.ProgramLibrariesEnabled = enabled
+	actions.AST.ProgramOperationsEnabled = operations
 	if problem := netModeSet(options); problem != "" {
 		fmt.Fprintln(os.Stderr, problem)
 		os.Exit(types.CX_COMPILATION_ERROR)

@@ -1,0 +1,1 @@
+error: CX_RUNTIME_LIBRARY_DISABLED, operation cipher.HashStateRelease is not enabled, enable it with --enable=cipher.HashStateRelease

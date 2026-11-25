@@ -180,6 +180,7 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageEntryInit = ir.ImageFuncNone
 	image.ImageEntryMain = ir.ImageFuncNone
 	image.ImageLibraryEnabled = prgrm.ProgramLibrariesEnabled
+	image.ImageOperationsEnabled = prgrm.ProgramOperationsEnabled
 
 	if packageIndex, found := prgrm.Packages[prgrm.CxIrState.CxIrStateNameMain]; found {
 		mainPackage, err := prgrm.GetPackageFromArray(packageIndex)

@@ -94,46 +94,66 @@ func CoreOpcodeName(code int) string {
 
 // CoreLibrariesEnabledResolve applies constants.LibraryPolicyEnabledWhenImported
 // to prgrm: when it is true, every library the program calls is enabled.
+// Then every opcode of an enabled library joins
+// ProgramOperationsEnabled, the set the loader checks (decision D119).
 func CoreLibrariesEnabledResolve(prgrm *ast.CXProgram) {
-	if !constants.LibraryPolicyEnabledWhenImported {
-		return
-	}
 	for library, used := range prgrm.ProgramLibrariesUsed {
-		if used {
+		if used && constants.LibraryPolicyEnabledWhenImported {
 			prgrm.ProgramLibrariesEnabled[library] = true
+		}
+		if prgrm.ProgramLibrariesEnabled[library] {
+			prgrm.ProgramOperationsEnabled.OpcodeSetLibraryAdd(library)
 		}
 	}
 }
 
-// CoreLibrariesMissing returns the names of the libraries enabled for prgrm
+// CoreLibrariesActive returns the libraries prgrm may call: those enabled
+// whole and those with an enabled operation.
+func CoreLibrariesActive(prgrm *ast.CXProgram) [constants.LibraryCount]bool {
+	var active [constants.LibraryCount]bool
+	for library := range active {
+		active[library] = prgrm.ProgramLibrariesEnabled[library] || prgrm.ProgramOperationsEnabled.OpcodeSetLibraryAny(library)
+	}
+	return active
+}
+
+// CoreLibrariesMissing returns the names of the libraries active for prgrm
 // that this binary does not link, in number order. opcodesLinked marks the
 // libraries whose functions are opcodes that the binary links, by its build
 // tags (decision D119), and the other libraries are linked when registered.
 func CoreLibrariesMissing(prgrm *ast.CXProgram, opcodesLinked [constants.LibraryCount]bool) []string {
 	var missing [constants.LibraryCount]bool
-	for library, enabled := range prgrm.ProgramLibrariesEnabled {
-		missing[library] = enabled && !ast.LibraryLinked(library) && !opcodesLinked[library]
+	for library, active := range CoreLibrariesActive(prgrm) {
+		missing[library] = active && !ast.LibraryLinked(library) && !opcodesLinked[library]
 	}
 	return CoreLibraryNames(missing)
 }
 
-// CoreLibraryRefused returns the first library, in number order, whose
-// opcodes prgrm uses and the run does not enable, and 0 when there is none.
+// CoreOperationRefused returns the first library opcode, in number order,
+// that prgrm uses and its run does not enable, and 0 when there is none.
 // The loader refuses such a program before it runs, so the run loop never
-// checks a library (decision D119).
-func CoreLibraryRefused(prgrm *ast.CXProgram) int {
-	for library, used := range prgrm.ProgramLibrariesUsed {
-		if used && !prgrm.ProgramLibrariesEnabled[library] && constants.LibraryOpcodeGroup(library) != constants.OpcodeGroupNone {
-			return library
+// checks a library or an operation (decision D119).
+func CoreOperationRefused(prgrm *ast.CXProgram) int {
+	for _, code := range CoreOpcodesUsed(prgrm) {
+		if constants.OpcodeLibraryOf(code) != 0 && !prgrm.ProgramOperationsEnabled.OpcodeSetContains(code) {
+			return code
 		}
 	}
 	return 0
 }
 
-// CoreLibraryRefusalLine is the line a refused program prints, the runtime
-// error CX_RUNTIME_LIBRARY_DISABLED without a source position.
-func CoreLibraryRefusalLine(library int) string {
-	return "error: " + ast.ErrorString(types.CX_RUNTIME_LIBRARY_DISABLED) + ", " + ast.RuntimeLibraryDisabledMessage(library)
+// CoreOperationRefusalLine is the line a program refused for opcode code
+// prints, the runtime error CX_RUNTIME_LIBRARY_DISABLED without a source
+// position. It names the library when the run enables nothing of it, and
+// the operation otherwise.
+func CoreOperationRefusalLine(prgrm *ast.CXProgram, code int) string {
+	library := constants.OpcodeLibraryOf(code)
+	message := ast.RuntimeLibraryDisabledMessage(library)
+	if prgrm.ProgramOperationsEnabled.OpcodeSetLibraryAny(library) {
+		name := constants.LibraryOperationName(code)
+		message = "operation " + name + " is not enabled, enable it with --enable=" + name
+	}
+	return "error: " + ast.ErrorString(types.CX_RUNTIME_LIBRARY_DISABLED) + ", " + message
 }
 
 // CoreLibraryNames returns the names of the libraries libraries marks, in

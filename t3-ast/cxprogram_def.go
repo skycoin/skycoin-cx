@@ -42,6 +42,10 @@ type CXProgram struct {
 	// set from --enable, see constants.LibraryPolicyEnabledWhenImported.
 	ProgramLibrariesUsed    [constants.LibraryCount]bool
 	ProgramLibrariesEnabled [constants.LibraryCount]bool
+	// ProgramOperationsEnabled holds the library opcodes this run may call,
+	// those --enable names one by one and, once loaded, every opcode of an
+	// enabled library (decision D119).
+	ProgramOperationsEnabled constants.OpcodeSet
 
 	// RuntimeError is the runtime error that ended the old loop, printed by
 	// the printer package once the loop has returned.

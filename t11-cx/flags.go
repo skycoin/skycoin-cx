@@ -99,7 +99,7 @@ func parseFlags(options *cxCmdFlags, args []string) {
 	commandLine.StringVar(&options.cxpath, "cxpath", options.cxpath, "Workspace directory, used instead of the CXPATH environment variable")
 	commandLine.StringVar(&options.sandbox, "sandbox", options.sandbox, "Directory a running program's file opcodes are confined to. Program paths must be relative and stay inside it. Defaults to the working directory.")
 	commandLine.StringVar(&options.executor, "executor", options.executor, "Loop that runs the program: auto runs it on the flat vm when every function lowers and on the old loop otherwise, old and vm force one loop. vm fails on a program that does not lower.")
-	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries the program may call, a comma separated list of file, net, process and cipher. A call into a library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
+	commandLine.StringVar(&options.enable, "enable", options.enable, "System libraries and library operations the program may call, a comma separated list of the libraries file, net, process and cipher and of single operations such as cipher.HashStateNew. A program that uses a cipher operation that is not enabled is refused before it runs, and a call into another library that is not enabled is the runtime error CX_RUNTIME_LIBRARY_DISABLED. See System libraries in LanguageGuide.md.")
 	commandLine.StringVar(&options.netRecord, "net-record", options.netRecord, "Write every batch of the net library to this replay record, see docs/Networking.md")
 	commandLine.StringVar(&options.netReplay, "net-replay", options.netReplay, "Run the net library from this replay record and open no socket, see docs/Networking.md")
 
@@ -185,25 +185,31 @@ func command(arg, name string) bool {
 	return strings.TrimLeft(arg, "-") == name
 }
 
-// librariesEnabledParse returns the set of system libraries the --enable
-// value list names, or the problem with it.
-func librariesEnabledParse(list string) (enabled [constants.LibraryCount]bool, problem string) {
+// librariesEnabledParse returns the system libraries and the library
+// operations the --enable list names, or the problem with it. An entry is a
+// library name, which enables every operation of the library, or one
+// operation, cipher.HashStateNew (decision D119).
+func librariesEnabledParse(list string) (enabled [constants.LibraryCount]bool, operations constants.OpcodeSet, problem string) {
 	for _, name := range strings.Split(list, ",") {
 		name = strings.TrimSpace(name)
 		if name == "" {
 			continue
 		}
-		library, found := constants.LibraryByName(name)
-		if !found {
-			var names []string
-			for _, known := range constants.LibraryTable {
-				names = append(names, known.LibraryName)
-			}
-			return enabled, fmt.Sprintf("unknown library %q in --enable, the libraries are %s", name, strings.Join(names, ", "))
+		if library, found := constants.LibraryByName(name); found {
+			enabled[library.LibraryNumber] = true
+			continue
 		}
-		enabled[library.LibraryNumber] = true
+		if code, found := constants.LibraryOperationByName(name); found {
+			operations.OpcodeSetAdd(code)
+			continue
+		}
+		var names []string
+		for _, known := range constants.LibraryTable {
+			names = append(names, known.LibraryName)
+		}
+		return enabled, operations, fmt.Sprintf("unknown library or operation %q in --enable, the libraries are %s, and an operation is a library and a function, as cipher.HashStateNew", name, strings.Join(names, ", "))
 	}
-	return enabled, ""
+	return enabled, operations, ""
 }
 
 // netModeSet sets where the net library takes its batches from, by

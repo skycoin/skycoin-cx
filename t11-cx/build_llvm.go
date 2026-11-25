@@ -61,10 +61,10 @@ func buildLlvm(options buildOptions) int {
 	llvmOptions := buildLlvmOptions()
 	llvmOptions.Debug = options.buildOptionsDebug
 	image, _, outside := core.ExecutorLower(prgrm)
-	if library := core.CoreLibraryRefused(prgrm); library != 0 {
+	if code := core.CoreOperationRefused(prgrm); code != 0 {
 		// The program is refused before it runs, as cx refuses it, so its
 		// code needs no native form.
-		llvmOptions.RefusalLine, llvmOptions.RefusalCode = core.CoreLibraryRefusalLine(library), types.CX_RUNTIME_LIBRARY_DISABLED
+		llvmOptions.RefusalLine, llvmOptions.RefusalCode = core.CoreOperationRefusalLine(prgrm, code), types.CX_RUNTIME_LIBRARY_DISABLED
 		image, outside = ir.Image{ImageEntryInit: ir.ImageFuncNone, ImageEntryMain: ir.ImageFuncNone}, ""
 	}
 	if outside != "" {
