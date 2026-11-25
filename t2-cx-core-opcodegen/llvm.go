@@ -35,6 +35,8 @@ type llvmRow struct {
 	operation string
 	operand   types.Code
 	result    types.Code
+	// conversion is a row named from.to.
+	conversion bool
 }
 
 // llvmRows finds the definition rows named type.operation or type.type
@@ -49,11 +51,12 @@ func llvmRows() ([]llvmRow, error) {
 		if !found || !scalar {
 			continue
 		}
-		ident := ""
+		ident, conversion := "", false
 		if operationIdent, known := llvmOperationIdents[operation]; known {
 			ident = "Opcode" + typeIdent + operationIdent
-		} else if target, conversion := llvmScalarIdents[codes[operation]]; conversion && operand != types.BOOL && codes[operation] != types.BOOL && codes[operation] != operand {
+		} else if target, scalar := llvmScalarIdents[codes[operation]]; scalar && operand != types.BOOL && codes[operation] != types.BOOL && codes[operation] != operand {
 			ident = "Opcode" + typeIdent + "To" + target
+			conversion = true
 		} else {
 			continue
 		}
@@ -69,7 +72,7 @@ func llvmRows() ([]llvmRow, error) {
 				return nil, fmt.Errorf("definition %q: output %q is not a scalar type", row.Name, outputs[0])
 			}
 		}
-		rows = append(rows, llvmRow{ident: ident, row: row, operation: operation, operand: operand, result: result})
+		rows = append(rows, llvmRow{ident: ident, row: row, operation: operation, operand: operand, result: result, conversion: conversion})
 	}
 	return rows, nil
 }
@@ -82,8 +85,8 @@ func llvmFileSource(rows []llvmRow) []byte {
 	b.WriteString("// opcodeFacts describes each scalar image opcode by the row of\n// OpcodeDefinitionTable it lowers from. Read only.\n")
 	b.WriteString("var opcodeFacts = [ir.OpcodeCount]OpcodeFact{\n")
 	for _, row := range rows {
-		fmt.Fprintf(&b, "\tir.%s: {%q, %q, %s, %d, %s},\n", row.ident, row.row.Name, row.operation, typeConstant(row.operand),
-			len(strings.Fields(row.row.Inputs)), typeConstant(row.result))
+		fmt.Fprintf(&b, "\tir.%s: {%q, %q, %s, %d, %s, %q},\n", row.ident, row.row.Name, row.operation, typeConstant(row.operand),
+			len(strings.Fields(row.row.Inputs)), typeConstant(row.result), llvmTemplate(row))
 	}
 	b.WriteString("}\n")
 	return b.Bytes()

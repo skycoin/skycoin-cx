@@ -9,12 +9,16 @@ import (
 // from its row of constants.OpcodeDefinitionTable by t2-cx-core-opcodegen.
 // OpcodeFactOperation is the part of the name after the dot, the target
 // type of a conversion. OpcodeFactResult is types.UNDEFINED for no output.
+// OpcodeFactTemplate is the inline LLVM IR of the opcode, from llvmTemplate
+// in t2-cx-core-opcodegen, and "" for an opcode that calls its runtime
+// function (decision D10).
 type OpcodeFact struct {
 	OpcodeFactName      string
 	OpcodeFactOperation string
 	OpcodeFactType      types.Code
 	OpcodeFactInputs    uint8
 	OpcodeFactResult    types.Code
+	OpcodeFactTemplate  string
 }
 
 // OpcodeFactOf returns the fact of op, with an empty name for an opcode that

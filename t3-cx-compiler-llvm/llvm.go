@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 )
@@ -55,6 +56,9 @@ type Options struct {
 	StopLines [StopCount]string
 	// AssertCode is the exit code after a failed test.
 	AssertCode int32
+	// FallbackOnly calls the runtime function of every scalar opcode, also
+	// of one with a template, to check the two against each other.
+	FallbackOnly bool
 }
 
 // Stats counts the instructions of a module by how they were emitted.
@@ -996,6 +1000,12 @@ func (e *emitter) instrScalar(pc uint32, in *ir.Instr, fact *OpcodeFact) error {
 			return err
 		}
 	}
+	if fact.OpcodeFactTemplate != "" && !e.options.FallbackOnly {
+		e.stats.StatsInline[in.InstrOpcode]++
+		r := e.newTmp()
+		e.expand(fact, a, b, r, pc)
+		return e.store(in, 2, typeLlvm(fact.OpcodeFactResult), typeSize(fact.OpcodeFactResult), r)
+	}
 	e.stats.StatsFallback[in.InstrOpcode]++
 	name := FallbackName(in.InstrOpcode)
 	param := operandType + extension(fact.OpcodeFactType)
@@ -1125,4 +1135,47 @@ func extension(code types.Code) string {
 		return " zeroext"
 	}
 	return ""
+}
+
+// llvmIntrinsics are the intrinsics a template may call, each declared for
+// the operand type when a template uses it.
+var llvmIntrinsics = []string{"llvm.abs", "llvm.smax", "llvm.smin", "llvm.umax", "llvm.umin", "llvm.fabs"}
+
+// expand writes the template of fact with its placeholders filled, a and b
+// the operands and r the result.
+func (e *emitter) expand(fact *OpcodeFact, a, b, r string, pc uint32) {
+	operandType := typeLlvm(fact.OpcodeFactType)
+	bits := 8 * typeSize(fact.OpcodeFactType)
+	floatSuffix := map[types.Code]string{types.F32: "f32", types.F64: "f64"}[fact.OpcodeFactType]
+	pairs := []string{"{a}", a, "{b}", b, "{r}", r, "{T}", operandType, "{R}", typeLlvm(fact.OpcodeFactResult), "{F}", floatSuffix,
+		"{W1}", strconv.Itoa(int(bits) - 1), "{W}", strconv.Itoa(int(bits))}
+	for i := 1; i <= 9; i++ {
+		key := "{t" + strconv.Itoa(i) + "}"
+		if strings.Contains(fact.OpcodeFactTemplate, key) {
+			pairs = append(pairs, key, e.newTmp())
+		}
+	}
+	text := strings.NewReplacer(pairs...).Replace(fact.OpcodeFactTemplate)
+	for _, line := range strings.Split(text, "\n") {
+		if check, found := strings.CutPrefix(line, "check "); found {
+			condition, stop, _ := strings.Cut(check, " ")
+			assert.AssertInvariantTrue(stop == "DivideByZero", "llvm: template stop "+stop)
+			e.check(condition, StopDivideByZero, pc)
+			continue
+		}
+		e.line("%s", line)
+	}
+	for _, intrinsic := range llvmIntrinsics {
+		if !strings.Contains(text, "@"+intrinsic+".") {
+			continue
+		}
+		switch intrinsic {
+		case "llvm.fabs":
+			e.declare(intrinsic+"."+floatSuffix, fmt.Sprintf("declare %s @%s.%s(%s)", operandType, intrinsic, floatSuffix, operandType))
+		case "llvm.abs":
+			e.declare(intrinsic+"."+operandType, fmt.Sprintf("declare %s @%s.%s(%s, i1)", operandType, intrinsic, operandType, operandType))
+		default:
+			e.declare(intrinsic+"."+operandType, fmt.Sprintf("declare %s @%s.%s(%s, %s)", operandType, intrinsic, operandType, operandType, operandType))
+		}
+	}
 }

@@ -21,10 +21,16 @@ import (
 // TestLlvmOpcodeFacts checks that the generated table of the LLVM target
 // describes every scalar image opcode.
 func TestLlvmOpcodeFacts(t *testing.T) {
+	inline, fallback := 0, 0
 	for op := ir.OpcodeBoolNot; op < ir.OpcodeCount; op++ {
 		fact := llvm.OpcodeFactOf(op)
 		if fact.OpcodeFactName == "" {
 			t.Errorf("image opcode %d has no row in the LLVM opcode table", op)
+		}
+		if fact.OpcodeFactTemplate != "" {
+			inline++
+		} else {
+			fallback++
 		}
 	}
 	for op := ir.OpcodeInvalid; op < ir.OpcodeBoolNot; op++ {
@@ -32,6 +38,7 @@ func TestLlvmOpcodeFacts(t *testing.T) {
 			t.Errorf("image opcode %d is not scalar but has the row %q", op, fact.OpcodeFactName)
 		}
 	}
+	t.Logf("scalar opcodes: %d inline by a template, %d call their runtime function", inline, fallback)
 }
 
 // llvmTestClang returns the C compiler the native tests use, CC or clang,
@@ -215,16 +222,19 @@ func llvmTestNative(t *testing.T, cc string, image *ir.Image, options llvm.Optio
 }
 
 // TestLlvmScalarOpcodes runs every scalar opcode on edge operands on vm and
-// as native code, with the operands in memory and as folded literals, and
-// checks that both print the same. It needs clang.
+// as native code, with the operands in memory and as folded literals, by its
+// template and by its runtime function, and checks that all print the same.
+// It needs clang.
 func TestLlvmScalarOpcodes(t *testing.T) {
 	cc := llvmTestClang(t)
-	for _, readOnly := range []bool{false, true} {
-		t.Run(fmt.Sprintf("readonly=%v", readOnly), func(t *testing.T) {
+	for _, variant := range []struct{ readOnly, fallbackOnly bool }{{false, false}, {true, false}, {false, true}, {true, true}} {
+		t.Run(fmt.Sprintf("readonly=%v,fallback=%v", variant.readOnly, variant.fallbackOnly), func(t *testing.T) {
 			t.Parallel()
-			image := llvmTestImage(readOnly)
+			image := llvmTestImage(variant.readOnly)
 			want := llvmTestVm(t, image)
-			got := llvmTestNative(t, cc, image, buildLlvmOptions())
+			options := buildLlvmOptions()
+			options.FallbackOnly = variant.fallbackOnly
+			got := llvmTestNative(t, cc, image, options)
 			if !bytes.Equal(got, want) {
 				line, gotLine, wantLine := executionRecordFirstDifference(got, want)
 				t.Errorf("native differs from vm at line %d: %q, vm %q", line, gotLine, wantLine)
