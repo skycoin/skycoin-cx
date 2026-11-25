@@ -1,0 +1,18 @@
+100000000 100000000
+error: test-stack-print-uninit.cx:20, CX_RUNTIME_ERROR, runtime error: integer divide by zero
+===Callstack===
+>>> fail()
+ProgramInput
+	test-stack-print-uninit.cx:11 : fail() : 0
+Expressions
+ 	test-stack-print-uninit.cx:12 : identity() : 1
+	:-1 : i32.lt() : false
+	test-stack-print-uninit.cx:15 : identity() : 100000000
+	test-stack-print-uninit.cx:16 : identity() : 100000000
+	test-stack-print-uninit.cx:20 : i32.div() : 0
+	test-stack-print-uninit.cx:23 : identity() : &{next: <nil>, name: }
+	test-stack-print-uninit.cx:26 : printf() : <invalid address>
+	test-stack-print-uninit.cx:26 : printf() : []
+	test-stack-print-uninit.cx:26 : printf() : [, ]
+
+>>> main()
