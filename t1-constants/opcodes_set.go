@@ -66,3 +66,12 @@ func LibraryOperationByName(name string) (int, bool) {
 	}
 	return 0, false
 }
+
+// OpcodeSetLibraryRemove removes every opcode of library from set.
+func (set *OpcodeSet) OpcodeSetLibraryRemove(library int) {
+	for _, row := range OpcodeDefinitionTable {
+		if OpcodeLibraryOf(row.Number) == library {
+			set[row.Number>>6] &^= 1 << (uint(row.Number) & 63)
+		}
+	}
+}

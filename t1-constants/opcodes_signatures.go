@@ -23,6 +23,9 @@ const (
 	// OpcodeGroupCipher is the cipher library in t4-cipher, left out by the
 	// nocipher tag.
 	OpcodeGroupCipher
+	// OpcodeGroupNet is the net library in t4-cxnet, in every build of cx and
+	// in the cores built with cxcorelibrarynet.
+	OpcodeGroupNet
 	OpcodeGroupCount
 )
 
@@ -154,12 +157,14 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupRegexp: opcodeGroupRegexpLinked,
 	OpcodeGroupCxfx:   opcodeGroupCxfxLinked,
 	OpcodeGroupCipher: opcodeGroupCipherLinked,
+	OpcodeGroupNet:    true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
 // the functions of a library, 0 for the other groups.
 var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupCipher: LibraryNumberCipher,
+	OpcodeGroupNet:    LibraryNumberNet,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

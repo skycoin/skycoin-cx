@@ -982,8 +982,8 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `cipher` and does not enable it is
-refused before it runs, with the same code and message and no position.
+A program that uses a function of `cipher` or `net` and does not enable
+it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
 ```
@@ -1014,9 +1014,9 @@ enables every library the program calls. See
 [skycoin-cx#492](https://github.com/skycoin/skycoin-cx/issues/492),
 decision D17.
 
-Every function of `cipher` is its own opcode, 796 to 804 (decision
-D119). The compiler turns every call of a function of `file`, `net` and
-`process` into one opcode, `LibraryCall` (795), which carries the library
+Every function of `cipher` is its own opcode, 796 to 804, and every
+function of `net`, 805 to 819 (decision D119). The compiler turns every
+call of a function of `file` and `process` into one opcode, `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
 numbers, see [Language versions](#language-versions).
@@ -4363,5 +4363,22 @@ run on vm and build with `cx build --target=llvm`.
 |---|---|
 | cipher functions 1 to 9 through `LibraryCall` | opcodes 796 to 804, deprecated function numbers reassignable from `2711250001` |
 | `error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library cipher ...` at the call | `error: CX_RUNTIME_LIBRARY_DISABLED, library cipher ...` before the run |
+
+Serialized programs from before this version must be recompiled.
+
+## Version 2611250004, 2026-11-25
+
+The fifteen functions of the `net` library are opcodes 805 to 819, one
+each, instead of functions 5 to 19 of library 2 called through
+`LibraryCall` (795), decision D119. The source does not change. A program
+that uses one of them without enabling it, as `--enable=net` or
+`--enable=net.TCPDial`, is refused before it runs with
+`CX_RUNTIME_LIBRARY_DISABLED` (12). Every net function has a native form,
+so a net program builds with `cx build --target=llvm` and replays a record
+named by `CX_NET_REPLAY`.
+
+| before | from 2611250004 |
+|---|---|
+| net functions 5 to 19 through `LibraryCall` | opcodes 805 to 819, deprecated function numbers reassignable from `2711250001` |
 
 Serialized programs from before this version must be recompiled.

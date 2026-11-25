@@ -9,10 +9,26 @@ import (
 
 // libraryRuntimeFunctions is the C function of runtime.c.txt that is the
 // native form of each system library opcode, decision D119. It takes the
-// block at sp, the inputs and then the outputs as the vm form reads them.
+// memory, its size, the pointer size and the block at sp, the inputs and
+// then the outputs as the vm form reads them.
 var libraryRuntimeFunctions = map[ir.Opcode]string{
 	ir.OpcodeCipherHashStateNew:     "cx_rt_cipher_hash_state_new",
 	ir.OpcodeCipherHashStateRelease: "cx_rt_cipher_hash_state_release",
+	ir.OpcodeNetUpdate:              "cx_rt_net_update",
+	ir.OpcodeNetReadyCount:          "cx_rt_net_ready_count",
+	ir.OpcodeNetReadyNext:           "cx_rt_net_ready_next",
+	ir.OpcodeNetClock:               "cx_rt_net_clock",
+	ir.OpcodeNetRead:                "cx_rt_net_read",
+	ir.OpcodeNetWrite:               "cx_rt_net_write",
+	ir.OpcodeNetClose:               "cx_rt_net_close",
+	ir.OpcodeNetTimeoutSet:          "cx_rt_net_timeout_set",
+	ir.OpcodeNetTCPListen:           "cx_rt_net_tcp_listen",
+	ir.OpcodeNetTCPDial:             "cx_rt_net_tcp_dial",
+	ir.OpcodeNetUDPListen:           "cx_rt_net_udp_listen",
+	ir.OpcodeNetUDPDial:             "cx_rt_net_udp_dial",
+	ir.OpcodeNetUDPReadFrom:         "cx_rt_net_udp_read_from",
+	ir.OpcodeNetUDPWriteTo:          "cx_rt_net_udp_write_to",
+	ir.OpcodeNetUDPPeerResolve:      "cx_rt_net_udp_peer_resolve",
 }
 
 // instrLibrary emits a system library opcode: the arguments of the pending
@@ -39,8 +55,8 @@ func (e *emitter) instrLibrary(in *ir.Instr) error {
 		e.line("%s = getelementptr inbounds i8, ptr %s, i64 %d", p, block, offset)
 		e.line("store %s %s, ptr %s, align 1", valueType(e.call.pendingCallSizes[offset]), e.call.pendingCallArgs[offset], p)
 	}
-	e.declare(function, fmt.Sprintf("declare void @%s(ptr) nounwind", function))
-	e.line("call void @%s(ptr %s)", function, block)
+	e.declare(function, fmt.Sprintf("declare void @%s(ptr, i64, i32, ptr) nounwind", function))
+	e.line("call void @%s(ptr @cx_mem, i64 %d, i32 %d, ptr %s)", function, uint64(e.dataEnd)+uint64(e.image.ImageScratchSize), pointerSize, block)
 	e.result = ""
 	e.resultBlock = true
 	e.call = pendingCall{}

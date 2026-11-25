@@ -654,6 +654,21 @@ var OpcodeDefinitionTable = [...]OpcodeDefinition{
 	{802, "cipher.SignatureRecoverPubKey", "cipher.OpCipherSignatureRecoverPubKey", "[]ui8 []ui8", "[]ui8 bool", ""},
 	{803, "cipher.SignatureSign", "cipher.OpCipherSignatureSign", "[]ui8 []ui8", "[]ui8 bool", ""},
 	{804, "cipher.KeyPairGenerate", "cipher.OpCipherKeyPairGenerate", "", "[]ui8 []ui8", ""},
+	{805, "net.Update", "cxnet.OpNetUpdate", "i32", "i32", ""},
+	{806, "net.ReadyCount", "cxnet.OpNetReadyCount", "", "i32", ""},
+	{807, "net.ReadyNext", "cxnet.OpNetReadyNext", "", "i32 i32 i32 i32", ""},
+	{808, "net.Clock", "cxnet.OpNetClock", "", "i64", ""},
+	{809, "net.Read", "cxnet.OpNetRead", "i32 i32 und i32", "i32", ""},
+	{810, "net.Write", "cxnet.OpNetWrite", "i32 und i32", "i32", ""},
+	{811, "net.Close", "cxnet.OpNetClose", "i32", "bool", ""},
+	{812, "net.TimeoutSet", "cxnet.OpNetTimeoutSet", "i32 i32", "bool", ""},
+	{813, "net.TCPListen", "cxnet.OpNetTCPListen", "str i32", "i32", ""},
+	{814, "net.TCPDial", "cxnet.OpNetTCPDial", "str i32", "i32", ""},
+	{815, "net.UDPListen", "cxnet.OpNetUDPListen", "str i32", "i32", ""},
+	{816, "net.UDPDial", "cxnet.OpNetUDPDial", "str i32", "i32", ""},
+	{817, "net.UDPReadFrom", "cxnet.OpNetUDPReadFrom", "i32 i32 und i32", "i32 i32", ""},
+	{818, "net.UDPWriteTo", "cxnet.OpNetUDPWriteTo", "i32 i32 und i32", "i32", ""},
+	{819, "net.UDPPeerResolve", "cxnet.OpNetUDPPeerResolve", "str i32", "i32", ""},
 }
 
 // OpcodeDefinition is one row of OpcodeDefinitionTable.

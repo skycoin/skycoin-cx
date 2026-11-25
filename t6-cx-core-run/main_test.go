@@ -44,7 +44,7 @@ var coreStandardDenied = map[string]bool{"net": true, "os/exec": true, "net/http
 // adds to the core, by its build tag.
 var coreLibraryImports = map[string][]string{
 	"cxcorelibraryfile":    {"t1-profiling", "t5-cxos"},
-	"cxcorelibrarynet":     {"t0-textsections", "t1-netbatch", "t5-cxnet"},
+	"cxcorelibrarynet":     {"t0-textsections", "t1-netbatch", "t4-cxnet"},
 	"cxcorelibraryprocess": {"t1-profiling", "t5-cxos"},
 }
 
@@ -63,7 +63,7 @@ func TestCoreImports(t *testing.T) {
 				allowed[name], library = true, true
 			}
 		}
-		out, err := exec.Command("go", "list", "-deps", "-tags", tags, "-f", "{{.Standard}} {{.ImportPath}}", ".").CombinedOutput()
+		out, err := exec.Command("go", "list", "-deps", "-tags", "cxcore "+tags, "-f", "{{.Standard}} {{.ImportPath}}", ".").CombinedOutput()
 		if err != nil {
 			t.Fatalf("go list -tags %q: %v\n%s", tags, err, out)
 		}

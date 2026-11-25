@@ -802,3 +802,12 @@ func NetUpdateNumber() int64 {
 func NetArrivalsPending() int {
 	return len(netState.netArrivals)
 }
+
+// NetRunMode and NetRunRecordPath say where the batches of the next run come
+// from, set by cx --net-record and --net-replay and by CX_NET_REPLAY in a
+// built program.
+// VIOLATION: state outside State. Owner: t1-netbatch; moves to a per program state with the cxfx and cipher tables, see D45.
+var (
+	NetRunMode       = NetModeLive
+	NetRunRecordPath string
+)

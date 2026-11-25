@@ -6,8 +6,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	"github.com/skycoin/skycoin-cx/t4-cipher"               // thin: only RegisterPackage, CipherOpcodeDispatch; registration list and opcode switch, keep
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"   // thin: only PrinterCompileErrorsRegister; registration list, keep
+	"github.com/skycoin/skycoin-cx/t4-cxnet"                // thin: only RegisterPackage, NetOpcodeDispatch; registration list and opcode switch, keep
 	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core" // thin: only CoreOpcodeDispatch; the opcode switch, keep
-	"github.com/skycoin/skycoin-cx/t5-cxnet"                // thin: only RegisterPackage; registration list, keep
 	"github.com/skycoin/skycoin-cx/t5-cxos"                 // thin: only RegisterPackage; registration list, keep
 	"github.com/skycoin/skycoin-cx/t6-cxfx"                 // thin: only CxfxOpcodeDispatch; the opcode switch, keep
 
@@ -67,8 +67,8 @@ func MakeProgram() *ast.CXProgram {
 }
 
 // OpcodeDispatch is the opcode switch of cx: the core switch, then the
-// switches of the cipher library and of cxfx, each of which reports false in
+// switches of the cipher and net libraries and of cxfx, each of which reports false in
 // a build whose tags leave it out.
 func OpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
-	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || cipher.CipherOpcodeDispatch(prgrm, code, inputs, outputs) || cxfx.CxfxOpcodeDispatch(prgrm, code, inputs, outputs)
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || cipher.CipherOpcodeDispatch(prgrm, code, inputs, outputs) || cxnet.NetOpcodeDispatch(prgrm, code, inputs, outputs) || cxfx.CxfxOpcodeDispatch(prgrm, code, inputs, outputs)
 }

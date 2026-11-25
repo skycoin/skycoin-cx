@@ -136,12 +136,9 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 		fmt.Println(CoreOperationRefusalLine(prgrm, code))
 		return types.CX_RUNTIME_LIBRARY_DISABLED
 	}
-	for library, start := range ast.LibraryRunStarts {
-		if start == nil || !prgrm.ProgramLibrariesEnabled[library] {
-			continue
-		}
-		if err := start(); err != nil {
-			fmt.Fprintf(os.Stderr, "library %s: %s\n", constants.LibraryNameOf(library), err)
+	if CoreLibrariesActive(prgrm)[constants.LibraryNumberNet] {
+		if err := executorNetRunStart(); err != nil {
+			fmt.Fprintf(os.Stderr, "library %s: %s\n", constants.LibraryNameOf(constants.LibraryNumberNet), err)
 			return types.CX_INTERNAL_ERROR
 		}
 	}

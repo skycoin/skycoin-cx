@@ -240,7 +240,7 @@ allocator ran the collector itself.
   function's `ListOfSlots` and `ListOfPointers` (t3-ast/cxfunction_def.go:57
   and :48) through `gcFrameRoots` (t3-ast/gc_type.go:241), and kept its
   scratch memory in `HeapSegmentStruct` (t3-ast/ast_cxprogram.go:31).
-- The old loop (t4-execute), t4-opcodes, t5-cxos, t4-regexp, t5-cxnet, t6-cxfx
+- The old loop (t4-execute), t4-opcodes, t5-cxos, t4-regexp, t4-cxnet, t6-cxfx
   and t5-cx-runtime-core all reached the collector through allocation. The vm
   (t3-cx-runtime-vm) and the IR base (t2-cx-runtime-ir) did not.
 
@@ -292,7 +292,7 @@ the collector between steps.
   `types.AllocWrite_str_data` are removed. The unused `DisplaceReferences` is
   removed with the old collector file.
 - Only t3-ast may import t2-cx-runtime-gc. The old loop, t4-opcodes, t5-cxos,
-  t4-regexp, t5-cxnet and t6-cxfx still allocate through t3-ast, which adds to
+  t4-regexp, t4-cxnet and t6-cxfx still allocate through t3-ast, which adds to
   the pressure but never collects. The vm and the IR base still reach nothing,
   and `make check-gcreach` enforces both rules.
 

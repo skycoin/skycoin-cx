@@ -21,7 +21,6 @@ type libraryDispatch struct {
 
 var libraryDispatches = []libraryDispatch{
 	{constants.LibraryNumberFile, "t5-cxos/library_file_dispatch_gen.go", "cxos", "LibraryFileDispatch", "!nocxos"},
-	{constants.LibraryNumberNet, "t5-cxnet/library_net_dispatch_gen.go", "cxnet", "LibraryNetDispatch", ""},
 	{constants.LibraryNumberProcess, "t5-cxos/library_process_dispatch_gen.go", "cxos", "LibraryProcessDispatch", "!nocxos"},
 }
 

@@ -752,6 +752,21 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{802, "cipher.SignatureRecoverPubKey", 2611250003, 0, 0},
 	{803, "cipher.SignatureSign", 2611250003, 0, 0},
 	{804, "cipher.KeyPairGenerate", 2611250003, 0, 0},
+	{805, "net.Update", 2611250004, 0, 0},
+	{806, "net.ReadyCount", 2611250004, 0, 0},
+	{807, "net.ReadyNext", 2611250004, 0, 0},
+	{808, "net.Clock", 2611250004, 0, 0},
+	{809, "net.Read", 2611250004, 0, 0},
+	{810, "net.Write", 2611250004, 0, 0},
+	{811, "net.Close", 2611250004, 0, 0},
+	{812, "net.TimeoutSet", 2611250004, 0, 0},
+	{813, "net.TCPListen", 2611250004, 0, 0},
+	{814, "net.TCPDial", 2611250004, 0, 0},
+	{815, "net.UDPListen", 2611250004, 0, 0},
+	{816, "net.UDPDial", 2611250004, 0, 0},
+	{817, "net.UDPReadFrom", 2611250004, 0, 0},
+	{818, "net.UDPWriteTo", 2611250004, 0, 0},
+	{819, "net.UDPPeerResolve", 2611250004, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -925,6 +940,23 @@ const (
 	OpcodeCipherSignatureRecoverPubKey = 802
 	OpcodeCipherSignatureSign          = 803
 	OpcodeCipherKeyPairGenerate        = 804
+
+	// The net library, decision D119.
+	OpcodeNetUpdate         = 805
+	OpcodeNetReadyCount     = 806
+	OpcodeNetReadyNext      = 807
+	OpcodeNetClock          = 808
+	OpcodeNetRead           = 809
+	OpcodeNetWrite          = 810
+	OpcodeNetClose          = 811
+	OpcodeNetTimeoutSet     = 812
+	OpcodeNetTCPListen      = 813
+	OpcodeNetTCPDial        = 814
+	OpcodeNetUDPListen      = 815
+	OpcodeNetUDPDial        = 816
+	OpcodeNetUDPReadFrom    = 817
+	OpcodeNetUDPWriteTo     = 818
+	OpcodeNetUDPPeerResolve = 819
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OP_RESIZE = 210

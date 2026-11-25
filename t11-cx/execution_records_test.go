@@ -947,5 +947,9 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 	}
 	defer os.Remove(output)
 	defer os.Remove(strings.TrimSuffix(output, ".exe") + buildLlvmExtension)
-	return executionRecordFormOutcome{run: executionRecordProcess(harness.t, output, nil, harness.tests, input.stdin, input.arguments...), applicable: true}
+	var env []string
+	if input.replayPath != "" {
+		env = append(env, "CX_NET_REPLAY="+input.replayPath)
+	}
+	return executionRecordFormOutcome{run: executionRecordProcess(harness.t, output, env, harness.tests, input.stdin, input.arguments...), applicable: true}
 }

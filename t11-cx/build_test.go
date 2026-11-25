@@ -28,7 +28,7 @@ var buildTestRunFlags = map[string]bool{"executor": true, "debug-go-stack": true
 func buildTestCore(t *testing.T, dir string, libraries ...string) string {
 	t.Helper()
 	path := filepath.Join(dir, buildCoreFileName(libraries))
-	tags := []string{}
+	tags := []string{"cxcore"}
 	if types.POINTER_SIZE == 8 {
 		tags = append(tags, "ptr64")
 	}
@@ -158,8 +158,8 @@ func TestBuildLibraries(t *testing.T) {
 	}{
 		{"--enable=file,net", true, types.CX_SUCCESS, "7\n"},
 		{"--enable=file,net,process", true, types.CX_SUCCESS, "7\n"},
-		{"--enable=process", false, types.CX_RUNTIME_LIBRARY_DISABLED, "library file is not enabled"},
-		{"--enable=", false, types.CX_RUNTIME_LIBRARY_DISABLED, "library file is not enabled"},
+		{"--enable=process", false, types.CX_RUNTIME_LIBRARY_DISABLED, "library net is not enabled"},
+		{"--enable=", false, types.CX_RUNTIME_LIBRARY_DISABLED, "library net is not enabled"},
 	}
 	for i, c := range cases {
 		output := filepath.Join(dir, fmt.Sprintf("program-%d", i))

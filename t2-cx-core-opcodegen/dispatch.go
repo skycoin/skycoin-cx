@@ -27,6 +27,7 @@ var dispatchGroups = []dispatchGroup{
 	{constants.OpcodeGroupRegexp, "t5-cx-runtime-core/core_dispatch_regexp", "core", "coreOpcodeDispatchRegexp", "!noregexp", "noregexp", "github.com/skycoin/skycoin-cx/t4-regexp", "regexp"},
 	{constants.OpcodeGroupCxfx, "t6-cxfx/cxfx_dispatch", "cxfx", "CxfxOpcodeDispatch", "cxfx", "!cxfx", "", ""},
 	{constants.OpcodeGroupCipher, "t4-cipher/cipher_dispatch", "cipher", "CipherOpcodeDispatch", "!nocipher", "nocipher", "", ""},
+	{constants.OpcodeGroupNet, "t4-cxnet/net_dispatch", "cxnet", "NetOpcodeDispatch", "", "", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.
@@ -66,7 +67,9 @@ func (gen *generated) dispatchFiles() map[string][]byte {
 	files["t5-cx-runtime-core/core_dispatch_gen.go"] = b.Bytes()
 	for _, group := range dispatchGroups {
 		files[group.path+"_gen.go"] = gen.dispatchGroupFile(group)
-		files[group.path+"_off_gen.go"] = dispatchGroupOffFile(group)
+		if group.tagOff != "" {
+			files[group.path+"_off_gen.go"] = dispatchGroupOffFile(group)
+		}
 	}
 	return files
 }
@@ -105,7 +108,10 @@ func (gen *generated) dispatchGroupFile(group dispatchGroup) []byte {
 		fmt.Fprintf(&cases, "\tcase %d:\n\t\t%s(prgrm, inputs, outputs)\n", row.Number, call)
 	}
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "//go:build %s\n\n%spackage %s\n\nimport (\n", group.tag, header, group.pkg)
+	if group.tag != "" {
+		fmt.Fprintf(&b, "//go:build %s\n\n", group.tag)
+	}
+	fmt.Fprintf(&b, "%spackage %s\n\nimport (\n", header, group.pkg)
 	names := make([]string, 0, len(used))
 	for name := range used {
 		if name != "types" {

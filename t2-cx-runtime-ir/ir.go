@@ -243,6 +243,24 @@ const (
 	OpcodeCipherHashStateNew
 	// OpcodeCipherHashStateRelease frees the hash state of the i32 handle.
 	OpcodeCipherHashStateRelease
+	// The net opcodes, one per function of the net library, each on the
+	// block as the function lays out its inputs and outputs. A byte buffer
+	// input is two pointers, its address and its size.
+	OpcodeNetUpdate
+	OpcodeNetReadyCount
+	OpcodeNetReadyNext
+	OpcodeNetClock
+	OpcodeNetRead
+	OpcodeNetWrite
+	OpcodeNetClose
+	OpcodeNetTimeoutSet
+	OpcodeNetTCPListen
+	OpcodeNetTCPDial
+	OpcodeNetUDPListen
+	OpcodeNetUDPDial
+	OpcodeNetUDPReadFrom
+	OpcodeNetUDPWriteTo
+	OpcodeNetUDPPeerResolve
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -547,3 +565,15 @@ const (
 	// OpcodeCount is one past the last opcode.
 	OpcodeCount
 )
+
+// OpcodeLibraryFirst and OpcodeLibraryLast bound the opcodes of the system
+// libraries, which run on the block at sp (decision D119).
+const (
+	OpcodeLibraryFirst = OpcodeCipherHashStateNew
+	OpcodeLibraryLast  = OpcodeNetUDPPeerResolve
+)
+
+// OpcodeLibrary reports whether op is an opcode of a system library.
+func OpcodeLibrary(op Opcode) bool {
+	return op >= OpcodeLibraryFirst && op <= OpcodeLibraryLast
+}

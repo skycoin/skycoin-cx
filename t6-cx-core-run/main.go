@@ -26,12 +26,13 @@ var coreLibraryRegisters []func(prgrm *ast.CXProgram)
 // that this core links, by the same build tags (decision D119).
 var coreLibraryOpcodesLinked = [constants.LibraryCount]bool{
 	constants.LibraryNumberCipher: coreLibraryCipherLinked,
+	constants.LibraryNumberNet:    coreLibraryNetLinked,
 }
 
 // coreOpcodeDispatch is the opcode switch of this core, the switch of
 // t5-cx-runtime-core and then the switches of the libraries it links.
 func coreOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
-	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs)
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs) || coreOpcodeDispatchNet(prgrm, code, inputs, outputs)
 }
 
 func main() {

@@ -211,12 +211,15 @@ const instrAbsoluteWriteMax = 8
 // and an upper bound of its size. A write through a computed address is not
 // one, the lowering only computes addresses of variables.
 func instrAbsoluteWrite(in *ir.Instr) (uint32, uint32, bool) {
+	if ir.OpcodeLibrary(in.InstrOpcode) {
+		return 0, 0, false
+	}
 	switch in.InstrOpcode {
 	case ir.OpcodeZero:
 		return in.InstrA, in.InstrN, in.InstrMode&ir.InstrModeFrameA == 0
 	case ir.OpcodeReturn, ir.OpcodeJump, ir.OpcodeJumpIf, ir.OpcodeCallFrame, ir.OpcodeCallArg, ir.OpcodeCall,
 		ir.OpcodeTestEqual, ir.OpcodeAddressStore, ir.OpcodePrintText, ir.OpcodePrintValue, ir.OpcodePrintStr,
-		ir.OpcodeLibraryCall, ir.OpcodeCipherHashStateNew, ir.OpcodeCipherHashStateRelease:
+		ir.OpcodeLibraryCall:
 		return 0, 0, false
 	}
 	size := uint32(instrAbsoluteWriteMax)

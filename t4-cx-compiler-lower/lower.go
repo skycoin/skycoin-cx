@@ -1092,6 +1092,36 @@ func libraryOpcodeOf(opcode int) ir.Opcode {
 		return ir.OpcodeCipherHashStateNew
 	case constants.OpcodeCipherHashStateRelease:
 		return ir.OpcodeCipherHashStateRelease
+	case constants.OpcodeNetUpdate:
+		return ir.OpcodeNetUpdate
+	case constants.OpcodeNetReadyCount:
+		return ir.OpcodeNetReadyCount
+	case constants.OpcodeNetReadyNext:
+		return ir.OpcodeNetReadyNext
+	case constants.OpcodeNetClock:
+		return ir.OpcodeNetClock
+	case constants.OpcodeNetRead:
+		return ir.OpcodeNetRead
+	case constants.OpcodeNetWrite:
+		return ir.OpcodeNetWrite
+	case constants.OpcodeNetClose:
+		return ir.OpcodeNetClose
+	case constants.OpcodeNetTimeoutSet:
+		return ir.OpcodeNetTimeoutSet
+	case constants.OpcodeNetTCPListen:
+		return ir.OpcodeNetTCPListen
+	case constants.OpcodeNetTCPDial:
+		return ir.OpcodeNetTCPDial
+	case constants.OpcodeNetUDPListen:
+		return ir.OpcodeNetUDPListen
+	case constants.OpcodeNetUDPDial:
+		return ir.OpcodeNetUDPDial
+	case constants.OpcodeNetUDPReadFrom:
+		return ir.OpcodeNetUDPReadFrom
+	case constants.OpcodeNetUDPWriteTo:
+		return ir.OpcodeNetUDPWriteTo
+	case constants.OpcodeNetUDPPeerResolve:
+		return ir.OpcodeNetUDPPeerResolve
 	}
 	return ir.OpcodeInvalid
 }

@@ -692,7 +692,9 @@ not fit the file or whose checksum fails is `FileErrorCodeContentInvalid`.
 (`t4-cxos-core`), and the system libraries the core links. A library is
 linked by the build tag `cxcorelibraryfile`, `cxcorelibrarynet`,
 `cxcorelibraryprocess` or `cxcorelibrarycipher`, whose file in `t6-cx-core-run` adds its register
-function. `make build` builds a core for every set, named by
+function and its opcode switch. Every core is also built with the tag
+`cxcore`, so the vm and the run start leave the net library out of a core
+without `cxcorelibrarynet` (D119). `make build` builds a core for every set, named by
 `buildCoreFileName`, `cx-core-file-net` for file and net. `cx build` keeps
 the enabled libraries the program calls, records them in the serialized
 program and appends it to the core of that set. It refuses a program that
@@ -753,9 +755,10 @@ This document does not list the opcodes. The list is
   signature tables of `t1-constants/libraries_signatures_gen.go` and one
   switch per library in the package of its handlers, under that package's
   build tag: `LibraryFileDispatch` and `LibraryProcessDispatch` in t5-cxos,
-  `LibraryNetDispatch` in t5-cxnet, each with a `Vm` switch of its vm forms.
-  The functions of the cipher library are opcodes instead, 796 to 804 in
-  `OpcodeGroupCipher`, which `cipher.CipherOpcodeDispatch` runs (D119).
+  each with a `Vm` switch of its vm forms. The functions of the cipher and
+  net libraries are opcodes instead, 796 to 819 in `OpcodeGroupCipher` and
+  `OpcodeGroupNet`, which `cipher.CipherOpcodeDispatch` and
+  `cxnet.NetOpcodeDispatch` run (D119).
   A binary links a library with
   `opcodes.LibraryLink`, which sets `ast.LibraryDispatches` and
   `vm.LibraryDispatchesVm` for its number. Nothing registers a library
@@ -815,8 +818,8 @@ one loop, and vm fails on a program that does not lower.
   `processNonAtomicOperators` and `popStack` make.
 * A system library call lowers when its function has a vm form in
   `constants.LibraryFunctionDefinitionTable` and its library is linked, see
-  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek`,
-  `os.Sync` and every function of `sys/net`. A `str` input is a pointer the vm form reads from the data
+  `vm.LibraryFunctionVmLinked`. The vm forms today are `os.Close`, `os.Seek` and
+  `os.Sync`. A `str` input is a pointer the vm form reads from the data
   segment, and an input of undefined type is a byte buffer, a `ui8` array
   lowered as its address and its byte size, two pointers that
   `OpcodeAddressOf` writes, see [Networking.md](Networking.md). It becomes
@@ -828,10 +831,10 @@ one loop, and vm fails on a program that does not lower.
   `ProgramLibrariesEnabled`, and stops with `StopLibraryDisabled` when the
   library is not enabled. Any other library function is
   `ReasonLibraryFunctionOutsideSubset`.
-* The library opcodes that run on vm, `cipher.HashStateNew` and
-  `cipher.HashStateRelease`, lower the same way with their own image opcode,
-  `OpcodeCipherHashStateNew` and `OpcodeCipherHashStateRelease`, in place of
-  `OpcodeLibraryCall`. They run in the slow path and check nothing, as the
+* The library opcodes that run on vm, `cipher.HashStateNew`,
+  `cipher.HashStateRelease` and every function of `sys/net`, lower the same
+  way with their own image opcode, `OpcodeCipherHashStateNew` to
+  `OpcodeNetUDPPeerResolve`, in place of `OpcodeLibraryCall`. They run in the slow path and check nothing, as the
   loader refuses a program whose library the run does not enable (D119).
 
 The subset is the bool, integer and float operators, conversions and print,

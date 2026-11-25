@@ -710,6 +710,10 @@ func (e *emitter) pointerTo32(v string) string {
 }
 
 func (e *emitter) instr(pc uint32, in *ir.Instr) error {
+	if ir.OpcodeLibrary(in.InstrOpcode) {
+		e.stats.StatsRuntime++
+		return e.instrLibrary(in)
+	}
 	switch in.InstrOpcode {
 	case ir.OpcodeReturn:
 		return e.instrReturn()
@@ -767,9 +771,6 @@ func (e *emitter) instr(pc uint32, in *ir.Instr) error {
 		return e.instrCallResult(in)
 	case ir.OpcodeLibraryCall:
 		return errors.New(LibraryCallRefusal)
-	case ir.OpcodeCipherHashStateNew, ir.OpcodeCipherHashStateRelease:
-		e.stats.StatsRuntime++
-		return e.instrLibrary(in)
 	case ir.OpcodeAddressIndexStatic, ir.OpcodeAddressIndex,
 		ir.OpcodeAddressDerefStatic, ir.OpcodeAddressDeref,
 		ir.OpcodeAddressLoad, ir.OpcodeAddressStore,

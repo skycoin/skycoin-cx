@@ -801,8 +801,8 @@ S1423,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,53,TestRege
 S1424,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,73,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 500},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1425,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,76,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 600},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S1426,CXTypeSignature,alloc-literal-heap,t4-regexp/op_regexp_test.go,93,TestRegexpFindAfterFailedCompile,&ast.CXTypeSignature{Offset: 300},state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S1427,CXPackage,ctor-call,t5-cxnet/init.go,19,RegisterPackage,"ast.MakePackage(""net"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1428,CXPackage,arena-add,t5-cxnet/init.go,22,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1427,CXPackage,ctor-call,t4-cxnet/init.go,19,RegisterPackage,"ast.MakePackage(""net"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
+S1428,CXPackage,arena-add,t4-cxnet/init.go,22,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1460,CXProgram,ctor-def,t7-init/init.go,31,MakeProgram,func MakeProgram,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1461,CXProgram,alloc-literal-heap,t7-init/init.go,37,MakeProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex, 0), CXFunctions: make([]ast....",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1462,CXFunction,make-slice,t7-init/init.go,41,MakeProgram,"make([]ast.CXFunction, 0)",state.CXFunctionMng (manager storage) or []CXFunctionGid,4-alloc,351,CXFunction phase 2-mng

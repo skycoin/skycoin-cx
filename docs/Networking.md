@@ -16,29 +16,31 @@ and the System libraries section of [LanguageGuide.md](../LanguageGuide.md#the-n
 
 ## Functions
 
-Every function is called through `LibraryCall` (795) with library 2 and its
-function number, fixed for life in `constants.LibraryFunctionLifecycleTable`.
-Numbers 1 to 4, the blocking `tcp.Dial`, `tcp.Listen`, `tcp.Accept` and
-`tcp.Close`, are deprecated since 2611240004 and reassignable from
-2711240001.
+Every function is its own opcode, 805 to 819, in the group `OpcodeGroupNet`
+(decision D119), `constants.OpcodeNetUpdate` to
+`constants.OpcodeNetUDPPeerResolve`. Until 2611250004 they were functions
+5 to 19 of library 2, called through `LibraryCall` (795), and those numbers
+are deprecated, reassignable from 2711250001. Functions 1 to 4, the
+blocking `tcp.Dial`, `tcp.Listen`, `tcp.Accept` and `tcp.Close`, are
+deprecated since 2611240004 and reassignable from 2711240001.
 
 | Number | Function | Does |
 | --- | --- | --- |
-| 5 | `net.Update(waitMilliseconds i32) (count i32)` | makes the new batch and returns its entry count. When nothing has arrived it waits up to `waitMilliseconds` for something to arrive, 0 does not wait |
-| 6 | `net.ReadyCount() (count i32)` | the entries of the batch `net.ReadyNext` has not returned yet |
-| 7 | `net.ReadyNext() (handle i32, trigger i32, messageId i32, detail i32)` | the next entry, or `net.TriggerNone` after the last |
-| 8 | `net.Clock() (milliseconds i64)` | the clock reading of the last update, milliseconds since the run started |
-| 9 | `net.Read(handle i32, messageId i32, buffer [N]ui8, offset i32) (length i32)` | copies the payload of a data entry from byte `offset` on into `buffer` and returns the bytes copied |
-| 10 | `net.Write(handle i32, buffer [N]ui8, length i32) (queued i32)` | queues the first `length` bytes of `buffer` for the next update and returns the bytes queued |
-| 11 | `net.Close(handle i32) (closed bool)` | closes and frees the handle. What was written since the last update is still sent |
-| 12 | `net.TimeoutSet(handle i32, milliseconds i32) (set bool)` | starts a timeout on the handle, 0 stops it |
-| 13 | `net.TCPListen(host str, port i32) (handle i32)` | opens a TCP listener. Port 0 takes a free port |
-| 14 | `net.TCPDial(host str, port i32) (handle i32)` | starts a TCP connection |
-| 15 | `net.UDPListen(host str, port i32) (handle i32)` | opens a UDP socket bound to the address |
-| 16 | `net.UDPDial(host str, port i32) (handle i32)` | opens a UDP socket whose `net.Write` goes to the address |
-| 17 | `net.UDPReadFrom(handle i32, messageId i32, buffer [N]ui8, offset i32) (length i32, peer i32)` | `net.Read` for UDP, and the peer the datagram came from |
-| 18 | `net.UDPWriteTo(handle i32, peer i32, buffer [N]ui8, length i32) (queued i32)` | queues one datagram to the peer, and returns its length or 0 when it does not fit |
-| 19 | `net.UDPPeerResolve(host str, port i32) (peer i32)` | the peer of a numeric address, added to the peer table |
+| 805 | `net.Update(waitMilliseconds i32) (count i32)` | makes the new batch and returns its entry count. When nothing has arrived it waits up to `waitMilliseconds` for something to arrive, 0 does not wait |
+| 806 | `net.ReadyCount() (count i32)` | the entries of the batch `net.ReadyNext` has not returned yet |
+| 807 | `net.ReadyNext() (handle i32, trigger i32, messageId i32, detail i32)` | the next entry, or `net.TriggerNone` after the last |
+| 808 | `net.Clock() (milliseconds i64)` | the clock reading of the last update, milliseconds since the run started |
+| 809 | `net.Read(handle i32, messageId i32, buffer [N]ui8, offset i32) (length i32)` | copies the payload of a data entry from byte `offset` on into `buffer` and returns the bytes copied |
+| 810 | `net.Write(handle i32, buffer [N]ui8, length i32) (queued i32)` | queues the first `length` bytes of `buffer` for the next update and returns the bytes queued |
+| 811 | `net.Close(handle i32) (closed bool)` | closes and frees the handle. What was written since the last update is still sent |
+| 812 | `net.TimeoutSet(handle i32, milliseconds i32) (set bool)` | starts a timeout on the handle, 0 stops it |
+| 813 | `net.TCPListen(host str, port i32) (handle i32)` | opens a TCP listener. Port 0 takes a free port |
+| 814 | `net.TCPDial(host str, port i32) (handle i32)` | starts a TCP connection |
+| 815 | `net.UDPListen(host str, port i32) (handle i32)` | opens a UDP socket bound to the address |
+| 816 | `net.UDPDial(host str, port i32) (handle i32)` | opens a UDP socket whose `net.Write` goes to the address |
+| 817 | `net.UDPReadFrom(handle i32, messageId i32, buffer [N]ui8, offset i32) (length i32, peer i32)` | `net.Read` for UDP, and the peer the datagram came from |
+| 818 | `net.UDPWriteTo(handle i32, peer i32, buffer [N]ui8, length i32) (queued i32)` | queues one datagram to the peer, and returns its length or 0 when it does not fit |
+| 819 | `net.UDPPeerResolve(host str, port i32) (peer i32)` | the peer of a numeric address, added to the peer table |
 
 Decision D19 asked for `tcp.Read`, `tcp.Write` and the UDP functions
 `Listen`, `Dial`, `ReadFrom`, `WriteTo` and `Close`. They are `net.Read` and
@@ -191,7 +193,9 @@ cx --enable=net --net-replay=tests/test-net-tcp.netreplay tests/test-net-tcp.cx
 ```
 
 A program built with `cx build` takes no cx flags, so it replays the record
-the environment variable `CX_NET_REPLAY` names.
+the environment variable `CX_NET_REPLAY` names. A native executable of
+`cx build --target=llvm` does the same.
+
 
 The record is a text sections file. The `updates` section has one line per
 update, `u number clock`, with the clock reading the update gave (decision
@@ -242,11 +246,26 @@ parsing its address. Those happen in the open, not in an update.
 
 ## The vm
 
-Every function has a vm form. A `str` input is read from the data segment,
+Every function runs on vm, as the image opcodes `ir.OpcodeNetUpdate` to
+`ir.OpcodeNetUDPPeerResolve`, which the vm runs directly from
+`t3-cx-runtime-vm/vm_net.go`. A core built without `cxcorelibrarynet`
+leaves that file out by the `cxcore` tag, so it links no socket code. A
+`str` input is read from the data segment,
 and a buffer is lowered as the address and the byte size of the array, which
 the vm form reads or fills in place, as the old loop does. A program that
 builds an address with `sprintf` does not lower, which is why the address
 functions take the host and the port apart.
+
+## Native
+
+The native form of each function is a C function of the LLVM runtime,
+`cx_rt_net_update` and so on in `t3-cx-compiler-llvm/runtime.c.txt`, which
+runs the batches as t1-netbatch does. It polls the sockets with `poll`, and
+with `WSAPoll` of Winsock on Windows, when the program calls `net.Update`,
+instead of reading them in goroutines, and it sends what a batch wrote at
+the next update. With `CX_NET_REPLAY` it reads the batches from the record
+and opens no socket, so the execution records check the native form of
+the net programs. It cannot write a record.
 
 ## js/wasm
 

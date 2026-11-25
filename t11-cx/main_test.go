@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t4-actions"
-	"github.com/skycoin/skycoin-cx/t5-cxnet"
+	"github.com/skycoin/skycoin-cx/t4-cxnet"
 	"github.com/skycoin/skycoin-cx/t5-cxos"
 	cxinit "github.com/skycoin/skycoin-cx/t7-init"
 )

@@ -9,7 +9,7 @@ package constants
 //
 // Handler is the Go function the switch of the old loop calls,
 // package.Function, with the package cxos (t5-cxos, the file and process
-// libraries, left out by the nocxos tag), cxnet (t5-cxnet) or cipher
+// libraries, left out by the nocxos tag), cxnet (t4-cxnet) or cipher
 // (t4-cipher, left out by nocipher). HandlerVm is the vm form in the same
 // package, "" for a function without one. Inputs and Outputs are spelled as
 // in OpcodeDefinitionTable, and und is a byte buffer, a ui8 array of any
@@ -72,21 +72,6 @@ var LibraryFunctionDefinitionTable = [...]LibraryFunctionDefinition{
 	{LibraryNumberFile, 64, "os.OpenReadWrite", "cxos.OpOsOpenReadWrite", "", "str", "i32"},
 	{LibraryNumberFile, 65, "os.Sync", "cxos.OpOsSync", "cxos.LibraryFileSyncVm", "i32", "bool"},
 	{LibraryNumberFile, 66, "os.Remove", "cxos.OpOsRemove", "", "str", "bool"},
-	{LibraryNumberNet, 5, "net.Update", "cxnet.OpNetUpdate", "cxnet.LibraryNetUpdateVm", "i32", "i32"},
-	{LibraryNumberNet, 6, "net.ReadyCount", "cxnet.OpNetReadyCount", "cxnet.LibraryNetReadyCountVm", "", "i32"},
-	{LibraryNumberNet, 7, "net.ReadyNext", "cxnet.OpNetReadyNext", "cxnet.LibraryNetReadyNextVm", "", "i32 i32 i32 i32"},
-	{LibraryNumberNet, 8, "net.Clock", "cxnet.OpNetClock", "cxnet.LibraryNetClockVm", "", "i64"},
-	{LibraryNumberNet, 9, "net.Read", "cxnet.OpNetRead", "cxnet.LibraryNetReadVm", "i32 i32 und i32", "i32"},
-	{LibraryNumberNet, 10, "net.Write", "cxnet.OpNetWrite", "cxnet.LibraryNetWriteVm", "i32 und i32", "i32"},
-	{LibraryNumberNet, 11, "net.Close", "cxnet.OpNetClose", "cxnet.LibraryNetCloseVm", "i32", "bool"},
-	{LibraryNumberNet, 12, "net.TimeoutSet", "cxnet.OpNetTimeoutSet", "cxnet.LibraryNetTimeoutSetVm", "i32 i32", "bool"},
-	{LibraryNumberNet, 13, "net.TCPListen", "cxnet.OpNetTCPListen", "cxnet.LibraryNetTCPListenVm", "str i32", "i32"},
-	{LibraryNumberNet, 14, "net.TCPDial", "cxnet.OpNetTCPDial", "cxnet.LibraryNetTCPDialVm", "str i32", "i32"},
-	{LibraryNumberNet, 15, "net.UDPListen", "cxnet.OpNetUDPListen", "cxnet.LibraryNetUDPListenVm", "str i32", "i32"},
-	{LibraryNumberNet, 16, "net.UDPDial", "cxnet.OpNetUDPDial", "cxnet.LibraryNetUDPDialVm", "str i32", "i32"},
-	{LibraryNumberNet, 17, "net.UDPReadFrom", "cxnet.OpNetUDPReadFrom", "cxnet.LibraryNetUDPReadFromVm", "i32 i32 und i32", "i32 i32"},
-	{LibraryNumberNet, 18, "net.UDPWriteTo", "cxnet.OpNetUDPWriteTo", "cxnet.LibraryNetUDPWriteToVm", "i32 i32 und i32", "i32"},
-	{LibraryNumberNet, 19, "net.UDPPeerResolve", "cxnet.OpNetUDPPeerResolve", "cxnet.LibraryNetUDPPeerResolveVm", "str i32", "i32"},
 	{LibraryNumberProcess, 1, "os.Run", "cxos.OpOsRun", "", "str i32 i32 str", "i32 i32 str"},
 }
 

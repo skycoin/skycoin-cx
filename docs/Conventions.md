@@ -89,7 +89,7 @@ document or check script.
 16. **System libraries.** File access, networking, processes and the hash and
     signatures of `sys/cipher` (see [CipherLibrary.md](CipherLibrary.md))
     are system libraries. Each function of a library that is hardcoded as
-    opcodes, `cipher` so far, is its own row of the opcode table, in the
+    opcodes, `cipher` and `net` so far, is its own row of the opcode table, in the
     opcode group of its library with the build tag of its package, named
     from the library down, `constants.OpcodeCipherHashStateNew`. Nothing is
     loaded or registered at run time (decision D119). The loader refuses a

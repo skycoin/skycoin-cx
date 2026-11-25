@@ -116,6 +116,9 @@ func buildProgramImage() ([]byte, error) {
 	core.CoreLibrariesEnabledResolve(actions.AST)
 	for library, enabled := range actions.AST.ProgramLibrariesEnabled {
 		actions.AST.ProgramLibrariesEnabled[library] = enabled && actions.AST.ProgramLibrariesUsed[library]
+		if !actions.AST.ProgramLibrariesUsed[library] {
+			actions.AST.ProgramOperationsEnabled.OpcodeSetLibraryRemove(library)
+		}
 	}
 	return ast.SerializeCXProgram(actions.AST, true, nil)
 }

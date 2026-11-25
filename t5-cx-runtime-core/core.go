@@ -22,7 +22,7 @@ import (
 // CoreRegister adds the native packages of the core to prgrm, registers the
 // system libraries that libraryRegisters register and sets the opcode switch
 // to CoreOpcodeDispatch. It leaves out every other library (t5-cxos,
-// t5-cxnet, t4-cipher) and the opcodes that need a module outside the
+// t4-cxnet, t4-cipher) and the opcodes that need a module outside the
 // standard library (t6-cxfx).
 func CoreRegister(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgram)) {
 	ast.OpcodeDispatch = CoreOpcodeDispatch

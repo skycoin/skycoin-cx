@@ -136,6 +136,9 @@ func buildLlvmNative(modulePath string, output string, debug bool) int {
 	if runtime.GOOS != "windows" {
 		// The MSVC C library holds the math functions, elsewhere libm does.
 		args = append(args, "-lm")
+	} else {
+		// Winsock holds the sockets of the net library.
+		args = append(args, "-lws2_32")
 	}
 	command := exec.Command(clang, args...)
 	command.Stdout, command.Stderr = os.Stderr, os.Stderr

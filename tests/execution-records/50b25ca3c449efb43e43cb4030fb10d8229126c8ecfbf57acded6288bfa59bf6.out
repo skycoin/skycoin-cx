@@ -1,0 +1,1 @@
+error: CX_RUNTIME_LIBRARY_DISABLED, library net is not enabled, enable it with --enable=net
