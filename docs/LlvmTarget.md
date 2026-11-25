@@ -5,7 +5,8 @@ native executable. It compiles the image vm runs, so it takes exactly the
 programs vm takes (decision D8), and a native run prints what vm prints.
 
 ```
-./bin/cx build --target=llvm hello.cx -o hello     # hello.ll and hello
+./bin/cx build --target=llvm hello.cx               # hello.ll and hello
+./bin/cx build --target=llvm hello.cx -o hello     # the same
 ./bin/cx build --target=llvm hello.cx -o hello.ll  # hello.ll alone
 ```
 

@@ -175,7 +175,7 @@ and each must give the recorded result. See
 `cx build` turns a program into one executable file.
 
 ```
-./bin/cx build hello.cx -o hello
+./bin/cx build hello.cx    # writes hello, as go build, or name it with -o
 ./hello
 ```
 

@@ -4042,6 +4042,10 @@ Several files and the compile flags of cx are given as they are to cx,
 `cx build --cxpath ws main.cx util.cx -o app`. `-o` names the output, on
 Windows with `.exe`, and `--core path` the core binary or a directory of
 cores, by default the directory of cx, where `make build` builds them.
+Without `-o` the output is named as `go build` names it, after the first
+source file without `.cx`, or after the source directory, in the working
+directory, so `cx build hello.cx` writes `hello` (`hello.exe` on Windows).
+Sources that give no single name, such as two directories, need `-o`.
 
 The output is the core binary with the serialized program and a trailer
 appended. The core is a minimum interpreter with no parser. At start up it

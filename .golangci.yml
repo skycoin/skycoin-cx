@@ -85,6 +85,12 @@ linters:
           - gosec
         text: "G204:"
         path: (_test\.go|t11-cx/build_llvm\.go|t5-cxos/op_os\.go)
+      # Tests run the binaries they build on the files they write, in their
+      # own temporary directories.
+      - linters:
+          - gosec
+        text: "G70[23]:"
+        path: _test\.go
       # The string pool and the program text view bytes as strings without a
       # copy, see docs/StringsHotPath.md.
       - linters:
@@ -97,8 +103,6 @@ linters:
         linters: [errcheck]
       - path: ^t0-benchmarks/digitalroot\.go$
         linters: [unconvert]
-      - path: ^t0-cx-core-assert/assert_test\.go$
-        linters: [gosec]
       - path: ^t0-cx-core-floatparse/atof\.go$
         linters: [nakedret, staticcheck, unparam]
       - path: ^t0-cx-core-floatparse/floatparse_test\.go$
@@ -143,14 +147,10 @@ linters:
         linters: [errcheck, unconvert]
       - path: ^t11-cx/affordance_test\.go$
         linters: [errcheck]
-      - path: ^t11-cx/ast_print_test\.go$
-        linters: [gosec]
       - path: ^t11-cx/build\.go$
         linters: [gosec]
       - path: ^t11-cx/build_llvm\.go$
         linters: [errcheck]
-      - path: ^t11-cx/build_test\.go$
-        linters: [gosec]
       - path: ^t11-cx/execution_records_test\.go$
         linters: [errcheck]
       - path: ^t11-cx/flags\.go$
@@ -161,10 +161,6 @@ linters:
         linters: [errcheck, gosec, unparam]
       - path: ^t11-cx/main\.go$
         linters: [errcheck]
-      - path: ^t11-cx/main_test\.go$
-        linters: [gosec]
-      - path: ^t11-cx/printf_value_test\.go$
-        linters: [gosec]
       - path: ^t11-cx/profile_test\.go$
         linters: [errcheck, gosec]
       - path: ^t11-cx/run_bench_test\.go$
@@ -177,8 +173,6 @@ linters:
         linters: [errcheck]
       - path: ^t11-cx/run_parsefloat_test\.go$
         linters: [errcheck]
-      - path: ^t11-cx/sandbox_test\.go$
-        linters: [gosec]
       - path: ^t11-cx/serialize_test\.go$
         linters: [errcheck]
       - path: ^t11-cx/step_test\.go$
@@ -187,8 +181,6 @@ linters:
         linters: [errcheck, gosec]
       - path: ^t1-constants/opcodes_test\.go$
         linters: [errcheck]
-      - path: ^t1-cx-core-objmodel/gid_test\.go$
-        linters: [gosec]
       - path: ^t1-cxtest/compound\.go$
         linters: [errcheck]
       - path: ^t1-cxtest/guide\.go$
@@ -217,8 +209,6 @@ linters:
         linters: [errcheck]
       - path: ^t2-cx-core-opcodegen/main\.go$
         linters: [errcheck]
-      - path: ^t2-cx-core-stringpool/stringpool_test\.go$
-        linters: [gosec]
       - path: ^t2-plencoder/main_test\.go$
         linters: [errcheck]
       - path: ^t2-plgraph/comment_test\.go$
@@ -235,8 +225,6 @@ linters:
         linters: [unconvert]
       - path: ^t3-ast/ast_cxtype_signature\.go$
         linters: [staticcheck, unconvert]
-      - path: ^t3-ast/cxirstate_test\.go$
-        linters: [gosec]
       - path: ^t3-ast/error\.go$
         linters: [unconvert]
       - path: ^t3-ast/print_value\.go$
@@ -251,8 +239,6 @@ linters:
         linters: [unconvert, unparam]
       - path: ^t3-packageloader/main\.go$
         linters: [errcheck]
-      - path: ^t3-packageloader/main_test\.go$
-        linters: [gosec]
       - path: ^t4-actions/assignment\.go$
         linters: [errcheck, unconvert]
       - path: ^t4-actions/expressions\.go$

@@ -56,6 +56,13 @@ func buildRun(args []string) int {
 	if len(sourceCode) == 0 {
 		return buildFail("no source files, see cx build --help")
 	}
+	if options.buildOptionsOutput == "" {
+		output, problem := buildOutputDefault(commandLine.Args())
+		if problem != "" {
+			return buildFail("no output file, " + problem + ", give one with -o, see cx build --help")
+		}
+		options.buildOptionsOutput = output
+	}
 	if !parseProgram(compileOptions, fileNames, sourceCode) {
 		return types.CX_COMPILATION_ERROR
 	}
@@ -167,9 +174,6 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 		}
 		*target = value
 	}
-	if options.buildOptionsOutput == "" {
-		return options, "no output file, give one with -o"
-	}
 	switch options.buildOptionsTarget {
 	case "":
 		options.buildOptionsTarget = buildTargetCore
@@ -178,6 +182,62 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 		return options, fmt.Sprintf("unknown --target %q, want %s or %s", options.buildOptionsTarget, buildTargetCore, buildTargetLlvm)
 	}
 	return options, ""
+}
+
+// buildOutputDefault names the output of cx build without -o in the working
+// directory as go build does, after the first source file without .cx or
+// after the one source directory, with .exe on Windows. sources are the
+// arguments that util.ParseArgsForCX reads. It returns a problem when they
+// give no single name.
+func buildOutputDefault(sources []string) (string, string) {
+	var files, directories []string
+	skip := false
+	for _, arg := range sources {
+		if skip {
+			skip = false
+			continue
+		}
+		// util.ParseArgsForCX skips flags and the value of a flag without =.
+		if len(arg) > 1 && arg[0] == '-' {
+			skip = !strings.Contains(arg, "=")
+			continue
+		}
+		if strings.HasPrefix(arg, "++") {
+			continue
+		}
+		if info, err := util.CXStatFile(filepath.Clean(arg)); err == nil && info.IsDir() {
+			directories = append(directories, arg)
+		} else {
+			files = append(files, arg)
+		}
+	}
+	var name string
+	switch {
+	case len(directories) == 0 && len(files) > 0:
+		name = filepath.Base(files[0])
+		if filepath.Ext(name) != ".cx" {
+			return "", fmt.Sprintf("the source %s does not end in .cx", files[0])
+		}
+		name = strings.TrimSuffix(name, ".cx")
+	case len(directories) == 1 && len(files) == 0:
+		directory, err := filepath.Abs(directories[0])
+		if err != nil {
+			return "", err.Error()
+		}
+		name = filepath.Base(directory)
+	default:
+		return "", "the sources are several directories or directories and files"
+	}
+	if name == "" || name == "." || name == string(filepath.Separator) {
+		return "", "the sources give no name"
+	}
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	if info, err := os.Stat(name); err == nil && info.IsDir() {
+		return "", fmt.Sprintf("%s is a directory", name)
+	}
+	return name, ""
 }
 
 // buildCoreFileName returns the file name of the core that links exactly
@@ -231,13 +291,17 @@ func buildFileFail(fileError *util.FileError) int {
 }
 
 func buildUsagePrint() {
-	fmt.Printf(`Usage: cx build [cx flags] source-files -o output [--core path] [--target core|llvm]
+	fmt.Printf(`Usage: cx build [cx flags] source-files [-o output] [--core path] [--target core|llvm]
 
 Compiles the program and writes output, one executable file that holds the
 core binary, the serialized program and a trailer. The core runs the program
 and passes its own command line arguments to it as os.Args.
 
--o, --output path   The executable file to write.
+-o, --output path   The executable file to write. Without -o, as go build,
+                    it is named after the first source file without .cx,
+                    or after the source directory, in the working
+                    directory, with .exe on Windows: cx build fib.cx
+                    writes fib.
 --core path         The core binary, or a directory of cores. By default the
                     core next to cx that links the libraries the program
                     calls and --enable enables, %s for none,
