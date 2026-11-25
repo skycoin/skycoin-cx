@@ -1,0 +1,24 @@
+// len and indexing read the slice result of a nested library call as they
+// read a variable holding it.
+package main
+
+import "sys/cipher"
+import "sys/string"
+
+var globalLen i32 = len(cipher.HashOfBytes(string.BytesOfString("abc")))
+
+func main() { global globalLen
+	var n i32
+	n = len(cipher.HashOfBytes(string.BytesOfString("abc")))
+	i32.print(n)
+	var m i32 = len(cipher.HashOfBytes(string.BytesOfString("abc")))
+	i32.print(m)
+	i32.print(globalLen)
+	var digest []ui8
+	digest = cipher.HashOfBytes(string.BytesOfString("abc"))
+	test(cipher.HashOfBytes(string.BytesOfString("abc"))[0], digest[0], "index of a nested library call")
+	var last ui8 = cipher.HashOfBytes(string.BytesOfString("abc"))[31]
+	test(last, digest[31], "index of a nested library call in a var initializer")
+	i32.print(len(append(cipher.HashOfBytes(string.BytesOfString("abc")), 1UB)))
+	i32.print(len(cipher.HashOfBytes(cipher.HashOfBytes(string.BytesOfString("abc")))))
+}

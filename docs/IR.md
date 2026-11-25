@@ -732,6 +732,12 @@ This document does not list the opcodes. The list is
   `cxfx.gl.Clear(uint32(%0))`, makes that call inline with the operands read
   at their offsets, which the simple GL and GLFW calls do (#432).
   Nothing registers an opcode at startup and a deprecated row has no case.
+* `ast.NativeParameters` makes the parameters of a signature. A typed
+  `[]T`, as the result of `string.BytesOfString`, has `Lengths` `{0}` like
+  a declared slice, so a nested call result is a `TYPE_SLICE_ATOMIC`. A
+  `[]und` has none, and the temporary result of `append`, `resize`,
+  `insert` or `remove` in an expression such as `len(append(s, v))` takes
+  the type of `s` once `s` is resolved.
 * A program that embeds CX, such as the Android playground with its `app`
   functions, adds opcodes outside the table. It names each one in
   `ast.NativeNames`, gives the compiler its native through

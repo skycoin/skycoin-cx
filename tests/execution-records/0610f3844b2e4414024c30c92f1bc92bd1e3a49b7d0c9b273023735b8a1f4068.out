@@ -1,0 +1,8 @@
+error: :0, CX_RUNTIME_LIBRARY_DISABLED, library cipher is not enabled, enable it with --enable=cipher
+===Callstack===
+>>> *init()
+Expressions
+ 	test-slice-nested-library-call.cx:8 : string.BytesOfString() : [97, 98, 99]
+	test-slice-nested-library-call.cx:8 : cipher.HashOfBytes() : []
+	test-slice-nested-library-call.cx:8 : len() : 0
+

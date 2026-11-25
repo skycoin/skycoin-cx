@@ -1,0 +1,95 @@
+// len, indexing and slice built-ins read the slice result of a nested
+// opcode or function call as they read a variable holding it.
+package main
+
+import "sys/string"
+
+var globalLen i32 = len(string.BytesOfString("xyz"))
+var globalLenSerialized i32 = len(serialize(#{strct(Point)}))
+var total i32 = 3
+var globalLenTotal i32 = len(serialize(#{var(total)}))
+var globalByte ui8 = string.BytesOfString("AB")[1]
+var globalLenAppend i32 = len(append(string.BytesOfString("AB"), 1UB))
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func bytesCount(b []ui8) (n i32) {
+	n = len(b)
+}
+
+func twoBytes() (r []ui8) {
+	r = append(r, 1UB)
+	r = append(r, 2UB)
+}
+
+func main() { global globalLen, globalLenSerialized, globalLenTotal, globalByte, globalLenAppend
+	var n i32
+	n = len(string.BytesOfString("abc"))
+	i32.print(n)
+	var m i32 = len(string.BytesOfString("abcd"))
+	i32.print(m)
+	i32.print(len(string.BytesOfString("abcde")))
+	i32.print(globalLen)
+
+	var b []ui8
+	b = serialize(#{strct(Point)})
+	test(len(serialize(#{strct(Point)})), len(b), "len of serialize in a statement")
+	var s i32 = len(serialize(#{strct(Point)}))
+	test(s, len(b), "len of serialize in a var initializer")
+	test(globalLenSerialized, len(b), "len of serialize in a global initializer")
+	test(bytesCount(serialize(#{strct(Point)})), len(b), "serialize through a parameter")
+	i32.print(len(serialize(#{var(total)})))
+	i32.print(globalLenTotal)
+
+	i32.print(len(append(string.BytesOfString("ab"), 99UB)))
+	i32.print(len(append(append(string.BytesOfString("ab"), 99UB), 100UB)))
+	i32.print(len(string.BytesOfString(string.StringOfBytes(string.BytesOfString("abcdef")))))
+
+	ui8.print(string.BytesOfString("AB")[0])
+	ui8.print(string.BytesOfString("AB")[1])
+	var c ui8 = string.BytesOfString("CD")[1]
+	ui8.print(c)
+
+	var sum ui8
+	var i i32
+	for i = 0; i < len(string.BytesOfString("ab")); i++ {
+		sum = sum + string.BytesOfString("ab")[i]
+	}
+	ui8.print(sum)
+
+	i32.print(len(append(twoBytes(), 3UB)))
+	var e ui8 = twoBytes()[1]
+	ui8.print(e)
+	var local []ui8
+	local = append(local, 5UB)
+	i32.print(len(append(local, 6UB)))
+	i32.print(len(append(append(local, 6UB), 7UB)))
+	ui8.print(append(local, 6UB)[1])
+
+	ui8.print(globalByte)
+	i32.print(globalLenAppend)
+	var points []Point
+	var point Point
+	point.x = 4
+	points = append(points, point)
+	i32.print(len(append(points, point)))
+	i32.print(append(points, point)[1].x)
+	var words []str
+	words = append(words, "a")
+	i32.print(len(append(words, "b")))
+	var rows [][]i32
+	var row []i32
+	row = append(row, 1)
+	rows = append(rows, row)
+	i32.print(len(append(rows, row)))
+	i32.print(len(append(rows[0], 2)))
+	i32.print(len(resize(string.BytesOfString("abc"), 5)))
+	i32.print(len(insert(string.BytesOfString("abc"), 1, 9UB)))
+
+	string.PrintLine(string.StringOfBytes(string.BytesOfString("round trip")))
+	deserialize(serialize(#{}))
+	i32.print(bytesCount(string.BytesOfString("seven!!")))
+}

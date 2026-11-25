@@ -229,6 +229,11 @@ func Slice(typeCode types.Code) *CXArgument {
 	// Now a constructor call, site S0075.
 	arg := Param(typeCode)
 	arg.DeclarationSpecifiers = append(arg.DeclarationSpecifiers, constants.DECL_SLICE)
+	// A typed []T is a slice as a declared one is. A []und takes its
+	// dimensions from its operand.
+	if typeCode != types.UNDEFINED {
+		arg.Lengths = []types.Pointer{0}
+	}
 	return arg
 }
 

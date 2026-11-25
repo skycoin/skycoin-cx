@@ -352,7 +352,8 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 			initOutTypeSigIdx = ast.AllocCXTypeSignatureOfCXArg(prgrm, prgrm.GetCXArgFromArray(initOutIdx))
 		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_ATOMIC || initializerExpressionOutputTypeSig.Type == ast.TYPE_POINTER_ATOMIC {
 			initOutTypeSigIdx = initializerExpression.GetOutputs(prgrm)[0]
-		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_STRUCT {
+		} else if initializerExpressionOutputTypeSig.Type == ast.TYPE_STRUCT || initializerExpressionOutputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+			// A slice result read whole or by index, as in var c ui8 = f()[1].
 			initOutTypeSigIdx = initializerExpression.GetOutputs(prgrm)[0]
 		} else {
 			panic("type is not known")

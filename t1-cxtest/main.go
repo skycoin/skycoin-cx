@@ -219,6 +219,10 @@ func runTestCases(t *runner.TestRunner) {
 	t.Run("test-slices.cx", types.CX_SUCCESS, "slices")
 	t.Run("test-slices-append-multi.cx", types.CX_SUCCESS, "append with several values")
 	t.Run("test-slices-of-slices-literal.cx", types.CX_SUCCESS, "slice of slices literal with two inner literals")
+	t.RunWant("test-slice-nested-call.cx", types.CX_SUCCESS, "len, indexing and slice built-ins of a nested opcode or call result",
+		"3\n4\n5\n3\n4\n4\n3\n4\n6\n65\n66\n68\n195\n3\n2\n2\n3\n6\n66\n3\n2\n4\n2\n2\n2\n5\n4\nround trip\n7\n")
+	t.RunWant("--enable=cipher test-slice-nested-library-call.cx", types.CX_SUCCESS, "len and indexing of a nested library call result",
+		"32\n32\n32\n33\n32\n")
 	t.RunWant("test-printf-v.cx", types.CX_SUCCESS, "printf %v of structs, arrays and slices of structs and array pointers (skycoin-cx#256)",
 		"pa [1, 2, 3]\n",
 		"p {x: 5, y: 6}\n",

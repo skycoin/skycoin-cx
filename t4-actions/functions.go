@@ -835,6 +835,13 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 							outTypeSig.Offset = inpExprAtomicOpInputTypeSig.Offset
 
 							typeSigIdx = outTypeSig.Index
+						} else if inpExprAtomicOpInputTypeSig.Type == ast.TYPE_SLICE_ATOMIC {
+							// A whole slice result, as append(f(), v) passes it.
+							_, outTypeSig := prgrm.AllocCXTypeSignatureCopy(inpExprAtomicOpInputTypeSig)
+							outTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
+							outTypeSig.Package = inpExprAtomicOp.Package
+
+							typeSigIdx = outTypeSig.Index
 						} else {
 							panic("type is not known")
 						}
@@ -867,6 +874,15 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 					_, newTypeSig := prgrm.AllocCXTypeSignatureCopy(inpExprAtomicOpOperatorOutputTypeSig)
 					newTypeSig.Name = generateTempVarName(prgrm, constants.LOCAL_PREFIX)
 					newTypeSig.Package = inpExprAtomicOp.Package
+					if newTypeSig.Type == ast.TYPE_SLICE_ATOMIC && newTypeSig.ArgDetails == ast.CXArgumentDebugGidNil {
+						// A native []T result has no position, so it takes the call's.
+						argDetailsGid := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugAlloc()
+						argDetails := prgrm.CxIrState.CXArgumentDebugMng.CXArgumentDebugGet(argDetailsGid)
+						argDetails.FileName = CurrentFile
+						argDetails.FileLine = inpExprCXLine.LineNumber
+						argDetails.FileColumn = prgrm.CXProgramCompileErrorColumn(argDetails.FileName, argDetails.FileLine)
+						newTypeSig.ArgDetails = argDetailsGid
+					}
 					newTypeSigIdx := newTypeSig.Index
 
 					inpExprAtomicOp.AddOutput(prgrm, newTypeSigIdx)
@@ -1019,6 +1035,41 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 			}
 		}
 	}
+}
+
+// sliceResultTemporaryTypeAdopt gives the temporary result of a []und
+// built-in, as in len(append(s, v)), the slice type of its resolved input s.
+func sliceResultTemporaryTypeAdopt(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) {
+	operator := prgrm.GetFunctionFromArray(expression.Operator)
+	if operator == nil || !operator.IsBuiltIn() || len(expression.GetInputs(prgrm)) == 0 || len(expression.GetOutputs(prgrm)) != 1 {
+		return
+	}
+	operatorOutputs := operator.GetOutputs(prgrm)
+	if len(operatorOutputs) != 1 {
+		return
+	}
+	operatorOutput := prgrm.GetCXTypeSignatureFromArray(operatorOutputs[0])
+	if operatorOutput.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
+		return
+	}
+	operatorOutputArg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(operatorOutput.Meta))
+	if operatorOutputArg.Type != types.UNDEFINED || !hasDeclSpec(operatorOutputArg, constants.DECL_SLICE) {
+		return
+	}
+	output := prgrm.GetCXTypeSignatureFromArray(expression.GetOutputs(prgrm)[0])
+	input := prgrm.GetCXTypeSignatureFromArray(expression.GetInputs(prgrm)[0])
+	if output.Type != ast.TYPE_CXARGUMENT_DEPRECATE || !IsTempVar(prgrm, output.Name) {
+		return
+	}
+	// The type x := s would give, so m[0] of an m [][]i32 is a []i32.
+	t, ok := shortDeclarationCollectionValue(prgrm, input, false)
+	if !ok || t.specs[len(t.specs)-1] != constants.DECL_SLICE {
+		return
+	}
+	out := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(output.Meta))
+	out.Type, out.PointerTargetType, out.Size, out.StructType = t.typ, t.pointerTargetType, t.size, t.structType
+	out.DeclarationSpecifiers, out.Lengths = t.specs, t.lengths
+	out.PassBy = constants.PASSBY_VALUE
 }
 
 // ProcessPointerStructs checks and processes if any args is a pointer struct.
@@ -1201,6 +1252,7 @@ func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, 
 
 		if !isInput {
 			ProcessOperatorExpression(prgrm, expr)
+			sliceResultTemporaryTypeAdopt(prgrm, &prgrm.CXAtomicOps[expr.Index])
 		}
 
 		// TODO: Check how to remove PreviouslyDeclared field

@@ -7,7 +7,7 @@ Expressions
  	test-cipher-library.cx:22 : ui8.div() : <index out of range>
 	test-cipher-library.cx:22 : ui8.div() : 0
 	test-cipher-library.cx:30 : vectorInput() : []
-	test-cipher-library.cx:37 : cipher.HashOfBytes() : 0
+	test-cipher-library.cx:37 : cipher.HashOfBytes() : []
 	test-cipher-library.cx:37 : hexOfBytes() : 
 
 >>> main()
@@ -26,13 +26,13 @@ Expressions
 	test-cipher-library.cx:53 : append() : []
 	test-cipher-library.cx:31 : i32.lt() : 0
 	:-1 : i32.lt() : false
-	test-cipher-library.cx:56 : cipher.HashStateSum() : 0
+	test-cipher-library.cx:56 : cipher.HashStateSum() : []
 	test-cipher-library.cx:56 : hexOfBytes() : 
 	test-cipher-library.cx:57 : append() : []
 	test-cipher-library.cx:57 : identity() : []
 	test-cipher-library.cx:32 : i32.ui8() : 0
 	:-1 : i32.ui8() : 0
-	test-cipher-library.cx:58 : cipher.HashStateSum() : 0
+	test-cipher-library.cx:58 : cipher.HashStateSum() : []
 	test-cipher-library.cx:58 : hexOfBytes() : 
 	test-cipher-library.cx:61 : append() : []
 	test-cipher-library.cx:61 : identity() : []
@@ -40,10 +40,10 @@ Expressions
 	test-cipher-library.cx:62 : identity() : []
 	test-cipher-library.cx:63 : append() : []
 	test-cipher-library.cx:63 : identity() : []
-	test-cipher-library.cx:64 : string.BytesOfString() : 0
+	test-cipher-library.cx:64 : string.BytesOfString() : []
 	test-cipher-library.cx:64 : cipher.HashOfBytes() : []
 	:-1 : cipher.SignatureVerify() : false
-	test-cipher-library.cx:67 : string.BytesOfString() : 0
+	test-cipher-library.cx:67 : string.BytesOfString() : []
 	test-cipher-library.cx:67 : cipher.HashOfBytes() : []
 	:-1 : cipher.SignatureVerify() : false
 	:-1 : cipher.SignatureVerify() : false

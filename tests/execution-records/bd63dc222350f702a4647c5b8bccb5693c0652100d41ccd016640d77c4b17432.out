@@ -4,7 +4,7 @@ error: test-cipher-keypair.cx:12, CX_RUNTIME_LIBRARY_DISABLED, library cipher is
 Expressions
  	test-cipher-keypair.cx:12 : cipher.KeyPairGenerate() : []
 	test-cipher-keypair.cx:12 : cipher.KeyPairGenerate() : []
-	test-cipher-keypair.cx:13 : string.BytesOfString() : 0
+	test-cipher-keypair.cx:13 : string.BytesOfString() : []
 	test-cipher-keypair.cx:13 : cipher.HashOfBytes() : []
 	test-cipher-keypair.cx:16 : cipher.SignatureSign() : []
 	test-cipher-keypair.cx:16 : cipher.SignatureSign() : false
