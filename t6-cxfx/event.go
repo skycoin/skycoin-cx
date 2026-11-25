@@ -53,7 +53,7 @@ type Event struct {
 func cxfxAppCallbackSet(prgrm *ast.CXProgram, eventType EventType, inputs []ast.CXValue) {
 	cxfxState.CxfxAppCallbackTable[eventType] = CxfxCallback{
 		CxfxCallbackWindow:   inputs[0].Get_i32(prgrm),
-		CxfxCallbackFunction: prgrm.CXProgramFunctionSlotGid(uint32(inputs[1].Get_i32(prgrm))),
+		CxfxCallbackFunction: ast.CXFunctionGid(inputs[1].Get_i64(prgrm)),
 		CxfxCallbackSet:      true,
 	}
 }

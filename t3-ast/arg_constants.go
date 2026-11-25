@@ -52,7 +52,7 @@ var ConstCxArg_STR = Param(types.STR)
 var ConstCxArg_UND_TYPE = Param(types.UNDEFINED)
 
 // ConstCxArg_FUNC is a function reference parameter. The compiler resolves
-// the function named by the argument and passes its slot in CXFunctionMng as an
-// i32 literal, so the opcode never looks a name up, see #432.
+// the function named by the argument and passes its CXFunctionGid as an i64
+// literal, so the opcode never looks a name up, see #432.
 // VIOLATION: state outside State. Owner: t3-ast; moves to CXArgumentMng in phase 1.
 var ConstCxArg_FUNC = Param(types.FUNC)

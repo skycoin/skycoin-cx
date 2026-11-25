@@ -1529,7 +1529,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 			expectedUndefined = expectedArg.Type == types.UNDEFINED
 			expectedSlice = expectedUndefined && hasDeclSpec(expectedArg, constants.DECL_SLICE)
 			if expectedArg.Type == types.FUNC {
-				// functionReferenceInputsResolve checked it and made it an i32.
+				// functionReferenceInputsResolve checked it and made it an i64.
 				continue
 			}
 		}

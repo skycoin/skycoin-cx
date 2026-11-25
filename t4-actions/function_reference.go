@@ -6,8 +6,8 @@ import (
 )
 
 // functionReferenceInputsResolve replaces each argument passed where a native
-// takes a function reference (ast.ConstCxArg_FUNC) with an i32 literal holding
-// the slot in CXFunctionMng of the function it names, so the opcode reads the
+// takes a function reference (ast.ConstCxArg_FUNC) with an i64 literal holding
+// the CXFunctionGid of the function it names, so the opcode reads the
 // function without a name lookup at run time (#432). An argument that is not
 // a function name is a compile error.
 func functionReferenceInputsResolve(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) {
@@ -22,7 +22,7 @@ func functionReferenceInputsResolve(prgrm *ast.CXProgram, expression *ast.CXAtom
 			continue
 		}
 		receivedTypeSig := prgrm.GetCXTypeSignatureFromArray(received[i])
-		functionIndex, found := functionReferenceTarget(prgrm, receivedTypeSig)
+		function, found := functionReferenceTarget(prgrm, receivedTypeSig)
 		if !found && !functionReferenceUnresolved(prgrm, receivedTypeSig) {
 			prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeFunctionReferenceInput, receivedTypeSig.ArgDetails, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(expressionOperatorName(prgrm, operator)), int64(i + 1), prgrm.CXProgramCompileErrorText(valueFormattedType(prgrm, receivedTypeSig))})
 			continue
@@ -30,9 +30,9 @@ func functionReferenceInputsResolve(prgrm *ast.CXProgram, expression *ast.CXAtom
 		if !found {
 			continue
 		}
-		var literal [4]byte
-		types.Write_i32(literal[:], 0, int32(ast.CXFunctionGidSlot(functionIndex)))
-		received[i] = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, WritePrimary(prgrm, types.I32, literal[:], false))
+		var literal [8]byte
+		types.Write_i64(literal[:], 0, int64(function))
+		received[i] = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, WritePrimary(prgrm, types.I64, literal[:], false))
 	}
 }
 
