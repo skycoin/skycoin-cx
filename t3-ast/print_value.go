@@ -14,13 +14,48 @@ import (
 // keeps on its stack.
 const printSpecifiersMax = 16
 
+// printValueInvalid is printed for a value that would be read outside program
+// memory, such as a local the call stack prints before its declaration ran.
+const printValueInvalid = "<invalid address>"
+
+// printMemoryFits reports whether size bytes at addr are inside memory.
+func printMemoryFits(memory []byte, addr, size types.Pointer) bool {
+	length := types.Cast_int_to_ptr(len(memory))
+	return addr <= length && size <= length-addr
+}
+
+// appendPointerAt appends the pointer stored at addr as appendPointer does.
+func appendPointerAt(dst []byte, memory []byte, addr types.Pointer) []byte {
+	if !printMemoryFits(memory, addr, types.POINTER_SIZE) {
+		return append(dst, printValueInvalid...)
+	}
+	return appendPointer(dst, types.Read_ptr(memory, addr))
+}
+
+// appendStrAt appends the str whose pointer is at addr. A nil str is empty,
+// and a pointer to no whole object in memory prints printValueInvalid.
+func appendStrAt(dst []byte, memory []byte, addr types.Pointer) []byte {
+	obj := types.Read_ptr(memory, addr)
+	if obj == 0 {
+		return dst
+	}
+	if !printMemoryFits(memory, obj, types.OBJECT_HEADER_SIZE) {
+		return append(dst, printValueInvalid...)
+	}
+	size := types.Read_obj_size(memory, obj)
+	if size < types.OBJECT_HEADER_SIZE || !printMemoryFits(memory, obj, size) {
+		return append(dst, printValueInvalid...)
+	}
+	return append(dst, memory[obj+types.OBJECT_HEADER_SIZE:obj+size]...)
+}
+
 // appendValueAt appends the value of type typ with dimensions dims at addr. A
 // zero dimension is a slice, which holds a pointer to its object. The
 // elements of a multi dimensional collection are separated by spaces.
 func appendValueAt(dst []byte, prgrm *CXProgram, addr types.Pointer, typ types.Code, size types.Pointer, structType *CXStruct, dims []types.Pointer, spaced bool) []byte {
 	if len(dims) == 0 {
 		if typ == types.POINTER {
-			return appendPointer(dst, types.Read_ptr(prgrm.Memory, addr))
+			return appendPointerAt(dst, prgrm.Memory, addr)
 		}
 		if structType != nil {
 			return appendStructAt(dst, prgrm, addr, structType)
@@ -39,9 +74,20 @@ func appendValueAt(dst []byte, prgrm *CXProgram, addr types.Pointer, typ types.C
 
 	n := dims[0]
 	if n == 0 {
+		if !printMemoryFits(prgrm.Memory, addr, types.POINTER_SIZE) {
+			return append(dst, printValueInvalid...)
+		}
 		sliceOffset := types.Read_ptr(prgrm.Memory, addr)
 		addr = sliceOffset + types.OBJECT_HEADER_SIZE + constants.SLICE_HEADER_SIZE
-		n = GetSliceLen(prgrm, sliceOffset)
+		if sliceOffset != 0 {
+			if !printMemoryFits(prgrm.Memory, sliceOffset, types.OBJECT_HEADER_SIZE+constants.SLICE_HEADER_SIZE) {
+				return append(dst, printValueInvalid...)
+			}
+			n = GetSliceLen(prgrm, sliceOffset)
+		}
+	}
+	if n > 0 && stride > 0 && (!printMemoryFits(prgrm.Memory, addr, 0) || n > (types.Cast_int_to_ptr(len(prgrm.Memory))-addr)/stride) {
+		return append(dst, printValueInvalid...)
 	}
 	dst = append(dst, '[')
 	for c := types.Pointer(0); c < n; c++ {
@@ -98,7 +144,7 @@ func appendTypeSignatureAt(dst []byte, prgrm *CXProgram, addr types.Pointer, typ
 		return appendArgValueAt(dst, prgrm, addr, prgrm.GetCXArgFromArray(CXArgumentIndex(typeSig.Meta)))
 	}
 	// Pointers print their address.
-	return appendPointer(dst, types.Read_ptr(prgrm.Memory, addr))
+	return appendPointerAt(dst, prgrm.Memory, addr)
 }
 
 // appendAddress appends p in hexadecimal with 0x, as fmt prints %#x.
@@ -115,14 +161,21 @@ func appendPointer(dst []byte, p types.Pointer) []byte {
 	return appendAddress(dst, p)
 }
 
-// appendStructPointer appends the pointer p to a struct strct as Go prints a
-// pointer to a struct that it is given, &{...}, or <nil>.
-func appendStructPointer(dst []byte, prgrm *CXProgram, p types.Pointer, strct *CXStruct) []byte {
+// appendStructPointerAt appends the pointer to a struct strct stored at addr
+// as Go prints a pointer to a struct that it is given, &{...}, or <nil>.
+func appendStructPointerAt(dst []byte, prgrm *CXProgram, addr types.Pointer, strct *CXStruct) []byte {
+	if !printMemoryFits(prgrm.Memory, addr, types.POINTER_SIZE) {
+		return append(dst, printValueInvalid...)
+	}
+	p := types.Read_ptr(prgrm.Memory, addr)
 	if p == 0 || strct == nil {
 		return appendPointer(dst, p)
 	}
 	if p >= prgrm.Heap.StartsAt {
 		p += types.OBJECT_HEADER_SIZE
+	}
+	if !printMemoryFits(prgrm.Memory, p, strct.GetStructSize(prgrm)) {
+		return append(dst, printValueInvalid...)
 	}
 	return appendStructAt(append(dst, '&'), prgrm, p, strct)
 }
@@ -147,10 +200,16 @@ func printSpecifiers(elt *CXArgument, specs []int) []int {
 // as fmt prints it with %v. Other types append nothing.
 func appendAtomic(dst []byte, memory []byte, typ types.Code, offset types.Pointer) []byte {
 	switch typ {
+	case types.BOOL, types.STR, types.I8, types.I16, types.I32, types.I64, types.UI8, types.UI16, types.UI32, types.UI64, types.F32, types.F64:
+		if !printMemoryFits(memory, offset, typ.Size()) {
+			return append(dst, printValueInvalid...)
+		}
+	}
+	switch typ {
 	case types.BOOL:
 		return strconv.AppendBool(dst, types.Read_bool(memory, offset))
 	case types.STR:
-		return append(dst, types.Read_str_bytes(memory, offset)...)
+		return appendStrAt(dst, memory, offset)
 	case types.I8:
 		return strconv.AppendInt(dst, int64(types.Read_i8(memory, offset)), 10)
 	case types.I16:
@@ -200,13 +259,13 @@ func appendArgValueAt(dst []byte, prgrm *CXProgram, addr types.Pointer, elt *CXA
 	}
 	if len(specs) > 1 && specs[1] == constants.DECL_POINTER && (len(dims) > 0 || len(specs) == 2) {
 		if len(dims) == 0 && elt.StructType != nil {
-			return appendStructPointer(dst, prgrm, types.Read_ptr(prgrm.Memory, addr), elt.StructType)
+			return appendStructPointerAt(dst, prgrm, addr, elt.StructType)
 		}
 		// A pointer, or an array or slice of pointers, prints addresses.
 		return appendValueAt(dst, prgrm, addr, types.POINTER, types.POINTER_SIZE, nil, dims, len(dims) > 1)
 	}
 	if len(dims) == 0 && len(specs) > 2 && specs[len(specs)-1] == constants.DECL_POINTER {
-		return appendPointer(dst, types.Read_ptr(prgrm.Memory, addr))
+		return appendPointerAt(dst, prgrm.Memory, addr)
 	}
 	return appendValueAt(dst, prgrm, addr, typ, elt.Size, elt.StructType, dims, len(dims) > 1)
 }
@@ -238,7 +297,7 @@ func AppendPrintableValue(dst []byte, prgrm *CXProgram, fp types.Pointer, argTyp
 		if argTypeSig.IsDeref {
 			return appendAtomic(dst, prgrm.Memory, types.Code(argTypeSig.Meta), GetFinalOffset(prgrm, fp, nil, argTypeSig))
 		}
-		return appendPointer(dst, types.Read_ptr(prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig)))
+		return appendPointerAt(dst, prgrm.Memory, GetFinalOffset(prgrm, fp, nil, argTypeSig))
 	case TYPE_ARRAY_ATOMIC, TYPE_POINTER_ARRAY_ATOMIC, TYPE_SLICE_ATOMIC, TYPE_POINTER_SLICE_ATOMIC:
 		// OBJMODEL: state.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet(gid), phase 5 #317.
 		// Now an arena getter, site S0494.
@@ -251,7 +310,7 @@ func AppendPrintableValue(dst []byte, prgrm *CXProgram, fp types.Pointer, argTyp
 		addr := GetFinalOffset(prgrm, fp, nil, argTypeSig)
 		pointer := argTypeSig.Type == TYPE_POINTER_ARRAY_ATOMIC || argTypeSig.Type == TYPE_POINTER_SLICE_ATOMIC
 		if pointer && !argTypeSig.IsDeref {
-			return appendPointer(dst, types.Read_ptr(prgrm.Memory, addr))
+			return appendPointerAt(dst, prgrm.Memory, addr)
 		}
 		return appendValueAt(dst, prgrm, addr, eltType, eltType.Size(), nil, dims, len(dims) > 1)
 	case TYPE_STRUCT, TYPE_POINTER_STRUCT:
@@ -260,7 +319,7 @@ func AppendPrintableValue(dst []byte, prgrm *CXProgram, fp types.Pointer, argTyp
 		structDetails := prgrm.GetCXTypeSignatureStructFromArray(argTypeSig.Meta)
 		addr := GetFinalOffset(prgrm, fp, nil, argTypeSig)
 		if argTypeSig.Type == TYPE_POINTER_STRUCT && !argTypeSig.IsDeref && len(structDetails.Fields) == 0 {
-			return appendStructPointer(dst, prgrm, types.Read_ptr(prgrm.Memory, addr), structDetails.StructType)
+			return appendStructPointerAt(dst, prgrm, addr, structDetails.StructType)
 		}
 		if argTypeSig.Type == TYPE_STRUCT && argTypeSig.PassBy == constants.PASSBY_REFERENCE && len(structDetails.Fields) == 0 {
 			return appendStructAt(append(dst, '&'), prgrm, addr, structDetails.StructType)

@@ -329,6 +329,12 @@ the matching `CX_RUNTIME_*` exit code. The CX `assert`, `test` and `panic`
 builtins do the same with `CX_ASSERT` or `CX_PANIC`. This holds under the REPL
 and any embedding host too.
 
+The call stack prints every argument of every expression in each frame,
+including locals whose declarations have not run yet and whose stack slots
+still hold an earlier value. A value whose index is out of range prints
+`<index out of range>`, and a str, slice or pointer that leads outside program
+memory prints `<invalid address>`, so the dump never panics.
+
 A call into a system library that the run did not enable ends the program in
 the same way. It prints `CX_RUNTIME_LIBRARY_DISABLED` with the message
 `library <name> is not enabled, enable it with --enable=<name>` and exits with

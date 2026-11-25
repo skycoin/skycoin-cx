@@ -1,0 +1,31 @@
+package main
+
+type node struct {
+	next *node
+	name str
+}
+
+// The block leaves numbers in the stack slots that the locals declared after
+// the division reuse, so the call stack of the runtime error prints locals
+// whose declarations never ran.
+func fail(d i32) {
+	for c := 0; c < 1; c++ {
+		var a i32
+		var b i32
+		a = 100000000
+		b = 100000000
+		printf("%d %d\n", a, b)
+	}
+	var z i32
+	z = 10 / d
+	var n node
+	var p *node
+	p = &n
+	var s []i32
+	var names [2]str
+	printf("%d %s %s %v %v\n", z, n.name, p.name, s, names)
+}
+
+func main() {
+	fail(0)
+}

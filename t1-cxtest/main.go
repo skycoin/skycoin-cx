@@ -319,6 +319,11 @@ func runTestCases(t *runner.TestRunner) {
 		"1\nerror: test-array-index-negative.cx:7, CX_RUNTIME_INVALID_CAST, 11\n===Callstack===\n>>> store()\n",
 		"\ttest-array-index-negative.cx:7 : identity() : <index out of range>\n\n>>> main()\n",
 	)
+	t.RunWant("test-stack-print-uninit.cx", types.CX_RUNTIME_ERROR, "the call stack prints a str local whose declaration never ran without a panic (skycoin-cx#407)",
+		"error: test-stack-print-uninit.cx:20, CX_RUNTIME_ERROR, runtime error: integer divide by zero\n===Callstack===\n>>> fail()\n",
+		"\ttest-stack-print-uninit.cx:26 : printf() : <invalid address>\n",
+		"\n>>> main()\n",
+	)
 	t.RunWant("test-printf-extra.cx", types.CX_SUCCESS, "printf prints values past the last verb as %!(EXTRA ...)",
 		"none\n%!(EXTRA i32=1, i32=2)5\n%!(EXTRA i64=1234567890123, bool=true, str=text)5 and\n%!(EXTRA i32=7, i32=9, f64=2.5)",
 	)
