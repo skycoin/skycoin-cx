@@ -49,9 +49,9 @@ func printerHeapBytes(prgrm *ast.CXProgram, heapOffset types.Pointer) []byte {
 // PrinterOpcodesRegister registers the debug opcode, which prints the call
 // stack, on the global opcode tables.
 func PrinterOpcodesRegister(prgrm *ast.CXProgram) {
-	opcodes.RegisterOpCode(prgrm, constants.OP_DEBUG_PRINT_STACK, "debug", printerOpDebugPrintStack, nil, nil)
+	opcodes.RegisterOpCode(prgrm, constants.OP_DEBUG_PRINT_STACK, "debug", PrinterOpDebugPrintStack, nil, nil)
 }
 
-func printerOpDebugPrintStack(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func PrinterOpDebugPrintStack(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	PrinterStackPrint(prgrm)
 }

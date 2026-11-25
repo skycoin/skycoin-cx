@@ -19,8 +19,8 @@ func expOffset(value ast.CXValue) types.Pointer {
 	return value.Offset
 }
 
-// regexpCompile is a helper function for `opRegexpMustCompile` and
-// `opRegexpCompile`. `regexpCompile` compiles a `regexp.Regexp` structure
+// regexpCompile is a helper function for `OpRegexpMustCompile` and
+// `OpRegexpCompile`. `regexpCompile` compiles a `regexp.Regexp` structure
 // and adds it to global `regexps`. It also writes CX structure `regexp.Regexp`.
 // GCREACH: allocates the expression str, which adds to the GC pressure,
 // see docs/GarbageCollector.md.
@@ -41,9 +41,9 @@ func regexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 	return nil
 }
 
-// opRegexpMustCompile is a wrapper for golang's `regexp`'s `MustCompile`.
+// OpRegexpMustCompile is a wrapper for golang's `regexp`'s `MustCompile`.
 // VIOLATION STRHOT-321: E, error or assert text, built on a failure branch only, #412.
-func opRegexpMustCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func OpRegexpMustCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	err := regexpCompile(prgrm, inputs, outputs)
 
 	if err != nil {
@@ -53,9 +53,9 @@ func opRegexpMustCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []a
 
 }
 
-// opRegexpCompile is a wrapper for golang's `regexp`'s `MustCompile`.
+// OpRegexpCompile is a wrapper for golang's `regexp`'s `MustCompile`.
 // VIOLATION STRHOT-143: B, hands a path or text to Go or the OS, #412.
-func opRegexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func OpRegexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	// We're only interested in `out1`, which represents the
 	// returned error.
 	err := regexpCompile(prgrm, inputs, outputs)
@@ -68,10 +68,10 @@ func opRegexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.C
 	outputs[1].Set_str(prgrm, errStr)
 }
 
-// opRegexpFind is a wrapper for golang's `regexp`'s `Find`.
+// OpRegexpFind is a wrapper for golang's `regexp`'s `Find`.
 // VIOLATION STRHOT-144: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-017: compiles and matches with the Go regexp package, #407.
-func opRegexpFind(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func OpRegexpFind(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	exp := types.Read_str(prgrm.Memory, expOffset(inputs[0]))
 	r, ok := regexps[exp]
 	if !ok {

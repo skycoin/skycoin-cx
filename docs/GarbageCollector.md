@@ -140,9 +140,9 @@ Lines are as of this document. Regenerate them with `./check-gcreach.sh -l`.
 - t4-execute/execute.go:97 `feedOSArgs`
 - t4-opcodes/op_aff.go, 27 lines in `queryParam`, `QueryExpressions`,
   `getSignatureSlice`, `queryStructsInPackage`, `QueryFunction`,
-  `QueryCaller`, `QueryProgram` and `opAffQuery`
-- t4-opcodes/op_serialize.go:24 `opSerialize`
-- t4-opcodes/op_str.go:159 `opStrBytesOfString`
+  `QueryCaller`, `QueryProgram` and `OpAffQuery`
+- t4-opcodes/op_serialize.go:24 `OpSerialize`
+- t4-opcodes/op_str.go:159 `OpStrBytesOfString`
 - t5-regexp/op_regexp.go:32 `regexpCompile`
 - t6-cxfx/event.go:64, op_glfw_desktop.go:237, op_openal.go:47,
   op_opengl.go:464

@@ -10,13 +10,10 @@ import (
 // VIOLATION: state outside State. Owner: t3-ast; moves to CXNativeFunctionMng in phase 1.
 var LibraryFunctionHandlers [constants.LibraryCount][]OpcodeHandler
 
-// libraryFunctionKeyShift leaves room for 65535 functions per library.
-const libraryFunctionKeyShift = 16
-
 // LibraryFunctionKey returns the key of a library function in NativeNames
 // and Natives. It is negative, so it never meets an opcode number.
 func LibraryFunctionKey(library int, function int) int {
-	return -(library<<libraryFunctionKeyShift | function)
+	return constants.LibraryFunctionKey(library, function)
 }
 
 // LibraryLinked reports whether library has handlers in this binary.

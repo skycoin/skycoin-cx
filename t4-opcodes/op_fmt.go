@@ -103,13 +103,13 @@ func buildString(prgrm *ast.CXProgram, inputs []ast.CXValue, res []byte) []byte 
 	return res
 }
 
-func opSprintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func OpSprintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	formatted := buildString(prgrm, inputs, formatBuffer(prgrm))
 	outputs[0].Set_str_bytes(prgrm, formatted)
 	formatBufferKeep(prgrm, formatted)
 }
 
-func opPrintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+func OpPrintf(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	formatted := buildString(prgrm, inputs, formatBuffer(prgrm))
 	os.Stdout.Write(formatted)
 	formatBufferKeep(prgrm, formatted)

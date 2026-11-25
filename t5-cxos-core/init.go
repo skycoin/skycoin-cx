@@ -11,8 +11,8 @@ import (
 
 // RegisterPackage adds the time opcodes and os.Exit to the opcode tables.
 func RegisterPackage(prgrm *ast.CXProgram) {
-	opcodes.RegisterFunction(prgrm, "time.Sleep", opTimeSleep, opcodes.In(ast.ConstCxArg_I32), nil)
-	opcodes.RegisterFunction(prgrm, "time.UnixMilli", opTimeUnixMilli, nil, opcodes.Out(ast.ConstCxArg_I64))
-	opcodes.RegisterFunction(prgrm, "time.UnixNano", opTimeUnixNano, nil, opcodes.Out(ast.ConstCxArg_I64))
-	opcodes.RegisterFunction(prgrm, "os.Exit", opOsExit, opcodes.In(ast.ConstCxArg_I32), nil)
+	opcodes.RegisterFunction(prgrm, "time.Sleep", OpTimeSleep, opcodes.In(ast.ConstCxArg_I32), nil)
+	opcodes.RegisterFunction(prgrm, "time.UnixMilli", OpTimeUnixMilli, nil, opcodes.Out(ast.ConstCxArg_I64))
+	opcodes.RegisterFunction(prgrm, "time.UnixNano", OpTimeUnixNano, nil, opcodes.Out(ast.ConstCxArg_I64))
+	opcodes.RegisterFunction(prgrm, "os.Exit", OpOsExit, opcodes.In(ast.ConstCxArg_I32), nil)
 }

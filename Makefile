@@ -105,10 +105,16 @@ names-csv: ## Write one CSV row per declared Go and CX name to NAMES_CSV, for sk
 	mkdir -p $(dir $(NAMES_CSV))
 	go run ./t0-cx-tools-names -out $(NAMES_CSV) . $(REPOS)
 
+generate-opcodes: ## Regenerate the opcode signature tables from t1-constants/opcodes_definitions.go, decision D21
+	go run ./t2-cx-core-opcodegen -root .
+
+check-opcodes: ## Check that the opcode signature tables are up to date with t1-constants/opcodes_definitions.go
+	go run ./t2-cx-core-opcodegen -root . -check
+
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
-check: check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, JSON, recover, object model, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
+check: check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
 
 bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx

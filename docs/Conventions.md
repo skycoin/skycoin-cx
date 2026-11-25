@@ -31,6 +31,11 @@ document or check script.
    [opcodes.csv](opcodes.csv). A new opcode takes the next number after the
    highest. A deleted opcode keeps its row as deprecated, gets no handler, and
    its number is never reused before the row's reassignable version.
+   Every live opcode also has a row in `constants.OpcodeDefinitionTable` in
+   [t1-constants/opcodes_definitions.go](../t1-constants/opcodes_definitions.go)
+   with its handler and signature. `make generate-opcodes` writes the
+   signature tables from it and `make check-opcodes` fails when they are out
+   of date (decision D21).
 8. **Opcode lifecycle.** Each row records the version the number was added,
    deprecated and becomes reassignable, 0 for the last two while live and 0
    added for opcodes older than versioning. Reassignable is the deprecated

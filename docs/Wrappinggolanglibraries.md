@@ -16,7 +16,7 @@ every part.
 2. **Write the handlers.** A handler has the signature
    `func(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue)`.
    It reads its inputs and writes its outputs with the `CXValue` getters
-   and setters. `opRegexpCompile` in [t5-regexp/op_regexp.go](../t5-regexp/op_regexp.go)
+   and setters. `OpRegexpCompile` in [t5-regexp/op_regexp.go](../t5-regexp/op_regexp.go)
    reads a string with `inputs[0].Get_str(prgrm)` and writes its error
    with `outputs[1].Set_str(prgrm, ...)`.
 
@@ -24,7 +24,7 @@ every part.
    [t5-regexp/init.go](../t5-regexp/init.go) it calls
    `ast.MakePackage(prgrm.CXProgramNameIntern("regexp"))`, then
    `prgrm.AddPackage` and `AddStruct` for the `Regexp` struct, then
-   `opcodes.RegisterFunction(prgrm, "regexp.Compile", opRegexpCompile, opcodes.In(...), opcodes.Out(...))`
+   `opcodes.RegisterFunction(prgrm, "regexp.Compile", OpRegexpCompile, opcodes.In(...), opcodes.Out(...))`
    for each function. There is no `func init`.
 
 4. **Call it from `RegisterPackages`** in

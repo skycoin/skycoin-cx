@@ -54,8 +54,8 @@ func TestRegexpCallsDoNotGrowProgram(t *testing.T) {
 
 	before := prgrm.CxIrState.CXArgumentMng.CXArgumentLen()
 	for i := 0; i < 100; i++ {
-		opRegexpCompile(prgrm, []ast.CXValue{strValue(prgrm, 0, "b+")}, []ast.CXValue{reg, errOut})
-		opRegexpFind(prgrm, []ast.CXValue{reg, in}, []ast.CXValue{out})
+		OpRegexpCompile(prgrm, []ast.CXValue{strValue(prgrm, 0, "b+")}, []ast.CXValue{reg, errOut})
+		OpRegexpFind(prgrm, []ast.CXValue{reg, in}, []ast.CXValue{out})
 	}
 	if got := out.Get_str(prgrm); got != "bbb" {
 		t.Fatalf("Find returned %q, want %q", got, "bbb")
@@ -74,7 +74,7 @@ func TestRegexpFindAfterFailedCompile(t *testing.T) {
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 	// Now a heap literal, site S1425.
 	errOut := ast.CXValue{Offset: 600, TypeSignature: &ast.CXTypeSignature{Offset: 600}}
-	opRegexpCompile(prgrm, []ast.CXValue{strValue(prgrm, 0, "a(")}, []ast.CXValue{reg, errOut})
+	OpRegexpCompile(prgrm, []ast.CXValue{strValue(prgrm, 0, "a(")}, []ast.CXValue{reg, errOut})
 	if errOut.Get_str(prgrm) == "" {
 		t.Fatal("Compile(\"a(\") returned no error")
 	}
@@ -91,5 +91,5 @@ func TestRegexpFindAfterFailedCompile(t *testing.T) {
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureAlloc(), phase 4 #331.
 	// Now a heap literal, site S1426.
 	out := ast.CXValue{Offset: 300, TypeSignature: &ast.CXTypeSignature{Offset: 300}}
-	opRegexpFind(prgrm, []ast.CXValue{reg, in}, []ast.CXValue{out})
+	OpRegexpFind(prgrm, []ast.CXValue{reg, in}, []ast.CXValue{out})
 }

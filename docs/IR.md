@@ -247,10 +247,10 @@ All control flow uses four opcodes, each with handlers in
 
 | Opcode | Number | Handler | Effect on `CXCall.Line` before the VM adds 1 |
 | --- | --- | --- | --- |
-| `jmp` | `OP_JMP` = 2 | `opJmp` | `+ ThenLines` if input 0 is true, `+ ElseLines` if false |
-| `goto` | `OP_GOTO` = 13 | `opGoto` | `+ ThenLines` |
-| `break` | `OP_BREAK` = 14 | `opBreak` | `+ ThenLines` |
-| `continue` | `OP_CONTINUE` = 15 | `opContinue` | `+ ThenLines` |
+| `jmp` | `OP_JMP` = 2 | `OpJmp` | `+ ThenLines` if input 0 is true, `+ ElseLines` if false |
+| `goto` | `OP_GOTO` = 13 | `OpGoto` | `+ ThenLines` |
+| `break` | `OP_BREAK` = 14 | `OpBreak` | `+ ThenLines` |
+| `continue` | `OP_CONTINUE` = 15 | `OpContinue` | `+ ThenLines` |
 
 `CXCall.Call` adds 1 to `Line` after every native, so a jump at index `i`
 with distance `n` continues at `i + n + 1`. `n = 0` falls through.
@@ -273,7 +273,7 @@ with distance `n` continues at `i + n + 1`. `n = 0` falls through.
   generated label `*lbl_<n>` and `ThenLines = types.MAX_INT32`, which
   moves `Line` past `LineCount` and so returns.
 
-`OP_ABS_JMP` (3, `opAbsJmp`) sets `Line` to `ThenLines` or `ElseLines`
+`OP_ABS_JMP` (3, `OpAbsJmp`) sets `Line` to `ThenLines` or `ElseLines`
 directly, but the compiler never emits it.
 
 ## Arguments and type signatures
@@ -774,7 +774,7 @@ the jumps, `test` on non-string values and calls. Anything else gives a
 * A stack operand must fit the frame of its function. The old loop lets a
   larger one, from a recursive struct type, run into the data segment.
 * Taking an address, in identity or a call by reference, is
-  `OpcodeAddressOf` or `OpcodeAddressPointer`, by the type tests `opIdentity`
+  `OpcodeAddressOf` or `OpcodeAddressPointer`, by the type tests `OpIdentity`
   and `processNonAtomicOperators` make.
 * `printf` reads its format at lower time as `buildString` does. Constant text
   goes to `ImageText` and `OpcodePrintText`, each value to
@@ -833,7 +833,7 @@ prints a stack overflow or runtime error for both.
 * Pointers to slices are only partly modelled. There is
   `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, which
   stays a `TYPE_CXARGUMENT_DEPRECATE`. A `*[]str` is a
-  `TYPE_CXARGUMENT_DEPRECATE` too, and `opIdentity` and the vm lowering test
+  `TYPE_CXARGUMENT_DEPRECATE` too, and `OpIdentity` and the vm lowering test
   for it with `CXArgumentStringSlicePointer` so `p = &s` takes its address.
 * `GetFinalOffset` decides whether an offset is in the frame by comparing
   it with `Stack.Size`, not by a flag on the operand.
