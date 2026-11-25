@@ -164,8 +164,9 @@ Each test program has an execution record, the hashes of the program, its
 input and its output and the exit code, in
 [tests/execution-records.txt](tests/execution-records.txt).
 `TestExecutionRecords` runs every record on the old loop, on vm, after a
-round trip through the serialized program on both loops, and as an
-executable from `cx build`, and each must give the recorded result. See
+round trip through the serialized program on both loops, as an executable
+from `cx build`, and as a native executable from `cx build --target=llvm`,
+and each must give the recorded result. See
 [docs/ExecutionRecords.md](docs/ExecutionRecords.md).
 
 ## cx build
@@ -194,6 +195,10 @@ leaves out, such as `gl`. The heap cap given with `-heap-max` is stored in
 the built program. Only a core with the cipher library links a Go
 module outside the standard library, the `cipher` package of Skycoin.
 See [Building an executable](LanguageGuide.md#building-an-executable).
+
+`cx build --target=llvm program.cx -o program` compiles a program that runs
+on vm to LLVM IR, `program.ll`, and with clang to a native executable that
+prints what vm prints. See [docs/LlvmTarget.md](docs/LlvmTarget.md).
 
 ## Performance
 

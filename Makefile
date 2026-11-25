@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -74,6 +74,9 @@ test-gui: ## Build cx with cxfx and run the gui CX program tests, under xvfb-run
 	go build -o ./bin/cxtest ./t1-cxtest
 	$(if $(DISPLAY),,xvfb-run -a) ./bin/cxtest --cxpath=$(CURDIR)/bin/cx-gui$(EXE) --wdir=./tests --log=fail,stderr --enable-tests=gui
 
+llvm-clang: ## Print the clang that cx build --target=llvm and the native form of the execution records use, see docs/LlvmTarget.md
+	@command -v "$${CX_CLANG:-clang}" >/dev/null && "$${CX_CLANG:-clang}" --version | head -n 1 || echo "no clang, the native form of the execution records is not run"
+
 check-tiers: ## Check that packages only import lower tiers and sit at <dir>/<file>.go
 	./check-tiers.sh
 
@@ -114,7 +117,7 @@ check-opcodes: ## Check that the opcode and library tables and switches are up t
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-ast
 
-check: check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
+check: check-tiers llvm-clang check-inits check-ifaces check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
 
 bench-compare: ## Time the t0-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx

@@ -1,10 +1,16 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"sort"
+	"strings"
 
+	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 	"github.com/skycoin/skycoin-cx/t3-ast"
@@ -42,8 +48,11 @@ func buildLlvmOptions() llvm.Options {
 	return options
 }
 
-// buildLlvm compiles the parsed program to LLVM IR at output. A program
-// outside the vm subset is refused with the message vm gives.
+// buildLlvm compiles the parsed program to LLVM IR, decision D9. An output
+// ending in .ll gets the IR alone. Any other output is a native executable,
+// which clang compiles from the IR, written beside it with .ll in place of
+// .exe, and the C runtime. A program outside the vm subset is refused with
+// the message vm gives.
 func buildLlvm(options buildOptions) int {
 	prgrm := actions.AST
 	core.CoreLibrariesEnabledResolve(prgrm)
@@ -62,8 +71,65 @@ func buildLlvm(options buildOptions) int {
 	if options.buildOptionsStats {
 		buildLlvmStatsPrint(stats)
 	}
-	if err := os.WriteFile(options.buildOptionsOutput, module, 0o644); err != nil {
+	output := options.buildOptionsOutput
+	if strings.HasSuffix(output, buildLlvmExtension) {
+		if err := os.WriteFile(output, module, 0o644); err != nil {
+			return buildFail(err.Error())
+		}
+		return types.CX_SUCCESS
+	}
+	modulePath := strings.TrimSuffix(output, ".exe") + buildLlvmExtension
+	if err := os.WriteFile(modulePath, module, 0o644); err != nil {
 		return buildFail(err.Error())
+	}
+	return buildLlvmNative(modulePath, output)
+}
+
+// buildLlvmExtension ends the file name of LLVM IR.
+const buildLlvmExtension = ".ll"
+
+// buildLlvmClangEnv names the C compiler that compiles LLVM IR, clang when
+// it is unset.
+const buildLlvmClangEnv = "CX_CLANG"
+
+// buildLlvmClang returns the clang cx build runs, or "" when there is none.
+func buildLlvmClang() string {
+	clang := os.Getenv(buildLlvmClangEnv)
+	if clang == "" {
+		clang = "clang"
+	}
+	path, err := exec.LookPath(clang)
+	if err != nil {
+		return ""
+	}
+	return path
+}
+
+// buildLlvmNative compiles the module at modulePath and links it with the
+// C runtime into the executable output.
+func buildLlvmNative(modulePath string, output string) int {
+	clang := buildLlvmClang()
+	if clang == "" {
+		return buildFail(fmt.Sprintf("wrote %s but found no clang to compile it into %s, install clang, set %s or give an output ending in .ll", modulePath, output, buildLlvmClangEnv))
+	}
+	directory, err := os.MkdirTemp("", "cx-llvm-")
+	if err != nil {
+		return buildFail(err.Error())
+	}
+	defer os.RemoveAll(directory)
+	runtimePath, err := buildLlvmRuntime(clang, directory)
+	if err != nil {
+		return buildFail(err.Error())
+	}
+	args := []string{"-O2", "-w", "-o", output, modulePath, runtimePath}
+	if runtime.GOOS != "windows" {
+		// The MSVC C library holds the math functions, elsewhere libm does.
+		args = append(args, "-lm")
+	}
+	command := exec.Command(clang, args...)
+	command.Stdout, command.Stderr = os.Stderr, os.Stderr
+	if err := command.Run(); err != nil {
+		return buildFail(fmt.Sprintf("%s: %v", clang, err))
 	}
 	return types.CX_SUCCESS
 }
@@ -92,4 +158,46 @@ func buildLlvmStatsPrint(stats llvm.Stats) {
 	}
 	fmt.Fprintf(os.Stderr, "llvm scalar inline %d runtime %d, other runtime calls %d, frame regions alloca %d memory %d\n",
 		inline, fallback, stats.StatsRuntime, stats.StatsAlloca, stats.StatsShadow)
+}
+
+// buildLlvmRuntime returns the C runtime compiled by clang, an object kept in
+// the user cache under the hash of the runtime and the path of clang, so
+// only the first native build compiles it. Without a cache it returns the C
+// source written to directory, which clang then compiles with the module.
+func buildLlvmRuntime(clang string, directory string) (string, error) {
+	source := filepath.Join(directory, llvm.RuntimeFileName)
+	if err := os.WriteFile(source, llvm.RuntimeC, 0o644); err != nil {
+		return "", err
+	}
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return source, nil
+	}
+	hash := cxhash.CxHashOfBytes(append(append([]byte(clang), 0), llvm.RuntimeC...))
+	object := filepath.Join(cache, "cx", "llvm-runtime-"+hex.EncodeToString(hash[:8])+".o")
+	if _, err := os.Stat(object); err == nil {
+		return object, nil
+	}
+	if err := os.MkdirAll(filepath.Dir(object), 0o755); err != nil {
+		return source, nil
+	}
+	// Each build compiles to its own file and renames it into place, so
+	// parallel builds never read a half written object.
+	partialFile, err := os.CreateTemp(filepath.Dir(object), "llvm-runtime-*.o")
+	if err != nil {
+		return source, nil
+	}
+	partial := partialFile.Name()
+	partialFile.Close()
+	command := exec.Command(clang, "-O2", "-w", "-c", "-o", partial, source)
+	command.Stdout, command.Stderr = os.Stderr, os.Stderr
+	if err := command.Run(); err != nil {
+		os.Remove(partial)
+		return "", fmt.Errorf("%s: compiling the runtime: %v", clang, err)
+	}
+	if err := os.Rename(partial, object); err != nil {
+		os.Remove(partial)
+		return source, nil
+	}
+	return object, nil
 }

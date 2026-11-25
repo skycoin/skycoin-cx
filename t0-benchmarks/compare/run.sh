@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Runs every benchmark in cx (old loop and vm), C, Python 3 and Bash, pinned
+# Runs every benchmark in cx (old loop, vm and native through the LLVM
+# target), C, Python 3 and Bash, pinned
 # to one core. It prints the median of RUNS runs, the same less the median
 # start up time of an empty program in that language (net), the CX
 # operations per net millisecond, and the net time relative to C.
@@ -15,7 +16,7 @@ CPU=${CPU:-2}
 CX=${CX:-../../bin/cx}
 CXOPCOUNT=${CXOPCOUNT:-../../bin/cx-opcount}
 BENCHES=${BENCHES:-count fib array struct memtest primes}
-LANGS=${LANGS:-cx-old cx-vm c python bash}
+LANGS=${LANGS:-cx-old cx-vm cx-native c python bash}
 CC=${CC:-clang}
 PYTHON=${PYTHON:-python3}
 work=$(mktemp -d)
@@ -30,6 +31,12 @@ done
 printf 'int main(void) { return 0; }\n' >"$work/empty.c"
 $CC -O2 -o "$work/empty" "$work/empty.c"
 printf 'package main\n\nfunc main() {\n}\n' >"$work/empty.cx"
+if [[ " $LANGS " == *" cx-native "* ]]; then
+	for bench in $BENCHES; do
+		CX_CLANG=$CC $CX build --target=llvm "cx/$bench.cx" -o "$work/$bench-native"
+	done
+	CX_CLANG=$CC $CX build --target=llvm "$work/empty.cx" -o "$work/empty-native"
+fi
 
 expected() { awk -v b="$1" -v s="$2" '$1 == b && $2 == s { print $3 }' expected.txt; }
 
@@ -37,6 +44,7 @@ command_of() {
 	case $2 in
 	cx-old) echo "$CX --executor=old cx/$1.cx" ;;
 	cx-vm) echo "$CX --executor=vm cx/$1.cx" ;;
+	cx-native) echo "$work/$1-native" ;;
 	c) echo "$work/$1" ;;
 	python) echo "$PYTHON -I python/$1.py" ;;
 	bash) echo "bash bash/$1.sh" ;;
@@ -47,6 +55,7 @@ empty_of() {
 	case $1 in
 	cx-old) echo "$CX --executor=old $work/empty.cx" ;;
 	cx-vm) echo "$CX --executor=vm $work/empty.cx" ;;
+	cx-native) echo "$work/empty-native" ;;
 	c) echo "$work/empty" ;;
 	python) echo "$PYTHON -I -c pass" ;;
 	bash) echo "bash -c :" ;;
@@ -109,10 +118,13 @@ for bench in $BENCHES; do
 			net=$(awk -v n="$net" -v f="${bash_factor[$bench]}" 'BEGIN { printf "%.1f", n * f }')
 		fi
 		if [[ $lang == cx-* && -x $CXOPCOUNT && $net != wrong ]]; then
-			ops=$(operations "$bench" "${lang#cx-}")
-			rate=$(awk -v o="$ops" -v n="$net" 'BEGIN { printf "%.0f", o / n }')
+			executor=${lang#cx-}
+			# The native program runs the image vm runs.
+			[[ $executor == native ]] && executor=vm
+			ops=$(operations "$bench" "$executor")
+			rate=$(awk -v o="$ops" -v n="$net" 'BEGIN { if (n < 1) print "-"; else printf "%.0f", o / n }')
 		fi
-		ratio=$(awk -v n="$net" -v c="$c_net" 'BEGIN { if (n == "wrong" || c == "wrong" || c < 2) print "-"; else printf "%.0f", n / c }')
+		ratio=$(awk -v n="$net" -v c="$c_net" 'BEGIN { if (n == "wrong" || c == "wrong" || c < 2) print "-"; else printf "%.1f", n / c }')
 		printf '| %s | %s | %s | %s | %s | %s | %s | %s |\n' "$bench" "$lang" "$scale" "$ms" "$net" "$ops" "$rate" "$ratio"
 	done
 done

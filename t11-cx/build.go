@@ -232,7 +232,9 @@ and passes its own command line arguments to it as os.Args.
                     calls and --enable enables, %s for none,
                     %s-file-net for file and net.
 --target name       core, the default, appends the program to a core. llvm
-                    writes the program as LLVM IR to output. It needs a
+                    compiles the program to LLVM IR, output.ll, and with
+                    clang (or CX_CLANG) to a native executable, output.
+                    An output ending in .ll gets the IR alone. It needs a
                     program that runs on vm and calls no system library.
 --llvm-stats        With --target=llvm, print how each scalar opcode was
                     emitted, inline or as a call into the runtime.

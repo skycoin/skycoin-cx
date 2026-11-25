@@ -25,6 +25,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t0-textsections"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t3-ast"
+	llvm "github.com/skycoin/skycoin-cx/t3-cx-compiler-llvm"
 	"github.com/skycoin/skycoin-cx/t4-actions"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
 	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"
@@ -84,9 +85,15 @@ const (
 	executionRecordFormImageOld executionRecordForm = "image-old"
 	executionRecordFormImageVm  executionRecordForm = "image-vm"
 	executionRecordFormBuilt    executionRecordForm = "built"
+	executionRecordFormNative   executionRecordForm = "native"
 )
 
-var executionRecordForms = []executionRecordForm{executionRecordFormOld, executionRecordFormVm, executionRecordFormImageOld, executionRecordFormImageVm, executionRecordFormBuilt}
+var executionRecordForms = []executionRecordForm{executionRecordFormOld, executionRecordFormVm, executionRecordFormImageOld, executionRecordFormImageVm, executionRecordFormBuilt, executionRecordFormNative}
+
+// executionRecordCallStack starts the call stack vm prints after a runtime
+// error. A native program prints the error line and no call stack, so its
+// output is checked against the recorded output cut there.
+var executionRecordCallStack = []byte("\n===Callstack===\n")
 
 // executionRecord is one line of the records section.
 type executionRecord struct {
@@ -159,6 +166,14 @@ var executionRecordExcludedByHand = map[string]string{
 	// names the file.
 	"deprecated/test-cipher.cx": "path",
 	"examples/cipher.cx":        "path",
+}
+
+// executionRecordFormOutcome is the run of one form, or why it did not
+// apply. A run that applies with a note failed before the program ran.
+type executionRecordFormOutcome struct {
+	run        executionRecordRun
+	applicable bool
+	note       string
 }
 
 // executionRecordRun is one run of a process.
@@ -579,15 +594,11 @@ func TestExecutionRecords(t *testing.T) {
 
 	dir := t.TempDir()
 	cores := buildTestCores(t, dir)
+	clang := buildLlvmClang()
 
-	type formOutcome struct {
-		run        executionRecordRun
-		applicable bool
-		note       string
-	}
 	type outcome struct {
 		programHash string
-		forms       map[executionRecordForm]formOutcome
+		forms       map[executionRecordForm]executionRecordFormOutcome
 		payload     int
 	}
 	outcomes := make([]outcome, len(file.records))
@@ -600,21 +611,31 @@ func TestExecutionRecords(t *testing.T) {
 			defer wait.Done()
 			defer func() { <-limit }()
 			input := harness.inputOf(file.inputs, record.name)
-			forms := map[executionRecordForm]formOutcome{}
+			forms := map[executionRecordForm]executionRecordFormOutcome{}
 			outcomes[i].programHash, _ = harness.programHash(record.name)
-			forms[executionRecordFormOld] = formOutcome{run: harness.cx("old", record.name, input), applicable: true}
+			forms[executionRecordFormOld] = executionRecordFormOutcome{run: harness.cx("old", record.name, input), applicable: true}
 			vmRun := harness.cx("vm", record.name, input)
 			if executionRecordVmOutside(vmRun) {
-				forms[executionRecordFormVm] = formOutcome{note: "does not lower"}
-				forms[executionRecordFormImageVm] = formOutcome{note: "does not lower"}
+				forms[executionRecordFormVm] = executionRecordFormOutcome{note: "does not lower"}
+				forms[executionRecordFormImageVm] = executionRecordFormOutcome{note: "does not lower"}
 			} else {
-				forms[executionRecordFormVm] = formOutcome{run: vmRun, applicable: true}
-				forms[executionRecordFormImageVm] = formOutcome{run: harness.image("vm", record.name, input), applicable: true}
+				forms[executionRecordFormVm] = executionRecordFormOutcome{run: vmRun, applicable: true}
+				forms[executionRecordFormImageVm] = executionRecordFormOutcome{run: harness.image("vm", record.name, input), applicable: true}
 			}
-			forms[executionRecordFormImageOld] = formOutcome{run: harness.image("old", record.name, input), applicable: true}
+			forms[executionRecordFormImageOld] = executionRecordFormOutcome{run: harness.image("old", record.name, input), applicable: true}
+			switch {
+			case executionRecordVmOutside(vmRun):
+				forms[executionRecordFormNative] = executionRecordFormOutcome{note: "does not lower"}
+			case executionRecordRunFlag(record.name) != "":
+				forms[executionRecordFormNative] = executionRecordFormOutcome{note: "passes the run time flag " + executionRecordRunFlag(record.name)}
+			case clang == "":
+				forms[executionRecordFormNative] = executionRecordFormOutcome{note: "no clang on this machine, set " + buildLlvmClangEnv + " or install clang"}
+			default:
+				forms[executionRecordFormNative] = harness.native(dir, i, record.name, input)
+			}
 
 			if flag := executionRecordRunFlag(record.name); flag != "" {
-				forms[executionRecordFormBuilt] = formOutcome{note: "passes the run time flag " + flag}
+				forms[executionRecordFormBuilt] = executionRecordFormOutcome{note: "passes the run time flag " + flag}
 			} else {
 				output := filepath.Join(dir, fmt.Sprintf("program-%d", i))
 				if runtime.GOOS == "windows" {
@@ -625,9 +646,9 @@ func TestExecutionRecords(t *testing.T) {
 				build := executionRecordProcess(t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 				switch {
 				case build.exitCode != types.CX_SUCCESS && bytes.Contains(build.stderr, []byte("opcodes it does not include")):
-					forms[executionRecordFormBuilt] = formOutcome{note: "uses opcodes outside the core"}
+					forms[executionRecordFormBuilt] = executionRecordFormOutcome{note: "uses opcodes outside the core"}
 				case build.exitCode != types.CX_SUCCESS:
-					forms[executionRecordFormBuilt] = formOutcome{run: build, applicable: true, note: "cx build failed"}
+					forms[executionRecordFormBuilt] = executionRecordFormOutcome{run: build, applicable: true, note: "cx build failed"}
 				default:
 					if program, fileError := core.CoreTrailerRead(output); fileError == nil {
 						outcomes[i].payload = len(program)
@@ -636,7 +657,7 @@ func TestExecutionRecords(t *testing.T) {
 					if input.replayPath != "" {
 						env = append(env, "CX_NET_REPLAY="+input.replayPath)
 					}
-					forms[executionRecordFormBuilt] = formOutcome{run: executionRecordProcess(t, output, env, harness.tests, input.stdin, input.arguments...), applicable: true}
+					forms[executionRecordFormBuilt] = executionRecordFormOutcome{run: executionRecordProcess(t, output, env, harness.tests, input.stdin, input.arguments...), applicable: true}
 					os.Remove(output)
 				}
 			}
@@ -670,8 +691,14 @@ func TestExecutionRecords(t *testing.T) {
 		} else if executionRecordHash(recorded) != record.outputHash {
 			t.Errorf("record %s: the recorded stdout does not hash to its name %s", record.name, record.outputHash)
 		}
-		matches := func(run executionRecordRun) bool {
-			return !run.timedOut && run.exitCode == record.exitCode && executionRecordHash(run.stdout) == record.outputHash
+		matches := func(form executionRecordForm, run executionRecordRun) bool {
+			if run.timedOut || run.exitCode != record.exitCode {
+				return false
+			}
+			if cut := bytes.Index(recorded, executionRecordCallStack); form == executionRecordFormNative && cut >= 0 {
+				return bytes.Equal(run.stdout, append(recorded[:cut:cut], '\n'))
+			}
+			return executionRecordHash(run.stdout) == record.outputHash
 		}
 		for _, form := range executionRecordForms {
 			outcome := result.forms[form]
@@ -680,7 +707,7 @@ func TestExecutionRecords(t *testing.T) {
 				continue
 			}
 			checked[form]++
-			if matches(outcome.run) {
+			if matches(form, outcome.run) {
 				continue
 			}
 			mismatches++
@@ -899,4 +926,26 @@ func executionRecordsImageChild(args []string) {
 // executionRecordsChildArguments splits an argument environment variable.
 func executionRecordsChildArguments(value string) []string {
 	return strings.Split(value, executionRecordsArgumentSeparator)
+}
+
+// native builds name with cx build --target=llvm into dir and runs the
+// executable on input. A program that calls a system library has no native
+// form.
+func (harness executionRecordHarness) native(dir string, index int, name string, input executionRecordInput) executionRecordFormOutcome {
+	output := filepath.Join(dir, fmt.Sprintf("native-%d", index))
+	if runtime.GOOS == "windows" {
+		output += ".exe"
+	}
+	buildArgs := append([]string{buildCommand, "--target=" + buildTargetLlvm}, strings.Fields(name)...)
+	buildArgs = append(buildArgs, "-o", output)
+	build := executionRecordProcess(harness.t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
+	switch {
+	case build.exitCode != types.CX_SUCCESS && bytes.Contains(build.stderr, []byte(llvm.LibraryCallRefusal)):
+		return executionRecordFormOutcome{note: "calls a system library"}
+	case build.exitCode != types.CX_SUCCESS:
+		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=llvm failed"}
+	}
+	defer os.Remove(output)
+	defer os.Remove(strings.TrimSuffix(output, ".exe") + buildLlvmExtension)
+	return executionRecordFormOutcome{run: executionRecordProcess(harness.t, output, nil, harness.tests, input.stdin, input.arguments...), applicable: true}
 }
