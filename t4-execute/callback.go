@@ -9,14 +9,15 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-ast"
 )
 
-// Callback runs fn with inputs written to its frame in a nested loop, for
-// the callbacks of t6-cxfx. Its results are left in the frame.
-func Callback(cxprogram *ast.CXProgram, fn *ast.CXFunction, inputs [][]byte) {
+// Callback runs the function gid names with inputs written to its frame in a
+// nested loop, for the callbacks of t6-cxfx. Its results are left in the frame.
+func Callback(cxprogram *ast.CXProgram, gid ast.CXFunctionGid, inputs [][]byte) {
+	fn := cxprogram.CxIrState.CXFunctionMng.CXFunctionGet(gid)
 	line := cxprogram.CallStack[cxprogram.CallCounter].Line
 	previousCall := cxprogram.CallCounter
 	cxprogram.CallCounter++
 	newCall := &cxprogram.CallStack[cxprogram.CallCounter]
-	newCall.Operator = fn
+	newCall.Operator = gid
 	newCall.Line = 0
 	newCall.FramePointer = cxprogram.Stack.Pointer
 	cxprogram.Stack.Pointer += fn.Size
@@ -27,7 +28,7 @@ func Callback(cxprogram *ast.CXProgram, fn *ast.CXFunction, inputs [][]byte) {
 		cxprogram.Memory[newFP+c] = 0
 	}
 
-	newCallOperatorInputs := newCall.Operator.GetInputs(cxprogram)
+	newCallOperatorInputs := fn.GetInputs(cxprogram)
 	for i, inp := range inputs {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S1247.

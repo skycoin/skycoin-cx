@@ -17,7 +17,7 @@ func popStack(prgrm *CXProgram, call *CXCall) error {
 
 	// copying the outputs to the previous stack frame
 	returnAddr := &prgrm.CallStack[prgrm.CallCounter]
-	returnOp := returnAddr.Operator
+	returnOp := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(returnAddr.Operator)
 	returnLine := returnAddr.Line
 	returnFP := returnAddr.FramePointer
 	fp := call.FramePointer
@@ -33,7 +33,7 @@ func popStack(prgrm *CXProgram, call *CXCall) error {
 
 	cxAtomicOpOutputs := cxAtomicOp.GetOutputs(prgrm)
 	lenOuts := len(cxAtomicOpOutputs)
-	callOperatorOutputs := call.Operator.GetOutputs(prgrm)
+	callOperatorOutputs := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).GetOutputs(prgrm)
 	for i, outputIdx := range callOperatorOutputs {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0098.
@@ -249,7 +249,7 @@ func processNonAtomicOperators(prgrm *CXProgram, cxAtomicOp *CXAtomicOperator, c
 			byts)
 	}
 
-	callPush(prgrm, cxAtomicOpOperator)
+	callPush(prgrm, cxAtomicOp.Operator, cxAtomicOpOperator)
 	return nil
 }
 
@@ -261,21 +261,23 @@ func callPushCheck(prgrm *CXProgram, operator *CXFunction) {
 	}
 }
 
-// callPush makes operator the current call, with its frame at the stack
-// pointer, after callPushCheck.
-func callPush(prgrm *CXProgram, operator *CXFunction) {
+// callPush makes operator, the function gid names, the current call, with its
+// frame at the stack pointer, after callPushCheck.
+func callPush(prgrm *CXProgram, gid CXFunctionGid, operator *CXFunction) {
 	callPushCheck(prgrm, operator)
 	prgrm.CallCounter++
 	newCall := &prgrm.CallStack[prgrm.CallCounter]
-	newCall.Operator = operator
+	newCall.Operator = gid
 	newCall.Line = 0
 	newCall.FramePointer = prgrm.Stack.Pointer
 	prgrm.Stack.Pointer += operator.Size
 }
 
-func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutputs *[]CXValue) error {
+// Call runs the next step of call, whose function fn is, the pointer the run
+// loop borrowed from CXFunctionMng for call.Operator.
+func (call *CXCall) Call(prgrm *CXProgram, fn *CXFunction, globalInputs *[]CXValue, globalOutputs *[]CXValue) error {
 	// CX is still single-threaded, so only one stack
-	if call.Line >= call.Operator.LineCount {
+	if call.Line >= fn.LineCount {
 		/*
 		   popping the stack
 		*/
@@ -291,7 +293,6 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 	   continue with call operator's execution
 	*/
 
-	fn := call.Operator
 	// A pointer, not a copy, so nothing escapes to the heap (VMALLOC-001, #407).
 	expr := &fn.Expressions[call.Line]
 	fp := call.FramePointer
@@ -310,9 +311,7 @@ func (call *CXCall) Call(prgrm *CXProgram, globalInputs *[]CXValue, globalOutput
 	if err != nil {
 		return err
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0117.
-	cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
+	cxAtomicOpOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(cxAtomicOp.Operator)
 	// if it's a native, then we just process the arguments with execNative
 	//TODO: WHEN WOULD OPERATOR EVER BE NIL?
 	if cxAtomicOpOperator == nil {

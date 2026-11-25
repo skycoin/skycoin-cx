@@ -80,7 +80,7 @@ func escapeAnalyze(prgrm *ast.CXProgram, params []escapeParam, results []*ast.CX
 		if op == nil {
 			continue
 		}
-		if operator := prgrm.GetFunctionFromArray(op.Operator); operator != nil {
+		if operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(op.Operator); operator != nil {
 			state.escapeLoopAdd(i, op, operator)
 			continue
 		}
@@ -156,7 +156,7 @@ func (state *escapeState) escapeExpression(expr *ast.CXExpression) {
 	if op == nil {
 		return
 	}
-	operator := prgrm.GetFunctionFromArray(op.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(op.Operator)
 	inputs := op.GetInputs(prgrm)
 	outputs := op.GetOutputs(prgrm)
 	switch {
@@ -244,7 +244,7 @@ func (state *escapeState) escapeMethod(receiverIdx ast.CXTypeSignatureIndex) *as
 	if err != nil {
 		return nil
 	}
-	return prgrm.GetFunctionFromArray(fnIdx)
+	return prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 }
 
 // escapeCallArgument handles sources passed as input i of fn. Only a function

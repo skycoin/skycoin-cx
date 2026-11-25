@@ -99,9 +99,7 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 	// declaration order, the order of their indexes.
 	var j int
 	for _, fnIdx := range slices.Sorted(maps.Values(pkg.Functions)) {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-		// Now an arena getter, site S0479.
-		fn := prgrm.GetFunctionFromArray(fnIdx)
+		fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 		if fn.Name == prgrm.CxIrState.CxIrStateNameSysInit {
 			continue
@@ -133,9 +131,7 @@ func buildStrFunctions(prgrm *CXProgram, pkg *CXPackage, ast1 *string) {
 				panic(err)
 			}
 
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now an arena getter, site S0481.
-			cxAtomicOpOperator := prgrm.GetFunctionFromArray(cxAtomicOp.Operator)
+			cxAtomicOpOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(cxAtomicOp.Operator)
 			// Adding label in case a `goto` statement was used for the expression.
 			if cxAtomicOp.Label != stringpool.StringGidNil {
 				lbl = " <<" + prgrm.CXProgramNameText(cxAtomicOp.Label) + ">>"

@@ -21,8 +21,8 @@ import (
 // inputFn.Expressions, and the last one writes to inputFn's first output.
 func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction, inputPkg *cxast.CXPackage, fns []*cxast.CXNativeFunction, numExprs int) {
 	// Adding an expression can grow CXAtomicOps, so operators are looked up
-	// by index after every addition. inputFn lives in CXFunctionMng and stays.
-	fnIdx := cxast.CXFunctionIndex(inputFn.Index)
+	// by index after every addition.
+	fnIdx := prgrm.CXProgramFunctionGid(inputFn)
 	fnOutputs := inputFn.GetOutputs(prgrm)
 	newExprs := numExprs - len(inputFn.Expressions)
 
@@ -54,9 +54,7 @@ func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction
 
 		// if operator is jmp, add then and else lines
 		if IsJumpOperator(op.AtomicOPCode) {
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now an arena getter, site S0023.
-			lineNumOptions := numExprs - len(prgrm.GetFunctionFromArray(fnIdx).Expressions)
+			lineNumOptions := numExprs - len(prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx).Expressions)
 			if lineNumOptions < 0 {
 				lineNumOptions = (lineNumOptions * -1) - 2
 			}
@@ -72,9 +70,7 @@ func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction
 
 		// The expression is added before its outputs are chosen, so its
 		// own slot is one of the options.
-		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-		// Now an arena getter, site S0024.
-		fn := prgrm.GetFunctionFromArray(fnIdx)
+		fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 		fn.AddExpression(prgrm, exprCXLine)
 		fn.AddExpression(prgrm, expr)
 
@@ -88,9 +84,7 @@ func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction
 		}
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0025.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	fn.Size = calcFnSize(prgrm, fn)
 	fn.LineCount = len(fn.Expressions)
 }
@@ -155,9 +149,7 @@ func opOutput(prgrm *cxast.CXProgram, fn *cxast.CXFunction, exprPos int) (cxast.
 	if expr.Type != cxast.CX_ATOMIC_OPERATOR {
 		return 0, false
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0031.
-	operator := prgrm.GetFunctionFromArray(getAtomicOp(prgrm, expr.Index).Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(getAtomicOp(prgrm, expr.Index).Operator)
 	outputs := operator.GetOutputs(prgrm)
 	if len(outputs) == 0 {
 		return 0, false
@@ -234,10 +226,8 @@ func findArgOptions(prgrm *cxast.CXProgram, fn *cxast.CXFunction, argTypeToFind 
 	return options
 }
 
-func getRandInp(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, opCode int, argType types.Code) cxast.CXTypeSignatureIndex {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0039.
-	options := findArgOptions(prgrm, prgrm.GetFunctionFromArray(fnIdx), argType)
+func getRandInp(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionGid, opCode int, argType types.Code) cxast.CXTypeSignatureIndex {
+	options := findArgOptions(prgrm, prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx), argType)
 
 	// if no options available or if operator is jump, add new i32_LT expression.
 	if len(options) == 0 || opCode == cxconstants.OP_JMP {
@@ -250,7 +240,7 @@ func getRandInp(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, opCode int,
 
 // addNewExpression appends an expression of type expressionType to fn, with
 // random inputs, and returns a signature reading its output.
-func addNewExpression(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, expressionType int) cxast.CXTypeSignatureIndex {
+func addNewExpression(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionGid, expressionType int) cxast.CXTypeSignatureIndex {
 	native := cxast.NativeFunctionOf(prgrm, expressionType)
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 	// Now a constructor call, site S0040.
@@ -260,16 +250,12 @@ func addNewExpression(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, expre
 	newExpr := cxast.MakeAtomicOperatorExpression(prgrm, native)
 
 	for _, inp := range native.Inputs {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-		// Now an arena getter, site S0042.
-		options := findArgOptions(prgrm, prgrm.GetFunctionFromArray(fnIdx), inp.Type)
+		options := findArgOptions(prgrm, prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx), inp.Type)
 		inpIdx := copySig(prgrm, options[rand.Intn(len(options))])
 		getAtomicOp(prgrm, newExpr.Index).AddInput(prgrm, inpIdx)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0043.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	fn.AddExpression(prgrm, newExprCXLine)
 	fn.AddExpression(prgrm, newExpr)
 
@@ -282,10 +268,8 @@ func addNewExpression(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, expre
 
 // getRandOut picks the slot of a random expression of fn whose operator
 // returns outType, so expressions may overwrite each other's results.
-func getRandOut(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionIndex, outType types.Code) cxast.CXTypeSignatureIndex {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0044.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+func getRandOut(prgrm *cxast.CXProgram, fnIdx cxast.CXFunctionGid, outType types.Code) cxast.CXTypeSignatureIndex {
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 	var options []int
 	for p := range fn.Expressions {

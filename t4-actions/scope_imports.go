@@ -420,7 +420,7 @@ func importScopedCheckName(prgrm *ast.CXProgram, pkg *ast.CXPackage, index int, 
 		return
 	}
 	if fnIdx, found := pkg.Functions[name]; found {
-		fn := prgrm.GetFunctionFromArray(fnIdx)
+		fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 		importScopedMaskReport(prgrm, name, fn.FileName, fn.FileLine, fn.FileColumn, position)
 		return
 	}

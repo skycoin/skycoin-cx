@@ -116,13 +116,13 @@ func PackageRedeclarationCheck(prgrm *ast.CXProgram, pkg *ast.CXPackage) {
 		strct := prgrm.GetStructFromArray(strctIdx)
 		declarations = append(declarations, packageDeclaration{strct.Name, strct.FileName, strct.FileLine, strct.FileColumn})
 	}
-	methods := make(map[ast.CXFunctionIndex]bool, len(pkg.Methods))
+	methods := make(map[ast.CXFunctionGid]bool, len(pkg.Methods))
 	for _, fnIdx := range pkg.Methods {
 		methods[fnIdx] = true
 	}
 	for _, fnIdx := range pkg.Functions {
 		if !methods[fnIdx] {
-			fn := prgrm.GetFunctionFromArray(fnIdx)
+			fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 			declarations = append(declarations, packageDeclaration{fn.Name, fn.FileName, fn.FileLine, fn.FileColumn})
 		}
 	}

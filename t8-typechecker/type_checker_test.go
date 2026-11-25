@@ -926,9 +926,7 @@ func TestTypeChecker_ParseFuncHeaders(t *testing.T) {
 					}
 
 					for _, gotFuncIdx := range pkg.Functions {
-						// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-						// Now an arena getter, site S1553.
-						gotFunc = program.GetFunctionFromArray(gotFuncIdx)
+						gotFunc = program.CxIrState.CXFunctionMng.CXFunctionGet(gotFuncIdx)
 						gotFuncName = actions.AST.CXProgramNameText(gotFunc.Name)
 
 						var inps bytes.Buffer
@@ -1342,9 +1340,7 @@ func TestTypeChecker_ParseAllDeclarations(t *testing.T) {
 					var gotFuncInputs string
 					var gotFuncOutputs string
 					for _, gotFuncIdx := range gotPkg.Functions {
-						// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-						// Now an arena getter, site S1557.
-						gotFunc := program.GetFunctionFromArray(gotFuncIdx)
+						gotFunc := program.CxIrState.CXFunctionMng.CXFunctionGet(gotFuncIdx)
 						gotFuncName = actions.AST.CXProgramNameText(gotFunc.Name)
 
 						var inps bytes.Buffer

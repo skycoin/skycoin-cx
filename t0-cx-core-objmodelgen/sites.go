@@ -158,7 +158,7 @@ func objmodelgenTableEnd(lines []string, start int) int {
 }
 
 // objmodelgenSiteComment matches the site ids of an OBJMODEL comment, as in
-// "site S0123." or "sites S0123 S0124.".
+// "site S" and four digits, or "sites S" and several ids.
 var objmodelgenSiteComment = regexp.MustCompile(`[Ss]ites?((?: S[0-9]{4})+)`)
 
 // objmodelgenSitesCodeCheck reports the sites CSV and the site comments of

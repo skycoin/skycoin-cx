@@ -26,7 +26,7 @@ func GarbageCollectorPrepare(prgrm *CXProgram) {
 	gcGlobalRoots(prgrm)
 	if functions := prgrm.CXProgramFunctionSlotCount(); cache.GCTypeCacheFunctions != functions {
 		for i := 0; i < functions; i++ {
-			if fn := prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(i)); fn != nil {
+			if fn := prgrm.CXProgramFunctionSlotLive(i); fn != nil {
 				gcFrameRoots(prgrm, fn)
 			}
 		}
@@ -56,10 +56,10 @@ func GarbageCollectorTrigger(prgrm *CXProgram) {
 	for c := types.Pointer(0); prgrm.CallCounter.IsValid() && c <= prgrm.CallCounter; c++ {
 		call := &prgrm.CallStack[c]
 		// A callback a native pushes onto CallStack has no operator.
-		if call.Operator == nil {
+		if call.Operator == CXFunctionGidNil {
 			continue
 		}
-		frames = append(frames, gc.GCRootFrame{GCRootFramePointer: call.FramePointer, GCRootFrameRoots: gcFrameRoots(prgrm, call.Operator)})
+		frames = append(frames, gc.GCRootFrame{GCRootFramePointer: call.FramePointer, GCRootFrameRoots: gcFrameRoots(prgrm, prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator))})
 	}
 	roots.GCRootTableFrames = frames
 	heap.Pointer = gc.GarbageCollectorCollect(prgrm.Memory, heap.StartsAt, heap.Pointer, roots, &heap.Collector)

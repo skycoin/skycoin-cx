@@ -115,12 +115,12 @@ A function is finished by `actions.FunctionHeader`, which adds the
 
 The rest of the program lives in flat slices, called arenas here. IR
 objects refer to each other by index into these slices, as integer types
-such as `CXFunctionIndex`.
+such as `CXStructIndex`, or by Gid into a manager, such as `CXFunctionGid`.
 
 | Arena | Element | Index type | Getter |
 | --- | --- | --- | --- |
 | `CXPackages` | `CXPackage` | `CXPackageIndex` | `GetPackageFromArray` |
-| `CxIrState.CXFunctionMng`, was `CXFunctions` | `CXFunction` | `CXFunctionIndex`, the slot index | `GetFunctionFromArray` (nil for -1) |
+| `CxIrState.CXFunctionMng`, was `CXFunctions` | `CXFunction` | `CXFunctionGid` | `CXFunctionMng.CXFunctionGet`, `CxIrStateFunctionGetOrNil` (nil for `CXFunctionGidNil`) |
 | `CXStructs` | `CXStruct` | `CXStructIndex` | direct index |
 | `CXAtomicOps` | `CXAtomicOperator` | `int` | `GetCXAtomicOp` |
 | `CxIrState.CXLineMng`, was `CXLines` | `CXLine` | `int`, the slot index | `GetCXLine` |
@@ -143,7 +143,7 @@ in the source and becomes a generational index under the object model in
 
 `ast.CXPackage` (`t3-ast/cxpackage_def.go`) has a `Name`, its own `Index`
 in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
-`Functions` (to `CXFunctionIndex`) and `Structs` (to `CXStructIndex`).
+`Functions` (to `CXFunctionGid`) and `Structs` (to `CXStructIndex`).
 `Globals` is a `*CXStruct` whose `Fields` are the global variables.
 `CurrentFunction` is the function being parsed.
 
@@ -217,16 +217,16 @@ A `CX_ATOMIC_OPERATOR` expression points at an `ast.CXAtomicOperator`
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `Operator` | `CXFunctionIndex` | What runs, see below |
+| `Operator` | `CXFunctionGid` | What runs, see below |
 | `Inputs`, `Outputs` | `*CXStruct` | `Fields` are the `CXTypeSignatureIndex` of each operand. Read them with `GetInputs(prgrm)` and `GetOutputs(prgrm)` |
-| `Function` | `CXFunctionIndex` | The function this expression belongs to |
+| `Function` | `CXFunctionGid` | The function this expression belongs to |
 | `Package` | `CXPackageIndex` | The package of that function |
 | `Label` | `string` | `goto` label, empty otherwise |
 | `ThenLines`, `ElseLines` | `int` | Relative jump distances for `jmp`, `goto`, `break` and `continue` |
 
 `Operator` takes one of three forms.
 
-* `-1`. `GetFunctionFromArray` returns nil and the expression is a
+* `CXFunctionGidNil`. `CxIrStateFunctionGetOrNil` returns nil and the expression is a
   variable declaration. It has one output and no inputs, and the VM
   zeroes the output's bytes (`wipeDeclarationMemory`).
 * A `CXFunction` with `AtomicOPCode != 0`. The expression is a native

@@ -56,7 +56,7 @@ type SymbolsData struct {
 //				   it's called on as the first argument.
 //	 nameLine, nameColumn - the position of the name, which tells a second
 //				   declaration of the name from the first, 0 when unknown.
-func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgument, isMethod bool, nameLine int, nameColumn int) ast.CXFunctionIndex {
+func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgument, isMethod bool, nameLine int, nameColumn int) ast.CXFunctionGid {
 	if isMethod {
 		receiver = MethodReceiver(prgrm, receiver)
 		if pkg, err := prgrm.GetCurrentPackage(); err == nil {
@@ -65,7 +65,7 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 
 			if fnIdx, ok := pkg.Methods[ast.CXPackageMethodKey{CXPackageMethodKeyStruct: receiverName, CXPackageMethodKeyMethod: methodName}]; ok {
 				fnIdx = prgrm.FunctionDeclarationAt(fnIdx, CurrentFile, nameLine, nameColumn)
-				fn := prgrm.GetFunctionFromArray(fnIdx)
+				fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 				fn.AddInput(prgrm, receiver[0])
 				pkg.CurrentFunction = fnIdx
 				return fnIdx
@@ -84,7 +84,7 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 		if pkg, err := prgrm.GetCurrentPackage(); err == nil {
 			fnNameGid := prgrm.CXProgramNameIntern(fnName)
 			if fn, err := prgrm.GetFunction(fnNameGid, pkg.Name); err == nil {
-				fnIdx := prgrm.FunctionDeclarationAt(ast.CXFunctionIndex(fn.Index), CurrentFile, nameLine, nameColumn)
+				fnIdx := prgrm.FunctionDeclarationAt(prgrm.CXProgramFunctionGid(fn), CurrentFile, nameLine, nameColumn)
 				pkg.CurrentFunction = fnIdx
 				return fnIdx
 			} else {
@@ -176,10 +176,8 @@ func FunctionResultsUnnamed(prgrm *ast.CXProgram, results []*ast.CXArgument) []*
 //		fnIdx - the index of the function in the main CXFunction array.
 //	 inputs - parameters to be added in the function as input.
 //	 outputs - parameters to be added in the function as output.
-func FunctionAddParameters(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs, outputs []*ast.CXArgument) {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0725.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+func FunctionAddParameters(prgrm *ast.CXProgram, fnIdx ast.CXFunctionGid, inputs, outputs []*ast.CXArgument) {
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 	fnInputs := fn.GetInputs(prgrm)
 	if len(fnInputs) != len(inputs) {
@@ -216,9 +214,7 @@ func isParseOp(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0729.
-	exprAtomicOpOperator := prgrm.GetFunctionFromArray(exprAtomicOp.Operator)
+	exprAtomicOpOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(exprAtomicOp.Operator)
 	if exprAtomicOpOperator != nil && exprAtomicOpOperator.AtomicOPCode > constants.START_PARSE_OPS && exprAtomicOpOperator.AtomicOPCode < constants.END_PARSE_OPS {
 		return true
 	}
@@ -230,9 +226,7 @@ func isParseOp(prgrm *ast.CXProgram, expr *ast.CXExpression) bool {
 // the expression `sa + sb` is not valid if they are struct instances.
 func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	expressionIdx := exprs[currIndex].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0730.
-	expressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[expressionIdx].Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[expressionIdx].Operator)
 	if expressionOperator != nil && ast.IsOperator(expressionOperator.AtomicOPCode) && !IsAllArgsBasicTypes(prgrm, &exprs[currIndex]) {
 		file, line := exprLine(prgrm, exprs, currIndex)
 		prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeOperatorArgumentTypes, file, line, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(constants.OpcodeNameOf(expressionOperator.AtomicOPCode))})
@@ -253,10 +247,8 @@ func CheckUndValidTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currInde
 //				 and receiver).
 //	 fnIdx - the index of the function in the main CXFunction array.
 //	 params - function parameters to be processed.
-func ProcessFunctionParameters(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionIndex, params []ast.CXTypeSignatureIndex) {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0731.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+func ProcessFunctionParameters(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionGid, params []ast.CXTypeSignatureIndex) {
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 	for _, paramIdx := range params {
 		UpdateSymbolsTable(prgrm, symbolsData, paramIdx, offset, false)
@@ -297,7 +289,7 @@ func ProcessFunctionParameters(prgrm *ast.CXProgram, symbolsData *SymbolsData, o
 //	 inputs - parameters to be added in the function as input.
 //	 outputs - parameters to be added in the function as output.
 //	 exprs - expression statements inside the function.
-func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs, outputs []*ast.CXArgument, exprs []ast.CXExpression) {
+func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionGid, inputs, outputs []*ast.CXArgument, exprs []ast.CXExpression) {
 	// getting offset to use by statements (excluding inputs, outputs and receiver).
 	var offset types.Pointer
 
@@ -321,9 +313,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	}
 
 	pkg.CurrentFunction = fnIdx
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0735.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 	scopeGlobalsCheckBegin(fnIdx)
 	symbolsData.escaped, exprs = escapeFunction(prgrm, fn, inputs, outputs, exprs)
@@ -332,9 +322,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	ProcessGoTos(prgrm, exprs)
 	ProcessLoopJumpsOutsideLoop(prgrm, exprs)
 	AddExprsToFunction(prgrm, fnIdx, exprs)
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, as at site S0735.
-	fn = prgrm.GetFunctionFromArray(fnIdx)
+	fn = prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetInputs(prgrm))
 	ProcessFunctionParameters(prgrm, symbolsData, &offset, fnIdx, fn.GetOutputs(prgrm))
 
@@ -394,9 +382,7 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 		symbolsScopeClose(symbolsData, expr)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, as at site S0735.
-	fn = prgrm.GetFunctionFromArray(fnIdx)
+	fn = prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	for _, slot := range symbolsData.escapedSlots {
 		gcRootAddEscapeSlot(fn, slot.escapeSlotOffset)
 	}
@@ -429,9 +415,7 @@ func ProcessTypedOperator(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIn
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0738.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if expressionOperator == nil {
 		return
 	}
@@ -533,9 +517,7 @@ func checkOperatorOperands(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0741.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if expressionOperator == nil || !ast.IsOperator(expressionOperator.AtomicOPCode) || len(expression.GetInputs(prgrm)) == 0 {
 		return
 	}
@@ -584,7 +566,7 @@ func checkOperatorResultType(prgrm *ast.CXProgram, exprs []ast.CXExpression, cur
 	if err != nil {
 		panic(err)
 	}
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if expressionOperator == nil || !ast.IsOperator(expressionOperator.AtomicOPCode) || ast.IsComparisonOperator(expressionOperator.AtomicOPCode) {
 		return
 	}
@@ -637,9 +619,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0744.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if expressionOperator == nil {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 		// Now an arena getter, site S0745.
@@ -663,7 +643,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 		}
 
 		if op, err := prgrm.GetFunction(opName, opPkg.Name); err == nil && fieldless {
-			expression.Operator = ast.CXFunctionIndex(op.Index)
+			expression.Operator = prgrm.CXProgramFunctionGid(op)
 		} else if fieldless {
 			// then it's not a possible method call
 			prgrm.CXProgramCompileErrorAdd(ast.CompileErrorCodeMessage, CurrentFile, LineNo, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(err.Error())})
@@ -702,9 +682,7 @@ func FunctionCall(prgrm *ast.CXProgram, exprs []ast.CXExpression, arguments [][]
 		if err != nil {
 			panic(err)
 		}
-		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-		// Now an arena getter, site S0751.
-		inpExprAtomicOpOperator := prgrm.GetFunctionFromArray(inpExprAtomicOp.Operator)
+		inpExprAtomicOpOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(inpExprAtomicOp.Operator)
 
 		inpExprCXLine, err := prgrm.GetPreviousCXLine(args, i)
 		if err != nil {
@@ -984,9 +962,7 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0782.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 
 	if expr.IsUndType(prgrm) {
 		for _, outputIdx := range expression.GetOutputs(prgrm) {
@@ -1035,7 +1011,7 @@ func ProcessOperatorExpression(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 // sliceResultTemporaryTypeAdopt gives the temporary result of a []und
 // built-in, as in len(append(s, v)), the slice type of its resolved input s.
 func sliceResultTemporaryTypeAdopt(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) {
-	operator := prgrm.GetFunctionFromArray(expression.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if operator == nil || !operator.IsBuiltIn() || len(expression.GetInputs(prgrm)) == 0 || len(expression.GetOutputs(prgrm)) != 1 {
 		return
 	}
@@ -1165,9 +1141,7 @@ func processTestExpression(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0796.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 
 	if expressionOperator != nil {
 		opCode := expressionOperator.AtomicOPCode
@@ -1221,10 +1195,8 @@ func checkIndexType(prgrm *ast.CXProgram, idxIdx ast.CXTypeSignatureIndex) {
 //	 args - the expression arguments.
 //	 expr - the expression.
 //	 isInput - true if args are input arguments, false if they are output args.
-func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionIndex, args []ast.CXTypeSignatureIndex, expr *ast.CXExpression, isInput bool) {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0800.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+func ProcessExpressionArguments(prgrm *ast.CXProgram, symbolsData *SymbolsData, offset *types.Pointer, fnIdx ast.CXFunctionGid, args []ast.CXTypeSignatureIndex, expr *ast.CXExpression, isInput bool) {
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 
 	for _, typeSignatureIdx := range args {
 		// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
@@ -1434,9 +1406,7 @@ func CheckRedeclared(prgrm *ast.CXProgram, symbolsData *SymbolsData, expr *ast.C
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0812.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 
 	if expressionOperator == nil && len(expression.GetOutputs(prgrm)) > 0 && len(expression.GetInputs(prgrm)) == 0 {
 		assert.AssertInvariantTrue(len(symbolsData.symbolsIndex) > 0, "CheckRedeclared: symbol scope stack is empty")
@@ -1484,9 +1454,7 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 		if err != nil {
 			panic(err)
 		}
-		// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-		// Now an arena getter, site S0814.
-		expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+		expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 		expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 		expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
@@ -1521,10 +1489,8 @@ func ProcessGoTos(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 }
 
 // AddExprsToFunction add all expressions to the function.
-func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, exprs []ast.CXExpression) {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0815.
-	fn := prgrm.GetFunctionFromArray(fnIdx)
+func AddExprsToFunction(prgrm *ast.CXProgram, fnIdx ast.CXFunctionGid, exprs []ast.CXExpression) {
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	for _, expr := range exprs {
 		fn.AddExpression(prgrm, &expr)
 	}
@@ -1545,9 +1511,7 @@ func checkMatchParamTypes(prgrm *ast.CXProgram, expr *ast.CXExpression, expected
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0817.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 
 	for i, expectedTypeSigIdx := range expected {
 		var receivedType, expectedType string
@@ -1711,9 +1675,7 @@ func CheckTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) b
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0829.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	exprCXLine, _ := prgrm.GetPreviousCXLine(exprs, currIndex)
 
 	if expressionOperator != nil {
@@ -1816,9 +1778,7 @@ func ProcessStringAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0837.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
@@ -1930,9 +1890,7 @@ func ProcessShortDeclaration(prgrm *ast.CXProgram, expr *ast.CXExpression, expre
 		var argStructType *ast.CXStruct
 		if expr.IsMethodCall() {
 
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now an arena getter, site S0845.
-			expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+			expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 			expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 			if len(expressionOperatorOutputs) == 0 {
 				return
@@ -2138,9 +2096,7 @@ func ProcessSliceAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0862.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
@@ -2423,7 +2379,7 @@ func ProcessMethodCall(prgrm *ast.CXProgram, expr *ast.CXExpression, symbolsData
 	expression = &prgrm.CXAtomicOps[expr.Index]
 	expression.Operator = fnIdx
 	receiver.Fields = receiver.Fields[:len(receiver.Fields)-1]
-	methodInputs := prgrm.GetFunctionFromArray(fnIdx).GetInputs(prgrm)
+	methodInputs := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx).GetInputs(prgrm)
 	methodPointer := len(methodInputs) > 0 && typeSignaturePointer(prgrm, prgrm.GetCXTypeSignatureFromArray(methodInputs[0]))
 	if !receiverPointer && methodPointer {
 		if !indirect && receiver.PassBy != constants.PASSBY_REFERENCE && len(receiver.Indexes) == 0 && IsTempVar(prgrm, receiver.Name) {
@@ -2488,7 +2444,7 @@ func typeSignaturePointer(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bo
 // types of the outputs of the method. It returns false after recording a
 // method without the outputs its call uses.
 func methodCallResultsType(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, strct *ast.CXStruct, method *ast.CXArgument) bool {
-	methodOutputs := prgrm.GetFunctionFromArray(expression.Operator).GetOutputs(prgrm)
+	methodOutputs := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator).GetOutputs(prgrm)
 	for i, resultIdx := range expression.GetOutputs(prgrm) {
 		resultTypeSig := prgrm.GetCXTypeSignatureFromArray(resultIdx)
 		if resultTypeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE || !strings.HasPrefix(prgrm.CXProgramNameText(resultTypeSig.Name), constants.METHOD_RESULT_PREFIX) {
@@ -2571,9 +2527,7 @@ func ProcessTempVariable(prgrm *ast.CXProgram, expr *ast.CXExpression) {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0928.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	expressionOperatorInputs := expressionOperator.GetInputs(prgrm)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 
@@ -3242,9 +3196,7 @@ func ProcessSymbolFields(prgrm *ast.CXProgram, symTypeSignature, argTypeSignatur
 				receiverType := strct.Name
 
 				if methodIdx, methodErr := strctPkg.GetMethod(prgrm, receiverType, methodName); methodErr == nil {
-					// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-					// Now an arena getter, site S0970.
-					method := prgrm.GetFunctionFromArray(methodIdx)
+					method := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(methodIdx)
 					methodOutputs := method.GetOutputs(prgrm)
 					// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 					// Now an arena getter, site S0971.
@@ -3518,7 +3470,7 @@ func checkSliceBuiltinTypes(prgrm *ast.CXProgram, exprs []ast.CXExpression, curr
 	if err != nil {
 		panic(err)
 	}
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if expressionOperator == nil || !expressionOperator.IsBuiltIn() {
 		return
 	}
@@ -3596,7 +3548,7 @@ func declarationSpecifiersSlice(dimensions int) []int {
 // incDecOperandMissing reports whether exprAtomicOp is an i++ or i-- that has
 // no 1 yet, which PostfixExpressionIncDec leaves out.
 func incDecOperandMissing(prgrm *ast.CXProgram, exprAtomicOp *ast.CXAtomicOperator) bool {
-	operator := prgrm.GetFunctionFromArray(exprAtomicOp.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(exprAtomicOp.Operator)
 	if operator == nil || (operator.AtomicOPCode != constants.OP_ADD && operator.AtomicOPCode != constants.OP_SUB) {
 		return false
 	}
@@ -3643,7 +3595,7 @@ func incDecOperandAdd(prgrm *ast.CXProgram, exprAtomicOp *ast.CXAtomicOperator) 
 // the line of the operator, not at the end of the function (skycoin/cx#450).
 func checkOperatorSameType(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) {
 	expression := &prgrm.CXAtomicOps[exprs[currIndex].Index]
-	operator := prgrm.GetFunctionFromArray(expression.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if operator == nil || !ast.IsOperator(operator.AtomicOPCode) || len(expression.GetOutputs(prgrm)) == 0 || expressionOperandInvalid(prgrm, expression) {
 		return
 	}
@@ -4010,7 +3962,7 @@ func typeSignatureInvalid(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) bo
 // expressionOperandInvalid reports whether an input or output of expression
 // is a types.INVALID placeholder, or its operator stands for a missing function.
 func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) bool {
-	if functionInvalid(prgrm, prgrm.GetFunctionFromArray(expression.Operator)) {
+	if functionInvalid(prgrm, prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)) {
 		return true
 	}
 	for _, typeSigIdx := range expression.GetInputs(prgrm) {
@@ -4029,14 +3981,14 @@ func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOper
 // invalidFunctionIndex adds a function that stands for the missing function
 // name, so that its call is typed. It takes any inputs and returns one
 // types.INVALID result, and the type checks skip its calls.
-func invalidFunctionIndex(prgrm *ast.CXProgram, pkgIdx ast.CXPackageIndex, name stringpool.StringGid) ast.CXFunctionIndex {
-	_, fn := ast.MakeFunction(prgrm, name, CurrentFile, LineNo)
+func invalidFunctionIndex(prgrm *ast.CXProgram, pkgIdx ast.CXPackageIndex, name stringpool.StringGid) ast.CXFunctionGid {
+	gid, fn := ast.MakeFunction(prgrm, name, CurrentFile, LineNo)
 	fn.Package = pkgIdx
 	_, input := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("input"), CurrentFile, LineNo)
 	fn.AddInput(prgrm, input.SetType(types.UNDEFINED))
 	_, output := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("output"), CurrentFile, LineNo)
 	fn.AddOutput(prgrm, output.SetType(types.INVALID))
-	return ast.CXFunctionIndex(fn.Index)
+	return gid
 }
 
 // functionInvalid reports whether fn is a function of invalidFunctionIndex.
@@ -4273,7 +4225,7 @@ func symbolFieldCompound(sig *ast.CXTypeSignature, field *ast.CXArgument) bool {
 func outputlessCallInvalidate(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator, operator *ast.CXFunction, file ast.SourceFileGid, line int) *ast.CXFunction {
 	prgrm.CXProgramCompileErrorAddLine(ast.CompileErrorCodeFunctionResultMissing, file, line, ast.CompileErrorOperands{int64(operator.Name)})
 	expression.Operator = invalidFunctionIndex(prgrm, expression.Package, operator.Name)
-	return prgrm.GetFunctionFromArray(expression.Operator)
+	return prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 }
 
 // outputlessValueCheck reports the value exprs when it ends in a call of a
@@ -4298,7 +4250,7 @@ func valueCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression, single bool) {
 			continue
 		}
 		expression := &prgrm.CXAtomicOps[exprs[i].Index]
-		operator := prgrm.GetFunctionFromArray(expression.Operator)
+		operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 		if operator == nil || exprs[i].IsMethodCall() || len(expression.GetOutputs(prgrm)) > 0 {
 			return
 		}

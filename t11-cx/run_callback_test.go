@@ -29,7 +29,7 @@ func main() {
 // runCallbackFunction returns the function of prgrm named name.
 func runCallbackFunction(t testing.TB, prgrm *ast.CXProgram, name string) *ast.CXFunction {
 	for i := 0; i < prgrm.CXProgramFunctionSlotCount(); i++ {
-		if fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(i)); fn != nil && prgrm.CXProgramNameText(fn.Name) == name {
+		if fn := prgrm.CXProgramFunctionSlotLive(i); fn != nil && prgrm.CXProgramNameText(fn.Name) == name {
 			return fn
 		}
 	}
@@ -45,7 +45,7 @@ func runCallbackPrepare(t testing.TB) (*ast.CXProgram, *ast.CXFunction, [][]byte
 	prgrm := actions.AST
 	execute.RunPrepare(prgrm)
 	mainFn := runCallbackFunction(t, prgrm, "main")
-	prgrm.CallStack[0] = execute.MakeCall(prgrm, mainFn)
+	prgrm.CallStack[0] = execute.MakeCall(prgrm, prgrm.CXProgramFunctionGid(mainFn))
 	prgrm.CallCounter = 0
 	prgrm.Stack.Pointer = mainFn.Size
 	inputs := [][]byte{make([]byte, 4), make([]byte, 4)}
@@ -63,7 +63,7 @@ func TestRunCallbackAllocs(t *testing.T) {
 	prgrm, fn, inputs := runCallbackPrepare(t)
 	stackPointer := prgrm.Stack.Pointer
 	allocs := testing.AllocsPerRun(100, func() {
-		execute.Callback(prgrm, fn, inputs)
+		execute.Callback(prgrm, prgrm.CXProgramFunctionGid(fn), inputs)
 	})
 	if allocs != 0 {
 		t.Errorf("%.0f allocations per callback, want 0", allocs)
@@ -81,6 +81,6 @@ func BenchmarkRunCallback(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		execute.Callback(prgrm, fn, inputs)
+		execute.Callback(prgrm, prgrm.CXProgramFunctionGid(fn), inputs)
 	}
 }

@@ -53,7 +53,7 @@ type Event struct {
 func cxfxAppCallbackSet(prgrm *ast.CXProgram, eventType EventType, inputs []ast.CXValue) {
 	cxfxState.CxfxAppCallbackTable[eventType] = CxfxCallback{
 		CxfxCallbackWindow:   inputs[0].Get_i32(prgrm),
-		CxfxCallbackFunction: ast.CXFunctionIndex(inputs[1].Get_i32(prgrm)),
+		CxfxCallbackFunction: prgrm.CXProgramFunctionSlotGid(uint32(inputs[1].Get_i32(prgrm))),
 		CxfxCallbackSet:      true,
 	}
 }
@@ -66,7 +66,7 @@ func cxfxAppCallbackCall(prgrm *ast.CXProgram, eventType EventType, count int) {
 		return
 	}
 	cxfxCallbackInputsI32(0, callback.CxfxCallbackWindow)
-	execute.Callback(prgrm, prgrm.GetFunctionFromArray(callback.CxfxCallbackFunction), cxfxState.CxfxCallbackInputs[:count+1])
+	execute.Callback(prgrm, callback.CxfxCallbackFunction, cxfxState.CxfxCallbackInputs[:count+1])
 }
 
 // VIOLATION: state outside State. Owner: t6-cxfx; moves to EventMng in phase 1.

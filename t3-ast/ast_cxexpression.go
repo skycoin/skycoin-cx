@@ -56,9 +56,7 @@ func (cxe CXExpression) IsBreak(prgrm *CXProgram) bool {
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0121.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	return expressionOperator != nil && expressionOperator.AtomicOPCode == constants.OP_BREAK
 }
 
@@ -71,9 +69,7 @@ func (cxe CXExpression) IsContinue(prgrm *CXProgram) bool {
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0123.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	return expressionOperator != nil && expressionOperator.AtomicOPCode == constants.OP_CONTINUE
 }
 
@@ -86,9 +82,7 @@ func (cxe CXExpression) IsUndType(prgrm *CXProgram) bool {
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0125.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	return expressionOperator != nil && IsOperator(expressionOperator.AtomicOPCode)
 
 }

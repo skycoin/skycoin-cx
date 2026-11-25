@@ -20,7 +20,7 @@ func PrinterErrorHeader(fileName string, lineNumber int) string {
 func PrinterRuntimeErrorPrint(prgrm *ast.CXProgram) int {
 	record := &prgrm.RuntimeError
 	call := prgrm.CallStack[record.RuntimeErrorRecordCall]
-	cxLine, _ := prgrm.GetPreviousCXLine(call.Operator.Expressions, record.RuntimeErrorRecordLine)
+	cxLine, _ := prgrm.GetPreviousCXLine(prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions, record.RuntimeErrorRecordLine)
 	fileName := prgrm.CXProgramSourceFileText(cxLine.FileName)
 
 	if record.RuntimeErrorRecordAssertLine {

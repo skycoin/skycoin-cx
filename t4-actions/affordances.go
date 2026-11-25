@@ -134,9 +134,9 @@ func affordanceLiteralValue(prgrm *ast.CXProgram, literal *ast.AffordanceLiteral
 		if !ok {
 			return fail(ast.AffordanceClauseFunction, "function '"+name(ast.AffordanceClauseFunction)+"' is not in package '"+prgrm.CXProgramNameText(pkg.Name)+"'")
 		}
-		fn = prgrm.GetFunctionFromArray(index)
+		fn = prgrm.CxIrState.CXFunctionMng.CXFunctionGet(index)
 		value.AffordanceValueKind = ast.AffordanceKindFunction
-		value.AffordanceValueItem = int32(index)
+		value.AffordanceValueItem = int32(ast.CXFunctionGidSlot(index))
 	}
 
 	if present(ast.AffordanceClauseVariable) {

@@ -24,8 +24,16 @@ func RunCxAst(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall typ
 func runLoop(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall types.Pointer, inputs *[]ast.CXValue, outputs *[]ast.CXValue) error {
 	var opCount int = 0
 	gcTick := !untilCall.IsValid()
+	// fn is borrowed for the run, which has no grow boundary and releases no
+	// function, and is read again only when the call names another function.
+	var fn *ast.CXFunction
+	fnGid := ast.CXFunctionGidNil
 	for !cxprogram.Terminated && (untilEnd || (opCount < maxOps)) && (!untilCall.IsValid() || cxprogram.CallCounter > untilCall) {
 		call := &cxprogram.CallStack[cxprogram.CallCounter]
+		if call.Operator != fnGid {
+			fnGid = call.Operator
+			fn = cxprogram.CxIrState.CXFunctionMng.CXFunctionGet(fnGid)
+		}
 
 		// checking if enough memory in stack
 		if cxprogram.Stack.Pointer > constants.STACK_SIZE {
@@ -34,7 +42,7 @@ func runLoop(cxprogram *ast.CXProgram, untilEnd bool, maxOps int, untilCall type
 
 		opCount++
 
-		err := call.Call(cxprogram, inputs, outputs)
+		err := call.Call(cxprogram, fn, inputs, outputs)
 		if err != nil {
 			return err
 		}
@@ -59,13 +67,13 @@ func runSysInitFunc(cxprogram *ast.CXProgram, mod *ast.CXPackage) error {
 	// *init function
 	// OBJMODEL: state.CXCallMng.CXCallAlloc(), phase 4 #366.
 	// Now a constructor call, site S1249.
-	mainCall := MakeCall(cxprogram, fn)
+	mainCall := MakeCall(cxprogram, cxprogram.CXProgramFunctionGid(fn))
 	cxprogram.CallStack[0] = mainCall
 	cxprogram.Stack.Pointer = fn.Size
 
 	for !cxprogram.Terminated {
 		call := &cxprogram.CallStack[cxprogram.CallCounter]
-		err = call.Call(cxprogram, &cxprogram.ProgramInputValues, &cxprogram.ProgramOutputValues)
+		err = call.Call(cxprogram, cxprogram.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator), &cxprogram.ProgramInputValues, &cxprogram.ProgramOutputValues)
 		if err != nil {
 			return err
 		}
@@ -76,7 +84,7 @@ func runSysInitFunc(cxprogram *ast.CXProgram, mod *ast.CXPackage) error {
 	// we reset call state
 	cxprogram.Terminated = false
 	cxprogram.CallCounter = 0
-	cxprogram.CallStack[0].Operator = nil
+	cxprogram.CallStack[0].Operator = ast.CXFunctionGidNil
 
 	return nil
 }
@@ -125,7 +133,7 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 	// initializing program resources
 	// cxprogram.Stacks = append(cxprogram.Stacks, MakeStack(1024))
 
-	if cxprogram.CallStack[0].Operator == nil {
+	if cxprogram.CallStack[0].Operator == ast.CXFunctionGidNil {
 		mod, err := cxprogram.SelectPackage(cxprogram.CxIrState.CxIrStateNameMain)
 		if err != nil {
 			return err
@@ -152,7 +160,7 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 		// main function
 		// OBJMODEL: state.CXCallMng.CXCallAlloc(), phase 4 #366.
 		// Now a constructor call, site S1250.
-		mainCall := MakeCall(cxprogram, fn)
+		mainCall := MakeCall(cxprogram, cxprogram.CXProgramFunctionGid(fn))
 		mainCall.FramePointer = cxprogram.Stack.Pointer
 		// initializing program resources
 		cxprogram.CallStack[0] = mainCall
@@ -179,7 +187,7 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 	if cxprogram.Terminated {
 		cxprogram.Terminated = false
 		cxprogram.CallCounter = 0
-		cxprogram.CallStack[0].Operator = nil
+		cxprogram.CallStack[0].Operator = ast.CXFunctionGidNil
 	}
 
 	// debugging memory
@@ -192,7 +200,7 @@ func RunCompiled(cxprogram *ast.CXProgram, maxOps int, args []string) error {
 
 // OBJMODEL: state.CXCallMng.CXCallAlloc(), phase 4 #366.
 // Now a constructor, site S1251.
-func MakeCall(prgrm *ast.CXProgram, op *ast.CXFunction) ast.CXCall {
+func MakeCall(prgrm *ast.CXProgram, op ast.CXFunctionGid) ast.CXCall {
 	// OBJMODEL: state.CXCallMng.CXCallAlloc(), phase 4 #366.
 	// Now a value literal, site S1252.
 	return ast.CXCall{

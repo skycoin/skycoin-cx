@@ -61,9 +61,8 @@ type CxfxShaderSourceArgument struct {
 // CxfxCallback is the CX function an event calls and the window it passes.
 type CxfxCallback struct {
 	CxfxCallbackWindow int32
-	// OBJMODEL: CXFunctionGid, phase 5 #352.
-	// Now an index into CXProgram.CXFunctions, resolved at compile time.
-	CxfxCallbackFunction ast.CXFunctionIndex
+	// CxfxCallbackFunction is the function, resolved at compile time.
+	CxfxCallbackFunction ast.CXFunctionGid
 	CxfxCallbackSet      bool
 }
 
@@ -76,9 +75,9 @@ type CxfxState struct {
 	CxfxTexturePixelsTable [CxfxTexturePixelsCountMax]CxfxTexturePixels
 	CxfxGifTable           [CxfxGifCountMax]*gif.GIF
 
-	// OBJMODEL: CXFunctionGid, phase 5 #352.
-	// Now indexes into CXProgram.CXFunctions, resolved at compile time.
-	CxfxCallbackI32I32Table [CxfxCallbackI32I32CountMax]ast.CXFunctionIndex
+	// CxfxCallbackI32I32Table holds the functions of the i32 callbacks, resolved
+	// at compile time.
+	CxfxCallbackI32I32Table [CxfxCallbackI32I32CountMax]ast.CXFunctionGid
 	CxfxCallbackI32I32Count int32
 
 	// CxfxAppCallbackTable is the callback of each event type.
@@ -192,14 +191,14 @@ func cxfxGifAdd(animation *gif.GIF) int32 {
 	return -1
 }
 
-func cxfxCallbackI32I32Get(handle int32) ast.CXFunctionIndex {
+func cxfxCallbackI32I32Get(handle int32) ast.CXFunctionGid {
 	if uint32(handle) >= uint32(cxfxState.CxfxCallbackI32I32Count) {
 		cxfxHandleAssertFailure(CxfxHandleKindCallbackI32I32, handle)
 	}
 	return cxfxState.CxfxCallbackI32I32Table[handle]
 }
 
-func cxfxCallbackI32I32Add(function ast.CXFunctionIndex) int32 {
+func cxfxCallbackI32I32Add(function ast.CXFunctionGid) int32 {
 	handle := cxfxState.CxfxCallbackI32I32Count
 	if handle >= CxfxCallbackI32I32CountMax {
 		cxfxTableFullAssertFailure(CxfxHandleKindCallbackI32I32, CxfxCallbackI32I32CountMax)

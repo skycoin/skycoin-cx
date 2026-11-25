@@ -66,9 +66,7 @@ func printerStackAtomicOp(cxprogram *ast.CXProgram, expr *ast.CXExpression) (*as
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0470.
-	return cxAtomicOp, cxprogram.GetFunctionFromArray(cxAtomicOp.Operator)
+	return cxAtomicOp, cxprogram.CxIrState.CxIrStateFunctionGetOrNil(cxAtomicOp.Operator)
 }
 
 // printerStackShownBefore reports whether a variable named as sig is an
@@ -113,7 +111,7 @@ func PrinterStackPrint(cxprogram *ast.CXProgram) {
 	fp := cxprogram.Stack.Pointer
 
 	for c := cxprogram.CallCounter; c != types.InvalidPointer; c-- {
-		op := cxprogram.CallStack[c].Operator
+		op := cxprogram.CxIrState.CXFunctionMng.CXFunctionGet(cxprogram.CallStack[c].Operator)
 		fp -= op.Size
 		opName := cxprogram.CXProgramNameBytes(op.Name)
 

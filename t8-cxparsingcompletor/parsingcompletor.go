@@ -84,7 +84,7 @@ type yySymType struct {
 	// The elements of an array or slice literal, elided ones not built yet.
 	literalElements []actions.LiteralElement
 
-	functionIndex ast.CXFunctionIndex
+	functionIndex ast.CXFunctionGid
 
 	// The names of a global statement, see #486.
 	scopeGlobalNames []actions.ScopeGlobalName

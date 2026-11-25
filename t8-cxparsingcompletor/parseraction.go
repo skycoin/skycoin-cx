@@ -93,7 +93,7 @@ func ParserActionExpressionStatement(exprs []ast.CXExpression) []ast.CXExpressio
 	var result []ast.CXExpression
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
 	// Now a heap literal, site S1497.
-	var lastFirstAtomicOp *ast.CXAtomicOperator = &ast.CXAtomicOperator{Operator: -1}
+	var lastFirstAtomicOp *ast.CXAtomicOperator = &ast.CXAtomicOperator{}
 	var err error
 
 	if len(exprs) > 0 {
@@ -102,9 +102,7 @@ func ParserActionExpressionStatement(exprs []ast.CXExpression) []ast.CXExpressio
 			panic(err)
 		}
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1498.
-	lastFirstAtomicOpOperator := actions.AST.GetFunctionFromArray(lastFirstAtomicOp.Operator)
+	lastFirstAtomicOpOperator := actions.AST.CxIrState.CxIrStateFunctionGetOrNil(lastFirstAtomicOp.Operator)
 
 	if len(exprs) > 0 && lastFirstAtomicOpOperator == nil && !exprs[len(exprs)-1].IsMethodCall() && !actions.ExpressionsDeclareInvalid(actions.AST, exprs) {
 		outs := lastFirstAtomicOp.GetOutputs(actions.AST)
@@ -137,7 +135,7 @@ func ParserActionLoopCondition(exprs []ast.CXExpression) []ast.CXExpression {
 		if err != nil {
 			panic(err)
 		}
-		if actions.AST.GetFunctionFromArray(cxAtomicOp.Operator) == nil {
+		if actions.AST.CxIrState.CxIrStateFunctionGetOrNil(cxAtomicOp.Operator) == nil {
 			return exprs
 		}
 	}

@@ -23,9 +23,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	var elt *ast.CXArgument
 
 	prevExpressionIdx := prevExprs[len(prevExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1094.
-	prevExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[prevExpressionIdx].Operator)
+	prevExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[prevExpressionIdx].Operator)
 	prevExprCXLine, _ := prgrm.GetPreviousCXLine(prevExprs, len(prevExprs)-1)
 
 	if prevExpressionOperator != nil && len(prgrm.CXAtomicOps[prevExpressionIdx].GetOutputs(prgrm)) == 0 {
@@ -185,9 +183,7 @@ func PostfixExpressionArray(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	}
 
 	postExpressionIdx := postExprs[len(postExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1123.
-	postExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[postExpressionIdx].Operator)
+	postExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[postExpressionIdx].Operator)
 	postExpressionOperatorOutputs := postExpressionOperator.GetOutputs(prgrm)
 
 	if prevExpressionOutputArg != nil && len(prevExpressionOutputArg.Fields) > 0 {
@@ -399,9 +395,7 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1148.
-	prevExpressionOperator := prgrm.GetFunctionFromArray(prevExpression.Operator)
+	prevExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prevExpression.Operator)
 
 	var firstPrevExpressionIdx int
 	for i := 0; i < len(prevExprs); i++ {
@@ -468,9 +462,7 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1155.
-	lastPrevExpressionOperator := prgrm.GetFunctionFromArray(lastPrevExpression.Operator)
+	lastPrevExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(lastPrevExpression.Operator)
 
 	firstPrevExpressionIdx := prevExprs[0].Index
 
@@ -576,9 +568,7 @@ func PostfixExpressionField(prgrm *ast.CXProgram, prevExprs []ast.CXExpression, 
 	lastExpr := prevExprs[len(prevExprs)-1]
 
 	lastExpressionIdx := lastExpr.Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1165.
-	lastExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastExpressionIdx].Operator)
+	lastExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastExpressionIdx].Operator)
 
 	lastExprCXLine, _ := prgrm.GetPreviousCXLine(prevExprs, len(prevExprs)-1)
 
@@ -933,7 +923,7 @@ func MethodCallStatement(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.C
 	}
 	readOp := &prgrm.CXAtomicOps[exprs[len(exprs)-1].Index]
 	callOp := &prgrm.CXAtomicOps[exprs[len(exprs)-2].Index]
-	if prgrm.GetFunctionFromArray(readOp.Operator) != nil || len(callOp.GetOutputs(prgrm)) != 1 || len(readOp.GetOutputs(prgrm)) != 1 {
+	if prgrm.CxIrState.CxIrStateFunctionGetOrNil(readOp.Operator) != nil || len(callOp.GetOutputs(prgrm)) != 1 || len(readOp.GetOutputs(prgrm)) != 1 {
 		return exprs
 	}
 	resultTypeSig := prgrm.GetCXTypeSignatureFromArray(callOp.GetOutputs(prgrm)[0])

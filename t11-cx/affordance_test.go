@@ -80,7 +80,7 @@ func TestAffordanceLiteralParse(t *testing.T) {
 			case ast.AffordanceKindMemory:
 				got.item = ast.AffordanceMemoryNames[value.AffordanceValueItem]
 			case ast.AffordanceKindFunction, ast.AffordanceKindLocal:
-				got.item = prgrm.CXProgramNameText(prgrm.GetFunctionFromArray(ast.CXFunctionIndex(value.AffordanceValueItem)).Name)
+				got.item = prgrm.CXProgramNameText(prgrm.CXProgramFunctionSlotLive(int(value.AffordanceValueItem)).Name)
 			case ast.AffordanceKindStruct:
 				got.item = prgrm.CXProgramNameText(prgrm.CXStructs[value.AffordanceValueItem].Name)
 			}

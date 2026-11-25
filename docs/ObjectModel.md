@@ -39,7 +39,7 @@ free one.
 | --- | --- | --- | --- |
 | `CXProgram` | `0x01` | none, one per compile | `*CXProgram` |
 | `CXPackage` | `0x02` | `CXProgram.CXPackages` | `CXPackageIndex` |
-| `CXFunction` | `0x03` | `CxIrState.CXFunctionMng` since #351 | `CXFunctionIndex`, the slot index |
+| `CXFunction` | `0x03` | `CxIrState.CXFunctionMng` since #351 | `CXFunctionGid` since #352 |
 | `CXNativeFunction` | `0x04` | none, made by `ast.NativeFunctionOf` from `constants.OpcodeSignatureTable` and `constants.LibraryFunctionSignatureTable` | opcode number or library function key |
 | `CXStruct` | `0x05` | `CXProgram.CXStructs`, and heap `*CXStruct` parameter lists | `CXStructIndex` |
 | `CXExpression` | `0x06` | none, held by value in `CXFunction.Expressions` and `CXProgram.SysInitExprs` | none |
@@ -710,7 +710,7 @@ constructors create it.
 | 2 | `CXArgument` (39, 257), `CXTypeSignature` (18, 158) | 57 | 415 |
 | 3 | `CXStruct` (21, 9) | 21 | 9 |
 | 4 | `CXAtomicOperator` (14, 76), `CXExpression` (112, 9) | 126 | 85 |
-| 5 | `CXFunction` (0, 72), `CXNativeFunction` (3, 0) | 3 | 72 |
+| 5 | `CXFunction` (0, 0), `CXNativeFunction` (3, 0) | 3 | 0 |
 | 6 | `CXPackage` (44, 38), `CXCall` (8, 1), `CXProgram` (59, 2) | 111 | 41 |
 
 `CXArgumentDebug` takes phases 4 and 5 in one step. Every allocation stores
@@ -731,7 +731,7 @@ every site in the table, in one PR. Phase 6 adds the teardown functions and thei
 ## Inventory
 
 [objectmodel-sites.csv](objectmodel-sites.csv) has one row for every site
-that breaks the standard today, 1032 in all, plus one row for
+that breaks the standard today, 960 in all, plus one row for
 `DereferenceStruct.arg`, which lives on the stack and needs no change. Its
 columns are
 
@@ -785,12 +785,12 @@ The counts per object.
 | `CXStruct` | 1 | 5 | 1 | 1 | 10 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 2 | 7 | 0 | 0 | 21 | 9 | 30 |
 | `CXAtomicOperator` | 0 | 0 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 75 | 1 | 0 | 0 | 0 | 14 | 76 | 90 |
 | `CXExpression` | 2 | 76 | 0 | 0 | 2 | 0 | 6 | 0 | 18 | 2 | 3 | 0 | 0 | 4 | 0 | 8 | 112 | 9 | 121 |
-| `CXFunction` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 1 | 0 | 0 | 0 | 72 | 72 |
+| `CXFunction` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `CXNativeFunction` | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 |
 | `CXPackage` | 1 | 16 | 24 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 37 | 1 | 0 | 0 | 0 | 44 | 38 | 82 |
 | `CXCall` | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 1 | 9 |
 | `CXProgram` | 3 | 34 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 2 | 0 | 59 | 2 | 61 |
-| total | 16 | 138 | 39 | 3 | 40 | 2 | 11 | 2 | 31 | 2 | 29 | 684 | 4 | 20 | 2 | 9 | 320 | 712 | 1032 |
+| total | 16 | 138 | 39 | 3 | 40 | 2 | 11 | 2 | 31 | 2 | 29 | 613 | 4 | 19 | 2 | 9 | 320 | 640 | 960 |
 
 
 

@@ -7,11 +7,11 @@ import (
 
 // functionReferenceInputsResolve replaces each argument passed where a native
 // takes a function reference (ast.ConstCxArg_FUNC) with an i32 literal holding
-// the CXFunctionIndex of the function it names, so the opcode reads the
+// the slot in CXFunctionMng of the function it names, so the opcode reads the
 // function without a name lookup at run time (#432). An argument that is not
 // a function name is a compile error.
 func functionReferenceInputsResolve(prgrm *ast.CXProgram, expression *ast.CXAtomicOperator) {
-	operator := prgrm.GetFunctionFromArray(expression.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	if operator == nil || !operator.IsBuiltIn() || expression.Inputs == nil {
 		return
 	}
@@ -31,7 +31,7 @@ func functionReferenceInputsResolve(prgrm *ast.CXProgram, expression *ast.CXAtom
 			continue
 		}
 		var literal [4]byte
-		types.Write_i32(literal[:], 0, int32(functionIndex))
+		types.Write_i32(literal[:], 0, int32(ast.CXFunctionGidSlot(functionIndex)))
 		received[i] = ast.AllocCXTypeSignatureOfCXArgBuilder(prgrm, WritePrimary(prgrm, types.I32, literal[:], false))
 	}
 }
@@ -57,21 +57,21 @@ func functionReferenceUnresolved(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignat
 
 // functionReferenceTarget returns the function an argument names, the
 // argument lookupSymbol typed as a function when it found no variable.
-func functionReferenceTarget(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) (ast.CXFunctionIndex, bool) {
+func functionReferenceTarget(prgrm *ast.CXProgram, typeSig *ast.CXTypeSignature) (ast.CXFunctionGid, bool) {
 	if typeSig.Type != ast.TYPE_CXARGUMENT_DEPRECATE {
-		return -1, false
+		return ast.CXFunctionGidNil, false
 	}
 	arg := prgrm.GetCXArgFromArray(ast.CXArgumentIndex(typeSig.Meta))
 	if arg.Type != types.FUNC || len(arg.Fields) != 0 || len(arg.Indexes) != 0 {
-		return -1, false
+		return ast.CXFunctionGidNil, false
 	}
 	pkg, err := prgrm.GetPackageFromArray(arg.Package)
 	if err != nil {
-		return -1, false
+		return ast.CXFunctionGidNil, false
 	}
 	fn, err := pkg.GetFunction(prgrm, StripNameNumber(prgrm, arg.Name))
 	if err != nil {
-		return -1, false
+		return ast.CXFunctionGidNil, false
 	}
-	return ast.CXFunctionIndex(fn.Index), true
+	return prgrm.CXProgramFunctionGid(fn), true
 }

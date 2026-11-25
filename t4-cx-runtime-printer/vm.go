@@ -65,10 +65,10 @@ func PrinterVmErrorPrint(prgrm *ast.CXProgram, machine *vm.Machine, stop vm.Stop
 	depth := machine.MachineDepth
 	for i := uint32(0); i < depth; i++ {
 		frame := &machine.MachineFrames[i]
-		prgrm.CallStack[i].Operator = prgrm.GetFunctionFromArray(ast.CXFunctionIndex(frame.FrameFunction))
+		prgrm.CallStack[i].Operator = prgrm.CXProgramFunctionSlotGid(frame.FrameFunction)
 		prgrm.CallStack[i].FramePointer = types.Pointer(frame.FramePointer)
 	}
-	prgrm.CallStack[depth].Operator = prgrm.GetFunctionFromArray(ast.CXFunctionIndex(machine.MachineFunction))
+	prgrm.CallStack[depth].Operator = prgrm.CXProgramFunctionSlotGid(machine.MachineFunction)
 	prgrm.CallStack[depth].FramePointer = types.Pointer(machine.MachineFramePointer)
 	prgrm.CallCounter = types.Pointer(depth)
 	prgrm.Stack.Pointer = types.Pointer(machine.MachineStackPointer)

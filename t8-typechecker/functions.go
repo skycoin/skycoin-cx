@@ -129,10 +129,8 @@ func ParseFuncParameters(prgrm *ast.CXProgram, paramBytes []byte, pkg *ast.CXPac
 	return parameterList, nil
 }
 
-func PreFunctionDeclaration(fnIdx ast.CXFunctionIndex, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1509.
-	fn := actions.AST.GetFunctionFromArray(fnIdx)
+func PreFunctionDeclaration(fnIdx ast.CXFunctionGid, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
+	fn := actions.AST.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	// adding inputs, outputs
 	for _, inp := range inputs {
 		fn.AddInput(actions.AST, inp)

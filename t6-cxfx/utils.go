@@ -10,12 +10,12 @@ import (
 // OpGlfwFuncI32I32 keeps the function the compiler resolved in the callback
 // table and returns its handle for glfw.InvokeCallbackI32I32.
 func OpGlfwFuncI32I32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
-	outputs[0].Set_i32(prgrm, cxfxCallbackI32I32Add(ast.CXFunctionIndex(inputs[0].Get_i32(prgrm))))
+	outputs[0].Set_i32(prgrm, cxfxCallbackI32I32Add(prgrm.CXProgramFunctionSlotGid(uint32(inputs[0].Get_i32(prgrm)))))
 }
 
 func OpGlfwCallI32I32(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	function := cxfxCallbackI32I32Get(inputs[0].Get_i32(prgrm))
 	cxfxCallbackInputsI32(0, inputs[1].Get_i32(prgrm))
 	cxfxCallbackInputsI32(1, inputs[2].Get_i32(prgrm))
-	execute.Callback(prgrm, prgrm.GetFunctionFromArray(function), cxfxState.CxfxCallbackInputs[:2])
+	execute.Callback(prgrm, function, cxfxState.CxfxCallbackInputs[:2])
 }

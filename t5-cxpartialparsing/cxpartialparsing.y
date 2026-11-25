@@ -34,10 +34,8 @@
 		return yyParse(NewLexer(codeBuf))
 	}
 
-	func PreFunctionDeclaration (fnIdx ast.CXFunctionIndex, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
-                // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-                // Now an arena getter, site S1393.
-                fn:=actions.AST.GetFunctionFromArray(fnIdx)
+	func PreFunctionDeclaration (fnIdx ast.CXFunctionGid, inputs []*ast.CXArgument, outputs []*ast.CXArgument) {
+                fn:=actions.AST.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 		// adding inputs, outputs
 		for _, inp := range inputs {
 			fn.AddInput(actions.AST,inp)
@@ -84,7 +82,7 @@
 	// Now a pointer at rest, site S1397.
 	expressions []*ast.CXExpression
 
-        functionIndex ast.CXFunctionIndex
+        functionIndex ast.CXFunctionGid
 }
 
 %token  <bool>          BOOLEAN_LITERAL
@@ -332,9 +330,7 @@ function_header:
 				_, fn := ast.MakeFunction(Program, Program.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, $<line>5)
 				fn.FileColumn = $<column>5
 				_,fnIdx:=pkg.AddMethod(Program,fn,receiverName,methodName)
-                                // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-                                // Now an arena getter, site S1402.
-                                newFn:=Program.GetFunctionFromArray(fnIdx)
+                                newFn:=Program.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
                                 newFn.AddInput(Program,receiver[0])
                                 
                                 pkg.CurrentFunction=fnIdx

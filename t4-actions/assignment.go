@@ -256,9 +256,7 @@ func ShortAssignment(prgrm *ast.CXProgram, expr *ast.CXExpression, exprCXLine *a
 
 	fromExpressionIdx := fromExprs[len(fromExprs)-1].Index
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0534.
-	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
+	fromExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
 	typeSig := toExpression.GetOutputs(prgrm)[0]
 
@@ -328,9 +326,7 @@ func getOutputTypeAt(prgrm *ast.CXProgram, expr *ast.CXExpression, index int) *a
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0545.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 	expressionOperatorOutputs := expressionOperator.GetOutputs(prgrm)
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0546.
@@ -370,9 +366,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 
 	lastFromExpressionIdx := len(fromExprs) - 1
 	fromExpressionIdx := fromExprs[lastFromExpressionIdx].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0549.
-	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
+	fromExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
 	// OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 	// Now a constructor call, site S0550.
@@ -597,9 +591,7 @@ func shortDeclarationAssignment(prgrm *ast.CXProgram, pkg *ast.CXPackage, toExpr
 func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExprs []ast.CXExpression, toExpression *ast.CXAtomicOperator) []ast.CXExpression {
 	lastFromExpressionIdx := len(fromExprs) - 1
 	fromExpressionIdx := fromExprs[lastFromExpressionIdx].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0579.
-	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
+	fromExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
 	toLastExpr, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, len(toExprs)-1)
 	if err != nil {
@@ -888,13 +880,11 @@ func Assignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, assignOp strin
 
 	lastFromExpressionIdx := len(fromExprs) - 1
 	fromExpressionIdx := fromExprs[lastFromExpressionIdx].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0591.
-	fromExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
+	fromExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[fromExpressionIdx].Operator)
 
 	// A target that does not exist, such as pkg.x of a package whose import
 	// failed, has its error already, and only a computed value is kept.
-	if target, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, len(toExprs)-1); err == nil && len(target.GetOutputs(prgrm)) == 0 && functionInvalid(prgrm, prgrm.GetFunctionFromArray(target.Operator)) {
+	if target, err := prgrm.GetCXAtomicOpFromExpressions(toExprs, len(toExprs)-1); err == nil && len(target.GetOutputs(prgrm)) == 0 && functionInvalid(prgrm, prgrm.CxIrState.CxIrStateFunctionGetOrNil(target.Operator)) {
 		if fromExpressionOperator == nil {
 			return nil
 		}
@@ -998,7 +988,7 @@ func ShortDeclarationShare(prgrm *ast.CXProgram, targets [][]ast.CXExpression, e
 	var names []stringpool.StringGid
 	for _, target := range targets {
 		op, err := prgrm.GetCXAtomicOpFromExpressions(target, len(target)-1)
-		if err != nil || prgrm.GetFunctionFromArray(op.Operator) != nil || len(op.GetOutputs(prgrm)) != 1 {
+		if err != nil || prgrm.CxIrState.CxIrStateFunctionGetOrNil(op.Operator) != nil || len(op.GetOutputs(prgrm)) != 1 {
 			continue
 		}
 		names = append(names, prgrm.GetCXTypeSignatureFromArray(op.GetOutputs(prgrm)[0]).Name)
@@ -1012,7 +1002,7 @@ func ShortDeclarationShare(prgrm *ast.CXProgram, targets [][]ast.CXExpression, e
 			continue
 		}
 		op := &prgrm.CXAtomicOps[exprs[i].Index]
-		if prgrm.GetFunctionFromArray(op.Operator) != nil || len(op.GetInputs(prgrm)) != 0 || len(op.GetOutputs(prgrm)) != 1 {
+		if prgrm.CxIrState.CxIrStateFunctionGetOrNil(op.Operator) != nil || len(op.GetInputs(prgrm)) != 0 || len(op.GetOutputs(prgrm)) != 1 {
 			continue
 		}
 		if prgrm.GetCXTypeSignatureFromArray(op.GetOutputs(prgrm)[0]).Name != names[0] {
@@ -1084,7 +1074,7 @@ func MultipleAssignmentCall(prgrm *ast.CXProgram, targets [][]ast.CXExpression, 
 		return multipleAssignmentMethodCall(prgrm, targets, assignOp, value)
 	}
 	callIdx := value[len(value)-1].Index
-	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[callIdx].Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[callIdx].Operator)
 	valueCount := 1
 	if operator != nil && len(prgrm.CXAtomicOps[callIdx].GetOutputs(prgrm)) == 0 {
 		valueCount = len(operator.GetOutputs(prgrm))
@@ -1165,7 +1155,7 @@ func shortDeclarationOperatorChained(prgrm *ast.CXProgram, exprs []ast.CXExpress
 	if expressionsCount(exprs) < 2 || exprs[len(exprs)-1].Type == ast.CX_LINE {
 		return false
 	}
-	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[exprs[len(exprs)-1].Index].Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[exprs[len(exprs)-1].Index].Operator)
 	return operator != nil && ast.IsOperator(operator.AtomicOPCode)
 }
 
@@ -1242,7 +1232,7 @@ func ShortDeclarationTargetsInvalid(prgrm *ast.CXProgram, targets [][]ast.CXExpr
 		}
 		expression := &prgrm.CXAtomicOps[target[last].Index]
 		outputs := expression.GetOutputs(prgrm)
-		if prgrm.GetFunctionFromArray(expression.Operator) != nil || len(outputs) != 1 || len(expression.GetInputs(prgrm)) > 0 {
+		if prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator) != nil || len(outputs) != 1 || len(expression.GetInputs(prgrm)) > 0 {
 			continue
 		}
 		sig := prgrm.GetCXTypeSignatureFromArray(outputs[0])
@@ -1276,5 +1266,5 @@ func ExpressionsDeclareInvalid(prgrm *ast.CXProgram, exprs []ast.CXExpression) b
 	}
 	expression := &prgrm.CXAtomicOps[exprs[last].Index]
 	outputs := expression.GetOutputs(prgrm)
-	return prgrm.GetFunctionFromArray(expression.Operator) == nil && len(expression.GetInputs(prgrm)) == 0 && len(outputs) == 1 && typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(outputs[0]))
+	return prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator) == nil && len(expression.GetInputs(prgrm)) == 0 && len(outputs) == 1 && typeSignatureInvalid(prgrm, prgrm.GetCXTypeSignatureFromArray(outputs[0]))
 }

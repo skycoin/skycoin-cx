@@ -9,9 +9,9 @@ type CXAtomicOperator struct {
 	// OBJMODEL: CXStructGid, phase 5 #337.
 	// Now a pointer at rest, site S0088.
 	Outputs  *CXStruct
-	Operator CXFunctionIndex
+	Operator CXFunctionGid
 
-	Function CXFunctionIndex
+	Function CXFunctionGid
 	Package  CXPackageIndex
 	Label    stringpool.StringGid
 

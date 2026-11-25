@@ -186,16 +186,16 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 		mainPackage, err := prgrm.GetPackageFromArray(packageIndex)
 		assert.AssertInvariantTrue(err == nil, "lower: main package index out of range")
 		if functionIndex, found := mainPackage.Functions[prgrm.CxIrState.CxIrStateNameSysInit]; found {
-			image.ImageEntryInit = uint32(functionIndex)
+			image.ImageEntryInit = ast.CXFunctionGidSlot(functionIndex)
 		}
 		if functionIndex, found := mainPackage.Functions[prgrm.CxIrState.CxIrStateNameMain]; found {
-			image.ImageEntryMain = uint32(functionIndex)
+			image.ImageEntryMain = ast.CXFunctionGidSlot(functionIndex)
 		}
 	}
 
 	var failures []Failure
 	for functionIndex := 0; functionIndex < functions; functionIndex++ {
-		fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(functionIndex))
+		fn := prgrm.CXProgramFunctionSlotLive(functionIndex)
 		if fn == nil {
 			continue
 		}
@@ -274,7 +274,7 @@ func (s *state) function(functionIndex uint32, fn *ast.CXFunction) (Failure, boo
 
 		cxAtomicOp, err := s.statePrgrm.GetCXAtomicOp(expr.Index)
 		assert.AssertInvariantTrue(err == nil, "lower: atomic operator index out of range")
-		operator := s.statePrgrm.GetFunctionFromArray(cxAtomicOp.Operator)
+		operator := s.statePrgrm.CxIrState.CxIrStateFunctionGetOrNil(cxAtomicOp.Operator)
 
 		switch {
 		case operator == nil:
@@ -630,7 +630,7 @@ func (s *state) call(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, callee *
 		code = append(code, in)
 	}
 
-	code = append(code, ir.Instr{InstrOpcode: ir.OpcodeCall, InstrM: uint32(cxAtomicOp.Operator)})
+	code = append(code, ir.Instr{InstrOpcode: ir.OpcodeCall, InstrM: ast.CXFunctionGidSlot(cxAtomicOp.Operator)})
 	var sources []ir.Slot
 	for i, signatureIndex := range calleeOutputs {
 		if i >= len(outputs) {

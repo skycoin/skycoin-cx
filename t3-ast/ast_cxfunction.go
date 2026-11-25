@@ -9,8 +9,6 @@ import (
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
 
-type CXFunctionIndex int
-
 // IsBuiltIn determines if opcode is not 0
 // True if the function is native to CX, e.g. int32.add()
 func (cxf CXFunction) IsBuiltIn() bool {
@@ -207,7 +205,7 @@ func (fn *CXFunction) AddExpression(prgrm *CXProgram, expr *CXExpression) *CXFun
 		}
 
 		cxAtomicOp.Package = fn.Package
-		cxAtomicOp.Function = CXFunctionIndex(fn.Index)
+		cxAtomicOp.Function = prgrm.CXProgramFunctionGid(fn)
 	}
 
 	fn.Expressions = append(fn.Expressions, *expr)
@@ -223,7 +221,7 @@ func (fn *CXFunction) AddExpressionByLineNumber(prgrm *CXProgram, expr *CXExpres
 		panic(err)
 	}
 	cxAtomicOp.Package = fn.Package
-	cxAtomicOp.Function = CXFunctionIndex(fn.Index)
+	cxAtomicOp.Function = prgrm.CXProgramFunctionGid(fn)
 
 	lenExprs := len(fn.Expressions)
 	if lenExprs == line {
@@ -292,7 +290,7 @@ func (fn *CXFunction) RemoveLocalVariableFromArray(name stringpool.StringGid) er
 // OBJMODEL: state.CXExpressionMng.CXExpressionAlloc(), phase 4 #346.
 // Now a constructor, site S0148.
 func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExpression {
-	var opIdx CXFunctionIndex = -1
+	var opIdx CXFunctionGid
 	if op != nil {
 		opIdx = prgrm.AddNativeFunctionInArray(op)
 	}

@@ -36,9 +36,7 @@ func FindFunction(cxprogram *cxast.CXProgram, functionName string) (*cxast.CXFun
 		}
 
 		if fnIdx, ok := pkg.Functions[functionNameGid]; ok {
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now an arena getter, site S1617.
-			return cxprogram.GetFunctionFromArray(fnIdx), nil
+			return cxprogram.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx), nil
 		}
 	}
 	return nil, errors.New("function not found")

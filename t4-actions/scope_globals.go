@@ -34,7 +34,7 @@ func scopeGlobalNameText(prgrm *ast.CXProgram, name ScopeGlobalName) string {
 // scopeGlobalsState holds the global statements of the function being
 // parsed, from its header to the end of FunctionDeclaration, see #486.
 type scopeGlobalsState struct {
-	function      ast.CXFunctionIndex
+	function      ast.CXFunctionGid
 	active        bool
 	checking      bool
 	statementSeen bool
@@ -53,8 +53,8 @@ var ScopeGlobalsInitializer bool
 
 // ScopeGlobalsBegin starts the global statements of the function fnIdx,
 // whose header the parser just read.
-func ScopeGlobalsBegin(fnIdx ast.CXFunctionIndex) {
-	fn := AST.GetFunctionFromArray(fnIdx)
+func ScopeGlobalsBegin(fnIdx ast.CXFunctionGid) {
+	fn := AST.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 	scopeGlobals = scopeGlobalsState{function: fnIdx, active: !ScopeGlobalsInitializer, maskingWarning: importScopedDirectiveMasking(fn.FileName, fn.FileLine)}
 	importScopedBegin()
 }
@@ -120,7 +120,7 @@ func scopeGlobalsDeclared(key SymbolsDataKey) *scopeGlobalDeclaration {
 
 // scopeGlobalsCheckBegin starts checking the uses of globals in fnIdx, when
 // the parser read its header.
-func scopeGlobalsCheckBegin(fnIdx ast.CXFunctionIndex) {
+func scopeGlobalsCheckBegin(fnIdx ast.CXFunctionGid) {
 	scopeGlobals.checking = scopeGlobals.active && scopeGlobals.function == fnIdx
 }
 
@@ -146,7 +146,7 @@ func scopeGlobalsUse(prgrm *ast.CXProgram, symPkg *ast.CXPackage, ident stringpo
 	if pkg, err := prgrm.GetCurrentPackage(); err == nil && pkg.Name != symPkg.Name {
 		text = prgrm.CXProgramNameText(symPkg.Name) + "." + text
 	}
-	fn := prgrm.GetFunctionFromArray(scopeGlobals.function)
+	fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(scopeGlobals.function)
 	textGid := prgrm.CXProgramCompileErrorText(text)
 	prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeGlobalUndeclared, details, ast.CompileErrorOperands{int64(fn.Name), textGid, textGid})
 }
@@ -155,7 +155,7 @@ func scopeGlobalsUse(prgrm *ast.CXProgram, symPkg *ast.CXPackage, ident stringpo
 // ends its global statements.
 func scopeGlobalsEnd(prgrm *ast.CXProgram) {
 	if scopeGlobals.checking {
-		fn := prgrm.GetFunctionFromArray(scopeGlobals.function)
+		fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(scopeGlobals.function)
 		for _, declaration := range scopeGlobals.declarations {
 			if !declaration.used {
 				prgrm.CXProgramCompileErrorAddPosition(ast.CompileErrorCodeGlobalDeclaredUnused, fn.FileName, declaration.name.Line, declaration.name.Column, ast.CompileErrorOperands{prgrm.CXProgramCompileErrorText(scopeGlobalNameText(prgrm, declaration.name)), int64(fn.Name)})
@@ -187,7 +187,7 @@ func scopeShadowCheck(prgrm *ast.CXProgram, symbolsData *SymbolsData, pkg *ast.C
 		return
 	}
 	if fnIdx, found := pkg.Functions[name]; found {
-		fn := prgrm.GetFunctionFromArray(fnIdx)
+		fn := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(fnIdx)
 		prgrm.CXProgramCompileErrorAddDebug(ast.CompileErrorCodeShadowFunction, typeSig.ArgDetails, operands(fn.FileName, fn.FileLine, fn.FileColumn))
 		return
 	}

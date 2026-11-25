@@ -57,9 +57,7 @@ func IterationExpressions(prgrm *ast.CXProgram,
 	prgrm.CXAtomicOps[upExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0613.
-	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
+	lastCondExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 	// A literal or variable condition is read in place, as in SelectionExpressions.
 	// Running it would zero it as a declaration (skycoin-cx#20).
 	loopConditionExprs := conditionExprs
@@ -272,9 +270,7 @@ func SelectionExpressions(prgrm *ast.CXProgram, conditionExprs []ast.CXExpressio
 	prgrm.CXAtomicOps[ifExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 
 	lastCondExpressionIdx := conditionExprs[len(conditionExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0631.
-	lastCondExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
+	lastCondExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastCondExpressionIdx].Operator)
 
 	var predicateTypeSigIdx ast.CXTypeSignatureIndex
 	if lastCondExpressionOperator == nil {
@@ -359,9 +355,7 @@ func resolveTypeForUnd(prgrm *ast.CXProgram, expr *ast.CXExpression) types.Code 
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0640.
-	expressionOperator := prgrm.GetFunctionFromArray(expression.Operator)
+	expressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(expression.Operator)
 
 	expressionInputs := expression.GetInputs(prgrm)
 	expressionOutputs := expression.GetOutputs(prgrm)
@@ -474,17 +468,13 @@ func OperatorExpression(prgrm *ast.CXProgram, leftExprs []ast.CXExpression, righ
 	outputlessValueCheck(prgrm, leftExprs)
 	outputlessValueCheck(prgrm, rightExprs)
 	lastLeftExpressionIdx := leftExprs[len(leftExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0647.
-	lastLeftExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastLeftExpressionIdx].Operator)
+	lastLeftExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastLeftExpressionIdx].Operator)
 	if len(prgrm.CXAtomicOps[lastLeftExpressionIdx].GetOutputs(prgrm)) < 1 {
 		operandResultOutputAdd(prgrm, pkg, leftExprs, lastLeftExpressionOperator)
 	}
 
 	lastRightExpressionIdx := rightExprs[len(rightExprs)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0658.
-	lastRightExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastRightExpressionIdx].Operator)
+	lastRightExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastRightExpressionIdx].Operator)
 	if len(prgrm.CXAtomicOps[lastRightExpressionIdx].GetOutputs(prgrm)) < 1 {
 		operandResultOutputAdd(prgrm, pkg, rightExprs, lastRightExpressionOperator)
 	}
@@ -729,14 +719,14 @@ func shortCircuitOperandExpression(prgrm *ast.CXProgram, exprIdx int) *ast.CXFun
 	operandOp.ElseLines = shortCircuitLinesPending
 	identityIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 	operandOp.Operator = identityIdx
-	return prgrm.GetFunctionFromArray(identityIdx)
+	return prgrm.CxIrState.CXFunctionMng.CXFunctionGet(identityIdx)
 }
 
 // ShortCircuitJumpCheck reports whether exprs[currIndex] is a short-circuit jmp. Its bool op
 // reads the same left operand and reports a type error on it, so the jmp is not type checked.
 func ShortCircuitJumpCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression, currIndex int) bool {
 	jmpOp := &prgrm.CXAtomicOps[exprs[currIndex].Index]
-	jmpOperator := prgrm.GetFunctionFromArray(jmpOp.Operator)
+	jmpOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(jmpOp.Operator)
 	if jmpOperator == nil || jmpOperator.AtomicOPCode != constants.OP_JMP || len(jmpOp.GetInputs(prgrm)) != 1 {
 		return false
 	}
@@ -750,7 +740,7 @@ func ShortCircuitJumpCheck(prgrm *ast.CXProgram, exprs []ast.CXExpression, currI
 		return false
 	}
 	boolOp := &prgrm.CXAtomicOps[exprs[target].Index]
-	boolOperator := prgrm.GetFunctionFromArray(boolOp.Operator)
+	boolOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(boolOp.Operator)
 	return boolOperator != nil && boolOperator.AtomicOPCode == boolOpcode && len(boolOp.GetInputs(prgrm)) > 0 && shortCircuitOperandSame(prgrm, jmpOp.GetInputs(prgrm)[0], boolOp.GetInputs(prgrm)[0])
 }
 
@@ -783,7 +773,7 @@ func ProcessShortCircuitJumps(prgrm *ast.CXProgram, exprs []ast.CXExpression) {
 				continue
 			}
 			boolOp := &prgrm.CXAtomicOps[exprs[j].Index]
-			boolOperator := prgrm.GetFunctionFromArray(boolOp.Operator)
+			boolOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(boolOp.Operator)
 			if boolOperator == nil || boolOperator.AtomicOPCode != boolOpcode || len(boolOp.GetInputs(prgrm)) == 0 || !shortCircuitOperandSame(prgrm, leftTypeSigIdx, boolOp.GetInputs(prgrm)[0]) {
 				continue
 			}
@@ -1081,9 +1071,7 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S0714.
-	lastExpressionOperator := prgrm.GetFunctionFromArray(lastExpression.Operator)
+	lastExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(lastExpression.Operator)
 	if lastExpressionOperator == nil {
 		opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 		lastExpression.Operator = opIdx
@@ -1236,7 +1224,7 @@ func ShortCircuitStrip(prgrm *ast.CXProgram, exprs []ast.CXExpression) []ast.CXE
 // struct field read. It reports false for the operands UnaryExpression handles.
 func unaryOperatorOnValue(prgrm *ast.CXProgram, op string, prevExprs []ast.CXExpression) ([]ast.CXExpression, bool) {
 	lastIdx := prevExprs[len(prevExprs)-1].Index
-	operator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[lastIdx].Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[lastIdx].Operator)
 	operand := prevExprs
 	if operator != nil {
 		if len(prgrm.CXAtomicOps[lastIdx].GetOutputs(prgrm)) == 0 {

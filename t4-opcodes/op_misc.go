@@ -74,7 +74,7 @@ func OpIdentity(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValu
 
 func OpGoto(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	call := prgrm.GetCurrentCall()
-	expr := call.Operator.Expressions[call.Line]
+	expr := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions[call.Line]
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1304.
@@ -124,7 +124,7 @@ func OpAbsJmp(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue)
 
 func OpBreak(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	call := prgrm.GetCurrentCall()
-	expr := call.Operator.Expressions[call.Line]
+	expr := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions[call.Line]
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1307.
@@ -138,7 +138,7 @@ func OpBreak(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) 
 
 func OpContinue(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	call := prgrm.GetCurrentCall()
-	expr := call.Operator.Expressions[call.Line]
+	expr := prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions[call.Line]
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
 	// Now an arena getter, site S1308.

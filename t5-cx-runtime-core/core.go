@@ -62,7 +62,7 @@ func CoreOpcodesUsed(prgrm *ast.CXProgram) []int {
 	seen := map[int]bool{}
 	var used []int
 	for index := 0; index < prgrm.CXProgramFunctionSlotCount(); index++ {
-		fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(index))
+		fn := prgrm.CXProgramFunctionSlotLive(index)
 		if fn == nil {
 			continue
 		}

@@ -13,9 +13,7 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 	glbl := prgrm.GetCXTypeSignatureFromArray(glblIdx)
 	defer prgrm.CXProgramGlobalInitializerAdd(prgrm.CurrentPackage, glbl.Name, start)
 	initializerExpressionIdx := initializer[len(initializer)-1].Index
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1209.
-	initializerExpressionOperator := prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[initializerExpressionIdx].Operator)
+	initializerExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(prgrm.CXAtomicOps[initializerExpressionIdx].Operator)
 	// then we just re-assign offsets
 	if initializerExpressionOperator == nil {
 		// then it's a literal
@@ -38,7 +36,7 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 			outputStruct.AddField_TypeSignature(prgrm, glblIdx)
 			// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
 			// Now a heap literal, site S1212 S1213.
-			index := prgrm.AddCXAtomicOp(&ast.CXAtomicOperator{Outputs: outputStruct, Operator: -1, Function: -1})
+			index := prgrm.AddCXAtomicOp(&ast.CXAtomicOperator{Outputs: outputStruct})
 			initializer = StructLiteralAssignment(prgrm,
 				// OBJMODEL: state.CXExpressionMng (manager storage) or []CXExpressionGid, phase 4 #346.
 				// Now a slice of objects, site S1214.
@@ -309,9 +307,7 @@ func processLocalInitialization(prgrm *ast.CXProgram, pkg *ast.CXPackage, initia
 		panic(err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-	// Now an arena getter, site S1229.
-	initializerExpressionOperator := prgrm.GetFunctionFromArray(initializerExpression.Operator)
+	initializerExpressionOperator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(initializerExpression.Operator)
 	if initializerExpressionOperator == nil {
 		// THEN it's a literal, e.g. var foo i32 = 10;
 
@@ -631,7 +627,7 @@ func globalsDeclareResults(prgrm *ast.CXProgram, names []*ast.CXArgument, spec *
 	}
 	value := values[0]
 	call := &prgrm.CXAtomicOps[value[len(value)-1].Index]
-	operator := prgrm.GetFunctionFromArray(call.Operator)
+	operator := prgrm.CxIrState.CxIrStateFunctionGetOrNil(call.Operator)
 	results := 1
 	if operator != nil && len(call.GetOutputs(prgrm)) == 0 {
 		results = len(operator.GetOutputs(prgrm))

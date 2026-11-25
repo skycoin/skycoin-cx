@@ -414,11 +414,7 @@ func serializeProgramFields(prgrm *CXProgram, encoder *serializeEncoder) error {
 	encoder.serializeEncoderPointer(prgrm.CallCounter)
 	encoder.serializeEncoderUint(uint64(used))
 	for _, call := range prgrm.CallStack[:used] {
-		operator := int64(-1)
-		if call.Operator != nil {
-			operator = int64(call.Operator.Index)
-		}
-		encoder.serializeEncoderInt(operator)
+		encoder.serializeEncoderInt(int64(call.Operator))
 		encoder.serializeEncoderInt(int64(call.Line))
 		encoder.serializeEncoderPointer(call.FramePointer)
 	}
@@ -503,17 +499,12 @@ func deserializeCallStack(prgrm *CXProgram, decoder *serializeDecoder, calls []s
 		return
 	}
 	for i, call := range calls {
-		operator := call.serializeCallReferenceOperator
-		functions := prgrm.CXProgramFunctionSlotCount()
-		if operator < -1 || operator >= int64(functions) || operator >= 0 && prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(operator)) == nil {
-			decoder.serializeDecoderFailf("call %d names function %d of %d", i, operator, functions)
+		operator := CXFunctionGid(call.serializeCallReferenceOperator)
+		if !serializeFunctionGidValid(prgrm, operator) {
+			decoder.serializeDecoderFailf("call %d names function %#x, which is not live", i, int64(operator))
 			return
 		}
-		if operator >= 0 {
-			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now a pointer into the manager, as the call stack holds it.
-			prgrm.CallStack[i].Operator = prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(operator))
-		}
+		prgrm.CallStack[i].Operator = operator
 		prgrm.CallStack[i].Line = call.serializeCallReferenceLine
 		prgrm.CallStack[i].FramePointer = call.serializeCallReferenceFramePointer
 	}
@@ -652,25 +643,25 @@ func deserializePackages(prgrm *CXProgram, decoder *serializeDecoder) {
 		pkg := &prgrm.CXPackages[i]
 		pkg.Name = stringpool.StringGid(decoder.serializeDecoderInt())
 		pkg.Index = decoder.serializeDecoderIntValue()
-		pkg.Imports = deserializeNameMap[CXPackageIndex](decoder)
-		pkg.Functions = deserializeNameMap[CXFunctionIndex](decoder)
-		pkg.Structs = deserializeNameMap[CXStructIndex](decoder)
+		pkg.Imports = deserializeNameMap(decoder, func() CXPackageIndex { return CXPackageIndex(decoder.serializeDecoderIntValue()) })
+		pkg.Functions = deserializeNameMap(decoder, func() CXFunctionGid { return CXFunctionGid(decoder.serializeDecoderInt()) })
+		pkg.Structs = deserializeNameMap(decoder, func() CXStructIndex { return CXStructIndex(decoder.serializeDecoderIntValue()) })
 		if count := decoder.serializeDecoderLength(3); count >= 0 {
-			pkg.Methods = make(map[CXPackageMethodKey]CXFunctionIndex, count)
+			pkg.Methods = make(map[CXPackageMethodKey]CXFunctionGid, count)
 			for j := 0; j < count; j++ {
 				var key CXPackageMethodKey
 				key.CXPackageMethodKeyStruct = stringpool.StringGid(decoder.serializeDecoderInt())
 				key.CXPackageMethodKeyMethod = stringpool.StringGid(decoder.serializeDecoderInt())
-				pkg.Methods[key] = CXFunctionIndex(decoder.serializeDecoderIntValue())
+				pkg.Methods[key] = CXFunctionGid(decoder.serializeDecoderInt())
 			}
 		}
 		pkg.Globals = deserializeOwnedStruct(decoder)
-		pkg.CurrentFunction = CXFunctionIndex(decoder.serializeDecoderIntValue())
+		pkg.CurrentFunction = CXFunctionGid(decoder.serializeDecoderInt())
 	}
 }
 
 // serializeNameMap writes a map from names to indexes in name Gid order.
-func serializeNameMap[Index ~int](encoder *serializeEncoder, names map[stringpool.StringGid]Index) {
+func serializeNameMap[Index ~int | ~int64](encoder *serializeEncoder, names map[stringpool.StringGid]Index) {
 	keys := make([]stringpool.StringGid, 0, len(names))
 	for key := range names {
 		keys = append(keys, key)
@@ -683,7 +674,7 @@ func serializeNameMap[Index ~int](encoder *serializeEncoder, names map[stringpoo
 	}
 }
 
-func deserializeNameMap[Index ~int](decoder *serializeDecoder) map[stringpool.StringGid]Index {
+func deserializeNameMap[Index ~int | ~int64](decoder *serializeDecoder, valueDecode func() Index) map[stringpool.StringGid]Index {
 	length := decoder.serializeDecoderLength(2)
 	if length < 0 {
 		return nil
@@ -691,7 +682,7 @@ func deserializeNameMap[Index ~int](decoder *serializeDecoder) map[stringpool.St
 	names := make(map[stringpool.StringGid]Index, length)
 	for i := 0; i < length; i++ {
 		key := stringpool.StringGid(decoder.serializeDecoderInt())
-		names[key] = Index(decoder.serializeDecoderIntValue())
+		names[key] = valueDecode()
 	}
 	return names
 }
@@ -923,8 +914,12 @@ func deserializeExpressions(prgrm *CXProgram, decoder *serializeDecoder) {
 			op := &prgrm.CXAtomicOps[i]
 			op.Inputs = deserializeOwnedStruct(decoder)
 			op.Outputs = deserializeOwnedStruct(decoder)
-			op.Operator = CXFunctionIndex(decoder.serializeDecoderIntValue())
-			op.Function = CXFunctionIndex(decoder.serializeDecoderIntValue())
+			op.Operator = CXFunctionGid(decoder.serializeDecoderInt())
+			op.Function = CXFunctionGid(decoder.serializeDecoderInt())
+			if !serializeFunctionGidValid(prgrm, op.Operator) || !serializeFunctionGidValid(prgrm, op.Function) {
+				decoder.serializeDecoderFailf("expression %d names function %#x or %#x, which is not live", i, int64(op.Operator), int64(op.Function))
+				return
+			}
 			op.Package = CXPackageIndex(decoder.serializeDecoderIntValue())
 			op.Label = stringpool.StringGid(decoder.serializeDecoderInt())
 			op.ThenLines = decoder.serializeDecoderIntValue()
@@ -1256,4 +1251,16 @@ func deserializeOpcodeSet(decoder *serializeDecoder, set *constants.OpcodeSet) {
 	for word := range set {
 		set[word] = decoder.serializeDecoderUint()
 	}
+}
+
+// serializeFunctionGidValid reports whether gid is CXFunctionGidNil or names
+// a live function of prgrm, the checks CXFunctionGet asserts.
+func serializeFunctionGidValid(prgrm *CXProgram, gid CXFunctionGid) bool {
+	if gid == CXFunctionGidNil {
+		return true
+	}
+	manager := &prgrm.CxIrState.CXFunctionMng
+	index := objmodel.GidIndex(int64(gid))
+	return objmodel.GidTypeTag(int64(gid)) == CXFunctionGidTypeTag && index < manager.CXFunctionMngNext &&
+		manager.CXFunctionMngLive[index] && manager.CXFunctionMngGenerations[index] == objmodel.GidGeneration(int64(gid))
 }

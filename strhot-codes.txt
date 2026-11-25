@@ -242,7 +242,7 @@ STRHOT-228 E open t1-cx-core-objmodel/gid.go GidCompose
 STRHOT-229 P removed t3-ast/ast_cxargument.go CXArgumentDebugFileLine returns the file name as a view of the string pool, #412
 STRHOT-230 P removed t3-ast/ast_cxatomicoperator.go *CXAtomicOperator.GetOperatorName not on the run path, the stack dump reads GetOperatorNameBytes, #412
 STRHOT-231 E open t3-ast/ast_cxprogram.go *CXProgram.GetPackageFromArray
-STRHOT-232 E open t3-ast/ast_cxprogram.go *CXProgram.GetFunctionFromArray
+STRHOT-232 E removed t3-ast/ast_cxprogram.go *CXProgram.GetFunctionFromArray deleted, functions are read by Gid through CXFunctionGet, #352
 STRHOT-233 E open t3-ast/ast_cxprogram.go *CXProgram.GetCXLine
 STRHOT-234 E open t3-ast/ast_cxprogram.go *CXProgram.GetCXArg
 STRHOT-235 E open t3-ast/ast_cxprogram.go *CXProgram.GetCXAtomicOp

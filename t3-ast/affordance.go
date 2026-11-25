@@ -1,10 +1,12 @@
 package ast
 
 import (
+	"cmp"
 	"encoding/binary"
 	"slices"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
 
@@ -166,10 +168,10 @@ func SerializeAffordance(prgrm *CXProgram, value AffordanceValue) ([]byte, bool)
 		for _, index := range structs {
 			serializeStruct(&encoder, &prgrm.CXStructs[index])
 		}
-		functions := affordanceIndexesSorted(pkg.Functions)
+		functions := affordanceFunctionsSorted(pkg.Functions)
 		encoder.serializeEncoderLength(len(functions), false)
 		for _, index := range functions {
-			if serializeFunction(prgrm, &encoder, prgrm.GetFunctionFromArray(index)) != nil {
+			if serializeFunction(prgrm, &encoder, prgrm.CxIrState.CXFunctionMng.CXFunctionGet(index)) != nil {
 				return nil, false
 			}
 		}
@@ -177,7 +179,7 @@ func SerializeAffordance(prgrm *CXProgram, value AffordanceValue) ([]byte, bool)
 		if int(value.AffordanceValueItem) < 0 || int(value.AffordanceValueItem) >= prgrm.CXProgramFunctionSlotCount() {
 			return nil, false
 		}
-		fn := prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(value.AffordanceValueItem))
+		fn := prgrm.CXProgramFunctionSlotLive(int(value.AffordanceValueItem))
 		if fn == nil || serializeFunction(prgrm, &encoder, fn) != nil {
 			return nil, false
 		}
@@ -212,7 +214,7 @@ func affordanceVariableBytes(prgrm *CXProgram, value AffordanceValue) ([]byte, b
 		found := false
 		for call := int(prgrm.CallCounter); call >= 0 && call < len(prgrm.CallStack); call-- {
 			operator := prgrm.CallStack[call].Operator
-			if operator != nil && operator.Index == int(value.AffordanceValueItem) {
+			if operator != CXFunctionGidNil && CXFunctionGidSlot(operator) == uint32(value.AffordanceValueItem) {
 				framePointer = prgrm.CallStack[call].FramePointer
 				found = true
 				break
@@ -253,4 +255,16 @@ func CXTypeSignatureWhole(prgrm *CXProgram, sig *CXTypeSignature) bool {
 		return len(arg.Fields) == 0 && len(arg.Indexes) == 0 && len(arg.DereferenceOperations) == 0
 	}
 	return false
+}
+
+// affordanceFunctionsSorted returns the functions of names in slot order.
+func affordanceFunctionsSorted(names map[stringpool.StringGid]CXFunctionGid) []CXFunctionGid {
+	functions := make([]CXFunctionGid, 0, len(names))
+	for _, gid := range names {
+		functions = append(functions, gid)
+	}
+	slices.SortFunc(functions, func(a, b CXFunctionGid) int {
+		return cmp.Compare(objmodel.GidIndex(int64(a)), objmodel.GidIndex(int64(b)))
+	})
+	return functions
 }
