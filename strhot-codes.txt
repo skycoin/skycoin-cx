@@ -207,7 +207,7 @@ STRHOT-193 B cxfx t6-cxfx/op_openal_desktop.go OpAlRenderer O fixed, OpenAL retu
 STRHOT-194 B cxfx t6-cxfx/op_openal_desktop.go OpAlVendor O fixed, OpenAL returns text, #432
 STRHOT-195 B cxfx t6-cxfx/op_openal_desktop.go OpAlVersion O fixed, OpenAL returns text, #432
 STRHOT-196 B cxfx t6-cxfx/op_openal.go OpAlLoadWav O fixed, reads the file at a program path, #432
-STRHOT-197 B cxfx t6-cxfx/op_opengl.go decodeHdr O fixed, parses an HDR file, #432
+STRHOT-197 E cxfx t6-cxfx/op_opengl.go decodeHdr B fixed, reads the HDR header as bytes and prints only on a failure branch, #432
 STRHOT-198 B cxfx t6-cxfx/op_opengl.go uploadTexture O fixed, reads the file at a program path, #432
 STRHOT-199 O removed t6-cxfx/op_opengl.go OpGlNewTexture handles and byte views, #432
 STRHOT-200 O removed t6-cxfx/op_opengl.go OpGlNewTextureCube handles and byte views, #432
@@ -335,7 +335,7 @@ STRHOT-321 E open t4-regexp/op_regexp.go OpRegexpMustCompile
 STRHOT-322 B cxfx t0-util/program_text.go ProgramTextStringView O fixed, only the t6-cxfx GLFW, gltext and file boundaries call it, D92
 STRHOT-323 E cxfx t6-cxfx/state.go cxfxHandleAssertFailure
 STRHOT-324 E cxfx t6-cxfx/state.go cxfxTableFullAssertFailure
-STRHOT-325 B cxfx t6-cxfx/op_opengl.go decodeImg
+STRHOT-325 B removed t6-cxfx/op_opengl.go decodeImg fixed, picks the decoder by the first bytes of the file, #432
 STRHOT-326 E open t5-cipher/op_cipher.go cipherHashStateAssertFailure
 STRHOT-327 E open t5-cipher/op_cipher.go cipherHashStateFullAssertFailure
 STRHOT-328 E open t5-cxnet/op_net.go netReplayEndAssertFailure

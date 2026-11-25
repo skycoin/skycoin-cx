@@ -135,6 +135,7 @@
 
 #### Fixed
 
+- `gl.UploadImageToTexture` of an `.hdr` file reads the `-Y height +X width` line the right way round. It took the height as the width, so a texture that was not square decoded wrong. The HDR header and the image format are read as bytes, which drops STRHOT-325 and leaves STRHOT-197 a failure branch only (#432)
 - The old loop stops a program at the call depth limit with the stack overflow error of vm, exit code 6. It indexed one past the call stack and crashed. A runtime error in `*init` is a runtime error with exit code 5, as on vm, where it was a Go panic (#514)
 - A method whose receiver is not a struct, `func (x i32) f()`, is compile error 7081, and a method of a struct that does not exist reports the missing struct. Both crashed the compiler. An assignment to an undeclared `v.x` after another declaration, `var d T` then `v.x = 1`, no longer crashes the compiler either (#515)
 - `TestLowerCompare` and the other in-process compiles of the tests compile through `compileSourceStrings`, as the cx command does, so they report the compile errors of `*init` too. They accepted initialization cycles and global type errors (#516)

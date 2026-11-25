@@ -4,24 +4,23 @@ package cxfx
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"math"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t0-util" // thin: only ProgramFileSystemPathFromBytes, ProgramSandboxFileOpen; no depth gain
 	"github.com/skycoin/skycoin-cx/t3-ast"
 
-	//"bytes"
 	"unsafe"
 )
 
@@ -57,9 +56,32 @@ func Slice_f32_ToPtr(value []float32) unsafe.Pointer {
 	return unsafe.Pointer(&value[0])
 }
 
-// VIOLATION STRHOT-325: B, decodes an image file, whose format the decoder names, #432.
+// The first bytes of the image formats imageDecode reads, as image/png,
+// image/jpeg and image/gif register them for image.Decode.
+var (
+	imageMagicPng  = []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}
+	imageMagicJpeg = []byte{0xff, 0xd8}
+	imageMagicGif  = []byte{'G', 'I', 'F', '8'}
+)
+
+// imageDecode decodes the png, jpeg or gif in file, picked by its first bytes
+// as image.Decode picks it, without the format name image.Decode returns.
+func imageDecode(file *os.File) (image.Image, error) {
+	reader := bufio.NewReader(file)
+	magic, _ := reader.Peek(len(imageMagicPng))
+	switch {
+	case bytes.HasPrefix(magic, imageMagicPng):
+		return png.Decode(reader)
+	case bytes.HasPrefix(magic, imageMagicJpeg):
+		return jpeg.Decode(reader)
+	case len(magic) >= 6 && bytes.HasPrefix(magic, imageMagicGif) && magic[5] == 'a':
+		return gif.Decode(reader)
+	}
+	return nil, image.ErrFormat
+}
+
 func decodeImg(file *os.File, cpuCopy bool) (data []byte, width int32, height int32, pixels []float32) {
-	img, _, err := image.Decode(file)
+	img, err := imageDecode(file)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +186,64 @@ func unpack_(file *os.File, width types.Pointer, line []byte) bool {
 	return true
 }
 
-// VIOLATION STRHOT-197: B, parses the text header of an HDR file, #432.
+// The header lines of an HDR file that decodeHdr reads.
+var (
+	hdrRadiance = []byte{'#', '?', 'R', 'A', 'D', 'I', 'A', 'N', 'C', 'E'}
+	hdrFormat   = []byte{'F', 'O', 'R', 'M', 'A', 'T', '='}
+	hdrRgbe     = []byte{'3', '2', '-', 'b', 'i', 't', '_', 'r', 'l', 'e', '_', 'r', 'g', 'b', 'e'}
+	hdrSizeY    = []byte{'-', 'Y'}
+	hdrSizeX    = []byte{'+', 'X'}
+)
+
+// hdrSizeRead reads the "-Y height +X width" line that follows the header of
+// an HDR file, through its newline.
+func hdrSizeRead(file *os.File) (width int, height int, ok bool) {
+	var line [64]byte
+	length := 0
+	for {
+		if length == len(line) {
+			return 0, 0, false
+		}
+		if count, _ := file.Read(line[length : length+1]); count == 0 {
+			return 0, 0, false
+		}
+		if line[length] == '\n' {
+			break
+		}
+		length++
+	}
+	fields := bytes.Fields(line[:length])
+	if len(fields) != 4 || !bytes.Equal(fields[0], hdrSizeY) || !bytes.Equal(fields[2], hdrSizeX) {
+		return 0, 0, false
+	}
+	height, okHeight := hdrDecimal(fields[1])
+	width, okWidth := hdrDecimal(fields[3])
+	return width, height, okHeight && okWidth
+}
+
+// hdrDecimal parses the decimal digits of field, an optional sign first.
+func hdrDecimal(field []byte) (int, bool) {
+	sign := 1
+	if len(field) > 0 && (field[0] == '-' || field[0] == '+') {
+		if field[0] == '-' {
+			sign = -1
+		}
+		field = field[1:]
+	}
+	if len(field) == 0 || len(field) > 9 {
+		return 0, false
+	}
+	value := 0
+	for _, digit := range field {
+		if digit < '0' || digit > '9' {
+			return 0, false
+		}
+		value = value*10 + int(digit-'0')
+	}
+	return sign * value, true
+}
+
+// VIOLATION STRHOT-197: E, prints why an HDR file does not decode, on a failure branch only, #432.
 func decodeHdr(file *os.File) (data []byte, i32Width int32, i32Height int32) {
 	data = nil
 	i32Width = 0
@@ -182,16 +261,16 @@ func decodeHdr(file *os.File) (data []byte, i32Width int32, i32Height int32) {
 
 	scanner.Split(scanLines)
 	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "#?RADIANCE" {
-		} else if strings.HasPrefix(line, "#") {
-		} else if strings.HasPrefix(line, "FORMAT=") {
-			var sformat string
-			if n, err := fmt.Sscanf(line, "FORMAT=%s\n", &sformat); n != 1 && err != nil {
-				fmt.Printf("Failed to scan format : err '%s'\n", err)
+		line := scanner.Bytes()
+		if bytes.Equal(line, hdrRadiance) {
+		} else if len(line) > 0 && line[0] == '#' {
+		} else if bytes.HasPrefix(line, hdrFormat) {
+			fields := bytes.Fields(line[len(hdrFormat):])
+			if len(fields) == 0 {
+				fmt.Printf("Failed to scan format : no format after FORMAT=\n")
 				return
 			}
-			if sformat == "32-bit_rle_rgbe" {
+			if bytes.Equal(fields[0], hdrRgbe) {
 				format = HDR_32_RLE_RGBE
 			}
 		} else if len(line) == 0 {
@@ -210,10 +289,9 @@ func decodeHdr(file *os.File) (data []byte, i32Width int32, i32Height int32) {
 
 	file.Seek(pos, 0)
 
-	var iwidth int
-	var iheight int
-	if n, err := fmt.Fscanf(file, "-Y %d +X %d\n", &iwidth, &iheight); n != 2 || err != nil {
-		fmt.Printf("Failed to scan width and height : err '%s'\n", err)
+	iwidth, iheight, ok := hdrSizeRead(file)
+	if !ok {
+		fmt.Printf("Failed to scan width and height : not a -Y height +X width line\n")
 		return
 	}
 
