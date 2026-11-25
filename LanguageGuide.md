@@ -1941,6 +1941,28 @@ func main () {
 }
 ```
 
+A slice is a reference to one object on the heap that holds its length,
+capacity and elements, so unlike Go two slice variables never hold
+different lengths of the same object. `append`, `insert` and `resize`
+change the object in place while its capacity holds the result, and
+return it, so the result shares the input's elements and length. When
+the capacity is too small they return a new object and leave the input
+as it was. `remove` never needs more capacity, so it always removes the
+element in place and returns the input's object. After `q = remove(r,
+1)`, `q` and `r` are the same slice, one element shorter.
+
+```cx
+package main
+
+func main () {
+	var r []i32
+	r = []i32{10, 20, 30}
+	var q []i32
+	q = remove(r, 0)
+	printf("%d %d %d\n", len(q), len(r), q[0]) // prints 2 2 20
+}
+```
+
 The value passed to `append` or `insert` has the element type of the
 slice, `copy` takes two slices of the same type, and the result of
 `append`, `insert`, `resize` and `remove` is assigned to a slice of the

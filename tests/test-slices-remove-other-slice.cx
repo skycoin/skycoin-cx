@@ -1,0 +1,125 @@
+package main
+
+type Point struct {
+	x i32
+	y i32
+	name str
+}
+
+func checkI32(s []i32, want []i32, msg str) {
+	test(len(s), len(want), msg)
+	for i := 0; i < len(want); i++ {
+		test(s[i], want[i], msg)
+	}
+}
+
+func firstLen(s []i32) (n i32) {
+	n = len(remove(s, 0))
+}
+
+func main()() {
+	// Remove into a different slice shares the input slice object, as
+	// append, insert and resize do when the capacity holds the result.
+	var r []i32
+	r = []i32{10, 20, 30, 40}
+	var q []i32
+	q = remove(r, 1)
+	checkI32(q, []i32{10, 30, 40}, "remove middle into q")
+	checkI32(r, []i32{10, 30, 40}, "input after remove into q")
+	q[0] = 99
+	test(r[0], 99, "q shares r")
+
+	var a []i32
+	a = []i32{1, 2, 3}
+	var b []i32
+	b = remove(a, 0)
+	checkI32(b, []i32{2, 3}, "remove first")
+	b = remove(a, 1)
+	checkI32(b, []i32{2}, "remove last")
+	b = remove(a, 0)
+	checkI32(b, []i32{}, "remove only")
+	test(len(a), 0, "input emptied")
+	b = append(b, 7)
+	checkI32(b, []i32{7}, "append after removing all")
+
+	var n []i32
+	n = []i32{5, 6, 7}
+	test(len(remove(n, 1)), 2, "len of remove")
+	test(len(remove(remove(n, 0), 0)), 0, "len of chained remove")
+	test(len(n), 0, "input after chained remove")
+
+	var c []i32
+	c = []i32{1, 2, 3, 4, 5}
+	var d []i32
+	d = remove(remove(c, 4), 0)
+	checkI32(d, []i32{2, 3, 4}, "chained remove")
+	test(firstLen([]i32{1, 2, 3}), 2, "remove of a parameter")
+
+	var u []ui8
+	u = []ui8{1UB, 2UB, 3UB, 4UB}
+	var v []ui8
+	v = remove(u, 2)
+	test(len(v), 3, "ui8 len")
+	test(v[0], 1UB, "ui8 0")
+	test(v[1], 2UB, "ui8 1")
+	test(v[2], 4UB, "ui8 2")
+
+	var s []str
+	s = []str{"a", "bb", "ccc"}
+	var t []str
+	t = remove(s, 0)
+	test(len(t), 2, "str len")
+	test(t[0], "bb", "str 0")
+	test(t[1], "ccc", "str 1")
+
+	var ps []Point
+	ps = []Point{Point{x: 1, y: 2, name: "p"}, Point{x: 3, y: 4, name: "q"}, Point{x: 5, y: 6, name: "r"}}
+	var qs []Point
+	qs = remove(ps, 1)
+	test(len(qs), 2, "struct len")
+	test(qs[0].x, 1, "struct 0 x")
+	test(qs[1].x, 5, "struct 1 x")
+	test(qs[1].y, 6, "struct 1 y")
+	test(qs[1].name, "r", "struct 1 name")
+
+	var m [][]i32
+	m = append(m, []i32{1})
+	m = append(m, []i32{2, 2})
+	m = append(m, []i32{3, 3, 3})
+	var mm [][]i32
+	mm = remove(m, 0)
+	test(len(mm), 2, "nested len")
+	checkI32(mm[0], []i32{2, 2}, "nested 0")
+	checkI32(mm[1], []i32{3, 3, 3}, "nested 1")
+
+	// insert and resize into a different slice follow the same rule.
+	var ir []i32
+	ir = []i32{1, 2, 3}
+	ir = append(ir, 4)
+	var iq []i32
+	iq = insert(ir, 1, 9)
+	checkI32(iq, []i32{1, 9, 2, 3, 4}, "insert into iq")
+
+	var rr []i32
+	rr = []i32{1, 2, 3, 4}
+	var rq []i32
+	rq = resize(rr, 2)
+	checkI32(rq, []i32{1, 2}, "resize into rq")
+	rq = resize(rr, 6)
+	test(len(rq), 6, "resize grow into rq")
+	test(rq[1], 2, "resize grow keeps data")
+
+
+	// Slices of slices hold pointers, 8 bytes in a ptr64 build.
+	var mr [][]i32
+	mr = resize(m, 5)
+	test(len(mr), 5, "nested resize len")
+	checkI32(mr[0], []i32{2, 2}, "nested resize 0")
+	checkI32(mr[1], []i32{3, 3, 3}, "nested resize 1")
+	var mi [][]i32
+	mi = insert(mr, 1, []i32{4})
+	checkI32(mi[1], []i32{4}, "nested insert 1")
+	checkI32(mi[2], []i32{3, 3, 3}, "nested insert 2")
+
+	printf("remove other slice ok\n")
+}

@@ -1,0 +1,8 @@
+package main
+
+func main()() {
+	var r []str
+	var q []str
+	q = remove(r, 0)
+	test(false, true, "runtime must throw CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
+}

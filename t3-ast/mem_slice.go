@@ -231,10 +231,10 @@ func SliceInsert(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 	return outputSliceOffset
 }
 
-// SliceRemove ...
-func SliceRemove(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *CXTypeSignature, index types.Pointer, sizeofElement types.Pointer) types.Pointer {
+// SliceRemove removes the element at index in place and returns the input
+// slice object, which the result shares with the input as append does.
+func SliceRemove(prgrm *CXProgram, fp types.Pointer, inp *CXTypeSignature, index types.Pointer, sizeofElement types.Pointer) types.Pointer {
 	inputSliceOffset := GetSliceOffset(prgrm, fp, inp)
-	outputSliceOffset := GetSliceOffset(prgrm, fp, out)
 
 	var inputSliceLen types.Pointer
 	if inputSliceOffset != 0 && inputSliceOffset.IsValid() {
@@ -245,11 +245,10 @@ func SliceRemove(prgrm *CXProgram, fp types.Pointer, out *CXTypeSignature, inp *
 		panic(types.CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE)
 	}
 
-	outputSliceData := GetSliceData(prgrm, outputSliceOffset, sizeofElement)
-	copy(outputSliceData[index*sizeofElement:], outputSliceData[(index+1)*sizeofElement:])
-	outputSliceHeader := GetSliceHeader(prgrm, outputSliceOffset)
-	types.Write_ptr(outputSliceHeader, types.POINTER_SIZE, inputSliceLen-1)
-	return outputSliceOffset
+	sliceData := GetSliceData(prgrm, inputSliceOffset, sizeofElement)
+	copy(sliceData[index*sizeofElement:], sliceData[(index+1)*sizeofElement:])
+	types.Write_ptr(GetSliceHeader(prgrm, inputSliceOffset), types.POINTER_SIZE, inputSliceLen-1)
+	return inputSliceOffset
 }
 
 // WriteToSlice is used to create slices in the backend, i.e. not by calling `append`

@@ -1,0 +1,9 @@
+package main
+
+func main()() {
+	var r []i32
+	r = []i32{0, 1, 2}
+	var q []i32
+	q = remove(r, 3)
+	test(false, true, "runtime must throw CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE")
+}
