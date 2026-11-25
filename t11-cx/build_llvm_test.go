@@ -286,3 +286,43 @@ func main() {
 		t.Errorf("native prints %q, vm %q", got, want)
 	}
 }
+
+// TestLlvmCompareBenchmarks builds the t0-benchmarks/compare programs with
+// cx build --target=llvm and checks that each prints the hash of
+// expected.txt and its pass line. It needs clang.
+func TestLlvmCompareBenchmarks(t *testing.T) {
+	llvmTestClang(t)
+	if testing.Short() {
+		t.Skip("builds the compare benchmarks")
+	}
+	dir, err := filepath.Abs(filepath.Join("..", "t0-benchmarks", "compare"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := os.ReadFile(filepath.Join(dir, "expected.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{}
+	for _, line := range strings.Split(string(expected), "\n") {
+		if fields := strings.Fields(line); len(fields) == 3 && fields[1] == "full" {
+			want[fields[0]] = fields[2]
+		}
+	}
+	harness := executionRecordHarnessNew(t)
+	for _, bench := range []string{"count", "fib", "array", "struct", "memtest", "primes"} {
+		output := filepath.Join(t.TempDir(), bench)
+		if goruntime.GOOS == "windows" {
+			output += ".exe"
+		}
+		build := executionRecordProcess(t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, dir, "", buildCommand, "--target="+buildTargetLlvm, filepath.Join("cx", bench+".cx"), "-o", output)
+		if build.exitCode != 0 {
+			t.Fatalf("%s: cx build exit code %d: %s", bench, build.exitCode, build.stderr)
+		}
+		run := executionRecordProcess(t, output, nil, dir, "")
+		lines := strings.Split(string(run.stdout), "\n")
+		if run.exitCode != 0 || len(lines) < 2 || lines[0] != want[bench] || lines[1] != bench+" pass" {
+			t.Errorf("%s: exit code %d, output %q, want hash %s and a pass line", bench, run.exitCode, run.stdout, want[bench])
+		}
+	}
+}
