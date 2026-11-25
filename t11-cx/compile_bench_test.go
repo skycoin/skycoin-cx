@@ -28,7 +28,7 @@ var compileBenchmarkPrograms = []string{
 // up.
 func compileBenchmarkObjectCount() int {
 	program := actions.AST
-	return len(program.CXPackages) + len(program.CXFunctions) + len(program.CXStructs) +
+	return len(program.CXPackages) + program.CxIrState.CXFunctionMng.CXFunctionLen() + len(program.CXStructs) +
 		len(program.CXAtomicOps) + program.CxIrState.CXLineMng.CXLineLen() + program.CxIrState.CXArgumentMng.CXArgumentLen() +
 		program.CxIrState.CXTypeSignatureMng.CXTypeSignatureLen() + program.CxIrState.CXTypeSignature_ArrayMng.CXTypeSignature_ArrayLen() +
 		program.CxIrState.CXTypeSignature_StructMng.CXTypeSignature_StructLen()

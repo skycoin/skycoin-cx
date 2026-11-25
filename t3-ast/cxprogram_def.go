@@ -85,7 +85,6 @@ type CXProgram struct {
 	// For new CX AST arrays
 	CXAtomicOps []CXAtomicOperator
 	CXPackages  []CXPackage
-	CXFunctions []CXFunction
 	CXStructs   []CXStruct
 	// Then reference the package of function by CxFunction id
 

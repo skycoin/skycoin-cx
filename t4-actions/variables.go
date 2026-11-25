@@ -24,8 +24,6 @@ func processGlobalInitializer(prgrm *ast.CXProgram, initializer []ast.CXExpressi
 		prgrm.CXAtomicOps[initializerExpressionIdx].Outputs = nil
 
 		prgrm.CXAtomicOps[initializerExpressionIdx].AddOutput(prgrm, glblIdx)
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S1210.
 		opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 		prgrm.CXAtomicOps[initializerExpressionIdx].Operator = opIdx
 

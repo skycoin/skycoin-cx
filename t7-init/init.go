@@ -39,10 +39,7 @@ func MakeProgram() *ast.CXProgram {
 	// OBJMODEL: state.CXProgramMng.CXProgramAlloc(), phase 4 #371.
 	// Now a heap literal, site S1461.
 	newPrgrm := &ast.CXProgram{
-		Packages: make(map[stringpool.StringGid]ast.CXPackageIndex, 0),
-		// OBJMODEL: state.CXFunctionMng (manager storage) or []CXFunctionGid, phase 4 #351.
-		// Now a slice of objects, site S1462.
-		CXFunctions:    make([]ast.CXFunction, 0),
+		Packages:       make(map[stringpool.StringGid]ast.CXPackageIndex, 0),
 		CurrentPackage: -1,
 		// OBJMODEL: state.CXCallMng (manager storage) or []CXCallGid, phase 4 #366.
 		// Now a slice of objects, site S1463.

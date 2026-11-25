@@ -54,8 +54,6 @@ func (pkg *CXPackage) GetMethod(prgrm *CXProgram, receiverName stringpool.String
 	// Trying to find it among the built-ins.
 	// Most likely a method from a core package.
 	if native, found := prgrm.CXProgramNativeFind(&NativeNames, pkg.Name, receiverName, methodName); found {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S0167.
 		opFnIdx := prgrm.AddNativeFunctionInArray(NativeFunctionOf(prgrm, native.NativeNameEntryCode))
 		return opFnIdx, nil
 	}
@@ -163,7 +161,7 @@ func (pkg *CXPackage) RemoveImport(impName stringpool.StringGid) {
 	}
 }
 
-// AddFunction adds fn to pkg. A second function of the same name is an
+// AddFunction adds fn, allocated by MakeFunction, to pkg. A second function of the same name is an
 // error and stays out of pkg.Functions, so the first keeps the name as in Go.
 func (pkg *CXPackage) AddFunction(prgrm *CXProgram, fn *CXFunction) (*CXPackage, CXFunctionIndex) {
 	return pkg, pkg.addFunction(prgrm, fn, CompileErrorCodeRedeclaredBlock)
@@ -172,9 +170,7 @@ func (pkg *CXPackage) AddFunction(prgrm *CXProgram, fn *CXFunction) (*CXPackage,
 func (pkg *CXPackage) addFunction(prgrm *CXProgram, fn *CXFunction, code CompileErrorCode) CXFunctionIndex {
 	fn.Package = CXPackageIndex(pkg.Index)
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now an arena insert, site S0178.
-	fnIdx := prgrm.AddFunctionInArray(fn)
+	fnIdx := CXFunctionIndex(fn.Index)
 	if firstIdx, ok := pkg.Functions[fn.Name]; ok {
 		first := prgrm.GetFunctionFromArray(firstIdx)
 		column := fn.FileColumn
@@ -210,17 +206,17 @@ func (prgrm *CXProgram) FunctionDeclarationAt(fnIdx CXFunctionIndex, file Source
 	if line == 0 || fn.FileName == file && fn.FileLine == line && fn.FileColumn == column {
 		return fnIdx
 	}
-	for index := range prgrm.CXFunctions {
-		other := &prgrm.CXFunctions[index]
-		if other.Name == fn.Name && other.Package == fn.Package && other.FileName == file && other.FileLine == line && other.FileColumn == column {
+	for index := 0; index < prgrm.CXProgramFunctionSlotCount(); index++ {
+		other := prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(index))
+		if other != nil && other.Name == fn.Name && other.Package == fn.Package && other.FileName == file && other.FileLine == line && other.FileColumn == column {
 			return CXFunctionIndex(index)
 		}
 	}
 	return fnIdx
 }
 
-// RemoveFunction ...
-func (pkg *CXPackage) RemoveFunction(fnName stringpool.StringGid) {
+// RemoveFunction removes the function fnName from pkg and releases it.
+func (pkg *CXPackage) RemoveFunction(prgrm *CXProgram, fnName stringpool.StringGid) {
 	fnIdx, ok := pkg.Functions[fnName]
 	if !ok {
 		return
@@ -231,9 +227,11 @@ func (pkg *CXPackage) RemoveFunction(fnName stringpool.StringGid) {
 		}
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionRelease(gid), phase 4 #351.
-	// Now a dropped object, site S0179.
 	delete(pkg.Functions, fnName)
+	if pkg.CurrentFunction == fnIdx {
+		pkg.CurrentFunction = -1
+	}
+	prgrm.CXProgramFunctionRelease(fnIdx)
 }
 
 // AddStruct ...

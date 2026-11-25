@@ -1085,8 +1085,6 @@ func AssociateReturnExpressions(prgrm *ast.CXProgram, idx int, retExprs []ast.CX
 	// Now an arena getter, site S0714.
 	lastExpressionOperator := prgrm.GetFunctionFromArray(lastExpression.Operator)
 	if lastExpressionOperator == nil {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S0715.
 		opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 		lastExpression.Operator = opIdx
 

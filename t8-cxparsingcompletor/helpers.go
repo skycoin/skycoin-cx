@@ -78,7 +78,6 @@ func (lval *yySymType) scancopy(tok *yySymType) {
 	lval.expressions = tok.expressions
 	lval.f32 = tok.f32
 	lval.f64 = tok.f64
-	lval.function = tok.function
 	lval.i = tok.i
 	lval.i16 = tok.i16
 	lval.i32 = tok.i32

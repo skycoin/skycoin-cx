@@ -607,8 +607,6 @@ func processAssignment(prgrm *ast.CXProgram, toExprs []ast.CXExpression, fromExp
 	}
 
 	if fromExpressionOperator == nil {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S0580.
 		opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 		prgrm.CXAtomicOps[fromExpressionIdx].Operator = opIdx
 

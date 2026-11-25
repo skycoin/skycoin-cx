@@ -28,8 +28,6 @@ func TestASTAPI_Functions(t *testing.T) {
 	})
 
 	t.Run("add empty function to package", func(t *testing.T) {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S1608.
 		err := astapi.AddEmptyFunctionToPackage(cxprogram, "main", "TestFunction")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)
@@ -87,8 +85,6 @@ func TestASTAPI_Functions(t *testing.T) {
 	})
 
 	t.Run("remove function from package", func(t *testing.T) {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionRelease(gid), phase 4 #351.
-		// Now a release, site S1609.
 		err := astapi.RemoveFunctionFromPackage(cxprogram, "main", "TestFunction")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)

@@ -28,9 +28,9 @@ func main() {
 
 // runCallbackFunction returns the function of prgrm named name.
 func runCallbackFunction(t testing.TB, prgrm *ast.CXProgram, name string) *ast.CXFunction {
-	for i := range prgrm.CXFunctions {
-		if prgrm.CXProgramNameText(prgrm.CXFunctions[i].Name) == name {
-			return &prgrm.CXFunctions[i]
+	for i := 0; i < prgrm.CXProgramFunctionSlotCount(); i++ {
+		if fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(i)); fn != nil && prgrm.CXProgramNameText(fn.Name) == name {
+			return fn
 		}
 	}
 	t.Fatalf("no function %s", name)

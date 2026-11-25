@@ -14,7 +14,7 @@ func TestSerializeFieldCounts(t *testing.T) {
 		value  interface{}
 		fields int
 	}{
-		{CXProgram{}, 32},
+		{CXProgram{}, 31},
 		{StackSegmentStruct{}, 3},
 		{DataSegmentStruct{}, 2},
 		{HeapSegmentStruct{}, 9},
@@ -34,6 +34,7 @@ func TestSerializeFieldCounts(t *testing.T) {
 		{CXTypeSignature_Struct{}, 2},
 		{CXCall{}, 3},
 		{CXLineMng{}, 8},
+		{CXFunctionMng{}, 8},
 	}
 	for _, count := range counts {
 		if got := reflect.TypeOf(count.value).NumField(); got != count.fields {

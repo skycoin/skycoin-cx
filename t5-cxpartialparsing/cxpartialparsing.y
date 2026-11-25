@@ -84,9 +84,6 @@
 	// Now a pointer at rest, site S1397.
 	expressions []*ast.CXExpression
 
-        // OBJMODEL: CXFunctionGid, the parser value stack lives across Allocs, phase 4 #351.
-        // Now a pointer at rest, site S1398.
-        function *ast.CXFunction
         functionIndex ast.CXFunctionIndex
 }
 
@@ -314,9 +311,7 @@ function_header:
                 FUNC IDENTIFIER
                 {
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now a constructor call, site S1400.
-				fn := ast.MakeFunction(Program, Program.CXProgramNameIntern($2), CurrentFile, $<line>2)
+				_, fn := ast.MakeFunction(Program, Program.CXProgramNameIntern($2), CurrentFile, $<line>2)
 				fn.FileColumn = $<column>2
 				_,fnIdx:=pkg.AddFunction(Program,fn)
                                 pkg.CurrentFunction=fnIdx
@@ -334,9 +329,7 @@ function_header:
 			methodName := Program.CXProgramNameIntern($5)
 
 			if pkg, err := Program.GetCurrentPackage(); err == nil {
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now a constructor call, site S1401.
-				fn := ast.MakeFunction(Program, Program.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, $<line>5)
+				_, fn := ast.MakeFunction(Program, Program.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, $<line>5)
 				fn.FileColumn = $<column>5
 				_,fnIdx:=pkg.AddMethod(Program,fn,receiverName,methodName)
                                 // OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.

@@ -156,7 +156,6 @@ func serializeUnusedManagersCheck(state *CxIrState) error {
 	}{
 		{CXProgramGidTypeTag, state.CXProgramMng.CXProgramMngNext != 0},
 		{CXPackageGidTypeTag, state.CXPackageMng.CXPackageMngNext != 0},
-		{CXFunctionGidTypeTag, state.CXFunctionMng.CXFunctionMngNext != 0},
 		{CXNativeFunctionGidTypeTag, state.CXNativeFunctionMng.CXNativeFunctionMngNext != 0},
 		{CXStructGidTypeTag, state.CXStructMng.CXStructMngNext != 0},
 		{CXExpressionGidTypeTag, state.CXExpressionMng.CXExpressionMngNext != 0},
@@ -505,14 +504,15 @@ func deserializeCallStack(prgrm *CXProgram, decoder *serializeDecoder, calls []s
 	}
 	for i, call := range calls {
 		operator := call.serializeCallReferenceOperator
-		if operator < -1 || operator >= int64(len(prgrm.CXFunctions)) {
-			decoder.serializeDecoderFailf("call %d names function %d of %d", i, operator, len(prgrm.CXFunctions))
+		functions := prgrm.CXProgramFunctionSlotCount()
+		if operator < -1 || operator >= int64(functions) || operator >= 0 && prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(operator)) == nil {
+			decoder.serializeDecoderFailf("call %d names function %d of %d", i, operator, functions)
 			return
 		}
 		if operator >= 0 {
 			// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
-			// Now a pointer into an arena, as the call stack holds it.
-			prgrm.CallStack[i].Operator = &prgrm.CXFunctions[operator]
+			// Now a pointer into the manager, as the call stack holds it.
+			prgrm.CallStack[i].Operator = prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(operator))
 		}
 		prgrm.CallStack[i].Line = call.serializeCallReferenceLine
 		prgrm.CallStack[i].FramePointer = call.serializeCallReferenceFramePointer
@@ -723,13 +723,13 @@ func deserializeStructs(prgrm *CXProgram, decoder *serializeDecoder) {
 //                     Functions section
 
 func serializeFunctions(prgrm *CXProgram, encoder *serializeEncoder) error {
-	encoder.serializeEncoderLength(len(prgrm.CXFunctions), prgrm.CXFunctions == nil)
-	for i := range prgrm.CXFunctions {
-		if err := serializeFunction(prgrm, encoder, &prgrm.CXFunctions[i]); err != nil {
-			return err
-		}
-	}
-	return nil
+	manager := &prgrm.CxIrState.CXFunctionMng
+	return serializeManager(encoder, manager.CXFunctionMngObjects, serializeManagerSlots{
+		len(manager.CXFunctionMngObjects), manager.CXFunctionMngGenerations, manager.CXFunctionMngLive, manager.CXFunctionMngFree,
+		manager.CXFunctionMngNext, manager.CXFunctionMngRetired, manager.CXFunctionMngLen, manager.CXFunctionMngGrowable,
+	}, func(fn *CXFunction) error {
+		return serializeFunction(prgrm, encoder, fn)
+	})
 }
 
 // GCREACH: writes the GC root tables ListOfPointers and ListOfSlots,
@@ -785,16 +785,17 @@ func serializeFunction(prgrm *CXProgram, encoder *serializeEncoder, fn *CXFuncti
 	return nil
 }
 
+// VIOLATION STRHOT-353: B, the serializer, compiler code run by an opcode, #412.
 func deserializeFunctions(prgrm *CXProgram, decoder *serializeDecoder) {
-	length := decoder.serializeDecoderLength(16)
-	if length < 0 {
+	objects, slots := deserializeManager(decoder, "CXFunctionMng", func(fn *CXFunction) {
+		deserializeFunction(prgrm, decoder, fn)
+	})
+	if decoder.serializeDecoderError != nil {
 		return
 	}
-	// OBJMODEL: state.CXFunctionMng (manager storage) or []CXFunctionGid, phase 4 #351.
-	// Now a slice of objects, the arena of a compiled program.
-	prgrm.CXFunctions = make([]CXFunction, length)
-	for i := range prgrm.CXFunctions {
-		deserializeFunction(prgrm, decoder, &prgrm.CXFunctions[i])
+	prgrm.CxIrState.CXFunctionMng = CXFunctionMng{
+		objects, slots.serializeManagerSlotsGenerations, slots.serializeManagerSlotsLive, slots.serializeManagerSlotsFree,
+		slots.serializeManagerSlotsNext, slots.serializeManagerSlotsRetired, slots.serializeManagerSlotsLen, slots.serializeManagerSlotsGrowable,
 	}
 }
 

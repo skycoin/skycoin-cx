@@ -13,7 +13,6 @@ S0011,CXProgram,ctor-call,t10-cxrepl/repl_test.go,24,TestMain,cxinit.MakeProgram
 S0012,CXProgram,drop,t10-cxrepl/repl_test.go,24,TestMain,actions.AST = cxinit.MakeProgram(),state.CXProgramMng.CXProgramRelease(gid),4-alloc,371,CXProgram phase 2-mng
 S0013,CXProgram,ctor-call,t10-generator/ast_serialize_test.go,94,generateSampleProgramFromCXEvolves,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0014,CXPackage,arena-add,t10-generator/ast_serialize_test.go,99,generateSampleProgramFromCXEvolves,"astapi.AddEmptyPackage(cxProgram, ""main"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S0015,CXFunction,arena-add,t10-generator/ast_serialize_test.go,106,generateSampleProgramFromCXEvolves,"astapi.AddEmptyFunctionToPackage(cxProgram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0016,CXProgram,ctor-call,t10-generator/lz4_test.go,97,TestDeserializeCompressed,"cxast.Deserialize(b, c)",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0017,CXProgram,ctor-call,t10-generator/lz4_test.go,111,TestDeserializeCompressed,"cxast.Deserialize(short[:8], nil)",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0018,CXProgram,ctor-call,t10-generator/lz4_test.go,138,TestSerializeCodecMisuse,"cxast.Deserialize([]byte{0}, tc.c)",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
@@ -24,7 +23,6 @@ S0022,CXExpression,ctor-call,t10-generator/program_generator.go,44,GenerateRando
 S0023,CXFunction,get-call,t10-generator/program_generator.go,58,GenerateRandomExpressions,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0024,CXFunction,get-call,t10-generator/program_generator.go,76,GenerateRandomExpressions,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0025,CXFunction,get-call,t10-generator/program_generator.go,92,GenerateRandomExpressions,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S0026,CXFunction,alloc-copy,t10-generator/program_generator.go,97,GenerateRandomExpressions,*inputFn = *fn,state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0027,CXAtomicOperator,get-call,t10-generator/program_generator.go,125,getAtomicOp,prgrm.GetCXAtomicOp(index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S0028,CXTypeSignature,get-call,t10-generator/program_generator.go,137,sigType,prgrm.GetCXTypeSignatureFromArray(idx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0029,CXArgument,get-call,t10-generator/program_generator.go,141,sigType,prgrm.GetCXArgFromArray(cxast.CXArgumentIndex(sig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
@@ -45,10 +43,8 @@ S0044,CXFunction,get-call,t10-generator/program_generator.go,292,getRandOut,prgr
 S0045,CXProgram,ctor-def,t10-generator/program_generator.go,318,GenerateSampleProgram,func GenerateSampleProgram,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0046,CXProgram,ctor-call,t10-generator/program_generator.go,326,GenerateSampleProgram,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0047,CXPackage,arena-add,t10-generator/program_generator.go,331,GenerateSampleProgram,"astapi.AddEmptyPackage(cxProgram, ""main"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S0048,CXFunction,arena-add,t10-generator/program_generator.go,338,GenerateSampleProgram,"astapi.AddEmptyFunctionToPackage(cxProgram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0049,CXProgram,ctor-call,t10-generator/program_generator_test.go,28,TestProgramGenerator,"cxgenerator.GenerateSampleProgram(t, tc.withLiteral)",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0050,CXPackage,arena-add,t10-generator/serialize_order_test.go,21,sampleProgramWithPackages,"astapi.AddEmptyPackage(prgrm, pkg)",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S0051,CXFunction,arena-add,t10-generator/serialize_order_test.go,27,sampleProgramWithPackages,"astapi.AddEmptyFunctionToPackage(prgrm, pkg, pkg+""_""+fn)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0052,CXPackage,get-call,t10-generator/serialize_order_test.go,41,packageFunctions,prgrm.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0053,CXProgram,ctor-call,t10-generator/serialize_order_test.go,88,TestSerializeKeepsFunctionsInTheirPackage,"cxast.Deserialize(b, nil)",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0054,CXProgram,ctor-call,t11-cx/compile_bench_test.go,56,BenchmarkCompile,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
@@ -58,7 +54,6 @@ S0057,CXProgram,drop,t11-cx/helpers.go,54,parseProgram,actions.AST = cxinit.Make
 S0058,CXPackage,ctor-call,t11-cx/helpers.go,88,initMainPkg,ast.MakePackage(constants.MAIN_PKG),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0059,CXPackage,arena-add,t11-cx/helpers.go,91,initMainPkg,prgrm.AddPackage(mod),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0060,CXPackage,get-call,t11-cx/helpers.go,94,initMainPkg,prgrm.GetPackageFromArray(modIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0061,CXFunction,ctor-call,t11-cx/helpers.go,100,initMainPkg,"ast.MakeFunction(constants.MAIN_FUNC, actions.CurrentFile, actions.LineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0062,CXProgram,ctor-call,t11-cx/main.go,180,Run,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S0063,CXProgram,drop,t11-cx/main.go,180,Run,actions.AST = cxinit.MakeProgram(),state.CXProgramMng.CXProgramRelease(gid),4-alloc,371,CXProgram phase 2-mng
 S0064,CXProgram,ctor-call,t11-cx/main_test.go,44,initProgram,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
@@ -112,8 +107,6 @@ S0129,CXExpression,value-field,t3-ast/cxfunction_def.go,22,type CXFunction,CXFun
 S0130,CXArgument,ptr-field,t3-ast/cxfunction_def.go,42,type CXFunction,CXFunction.ListOfPointers []*CXArgument,CXArgumentGid,5-gid,327,CXArgument phase 4-alloc
 S0131,CXArgument,ptr-field,t3-ast/cxnativefunction_def.go,11,type CXNativeFunction,CXNativeFunction.Inputs []*CXArgument,CXArgumentGid,5-gid,327,CXArgument phase 4-alloc
 S0132,CXArgument,ptr-field,t3-ast/cxnativefunction_def.go,14,type CXNativeFunction,CXNativeFunction.Outputs []*CXArgument,CXArgumentGid,5-gid,327,CXArgument phase 4-alloc
-S0133,CXFunction,ctor-def,t3-ast/ast_cxfunction.go,26,MakeFunction,func MakeFunction,state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S0134,CXFunction,alloc-literal-heap,t3-ast/ast_cxfunction.go,29,MakeFunction,"&CXFunction{ Name: name, Index: -1, FileName: fileName, FileLine: fileLine, Inputs: &CXStr...",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0135,CXStruct,alloc-literal-heap,t3-ast/ast_cxfunction.go,36,MakeFunction,"&CXStruct{ Name: name + ""_Input"", }",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0136,CXTypeSignature,get-call,t3-ast/ast_cxfunction.go,93,CXFunction.AddInput,prgrm.GetCXTypeSignatureFromArray(inputIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0137,CXStruct,alloc-literal-heap,t3-ast/ast_cxfunction.go,106,CXFunction.AddInput,&CXStruct{},state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
@@ -126,7 +119,6 @@ S0145,CXExpression,alloc-copy,t3-ast/ast_cxfunction.go,232,CXFunction.AddExpress
 S0146,CXExpression,drop,t3-ast/ast_cxfunction.go,247,CXFunction.RemoveExpression,fn.Expressions = fn.Expressions[:len(fn.Expressions)-1],state.CXExpressionMng.CXExpressionRelease(gid),4-alloc,346,CXExpression phase 2-mng
 S0147,CXExpression,drop,t3-ast/ast_cxfunction.go,251,CXFunction.RemoveExpression,"fn.Expressions = append(fn.Expressions[:line], fn.Expressions[line+1:]...)",state.CXExpressionMng.CXExpressionRelease(gid),4-alloc,346,CXExpression phase 2-mng
 S0148,CXExpression,ctor-def,t3-ast/ast_cxfunction.go,289,MakeAtomicOperatorExpression,func MakeAtomicOperatorExpression,state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
-S0149,CXFunction,arena-add,t3-ast/ast_cxfunction.go,294,MakeAtomicOperatorExpression,prgrm.AddNativeFunctionInArray(op),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0150,CXAtomicOperator,alloc-literal-heap,t3-ast/ast_cxfunction.go,299,MakeAtomicOperatorExpression,"&CXAtomicOperator{ Operator: opIdx, }",state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(),4-alloc,341,CXAtomicOperator phase 2-mng
 S0151,CXAtomicOperator,arena-add,t3-ast/ast_cxfunction.go,299,MakeAtomicOperatorExpression,"prgrm.AddCXAtomicOp(&CXAtomicOperator{ Operator: opIdx, })",state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(),4-alloc,341,CXAtomicOperator phase 2-mng
 S0152,CXExpression,alloc-literal-heap,t3-ast/ast_cxfunction.go,306,MakeAtomicOperatorExpression,"&CXExpression{ Index: index, Type: CX_ATOMIC_OPERATOR, }",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
@@ -135,7 +127,6 @@ S0156,CXExpression,alloc-literal-heap,t3-ast/ast_cxfunction.go,325,MakeCXLineExp
 S0157,CXStruct,ptr-field,t3-ast/cxpackage_def.go,15,type CXPackage,CXPackage.Globals *CXStruct,CXStructGid,5-gid,337,CXStruct phase 4-alloc
 S0158,CXFunction,get-call,t3-ast/ast_cxpackage.go,15,CXPackage.GetFunction,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0161,CXPackage,get-call,t3-ast/ast_cxpackage.go,49,CXPackage.GetImport,prgrm.GetPackageFromArray(pkg.Imports[impName]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0167,CXFunction,arena-add,t3-ast/ast_cxpackage.go,98,CXPackage.GetMethod,prgrm.AddNativeFunctionInArray(Natives[opCode]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0168,CXStruct,get-addr-arena,t3-ast/ast_cxpackage.go,110,CXPackage.GetStruct,&prgrm.CXStructs[strctIdx],state.CXStructMng.CXStructGet(gid),5-gid,337,CXStruct phase 4-alloc
 S0171,CXTypeSignature,get-call,t3-ast/ast_cxpackage.go,137,CXPackage.GetGlobal,prgrm.GetCXTypeSignatureFromArray(fieldIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0172,CXFunction,get-call,t3-ast/ast_cxpackage.go,154,CXPackage.GetCurrentFunction,prgrm.GetFunctionFromArray(pkg.CurrentFunction),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
@@ -144,8 +135,6 @@ S0174,CXPackage,ctor-def,t3-ast/ast_cxpackage.go,179,MakePackage,func MakePackag
 S0175,CXPackage,alloc-literal-heap,t3-ast/ast_cxpackage.go,182,MakePackage,"&CXPackage{ Name: name, Globals: &CXStruct{}, Imports: make(map[string]CXPackageIndex, 0),...",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0176,CXStruct,alloc-literal-heap,t3-ast/ast_cxpackage.go,186,MakePackage,&CXStruct{},state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0177,CXPackage,drop,t3-ast/ast_cxpackage.go,215,CXPackage.RemoveImport,"delete(pkg.Imports, impName)",state.CXPackageMng.CXPackageRelease(gid),4-alloc,361,CXPackage phase 2-mng
-S0178,CXFunction,arena-add,t3-ast/ast_cxpackage.go,229,CXPackage.AddFunction,prgrm.AddFunctionInArray(fn),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S0179,CXFunction,drop,t3-ast/ast_cxpackage.go,244,CXPackage.RemoveFunction,"delete(pkg.Functions, fnName)",state.CXFunctionMng.CXFunctionRelease(gid),4-alloc,351,CXFunction phase 2-mng
 S0180,CXStruct,arena-add,t3-ast/ast_cxpackage.go,255,CXPackage.AddStruct,prgrm.AddStructInArray(strct),state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0181,CXStruct,drop,t3-ast/ast_cxpackage.go,268,CXPackage.RemoveStruct,"delete(pkg.Structs, strctName)",state.CXStructMng.CXStructRelease(gid),4-alloc,336,CXStruct phase 2-mng
 S0182,CXArgument,get-call,t3-ast/ast_cxpackage.go,275,CXPackage.AddGlobal,prgrm.GetCXArgFromArray(defIdx),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
@@ -157,18 +146,14 @@ S0187,CXExpression,value-field,t3-ast/cxprogram_def.go,51,type CXProgram,CXProgr
 S0188,CXPackage,arena-add,t3-ast/ast_cxprogram.go,40,CXProgram.AddPackage,cxprogram.AddPackageInArray(mod),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0189,CXPackage,arena-append,t3-ast/ast_cxprogram.go,53,CXProgram.AddPackageInArray,"append(cxprogram.CXPackages, *pkg)",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S0190,CXPackage,get-addr-arena,t3-ast/ast_cxprogram.go,65,CXProgram.GetPackageFromArray,&cxprogram.CXPackages[index],state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0191,CXFunction,arena-append,t3-ast/ast_cxprogram.go,104,CXProgram.AddFunctionInArray,"append(cxprogram.CXFunctions, *fn)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0192,CXArgument,ctor-def,t3-ast/ast_cxprogram.go,113,nativeArgCopy,func nativeArgCopy,state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S0193,CXArgument,alloc-copy,t3-ast/ast_cxprogram.go,116,nativeArgCopy,cp := *arg,state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
-S0194,CXFunction,alloc-literal-heap,t3-ast/ast_cxprogram.go,124,CXProgram.AddNativeFunctionInArray,"&CXFunction{ Index: len(cxprogram.CXFunctions), AtomicOPCode: fn.AtomicOPCode, Inputs: &CX...",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0195,CXStruct,alloc-literal-heap,t3-ast/ast_cxprogram.go,129,CXProgram.AddNativeFunctionInArray,&CXStruct{},state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0196,CXStruct,alloc-literal-heap,t3-ast/ast_cxprogram.go,132,CXProgram.AddNativeFunctionInArray,&CXStruct{},state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0197,CXArgument,ctor-call,t3-ast/ast_cxprogram.go,146,CXProgram.AddNativeFunctionInArray,nativeArgCopy(argIn),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S0198,CXTypeSignature,arena-add,t3-ast/ast_cxprogram.go,150,CXProgram.AddNativeFunctionInArray,cxprogram.AddCXTypeSignatureInArray(newField),state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
 S0199,CXArgument,ctor-call,t3-ast/ast_cxprogram.go,164,CXProgram.AddNativeFunctionInArray,nativeArgCopy(argOut),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S0200,CXTypeSignature,arena-add,t3-ast/ast_cxprogram.go,167,CXProgram.AddNativeFunctionInArray,cxprogram.AddCXTypeSignatureInArray(newField),state.CXTypeSignatureMng.CXTypeSignatureAlloc(),4-alloc,331,CXTypeSignature phase 2-mng
-S0201,CXFunction,arena-append,t3-ast/ast_cxprogram.go,173,CXProgram.AddNativeFunctionInArray,"append(cxprogram.CXFunctions, *fnNative)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S0202,CXFunction,get-addr-arena,t3-ast/ast_cxprogram.go,189,CXProgram.GetFunctionFromArray,&cxprogram.CXFunctions[index],state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0203,CXStruct,arena-append,t3-ast/ast_cxprogram.go,201,CXProgram.AddStructInArray,"append(cxprogram.CXStructs, *strct)",state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S0204,CXStruct,get-addr-arena,t3-ast/ast_cxprogram.go,217,CXProgram.GetStructFromArray,&cxprogram.CXStructs[index],state.CXStructMng.CXStructGet(gid),5-gid,337,CXStruct phase 4-alloc
 S0207,CXAtomicOperator,get-addr-arena,t3-ast/ast_cxprogram.go,255,CXProgram.GetCXAtomicOp,&cxprogram.CXAtomicOps[index],state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
@@ -195,7 +180,6 @@ S0247,CXAtomicOperator,alloc-literal-heap,t3-ast/ast_cxprogram.go,637,CXProgram.
 S0248,CXPackage,get-call,t3-ast/ast_cxprogram.go,650,CXProgram.SelectPackage,cxprogram.GetPackageFromArray(cxprogram.Packages[name]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0249,CXPackage,get-call,t3-ast/ast_cxprogram.go,661,CXProgram.GetCurrentPackage,cxprogram.GetPackageFromArray(cxprogram.CurrentPackage),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0250,CXPackage,get-call,t3-ast/ast_cxprogram.go,672,CXProgram.GetCurrentFunction,cxprogram.GetPackageFromArray(cxprogram.CurrentPackage),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S0251,CXFunction,alloc-literal-heap,t3-ast/ast_cxprogram.go,676,CXProgram.GetCurrentFunction,&CXFunction{},state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0252,CXFunction,get-call,t3-ast/ast_cxprogram.go,685,CXProgram.GetCurrentFunction,cxprogram.GetFunctionFromArray(currentPackage.CurrentFunction),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0253,CXPackage,get-call,t3-ast/ast_cxprogram.go,697,CXProgram.GetPackage,cxprogram.GetPackageFromArray(cxprogram.Packages[pkgName]),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S0254,CXTypeSignature,get-call,t3-ast/ast_cxstruct.go,21,CXStruct.GetField,prgrm.GetCXTypeSignatureFromArray(typeSignatureIdx),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
@@ -344,7 +328,6 @@ S0576,CXAtomicOperator,get-call,t4-actions/assignment.go,511,shortDeclarationAss
 S0577,CXTypeSignature,get-call,t4-actions/assignment.go,518,shortDeclarationAssignment,prgrm.GetCXTypeSignatureFromArray(toExprAtomicOp.GetOutputs(prgrm)[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0578,CXExpression,make-slice,t4-actions/assignment.go,543,shortDeclarationAssignment,[]ast.CXExpression{*expr},state.CXExpressionMng (manager storage) or []CXExpressionGid,4-alloc,346,CXExpression phase 2-mng
 S0579,CXFunction,get-call,t4-actions/assignment.go,551,processAssignment,prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[fromExpressionIdx].Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S0580,CXFunction,arena-add,t4-actions/assignment.go,561,processAssignment,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0581,CXTypeSignature,get-call,t4-actions/assignment.go,566,processAssignment,prgrm.GetCXTypeSignatureFromArray(toExpression.GetOutputs(prgrm)[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0582,CXTypeSignature,get-call,t4-actions/assignment.go,576,processAssignment,prgrm.GetCXTypeSignatureFromArray(prgrm.CXAtomicOps[fromExpressionIdx].GetOutputs(prgrm)[0...,state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S0583,CXArgument,get-call,t4-actions/assignment.go,580,processAssignment,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fromExpressionOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
@@ -425,15 +408,12 @@ S0699,CXTypeSignature,get-call,t4-actions/expressions.go,843,AssociateReturnExpr
 S0701,CXArgument,get-call,t4-actions/expressions.go,849,AssociateReturnExpressions,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(fnOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S0713,CXAtomicOperator,get-call,t4-actions/expressions.go,904,AssociateReturnExpressions,prgrm.GetCXAtomicOp(lastExpr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S0714,CXFunction,get-call,t4-actions/expressions.go,911,AssociateReturnExpressions,prgrm.GetFunctionFromArray(lastExpression.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S0715,CXFunction,arena-add,t4-actions/expressions.go,915,AssociateReturnExpressions,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0716,CXExpression,ctor-call,t4-actions/expressions.go,926,AssociateReturnExpressions,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0717,CXExpression,ctor-call,t4-actions/expressions.go,929,AssociateReturnExpressions,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0718,CXAtomicOperator,get-call,t4-actions/expressions.go,932,AssociateReturnExpressions,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S0719,CXExpression,ctor-call,t4-actions/expressions.go,991,AddJmpToReturnExpressions,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0720,CXExpression,ctor-call,t4-actions/expressions.go,995,AddJmpToReturnExpressions,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_GOTO])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0721,CXAtomicOperator,get-call,t4-actions/expressions.go,998,AddJmpToReturnExpressions,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S0723,CXFunction,ctor-call,t4-actions/functions.go,51,FunctionHeader,"ast.MakeFunction(fnName, CurrentFile, LineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S0724,CXFunction,ctor-call,t4-actions/functions.go,69,FunctionHeader,"ast.MakeFunction(fnName, CurrentFile, LineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0725,CXFunction,get-call,t4-actions/functions.go,92,FunctionAddParameters,prgrm.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0726,CXTypeSignature,drop,t4-actions/functions.go,100,FunctionAddParameters,fn.Inputs.Fields = fn.Inputs.Fields[:1],state.CXTypeSignatureMng.CXTypeSignatureRelease(gid),4-alloc,331,CXTypeSignature phase 2-mng
 S0727,CXTypeSignature,drop,t4-actions/functions.go,104,FunctionAddParameters,fn.Inputs.Fields = nil,state.CXTypeSignatureMng.CXTypeSignatureRelease(gid),4-alloc,331,CXTypeSignature phase 2-mng
@@ -597,10 +577,8 @@ S0984,CXAtomicOperator,get-call,t4-actions/literals.go,57,SliceLiteralExpression
 S0985,CXFunction,get-call,t4-actions/literals.go,63,SliceLiteralExpression,prgrm.GetFunctionFromArray(exprAtomicOp.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S0988,CXExpression,ctor-call,t4-actions/literals.go,86,SliceLiteralExpression,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S0989,CXExpression,ctor-call,t4-actions/literals.go,89,SliceLiteralExpression,"ast.MakeAtomicOperatorExpression(prgrm, nil)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
-S0991,CXFunction,arena-add,t4-actions/literals.go,100,SliceLiteralExpression,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_APPEND]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S0993,CXArgument,get-call,t4-actions/literals.go,117,SliceLiteralExpression,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(outTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S0999,CXAtomicOperator,get-call,t4-actions/literals.go,142,SliceLiteralExpression,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
-S1000,CXFunction,arena-add,t4-actions/literals.go,154,SliceLiteralExpression,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_APPEND]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1004,CXExpression,ctor-call,t4-actions/literals.go,185,SliceLiteralExpression,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1005,CXExpression,ctor-call,t4-actions/literals.go,188,SliceLiteralExpression,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1006,CXAtomicOperator,get-call,t4-actions/literals.go,191,SliceLiteralExpression,prgrm.GetCXAtomicOp(symExpr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
@@ -614,7 +592,6 @@ S1031,CXAtomicOperator,get-call,t4-actions/literals.go,481,ArrayLiteralExpressio
 S1032,CXFunction,get-call,t4-actions/literals.go,487,ArrayLiteralExpression,prgrm.GetFunctionFromArray(expression.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S1036,CXExpression,ctor-call,t4-actions/literals.go,522,ArrayLiteralExpression,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1037,CXExpression,ctor-call,t4-actions/literals.go,525,ArrayLiteralExpression,"ast.MakeAtomicOperatorExpression(prgrm, nil)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
-S1039,CXFunction,arena-add,t4-actions/literals.go,535,ArrayLiteralExpression,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1041,CXAtomicOperator,get-call,t4-actions/literals.go,547,ArrayLiteralExpression,prgrm.GetCXAtomicOp(expr.Index),state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid),5-gid,342,CXAtomicOperator phase 4-alloc
 S1044,CXExpression,ctor-call,t4-actions/literals.go,582,ArrayLiteralExpression,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1045,CXExpression,ctor-call,t4-actions/literals.go,585,ArrayLiteralExpression,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_IDENTITY])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
@@ -660,11 +637,9 @@ S1148,CXFunction,get-call,t4-actions/postfix.go,392,PostfixExpressionEmptyFunCal
 S1150,CXTypeSignature,get-call,t4-actions/postfix.go,407,PostfixExpressionEmptyFunCall,prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S1151,CXArgument,get-call,t4-actions/postfix.go,412,PostfixExpressionEmptyFunCall,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(prevExpressionOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1153,CXTypeSignature,get-call,t4-actions/postfix.go,423,PostfixExpressionEmptyFunCall,prgrm.GetCXTypeSignatureFromArray(prevExpression.GetOutputs(prgrm)[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
-S1154,CXFunction,arena-add,t4-actions/postfix.go,431,PostfixExpressionEmptyFunCall,prgrm.AddNativeFunctionInArray(ast.Natives[opCode]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1155,CXFunction,get-call,t4-actions/postfix.go,460,PostfixExpressionFunCall,prgrm.GetFunctionFromArray(lastPrevExpression.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S1157,CXTypeSignature,get-call,t4-actions/postfix.go,471,PostfixExpressionFunCall,prgrm.GetCXTypeSignatureFromArray(lastPrevExpression.GetOutputs(prgrm)[0]),state.CXTypeSignatureMng.CXTypeSignatureGet(gid),5-gid,332,CXTypeSignature phase 4-alloc
 S1158,CXArgument,get-call,t4-actions/postfix.go,476,PostfixExpressionFunCall,prgrm.GetCXArgFromArray(ast.CXArgumentIndex(lastPrevExpressionOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
-S1159,CXFunction,arena-add,t4-actions/postfix.go,496,PostfixExpressionFunCall,prgrm.AddNativeFunctionInArray(ast.Natives[opCode]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1160,CXExpression,ctor-call,t4-actions/postfix.go,522,PostfixExpressionIncDec,"ast.MakeCXLineExpression(prgrm, CurrentFile, LineNo, LineStr)",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1161,CXExpression,ctor-call,t4-actions/postfix.go,527,PostfixExpressionIncDec,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_ADD])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
 S1162,CXExpression,ctor-call,t4-actions/postfix.go,531,PostfixExpressionIncDec,"ast.MakeAtomicOperatorExpression(prgrm, ast.Natives[constants.OP_SUB])",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
@@ -689,7 +664,6 @@ S1206,CXExpression,value-field,t4-actions/statements.go,20,type SelectStatement,
 S1207,CXExpression,value-field,t4-actions/statements.go,23,type SelectStatement,SelectStatement.Else []ast.CXExpression,[]CXExpressionGid or CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
 S1208,CXTypeSignature,drop,t4-actions/structs.go,32,DeclareStruct,strct.Fields = nil,state.CXTypeSignatureMng.CXTypeSignatureRelease(gid),4-alloc,331,CXTypeSignature phase 2-mng
 S1209,CXFunction,get-call,t4-actions/variables.go,15,processGlobalInitializer,prgrm.GetFunctionFromArray(prgrm.CXAtomicOps[initializerExpressionIdx].Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
-S1210,CXFunction,arena-add,t4-actions/variables.go,26,processGlobalInitializer,prgrm.AddNativeFunctionInArray(ast.Natives[constants.OP_IDENTITY]),state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1211,CXStruct,alloc-literal-heap,t4-actions/variables.go,36,processGlobalInitializer,&ast.CXStruct{},state.CXStructMng.CXStructAlloc(),4-alloc,336,CXStruct phase 2-mng
 S1212,CXAtomicOperator,alloc-literal-heap,t4-actions/variables.go,40,processGlobalInitializer,"&ast.CXAtomicOperator{Outputs: outputStruct, Operator: -1, Function: -1}",state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(),4-alloc,341,CXAtomicOperator phase 2-mng
 S1213,CXAtomicOperator,arena-add,t4-actions/variables.go,40,processGlobalInitializer,"prgrm.AddCXAtomicOp(&ast.CXAtomicOperator{Outputs: outputStruct, Operator: -1, Function: -...",state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(),4-alloc,341,CXAtomicOperator phase 2-mng
@@ -778,10 +752,7 @@ S1394,CXArgument,ptr-field,t5-cxpartialparsing/cxpartialparsing.y,72,type yySymT
 S1395,CXArgument,ptr-field,t5-cxpartialparsing/cxpartialparsing.y,75,type yySymType,yySymType.arguments []*ast.CXArgument,"CXArgumentGid, the parser value stack lives across Allocs",4-alloc,326,CXArgument phase 2-mng
 S1396,CXExpression,ptr-field,t5-cxpartialparsing/cxpartialparsing.y,79,type yySymType,yySymType.expression *ast.CXExpression,"CXExpressionGid, the parser value stack lives across Allocs",4-alloc,346,CXExpression phase 2-mng
 S1397,CXExpression,ptr-field,t5-cxpartialparsing/cxpartialparsing.y,82,type yySymType,yySymType.expressions []*ast.CXExpression,"CXExpressionGid, the parser value stack lives across Allocs",4-alloc,346,CXExpression phase 2-mng
-S1398,CXFunction,ptr-field,t5-cxpartialparsing/cxpartialparsing.y,86,type yySymType,yySymType.function *ast.CXFunction,"CXFunctionGid, the parser value stack lives across Allocs",4-alloc,351,CXFunction phase 2-mng
 S1399,CXArgument,make-slice,t5-cxpartialparsing/cxpartialparsing.y,219,yyParserImpl.Parse,[]*ast.CXArgument{yyDollar[1].argument},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
-S1400,CXFunction,ctor-call,t5-cxpartialparsing/cxpartialparsing.y,247,yyParserImpl.Parse,"ast.MakeFunction(yyDollar[2].tok, CurrentFileName, lineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S1401,CXFunction,ctor-call,t5-cxpartialparsing/cxpartialparsing.y,267,yyParserImpl.Parse,"ast.MakeFunction(fnName, CurrentFileName, lineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1402,CXFunction,get-call,t5-cxpartialparsing/cxpartialparsing.y,271,yyParserImpl.Parse,Program.GetFunctionFromArray(fnIdx),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S1403,CXArgument,make-slice,t5-cxpartialparsing/cxpartialparsing.y,311,yyParserImpl.Parse,[]*ast.CXArgument{yyDollar[1].argument},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1405,CXArgument,make-slice,t5-cxpartialparsing/cxpartialparsing.y,362,yyParserImpl.Parse,[]*ast.CXArgument{arg},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
@@ -805,7 +776,6 @@ S1427,CXPackage,ctor-call,t4-cxnet/init.go,19,RegisterPackage,"ast.MakePackage("
 S1428,CXPackage,arena-add,t4-cxnet/init.go,22,RegisterPackage,prgrm.AddPackage(netPkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1460,CXProgram,ctor-def,t7-init/init.go,31,MakeProgram,func MakeProgram,state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1461,CXProgram,alloc-literal-heap,t7-init/init.go,37,MakeProgram,"&ast.CXProgram{ Packages: make(map[string]ast.CXPackageIndex, 0), CXFunctions: make([]ast....",state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
-S1462,CXFunction,make-slice,t7-init/init.go,41,MakeProgram,"make([]ast.CXFunction, 0)",state.CXFunctionMng (manager storage) or []CXFunctionGid,4-alloc,351,CXFunction phase 2-mng
 S1463,CXCall,make-slice,t7-init/init.go,45,MakeProgram,"make([]ast.CXCall, constants.CALLSTACK_SIZE)",state.CXCallMng (manager storage) or []CXCallGid,4-alloc,366,CXCall phase 2-mng
 S1465,CXProgram,ctor-call,t7-init/opcodes_test.go,16,TestRegisteredOpcodesMatchLifecycleTable,MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1466,CXProgram,ctor-call,t8-cxparsingcompletor/init.go,24,InitCXCore,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
@@ -815,7 +785,6 @@ S1469,CXArgument,ptr-field,t8-cxparsingcompletor/parsingcompletor.y,57,type yySy
 S1470,CXExpression,ptr-field,t8-cxparsingcompletor/parsingcompletor.y,61,type yySymType,yySymType.expression *ast.CXExpression,"CXExpressionGid, the parser value stack lives across Allocs",4-alloc,346,CXExpression phase 2-mng
 S1471,CXExpression,value-field,t8-cxparsingcompletor/parsingcompletor.y,64,type yySymType,yySymType.expressions []ast.CXExpression,[]CXExpressionGid or CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
 S1472,CXExpression,value-field,t8-cxparsingcompletor/parsingcompletor.y,73,type yySymType,yySymType.arrayArguments [][]ast.CXExpression,[]CXExpressionGid or CXExpressionGid,5-gid,347,CXExpression phase 4-alloc
-S1473,CXFunction,ptr-field,t8-cxparsingcompletor/parsingcompletor.y,77,type yySymType,yySymType.function *ast.CXFunction,"CXFunctionGid, the parser value stack lives across Allocs",4-alloc,351,CXFunction phase 2-mng
 S1474,CXArgument,make-slice,t8-cxparsingcompletor/parsingcompletor.y,279,yyParserImpl.Parse,[]*ast.CXArgument{yyDollar[1].argument},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1475,CXArgument,make-slice,t8-cxparsingcompletor/parsingcompletor.y,340,yyParserImpl.Parse,[]*ast.CXArgument{yyDollar[1].argument},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
 S1477,CXArgument,make-slice,t8-cxparsingcompletor/parsingcompletor.y,386,yyParserImpl.Parse,[]*ast.CXArgument{arg},state.CXArgumentMng (manager storage) or []CXArgumentGid,4-alloc,326,CXArgument phase 2-mng
@@ -917,7 +886,6 @@ S1582,CXTypeSignature,get-call,t9-astapi/arguments.go,432,appendArgsByType,cxpro
 S1583,CXArgument,get-call,t9-astapi/arguments.go,469,AddLiteralInputToExpression,cxprogram.GetCXArgFromArray(cxast.CXArgumentIndex(litArg.Index)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1585,CXProgram,ctor-call,t9-astapi/arguments_test.go,26,TestASTAPI_Arguments,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1586,CXPackage,arena-add,t9-astapi/arguments_test.go,33,TestASTAPI_Arguments,"astapi.AddEmptyPackage(cxprogram, ""main"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1587,CXFunction,arena-add,t9-astapi/arguments_test.go,42,TestASTAPI_Arguments,"astapi.AddEmptyFunctionToPackage(cxprogram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1589,CXPackage,get-call,t9-astapi/arguments_test.go,140,TestASTAPI_Arguments,"cxprogram.GetPackageFromArray(cxprogram.Packages[""main""])",state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S1590,CXArgument,arena-add,t9-astapi/arguments_test.go,147,TestASTAPI_Arguments,cxprogram.AddCXArgInArray(arg),state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng
 S1591,CXExpression,ctor-call,t9-astapi/expressions.go,34,AddNativeExpressionToFunction,"cxast.MakeCXLineExpression(cxprogram, """", -1, """")",state.CXExpressionMng.CXExpressionAlloc(),4-alloc,346,CXExpression phase 2-mng
@@ -929,14 +897,9 @@ S1596,CXExpression,ctor-call,t9-astapi/expressions.go,129,AddNativeExpressionToF
 S1597,CXFunction,get-call,t9-astapi/expressions.go,138,AddNativeExpressionToFunctionByLineNumber,cxprogram.GetFunctionFromArray(cxAtomicOp.Operator),state.CXFunctionMng.CXFunctionGet(gid),5-gid,352,CXFunction phase 4-alloc
 S1598,CXProgram,ctor-call,t9-astapi/expressions_test.go,24,TestASTAPI_Expressions,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1599,CXPackage,arena-add,t9-astapi/expressions_test.go,31,TestASTAPI_Expressions,"astapi.AddEmptyPackage(cxprogram, ""main"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1600,CXFunction,arena-add,t9-astapi/expressions_test.go,40,TestASTAPI_Expressions,"astapi.AddEmptyFunctionToPackage(cxprogram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1601,CXExpression,release-call,t9-astapi/expressions_test.go,88,TestASTAPI_Expressions,"astapi.RemoveExpressionFromFunction(cxprogram, ""TestFunction"", 2)",state.CXExpressionMng.CXExpressionRelease(gid),4-alloc,346,CXExpression phase 2-mng
-S1602,CXFunction,ctor-call,t9-astapi/functions.go,33,AddEmptyFunctionToPackage,"cxast.MakeFunction(functionName, """", -1)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S1603,CXFunction,release-call,t9-astapi/functions.go,74,RemoveFunctionFromPackage,pkg.RemoveFunction(functionName),state.CXFunctionMng.CXFunctionRelease(gid),4-alloc,351,CXFunction phase 2-mng
 S1606,CXProgram,ctor-call,t9-astapi/functions_test.go,17,TestASTAPI_Functions,cxinit.MakeProgram(),state.CXProgramMng.CXProgramAlloc(),4-alloc,371,CXProgram phase 2-mng
 S1607,CXPackage,arena-add,t9-astapi/functions_test.go,24,TestASTAPI_Functions,"astapi.AddEmptyPackage(cxprogram, ""main"")",state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
-S1608,CXFunction,arena-add,t9-astapi/functions_test.go,33,TestASTAPI_Functions,"astapi.AddEmptyFunctionToPackage(cxprogram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
-S1609,CXFunction,release-call,t9-astapi/functions_test.go,92,TestASTAPI_Functions,"astapi.RemoveFunctionFromPackage(cxprogram, ""main"", ""TestFunction"")",state.CXFunctionMng.CXFunctionRelease(gid),4-alloc,351,CXFunction phase 2-mng
 S1610,CXPackage,get-call,t9-astapi/packages.go,25,GetPackagesNameList,cxprogram.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
 S1611,CXPackage,ctor-call,t9-astapi/packages.go,51,AddEmptyPackage,cxast.MakePackage(pkgName),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1612,CXPackage,arena-add,t9-astapi/packages.go,54,AddEmptyPackage,cxprogram.AddPackage(pkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
@@ -952,7 +915,6 @@ S1623,CXStruct,ctor-call,t9-cxparsing/utils.go,123,Preliminarystage,ast.MakeStru
 S1624,CXPackage,ctor-call,t9-cxparsing/utils.go,205,Preliminarystage,ast.MakePackage(match[len(match)-1]),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1625,CXPackage,arena-add,t9-cxparsing/utils.go,208,Preliminarystage,cxpartialparsing.Program.AddPackage(prePkg),state.CXPackageMng.CXPackageAlloc(),4-alloc,361,CXPackage phase 2-mng
 S1626,CXPackage,get-call,t9-cxparsing/utils.go,211,Preliminarystage,cxpartialparsing.Program.GetPackageFromArray(pkgIdx),state.CXPackageMng.CXPackageGet(gid),5-gid,362,CXPackage phase 4-alloc
-S1629,CXFunction,ctor-call,t9-cxparsing/utils.go,327,AddInitFunction,"ast.MakeFunction(constants.SYS_INIT_FUNC, actions.CurrentFile, actions.LineNo)",state.CXFunctionMng.CXFunctionAlloc(),4-alloc,351,CXFunction phase 2-mng
 S1630,CXArgument,get-call,t3-ast/ast_cxcall.go,74,wipeDeclarationMemory,prgrm.GetCXArg(CXArgumentIndex(cxAtomicOutputTypeSig.Meta)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1631,CXArgument,get-call,t3-ast/ast_cxpackage.go,278,CXPackage.AddGlobal,prgrm.GetCXArg(CXArgumentIndex(defIdx)),state.CXArgumentMng.CXArgumentGet(gid),5-gid,327,CXArgument phase 4-alloc
 S1632,CXArgument,alloc-copy,t3-ast/ast_cxprogram.go,394,CXProgram.AddCXArgInArray,*cxprogram.CxIrState.CXArgumentMng.CXArgumentGet(gid) = *cxArg,state.CXArgumentMng.CXArgumentAlloc(),4-alloc,326,CXArgument phase 2-mng

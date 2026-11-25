@@ -93,6 +93,7 @@ func (manager *CXFunctionMng) CXFunctionRelease(gid CXFunctionGid) {
 
 // CXFunctionGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
+// VIOLATION STRHOT-352: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXFunctionMng) CXFunctionGet(gid CXFunctionGid) *CXFunction {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXFunctionGidTypeTag || uint64(index) >= uint64(len(manager.CXFunctionMngObjects)) ||

@@ -174,8 +174,9 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageStackSize = s.stateStackSize
 	image.ImageDataStart = s.stateDataStart
 	image.ImageData = append([]byte(nil), prgrm.Memory[s.stateDataStart:s.stateDataEnd]...)
-	image.ImageFuncs = make([]ir.Func, len(prgrm.CXFunctions))
-	image.ImageFuncNames = make([]string, len(prgrm.CXFunctions))
+	functions := prgrm.CXProgramFunctionSlotCount()
+	image.ImageFuncs = make([]ir.Func, functions)
+	image.ImageFuncNames = make([]string, functions)
 	image.ImageEntryInit = ir.ImageFuncNone
 	image.ImageEntryMain = ir.ImageFuncNone
 
@@ -193,8 +194,11 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	}
 
 	var failures []Failure
-	for functionIndex := range prgrm.CXFunctions {
-		fn := &prgrm.CXFunctions[functionIndex]
+	for functionIndex := 0; functionIndex < functions; functionIndex++ {
+		fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(functionIndex))
+		if fn == nil {
+			continue
+		}
 		image.ImageFuncNames[functionIndex] = prgrm.CXProgramNameText(fn.Name)
 		if fn.IsBuiltIn() {
 			continue

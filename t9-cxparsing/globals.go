@@ -225,7 +225,7 @@ func globalDeferredType(prgrm *ast.CXProgram, pkg *ast.CXPackage, deferred *ast.
 	errorList := &prgrm.CxIrState.CompileErrorList
 	records := len(errorList.CompileErrorListRecords)
 	foundCompileErrors := globals.FoundCompileErrors
-	functions := len(prgrm.CXFunctions)
+	functionsLive := prgrm.CXProgramFunctionLiveSlots()
 	atomicOps := len(prgrm.CXAtomicOps)
 	currentFile, lineNo, lineStr := actions.CurrentFile, actions.LineNo, actions.LineStr
 	currentPackage := prgrm.CurrentPackage
@@ -234,7 +234,7 @@ func globalDeferredType(prgrm *ast.CXProgram, pkg *ast.CXPackage, deferred *ast.
 
 	actions.CurrentFile = deferred.GlobalDeferredFile
 	prgrm.CurrentPackage = ast.CXPackageIndex(pkg.Index)
-	fn := ast.MakeFunction(prgrm, functionName, deferred.GlobalDeferredFile, 0)
+	_, fn := ast.MakeFunction(prgrm, functionName, deferred.GlobalDeferredFile, 0)
 	_, fnIdx := pkg.AddFunction(prgrm, fn)
 	actions.ScopeGlobalsInitializer = true
 	Passtwo(bytes.NewBufferString(globalDeferredSource(prgrm, pkg, deferred, text, functionName, valueName)))
@@ -249,7 +249,7 @@ func globalDeferredType(prgrm *ast.CXProgram, pkg *ast.CXPackage, deferred *ast.
 	if !reported {
 		globals.FoundCompileErrors = foundCompileErrors
 	}
-	prgrm.CXFunctions = prgrm.CXFunctions[:functions]
+	prgrm.CXProgramFunctionReleaseNew(functionsLive)
 	prgrm.CXAtomicOps = prgrm.CXAtomicOps[:atomicOps]
 	actions.CurrentFile, actions.LineNo, actions.LineStr = currentFile, lineNo, lineStr
 	prgrm.CurrentPackage = currentPackage

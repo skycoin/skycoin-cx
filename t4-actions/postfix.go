@@ -438,8 +438,6 @@ func PostfixExpressionEmptyFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpre
 				prgrm.CXAtomicOps[firstPrevExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 			}
 			prgrm.CXAtomicOps[firstPrevExpressionIdx].Outputs = nil
-			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-			// Now an arena insert, site S1154.
 			opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, native.NativeNameEntryCode))
 			prgrm.CXAtomicOps[firstPrevExpressionIdx].Operator = opIdx
 		}
@@ -506,8 +504,6 @@ func PostfixExpressionFunCall(prgrm *ast.CXProgram, prevExprs []ast.CXExpression
 				prgrm.CXAtomicOps[firstPrevExpressionIdx].Package = ast.CXPackageIndex(pkg.Index)
 			}
 			prgrm.CXAtomicOps[firstPrevExpressionIdx].Outputs = nil
-			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-			// Now an arena insert, site S1159.
 			opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, native.NativeNameEntryCode))
 			prgrm.CXAtomicOps[firstPrevExpressionIdx].Operator = opIdx
 		}

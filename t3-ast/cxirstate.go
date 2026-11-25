@@ -75,7 +75,7 @@ func (state *CxIrState) CxIrStateInit() {
 	state.CxIrStateNameOs = state.StringPool.StringPoolIntern([]byte(constants.OS_PKG))
 	state.CXProgramMng.CXProgramMngInit(1, false)
 	state.CXPackageMng.CXPackageMngInit(64, true)
-	state.CXFunctionMng.CXFunctionMngInit(64, true)
+	state.CXFunctionMng.CXFunctionMngInit(2048, true)
 	state.CXNativeFunctionMng.CXNativeFunctionMngInit(64, true)
 	state.CXStructMng.CXStructMngInit(64, true)
 	state.CXExpressionMng.CXExpressionMngInit(64, true)

@@ -28,14 +28,12 @@ import (
 //
 // Note the new function added to the package.
 func AddEmptyFunctionToPackage(cxprogram *cxast.CXProgram, packageName, functionName string) error {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now a constructor call, site S1602.
-	fn := cxast.MakeFunction(cxprogram, cxprogram.CXProgramNameIntern(functionName), cxast.SourceFileGidNil, -1)
-
 	pkg, err := FindPackage(cxprogram, packageName)
 	if err != nil {
 		return err
 	}
+
+	_, fn := cxast.MakeFunction(cxprogram, cxprogram.CXProgramNameIntern(functionName), cxast.SourceFileGidNil, -1)
 
 	pkg.AddFunction(cxprogram, fn)
 
@@ -69,10 +67,8 @@ func RemoveFunctionFromPackage(cxprogram *cxast.CXProgram, packageName, function
 	if err != nil {
 		return err
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionRelease(gid), phase 4 #351.
-	// Now a release, site S1603.
 	if functionNameGid, found := cxprogram.CXProgramNameFind(functionName); found {
-		pkg.RemoveFunction(functionNameGid)
+		pkg.RemoveFunction(cxprogram, functionNameGid)
 	}
 
 	return nil

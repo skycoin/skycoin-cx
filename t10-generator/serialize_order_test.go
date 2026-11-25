@@ -22,8 +22,6 @@ func sampleProgramWithPackages(t *testing.T) *cxast.CXProgram {
 			t.Fatal(err)
 		}
 		for _, fn := range []string{"one", "two", "three"} {
-			// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-			// Now an arena insert, site S0051.
 			if err := astapi.AddEmptyFunctionToPackage(prgrm, pkg, pkg+"_"+fn); err != nil {
 				t.Fatal(err)
 			}

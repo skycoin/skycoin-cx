@@ -70,9 +70,7 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 				pkg.CurrentFunction = fnIdx
 				return fnIdx
 			} else {
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now a constructor call, site S0723.
-				fn := ast.MakeFunction(prgrm, prgrm.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, LineNo)
+				_, fn := ast.MakeFunction(prgrm, prgrm.CXProgramMethodNameIntern(receiverName, methodName), CurrentFile, LineNo)
 				fn.AddInput(prgrm, receiver[0])
 				_, fnIdx := pkg.AddMethod(prgrm, fn, receiverName, methodName)
 				pkg.CurrentFunction = fnIdx
@@ -90,9 +88,7 @@ func FunctionHeader(prgrm *ast.CXProgram, fnName string, receiver []*ast.CXArgum
 				pkg.CurrentFunction = fnIdx
 				return fnIdx
 			} else {
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now a constructor call, site S0724.
-				fn := ast.MakeFunction(prgrm, fnNameGid, CurrentFile, LineNo)
+				_, fn := ast.MakeFunction(prgrm, fnNameGid, CurrentFile, LineNo)
 				_, fnIdx := pkg.AddFunction(prgrm, fn)
 				pkg.CurrentFunction = fnIdx
 
@@ -336,7 +332,6 @@ func FunctionDeclaration(prgrm *ast.CXProgram, fnIdx ast.CXFunctionIndex, inputs
 	ProcessGoTos(prgrm, exprs)
 	ProcessLoopJumpsOutsideLoop(prgrm, exprs)
 	AddExprsToFunction(prgrm, fnIdx, exprs)
-	// The steps above may grow prgrm.CXFunctions, which moves fn.
 	// OBJMODEL: state.CXFunctionMng.CXFunctionGet(gid), phase 5 #352.
 	// Now an arena getter, as at site S0735.
 	fn = prgrm.GetFunctionFromArray(fnIdx)
@@ -4035,13 +4030,13 @@ func expressionOperandInvalid(prgrm *ast.CXProgram, expression *ast.CXAtomicOper
 // name, so that its call is typed. It takes any inputs and returns one
 // types.INVALID result, and the type checks skip its calls.
 func invalidFunctionIndex(prgrm *ast.CXProgram, pkgIdx ast.CXPackageIndex, name stringpool.StringGid) ast.CXFunctionIndex {
-	fn := ast.MakeFunction(prgrm, name, CurrentFile, LineNo)
+	_, fn := ast.MakeFunction(prgrm, name, CurrentFile, LineNo)
 	fn.Package = pkgIdx
 	_, input := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("input"), CurrentFile, LineNo)
 	fn.AddInput(prgrm, input.SetType(types.UNDEFINED))
 	_, output := ast.MakeArgument(prgrm, prgrm.CXProgramNameIntern("output"), CurrentFile, LineNo)
 	fn.AddOutput(prgrm, output.SetType(types.INVALID))
-	return prgrm.AddFunctionInArray(fn)
+	return ast.CXFunctionIndex(fn.Index)
 }
 
 // functionInvalid reports whether fn is a function of invalidFunctionIndex.

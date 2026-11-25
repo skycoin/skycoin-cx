@@ -169,15 +169,16 @@ func SerializeAffordance(prgrm *CXProgram, value AffordanceValue) ([]byte, bool)
 		functions := affordanceIndexesSorted(pkg.Functions)
 		encoder.serializeEncoderLength(len(functions), false)
 		for _, index := range functions {
-			if serializeFunction(prgrm, &encoder, &prgrm.CXFunctions[index]) != nil {
+			if serializeFunction(prgrm, &encoder, prgrm.GetFunctionFromArray(index)) != nil {
 				return nil, false
 			}
 		}
 	case AffordanceKindFunction:
-		if int(value.AffordanceValueItem) < 0 || int(value.AffordanceValueItem) >= len(prgrm.CXFunctions) {
+		if int(value.AffordanceValueItem) < 0 || int(value.AffordanceValueItem) >= prgrm.CXProgramFunctionSlotCount() {
 			return nil, false
 		}
-		if serializeFunction(prgrm, &encoder, &prgrm.CXFunctions[value.AffordanceValueItem]) != nil {
+		fn := prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(value.AffordanceValueItem))
+		if fn == nil || serializeFunction(prgrm, &encoder, fn) != nil {
 			return nil, false
 		}
 	case AffordanceKindStruct:

@@ -120,7 +120,7 @@ such as `CXFunctionIndex`.
 | Arena | Element | Index type | Getter |
 | --- | --- | --- | --- |
 | `CXPackages` | `CXPackage` | `CXPackageIndex` | `GetPackageFromArray` |
-| `CXFunctions` | `CXFunction` | `CXFunctionIndex` | `GetFunctionFromArray` (nil for -1) |
+| `CxIrState.CXFunctionMng`, was `CXFunctions` | `CXFunction` | `CXFunctionIndex`, the slot index | `GetFunctionFromArray` (nil for -1) |
 | `CXStructs` | `CXStruct` | `CXStructIndex` | direct index |
 | `CXAtomicOps` | `CXAtomicOperator` | `int` | `GetCXAtomicOp` |
 | `CxIrState.CXLineMng`, was `CXLines` | `CXLine` | `int`, the slot index | `GetCXLine` |
@@ -166,7 +166,7 @@ in `CXPackages`, and three name maps, `Imports` (to `CXPackageIndex`),
   walks it by the `ast.GCType` that `ast.GCTypeOf` builds from that type
   (`t3-ast/gc_type.go`).
 
-`CXFunctions` holds more than the user's functions. Every expression that
+`CXFunctionMng` holds more than the user's functions. Every expression that
 calls a native operator gets its own copy of the native, made by
 `CXProgram.AddNativeFunctionInArray` from `ast.NativeFunctionOf(prgrm, opcode)`,
 which makes it from `constants.OpcodeSignatureTable`. The copy has
@@ -512,7 +512,7 @@ When it is true, `Line` becomes 7 and the then block runs. The `jmp` at
 `sum` and `i32.add` resolve differently although both are called the same
 way. `sum` stays a user function call at index 2, and `+` becomes the
 native `i32.add` in `ProcessTypedOperator`. The arenas end up with 8
-`CXFunctions`, three user functions (`sum`, `main`, `*init`) and five
+functions in `CXFunctionMng`, three user functions (`sum`, `main`, `*init`) and five
 per-expression native copies.
 
 ## Serialized form
@@ -587,7 +587,7 @@ The bytes start with a fixed 24 byte header, little endian.
 | Bytes | Field | Value |
 | --- | --- | --- |
 | 0 to 7 | magic | `CXPROGRM` |
-| 8 to 11 | format | `serializeFormatVersion`, now 7 |
+| 8 to 11 | format | `serializeFormatVersion`, now 8 |
 | 12 to 15 | pointer size | `types.POINTER_SIZE`, 4, or 8 with the `ptr64` tag |
 | 16 to 23 | language version | `CXProgram.Version` |
 
@@ -604,7 +604,7 @@ serializations of the same program are byte for byte equal
 | strings | every string pool slot in order, whether the pool is frozen, the four `CxIrStateName*` Gids and `SourceFileMng` |
 | packages | `CXPackages`, with imports, functions, structs and methods by name Gid, and the globals struct |
 | structs | `CXStructs` |
-| functions | `CXFunctions`, with `AtomicOPCode`, `LibraryNumber`, `LibraryFunctionNumber`, inputs, outputs, expressions, local variables, `ListOfPointers`, `EscapeInputs` and `ListOfSlots` |
+| functions | `CXFunctionMng`, its slots and each live function with `AtomicOPCode`, `LibraryNumber`, `LibraryFunctionNumber`, inputs, outputs, expressions, local variables, `ListOfPointers`, `EscapeInputs` and `ListOfSlots` |
 | expressions | `CXAtomicOps` and `CXLineMng` |
 | arguments | `CXArgumentMng` and `CXArgumentDebugMng` |
 | type signatures | `CXTypeSignatureMng`, `CXTypeSignature_ArrayMng` and `CXTypeSignature_StructMng` |
@@ -793,7 +793,7 @@ one loop, and vm fails on a program that does not lower.
   returns. The lowering maps a language opcode to an image opcode by its
   live name.
 * `ir.Func` holds the code, the frame size and the input and output slots.
-  `ImageFuncs` is indexed like `CXProgram.CXFunctions`, so a function id is
+  `ImageFuncs` is indexed by the slots of `CxIrState.CXFunctionMng`, so a function id is
   the same in both. A function that does not lower has no code.
 * `ir.Image` holds the data segment bytes and where they start, the stack
   size, the ids of `*init` and `main`, and the line and name tables. It
@@ -902,7 +902,7 @@ prints a stack overflow or runtime error for both.
   into them, which broke the next REPL program
   ([#174](https://github.com/skycoin/skycoin-cx/issues/174), closed).
   Each expression still gets its own copy of the native function in
-  `CXFunctions`.
+  `CXFunctionMng`.
 * Pointers to slices are only partly modelled. There is
   `TYPE_POINTER_SLICE_ATOMIC` but no pointer to a slice of structs, which
   stays a `TYPE_CXARGUMENT_DEPRECATE`. A `*[]str` is a

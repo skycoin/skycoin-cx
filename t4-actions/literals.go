@@ -135,8 +135,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 
 			if exprAtomicOpOperator == nil {
 				// then it's a literal
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now an arena insert, site S0991.
 				opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_APPEND))
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = opIdx
 
@@ -214,8 +212,6 @@ func sliceLiteralExpressionOf(prgrm *ast.CXProgram, typeCode types.Code, strct *
 				exprAtomicOp.AddOutput(prgrm, outTypeSigIdx)
 
 				result = append(result, expr)
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now an arena insert, site S1000.
 				opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_APPEND))
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = opIdx
 
@@ -792,8 +788,6 @@ func arrayLiteralExpressionOf(prgrm *ast.CXProgram, arraySizes []types.Pointer, 
 
 			if expressionOperator == nil {
 				// then it's a literal
-				// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-				// Now an arena insert, site S1039.
 				opIdx := prgrm.AddNativeFunctionInArray(ast.NativeFunctionOf(prgrm, constants.OP_IDENTITY))
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Operator = opIdx
 				prgrm.CXAtomicOps[symExprAtomicOpIdx].Inputs = expression.Outputs

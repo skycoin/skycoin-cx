@@ -96,8 +96,6 @@ func generateSampleProgramFromCXEvolves(t *testing.T, withLiteral bool) *cxast.C
 		t.Errorf("want no error, got %v", err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now an arena insert, site S0015.
 	err = astapi.AddEmptyFunctionToPackage(cxProgram, "main", "TestFunction")
 	if err != nil {
 		t.Errorf("want no error, got %v", err)

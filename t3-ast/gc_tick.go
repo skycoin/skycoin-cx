@@ -24,11 +24,13 @@ func GarbageCollectorPrepare(prgrm *CXProgram) {
 	heap := &prgrm.Heap
 	cache := gcTypeCache(prgrm)
 	gcGlobalRoots(prgrm)
-	if cache.GCTypeCacheFunctions != len(prgrm.CXFunctions) {
-		for i := range prgrm.CXFunctions {
-			gcFrameRoots(prgrm, &prgrm.CXFunctions[i])
+	if functions := prgrm.CXProgramFunctionSlotCount(); cache.GCTypeCacheFunctions != functions {
+		for i := 0; i < functions; i++ {
+			if fn := prgrm.CXProgramFunctionSlotLive(CXFunctionIndex(i)); fn != nil {
+				gcFrameRoots(prgrm, fn)
+			}
 		}
-		cache.GCTypeCacheFunctions = len(prgrm.CXFunctions)
+		cache.GCTypeCacheFunctions = functions
 	}
 	if cap(heap.Roots.GCRootTableFrames) < len(prgrm.CallStack) {
 		heap.Roots.GCRootTableFrames = make([]gc.GCRootFrame, 0, len(prgrm.CallStack))

@@ -37,8 +37,6 @@ func TestASTAPI_Arguments(t *testing.T) {
 	})
 
 	t.Run("add empty function to package", func(t *testing.T) {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S1587.
 		err := astapi.AddEmptyFunctionToPackage(cxprogram, "main", "TestFunction")
 		if err != nil {
 			t.Errorf("want no error, got %v", err)

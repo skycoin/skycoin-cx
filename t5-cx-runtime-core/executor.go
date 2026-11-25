@@ -58,7 +58,7 @@ func executorFailureDescribe(prgrm *ast.CXProgram, failure lower.Failure) string
 			description += " " + row.Name
 		}
 	}
-	return description + " in " + prgrm.CXProgramNameText(prgrm.CXFunctions[failure.FailureFunction].Name)
+	return description + " in " + prgrm.CXProgramNameText(prgrm.GetFunctionFromArray(ast.CXFunctionIndex(failure.FailureFunction)).Name)
 }
 
 // ExecutorVmRun runs image on vm as execute.RunCompiled and runProgram run

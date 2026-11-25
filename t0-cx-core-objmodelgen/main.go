@@ -56,6 +56,7 @@ var objmodelgenStrhotCodes = map[string]string{
 	"CXArgumentDebugGet":            "STRHOT-002",
 	"CXArgumentGet":                 "STRHOT-003",
 	"CXLineGet":                     "STRHOT-004",
+	"CXFunctionGet":                 "STRHOT-352",
 	"CXTypeSignature_ArrayGet":      "STRHOT-005",
 	"CXTypeSignatureGet":            "STRHOT-006",
 	"CXTypeSignature_StructGet":     "STRHOT-007",

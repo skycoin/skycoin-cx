@@ -333,7 +333,7 @@ func lowerCompareChild(t *testing.T, program string) {
 		result := lowerCompareResult{Stage: lowerCompareStageOutside}
 		for _, failure := range failures {
 			entry := lowerCompareFailure{
-				Function: actions.AST.CXProgramNameText(actions.AST.CXFunctions[failure.FailureFunction].Name),
+				Function: actions.AST.CXProgramNameText(actions.AST.GetFunctionFromArray(ast.CXFunctionIndex(failure.FailureFunction)).Name),
 				Reason:   lower.ReasonNames[failure.FailureReason],
 			}
 			if failure.FailureReason == lower.ReasonOpcodeOutsideSubset {

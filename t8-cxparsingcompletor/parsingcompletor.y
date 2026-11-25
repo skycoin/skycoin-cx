@@ -77,9 +77,6 @@ build-parser: ## Generate lexer and parser for CX grammar
 	// The elements of an array or slice literal, elided ones not built yet.
 	literalElements []actions.LiteralElement
 
-    // OBJMODEL: CXFunctionGid, the parser value stack lives across Allocs, phase 4 #351.
-    // Now a pointer at rest, site S1473.
-    function *ast.CXFunction
     functionIndex ast.CXFunctionIndex
 
     // The names of a global statement, see #486.

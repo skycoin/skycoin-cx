@@ -61,9 +61,12 @@ func CoreOpcodeLinked(code int) bool {
 func CoreOpcodesUsed(prgrm *ast.CXProgram) []int {
 	seen := map[int]bool{}
 	var used []int
-	for index := range prgrm.CXFunctions {
-		code := prgrm.CXFunctions[index].AtomicOPCode
-		if code != 0 && !seen[code] {
+	for index := 0; index < prgrm.CXProgramFunctionSlotCount(); index++ {
+		fn := prgrm.CXProgramFunctionSlotLive(ast.CXFunctionIndex(index))
+		if fn == nil {
+			continue
+		}
+		if code := fn.AtomicOPCode; code != 0 && !seen[code] {
 			seen[code] = true
 			used = append(used, code)
 		}

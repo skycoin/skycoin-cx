@@ -20,8 +20,8 @@ import (
 // inputFn. Each expression owns a stack slot named after its position in
 // inputFn.Expressions, and the last one writes to inputFn's first output.
 func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction, inputPkg *cxast.CXPackage, fns []*cxast.CXNativeFunction, numExprs int) {
-	// Adding an expression can grow CXFunctions and CXAtomicOps, so both
-	// are looked up by index after every addition.
+	// Adding an expression can grow CXAtomicOps, so operators are looked up
+	// by index after every addition. inputFn lives in CXFunctionMng and stays.
 	fnIdx := cxast.CXFunctionIndex(inputFn.Index)
 	fnOutputs := inputFn.GetOutputs(prgrm)
 	newExprs := numExprs - len(inputFn.Expressions)
@@ -93,9 +93,6 @@ func GenerateRandomExpressions(prgrm *cxast.CXProgram, inputFn *cxast.CXFunction
 	fn := prgrm.GetFunctionFromArray(fnIdx)
 	fn.Size = calcFnSize(prgrm, fn)
 	fn.LineCount = len(fn.Expressions)
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now an object copy, site S0026.
-	*inputFn = *fn
 }
 
 func IsJumpOperator(opCode int) bool {
@@ -332,8 +329,6 @@ func GenerateSampleProgram(t *testing.T, withLiteral bool) *cxast.CXProgram {
 		t.Errorf("want no error, got %v", err)
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now an arena insert, site S0048.
 	err = astapi.AddEmptyFunctionToPackage(cxProgram, "main", "TestFunction")
 	if err != nil {
 		t.Errorf("want no error, got %v", err)

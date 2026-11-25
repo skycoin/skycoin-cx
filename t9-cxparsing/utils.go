@@ -342,9 +342,7 @@ func AddInitFunction(prgrm *ast.CXProgram) error {
 		return err
 	}
 
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now a constructor call, site S1629.
-	initFn := ast.MakeFunction(prgrm, prgrm.CxIrState.CxIrStateNameSysInit, actions.CurrentFile, actions.LineNo)
+	_, initFn := ast.MakeFunction(prgrm, prgrm.CxIrState.CxIrStateNameSysInit, actions.CurrentFile, actions.LineNo)
 	_, fnIdx := mainPkg.AddFunction(prgrm, initFn)
 	globalsMethodResultsDeclare(prgrm, prgrm.GetFunctionFromArray(fnIdx))
 

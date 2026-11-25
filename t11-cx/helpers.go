@@ -121,9 +121,7 @@ func initMainPkg(prgrm *ast.CXProgram) {
 	if err != nil {
 		panic(err)
 	}
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now a constructor call, site S0061.
-	fn := ast.MakeFunction(prgrm, prgrm.CxIrState.CxIrStateNameMain, actions.CurrentFile, actions.LineNo)
+	_, fn := ast.MakeFunction(prgrm, prgrm.CxIrState.CxIrStateNameMain, actions.CurrentFile, actions.LineNo)
 	modPkg.AddFunction(prgrm, fn)
 }
 

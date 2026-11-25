@@ -21,25 +21,21 @@ func (cxf CXFunction) IsAtomic() bool {
 	return cxf.AtomicOPCode != 0
 }
 
-// MakeFunction creates an empty function.
-// Later, parameters and contents can be added.
-// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-// Now a constructor, site S0133.
-func MakeFunction(prgrm *CXProgram, name stringpool.StringGid, fileName SourceFileGid, fileLine int) *CXFunction {
-	// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-	// Now a heap literal, site S0134.
-	return &CXFunction{
-		Name:     name,
-		Index:    -1,
-		FileName: fileName,
-		FileLine: fileLine,
-		// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
-		// Now a heap literal, site S0135.
-		Inputs: &CXStruct{
-			Name: prgrm.CXProgramNameIntern(prgrm.CXProgramNameText(name) + "_Input"),
-		},
-		LocalVariables: []stringpool.StringGid{},
+// MakeFunction allocates an empty function in the program's CXFunctionMng
+// and returns its Gid and the pointer to fill it through. Parameters and
+// contents are added later.
+func MakeFunction(prgrm *CXProgram, name stringpool.StringGid, fileName SourceFileGid, fileLine int) (CXFunctionGid, *CXFunction) {
+	gid, fn := prgrm.CXProgramFunctionAlloc()
+	fn.Name = name
+	fn.FileName = fileName
+	fn.FileLine = fileLine
+	// OBJMODEL: state.CXStructMng.CXStructAlloc(), phase 4 #336.
+	// Now a heap literal, site S0135.
+	fn.Inputs = &CXStruct{
+		Name: prgrm.CXProgramNameIntern(prgrm.CXProgramNameText(name) + "_Input"),
 	}
+	fn.LocalVariables = []stringpool.StringGid{}
+	return gid, fn
 }
 
 // ----------------------------------------------------------------
@@ -298,8 +294,6 @@ func (fn *CXFunction) RemoveLocalVariableFromArray(name stringpool.StringGid) er
 func MakeAtomicOperatorExpression(prgrm *CXProgram, op *CXNativeFunction) *CXExpression {
 	var opIdx CXFunctionIndex = -1
 	if op != nil {
-		// OBJMODEL: state.CXFunctionMng.CXFunctionAlloc(), phase 4 #351.
-		// Now an arena insert, site S0149.
 		opIdx = prgrm.AddNativeFunctionInArray(op)
 	}
 
