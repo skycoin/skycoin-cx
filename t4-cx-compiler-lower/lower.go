@@ -142,6 +142,9 @@ type state struct {
 	statePrintLine   int
 	stateImage       ir.Image
 	stateFiles       map[ast.SourceFileGid]uint32
+	stateLocals      []ir.Local
+	stateLocalNames  map[string]uint32
+	stateReadOnly    []ir.Span
 }
 
 // jumpFixup is a jump target still in expression indexes.
@@ -157,10 +160,11 @@ type jumpFixup struct {
 // be compiled and not yet run.
 func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	s := &state{
-		statePrgrm:     prgrm,
-		stateStackSize: pointerToUint32(prgrm.Stack.Size),
-		stateDataStart: pointerToUint32(prgrm.Data.StartsAt),
-		stateFiles:     map[ast.SourceFileGid]uint32{},
+		statePrgrm:      prgrm,
+		stateStackSize:  pointerToUint32(prgrm.Stack.Size),
+		stateDataStart:  pointerToUint32(prgrm.Data.StartsAt),
+		stateFiles:      map[ast.SourceFileGid]uint32{},
+		stateLocalNames: map[string]uint32{},
 	}
 	s.stateDataEnd = s.stateDataStart + pointerToUint32(prgrm.Data.Size)
 	opcodeTableBuild(&s.stateTable)
@@ -199,6 +203,7 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 			failures = append(failures, failure)
 		}
 	}
+	s.readOnlyEnd()
 	return s.stateImage, failures
 }
 
@@ -211,6 +216,7 @@ func opcodeNumber(name string) int {
 
 // function lowers fn into stateImage.ImageFuncs[functionIndex].
 func (s *state) function(functionIndex uint32, fn *ast.CXFunction) (Failure, bool) {
+	s.stateLocals = s.stateLocals[:0]
 	failure := Failure{FailureFunction: functionIndex}
 	lowered := ir.Func{FuncFrameSize: pointerToUint32(fn.Size)}
 	s.stateFrameSize = lowered.FuncFrameSize
@@ -223,6 +229,12 @@ func (s *state) function(functionIndex uint32, fn *ast.CXFunction) (Failure, boo
 	if lowered.FuncOutputs, reason = s.slots(fn.GetOutputs(s.statePrgrm), lowered.FuncFrameSize); reason != ReasonNone {
 		failure.FailureReason = ReasonParameterLayout
 		return failure, true
+	}
+	for i, signatureIndex := range fn.GetInputs(s.statePrgrm) {
+		s.localAdd(signatureIndex, lowered.FuncInputs[i].SlotOffset, lowered.FuncInputs[i].SlotSize)
+	}
+	for i, signatureIndex := range fn.GetOutputs(s.statePrgrm) {
+		s.localAdd(signatureIndex, lowered.FuncOutputs[i].SlotOffset, lowered.FuncOutputs[i].SlotSize)
 	}
 
 	lineCount := fn.LineCount
@@ -293,6 +305,7 @@ func (s *state) function(functionIndex uint32, fn *ast.CXFunction) (Failure, boo
 	lowered.FuncCode = code
 	lowered.FuncLineFirst = uint32(len(s.stateImage.ImageLines))
 	lowered.FuncLineCount = uint32(len(lines))
+	s.localsEnd(&lowered)
 	s.stateImage.ImageLines = append(s.stateImage.ImageLines, lines...)
 	s.stateImage.ImageFuncs[functionIndex] = lowered
 	return Failure{}, false
@@ -329,11 +342,15 @@ func (s *state) declaration(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator) (
 	if ast.OffsetEscaped(offset) {
 		return code, ReasonOperandHeap
 	}
+	size := pointerToUint32(signature.GetSize(s.statePrgrm, false))
+	if uint64(offset)+uint64(size) <= uint64(s.stateFrameSize) {
+		s.localAdd(outputs[0], pointerToUint32(offset), size)
+	}
 	return append(code, ir.Instr{
 		InstrOpcode: ir.OpcodeZero,
 		InstrMode:   ir.InstrModeFrameA,
 		InstrA:      pointerToUint32(offset),
-		InstrN:      pointerToUint32(signature.GetSize(s.statePrgrm, false)),
+		InstrN:      size,
 	}), ReasonNone
 }
 
@@ -775,6 +792,15 @@ func (s *state) placeStatic(p place) (operand, ReasonCode) {
 // field becomes code. A place without index or dereference stays static,
 // with its field offsets added.
 func (s *state) placeOf(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex) ([]ir.Instr, place, ReasonCode) {
+	code, p, reason := s.placeOfSignature(code, signatureIndex)
+	if reason == ReasonNone {
+		s.readOnlyAdd(signatureIndex, p)
+	}
+	return code, p, reason
+}
+
+// placeOfSignature is placeOf without recording literals.
+func (s *state) placeOfSignature(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex) ([]ir.Instr, place, ReasonCode) {
 	prgrm := s.statePrgrm
 	signature := prgrm.GetCXTypeSignatureFromArray(signatureIndex)
 	size := pointerToUint32(signature.GetSize(prgrm, false))

@@ -5,6 +5,7 @@
 package ir
 
 import (
+	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
 )
 
@@ -52,16 +53,40 @@ type Line struct {
 	LineNumber uint32
 }
 
+// Local is one variable of a function frame, an input, an output or a
+// declared variable, LocalSize bytes at LocalOffset from the frame pointer.
+// LocalName and LocalTypeName index ImageLocalNames. LocalType is the
+// types.Code of a scalar variable and types.UNDEFINED for any other. A
+// compiler that keeps variables in registers takes their extent from here,
+// and a debugger their names and types.
+type Local struct {
+	LocalOffset   uint32
+	LocalSize     uint32
+	LocalName     uint32
+	LocalTypeName uint32
+	LocalType     types.Code
+}
+
+// Span is the byte range [SpanStart, SpanEnd) of absolute addresses.
+type Span struct {
+	SpanStart uint32
+	SpanEnd   uint32
+}
+
 // Func is one function. FuncCode is fixed once the image is built and ends
 // with OpcodeReturn. A function that was not lowered has no code. Its lines
-// are ImageLines[FuncLineFirst : FuncLineFirst+FuncLineCount], in pc order.
+// are ImageLines[FuncLineFirst : FuncLineFirst+FuncLineCount], in pc order,
+// and its variables ImageLocals[FuncLocalFirst : FuncLocalFirst+FuncLocalCount],
+// by offset.
 type Func struct {
-	FuncCode      []Instr
-	FuncFrameSize uint32
-	FuncInputs    []Slot
-	FuncOutputs   []Slot
-	FuncLineFirst uint32
-	FuncLineCount uint32
+	FuncCode       []Instr
+	FuncFrameSize  uint32
+	FuncInputs     []Slot
+	FuncOutputs    []Slot
+	FuncLineFirst  uint32
+	FuncLineCount  uint32
+	FuncLocalFirst uint32
+	FuncLocalCount uint32
 }
 
 // Image is a program ready to run. ImageFuncs is indexed like the compiler's
@@ -71,6 +96,8 @@ type Func struct {
 // holds computed addresses and loaded values for one expression at a time.
 // ImageText holds the constant bytes OpcodePrintText writes. An entry is a
 // function id or ImageFuncNone. ImageFuncNames[i] names ImageFuncs[i].
+// ImageReadOnly lists the literals of the data segment, sorted and apart,
+// which no instruction writes.
 type Image struct {
 	ImageFuncs       []Func
 	ImageData        []byte
@@ -83,6 +110,9 @@ type Image struct {
 	ImageLines       []Line
 	ImageFileNames   []string
 	ImageFuncNames   []string
+	ImageLocals      []Local
+	ImageLocalNames  []string
+	ImageReadOnly    []Span
 
 	// ImageLibraryEnabled marks the system libraries the run may call, by
 	// library number, as CXProgram.ProgramLibrariesEnabled.

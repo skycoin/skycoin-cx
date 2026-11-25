@@ -795,6 +795,14 @@ one loop, and vm fails on a program that does not lower.
 * `ir.Image` holds the data segment bytes and where they start, the stack
   size, the ids of `*init` and `main`, and the line and name tables. It
   holds no pointer to an IR object.
+* Three side tables serve a compiler of the image, decision D8.
+  `ImageLocals` gives the offset, size, name and type of every input,
+  output and declared variable of a function, from `FuncLocalFirst`, so a
+  compiler can keep a variable whose address is never taken in a register
+  and a debugger can name it. `ImageLocalNames` holds the names, without the
+  `n:` scope prefix. `ImageReadOnly` lists the literals of the data segment
+  that no instruction writes or takes the address of, which a compiler may
+  read as constants.
 * `CX_LINE` expressions become `ir.Line` entries, a pc where a source line
   starts. A jump target, counted in expressions by `ThenLines` and
   `ElseLines`, becomes a pc. A target at or past `LineCount` becomes the
