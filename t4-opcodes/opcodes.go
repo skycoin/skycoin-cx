@@ -89,17 +89,10 @@ func MakeNativeFunction(prgrm *ast.CXProgram, opCode int, inputs []*ast.CXArgume
 		Outputs: []*ast.CXArgument{},
 	}
 
-	offset := types.Pointer(0)
-	for _, inp := range inputs {
-		inp.Offset = offset
-		offset.Add(ast.GetNativeSize(prgrm, inp))
-		fn.Inputs = append(fn.Inputs, inp)
-	}
-	for _, out := range outputs {
-		out.Offset = offset
-		offset.Add(ast.GetNativeSize(prgrm, out))
-		fn.Outputs = append(fn.Outputs, out)
-	}
+	// A native has no frame, so its parameters keep Offset 0. Writing it into the
+	// shared ConstCxArg templates left every native the last registration's offset.
+	fn.Inputs = append(fn.Inputs, inputs...)
+	fn.Outputs = append(fn.Outputs, outputs...)
 
 	return fn
 }

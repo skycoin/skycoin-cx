@@ -1086,7 +1086,7 @@ func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, c
 		return code, ReasonCalleeLayout
 	}
 	// The signatures give the sizes. The block packs the inputs and then the
-	// outputs, as opcodes.MakeNativeFunction lays them out.
+	// outputs in order, the layout the vm form of the function reads.
 	blockSize := uint32(0)
 	for _, slots := range [][]ir.Slot{inputSlots, outputSlots} {
 		for i := range slots {
