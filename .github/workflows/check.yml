@@ -76,3 +76,27 @@ jobs:
           go-version-file: go.mod
       - run: make build-wasm
       - run: make test-wasm
+
+  # The TinyGo builds are an alternative to the Go builds, see
+  # docs/Microcontrollers.md. This job builds them with a TinyGo release and
+  # runs the vm with an image on a Cortex-M3 in QEMU.
+  tinygo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+      - name: install TinyGo 0.44.0 and qemu-system-arm
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/tinygo.deb" https://github.com/tinygo-org/tinygo/releases/download/v0.44.0/tinygo_0.44.0_amd64.deb
+          sudo dpkg -i "$RUNNER_TEMP/tinygo.deb"
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-arm
+      - run: tinygo test ./t0-cxhash ./t1-cx-runtime-sandbox
+      - run: go test -count=1 -run 'TestBuildLlvmLinkerChoose|TestBuildLlvmTinygo' ./t11-cx
+      - run: make run-mcu MCU_TARGET=cortex-m-qemu
+      - run: make build-mcu MCU_TARGET=pico
+      - run: make build-tinygo build-wasm-tinygo
