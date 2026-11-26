@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jinzhu/copier"
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
@@ -1345,7 +1344,7 @@ func PointerAdd(prgrm *ast.CXProgram, fn *ast.CXFunction, typeSigIdx ast.CXTypeS
 			// A copy of sym without its fields, owned by fn.
 			_, fieldlessSym := prgrm.CXArgumentAlloc()
 			fieldlessSymIndex := fieldlessSym.Index
-			copier.Copy(fieldlessSym, sym)
+			*fieldlessSym = *sym
 			fieldlessSym.Index = fieldlessSymIndex
 			// OBJMODEL: state.CXArgumentMng.CXArgumentRelease(gid), phase 4 #326.
 			// Now a dropped object, site S0809.

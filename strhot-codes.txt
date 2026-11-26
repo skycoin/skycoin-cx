@@ -364,3 +364,4 @@ STRHOT-350 B open t1-cx-runtime-sandbox/path.go FileRemove
 STRHOT-351 B open t3-ast/serialize.go deserializeOpcodeSet
 STRHOT-352 E open t3-ast/cxfunction_mng.go *CXFunctionMng.CXFunctionGet
 STRHOT-353 B open t3-ast/serialize.go deserializeFunctions
+STRHOT-354 B open t1-cx-runtime-sandbox/root.go rootFileOpen

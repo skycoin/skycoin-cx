@@ -64,7 +64,7 @@ func CPUProfileStartFile(path string, profRate int) (stop func() error, err erro
 func CPUProfileStartOnFile(f *os.File, profRate int) (stop func() error, err error) {
 	// test against default value to avoid warning
 	if profRate != 100 {
-		runtime.SetCPUProfileRate(profRate)
+		profilingCPURateSet(profRate)
 	}
 
 	if err := pprof.StartCPUProfile(f); err != nil {

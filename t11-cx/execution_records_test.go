@@ -304,12 +304,20 @@ func executionRecordProcess(t *testing.T, executable string, env []string, dir s
 	return run
 }
 
-// executionRecordHarness runs the test binary as cx.
+// executionRecordHarness runs the test binary as cx. cxExecutable runs the
+// forms that run cx itself, the test binary or the cx that
+// executionRecordsCxEnv names.
 type executionRecordHarness struct {
-	t          *testing.T
-	executable string
-	tests      string
+	t            *testing.T
+	executable   string
+	cxExecutable string
+	tests        string
 }
+
+// executionRecordsCxEnv names a cx binary, such as a TinyGo build, to run
+// the old, vm, built and native forms with. The image-old and image-vm
+// forms and the program hashes still run in the test binary.
+const executionRecordsCxEnv = "CX_EXECUTION_RECORDS_CX"
 
 func executionRecordHarnessNew(t *testing.T) executionRecordHarness {
 	tests, err := filepath.Abs(filepath.Join("..", "tests"))
@@ -320,7 +328,11 @@ func executionRecordHarnessNew(t *testing.T) executionRecordHarness {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return executionRecordHarness{t: t, executable: executable, tests: tests}
+	cxExecutable := executable
+	if path := os.Getenv(executionRecordsCxEnv); path != "" {
+		cxExecutable = path
+	}
+	return executionRecordHarness{t: t, executable: executable, cxExecutable: cxExecutable, tests: tests}
 }
 
 // cxArguments returns the cx arguments of name with the program arguments
@@ -371,7 +383,7 @@ func (harness executionRecordHarness) programHash(name string) (string, executio
 // cx runs cx with the executor on name.
 func (harness executionRecordHarness) cx(executor string, name string, input executionRecordInput) executionRecordRun {
 	args := append([]string{"--executor=" + executor}, harness.cxArguments(name, input)...)
-	return executionRecordProcess(harness.t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, input.stdin, args...)
+	return executionRecordProcess(harness.t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, input.stdin, args...)
 }
 
 // image runs name with the executor after a round trip through the image
@@ -642,7 +654,7 @@ func TestExecutionRecords(t *testing.T) {
 				}
 				buildArgs := append([]string{buildCommand}, strings.Fields(record.name)...)
 				buildArgs = append(buildArgs, "-o", output, "--core", dir)
-				build := executionRecordProcess(t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
+				build := executionRecordProcess(t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 				switch {
 				case build.exitCode != types.CX_SUCCESS && bytes.Contains(build.stderr, []byte("opcodes it does not include")):
 					forms[executionRecordFormBuilt] = executionRecordFormOutcome{note: "uses opcodes outside the core"}
@@ -937,7 +949,7 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 	}
 	buildArgs := append([]string{buildCommand, "--target=" + buildTargetLlvm}, strings.Fields(name)...)
 	buildArgs = append(buildArgs, "-o", output)
-	build := executionRecordProcess(harness.t, harness.executable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
+	build := executionRecordProcess(harness.t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 	switch {
 	case build.exitCode != types.CX_SUCCESS:
 		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=llvm failed"}

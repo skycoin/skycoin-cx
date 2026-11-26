@@ -81,6 +81,7 @@
 
 #### Added
 
+- `make build-tinygo` and `make build-wasm-tinygo` build cx with TinyGo, an alternative to the Go builds, which stay the default. A TinyGo build checks sandbox paths in Go, as TinyGo has no `os.Root`, and hashes with a portable BLAKE3 that a Go test checks against `lukechampine.com/blake3` (decisions D130 and D132). `CX_EXECUTION_RECORDS_CX` runs the execution records with another cx, and a TinyGo cx passes all of them. See docs/Microcontrollers.md
 - A `cx build` core with no program appended runs `cx-core --program FILE args`, where FILE is a program made with `cx build`, so a js/wasm host, which has no `os.Executable`, needs no separate command. A core with an appended program runs it with every argument as before
 - `make check-names`, part of `make check`, fails on a Go name that breaks the Naming rules of AGENTS.md and docs/NamingPlan.md and is not in `names-allowlist.txt`, which only shrinks. docs/NamingPlan.md lists the renames to come (#569)
 - Release archives. Pushing a `v*` tag publishes a GitHub release of cx and the 16 `cx build` cores, built with cgo off for linux, darwin and windows on amd64 and arm64, with SHA256SUMS. A tag with a `-`, such as `v0.9.0-alpha1`, is a prerelease. The workflow refuses a tag whose commit is not on main or whose check run did not pass. `make release-archives VERSION=v0.9.0` builds the same archives locally, and `make release-notes VERSION=v0.9.0` prints the notes. The GUI build (cxfx) is not included

@@ -101,6 +101,10 @@ each record it runs every form on the input and compares the exit code and
 the hash of stdout with the record. A mismatch names the record, the form
 and the first line that differs from the recorded stdout.
 
+`CX_EXECUTION_RECORDS_CX` names another cx, such as a TinyGo build, that
+runs the old, vm, built and native forms in place of the test binary, see
+[Microcontrollers.md](Microcontrollers.md).
+
 ```
 record examples/hello-world.cx, form old: stdout differs from the record, first differing line 2: "Hello Earth!\n", recorded "Hello World!\n"
 ```

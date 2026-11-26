@@ -68,7 +68,7 @@ func TestProgramFileSystemPathFromBytesAccepts(t *testing.T) {
 
 // programSandboxFixture makes <tmp>/sandbox and <tmp>/outside/secret.txt and
 // opens the sandbox root.
-func programSandboxFixture(t *testing.T) (root *os.Root, sandbox string, outside string) {
+func programSandboxFixture(t *testing.T) (root *Root, sandbox string, outside string) {
 	t.Helper()
 	dir := t.TempDir()
 	sandbox = filepath.Join(dir, "sandbox")

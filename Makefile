@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -84,6 +84,17 @@ build-wasm: ## Compile check cx for js/wasm with the default tags, as the playgr
 test-wasm: ## Build cx for js/wasm and run the hello world example under Node
 	GOOS=js GOARCH=wasm go build -tags="$(TAGS)" -o ./bin/cx.wasm ./t11-cx
 	node "$$(go env GOROOT)/lib/wasm/wasm_exec_node.js" ./bin/cx.wasm tests/examples/hello-world.cx | grep -qx "Hello World!"
+
+# The TinyGo targets are opt in, the Go builds stay the default, see
+# docs/Microcontrollers.md.
+TINYGO ?= tinygo
+
+build-tinygo: ## Build cx and cx-core with TinyGo, ./bin/cx-tinygo and ./bin/cx-core-tinygo (needs tinygo)
+	$(TINYGO) build -tags="$(TAGS)" -o ./bin/cx-tinygo$(EXE) ./t11-cx
+	$(TINYGO) build -tags="$(TAGS) cxcore" -o ./bin/cx-core-tinygo$(EXE) ./t6-cx-core-run
+
+build-wasm-tinygo: ## Build cx for js/wasm with TinyGo, ./bin/cx-tinygo.wasm, which runs with the wasm_exec.js of TinyGo
+	$(TINYGO) build -target=wasm -tags="$(TAGS)" -o ./bin/cx-tinygo.wasm ./t11-cx
 
 build-tests: build ## Build the cx program test runner
 	go build -o ./bin/cxtest ./t1-cxtest

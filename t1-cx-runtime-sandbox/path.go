@@ -68,11 +68,11 @@ func pathDriveLetter(letter byte) bool {
 
 // RootOpen opens the directory every program path resolves in.
 // An empty dir means ".".
-func RootOpen(dir string) (*os.Root, *FileError) {
+func RootOpen(dir string) (*Root, *FileError) {
 	if dir == "" {
 		dir = "."
 	}
-	root, err := os.OpenRoot(dir)
+	root, err := rootDirectoryOpen(dir)
 	if err != nil {
 		return nil, fileErrorFromFileSystemError(FileOperationSandboxRootOpen, dir, err)
 	}
@@ -80,7 +80,7 @@ func RootOpen(dir string) (*os.Root, *FileError) {
 }
 
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func rootCheck(root *os.Root, operation FileOperationCode, programPath Path) *FileError {
+func rootCheck(root *Root, operation FileOperationCode, programPath Path) *FileError {
 	if root != nil {
 		return nil
 	}
@@ -95,7 +95,7 @@ func rootCheck(root *os.Root, operation FileOperationCode, programPath Path) *Fi
 // FileOpen opens a program path for reading inside root.
 // VIOLATION STRHOT-272: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func FileOpen(root *os.Root, programPath Path) (*os.File, *FileError) {
+func FileOpen(root *Root, programPath Path) (*os.File, *FileError) {
 	if fileError := rootCheck(root, FileOperationOpen, programPath); fileError != nil {
 		return nil, fileError
 	}
@@ -112,7 +112,7 @@ func FileOpen(root *os.Root, programPath Path) (*os.File, *FileError) {
 // FileCreate creates or truncates a program path inside root.
 // VIOLATION STRHOT-270: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func FileCreate(root *os.Root, programPath Path) (*os.File, *FileError) {
+func FileCreate(root *Root, programPath Path) (*os.File, *FileError) {
 	if fileError := rootCheck(root, FileOperationCreate, programPath); fileError != nil {
 		return nil, fileError
 	}
@@ -131,14 +131,14 @@ func FileCreate(root *os.Root, programPath Path) (*os.File, *FileError) {
 // keeping its content when it does.
 // VIOLATION STRHOT-349: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func FileOpenReadWrite(root *os.Root, programPath Path) (*os.File, *FileError) {
+func FileOpenReadWrite(root *Root, programPath Path) (*os.File, *FileError) {
 	if fileError := rootCheck(root, FileOperationOpenReadWrite, programPath); fileError != nil {
 		return nil, fileError
 	}
 	if filelog.Enabled() {
 		fmt.Printf("FileOpenReadWrite: Opening '%s' in '%s'\n", programPath.pathText, root.Name())
 	}
-	file, err := root.OpenFile(programPath.pathText, os.O_RDWR|os.O_CREATE, 0o666)
+	file, err := rootFileOpen(root, programPath.pathText, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		return nil, pathFileError(FileOperationOpenReadWrite, programPath, err)
 	}
@@ -149,7 +149,7 @@ func FileOpenReadWrite(root *os.Root, programPath Path) (*os.File, *FileError) {
 // empty directory. A symlink is removed itself, never what it points to.
 // VIOLATION STRHOT-350: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
-func FileRemove(root *os.Root, programPath Path) *FileError {
+func FileRemove(root *Root, programPath Path) *FileError {
 	if fileError := rootCheck(root, FileOperationRemove, programPath); fileError != nil {
 		return fileError
 	}
@@ -163,7 +163,7 @@ func FileRemove(root *os.Root, programPath Path) *FileError {
 }
 
 // FileRead reads a whole program path inside root.
-func FileRead(root *os.Root, programPath Path) ([]byte, *FileError) {
+func FileRead(root *Root, programPath Path) ([]byte, *FileError) {
 	file, fileError := FileOpen(root, programPath)
 	if fileError != nil {
 		fileError.FileErrorOperation = FileOperationRead

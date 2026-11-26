@@ -3,6 +3,8 @@
 package regexp
 
 import (
+	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/skycoin/skycoin-cx/t0-types" // thin: only Read_str, STR, Write_str; no depth gain
@@ -47,7 +49,7 @@ func OpRegexpMustCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []a
 	err := regexpCompile(prgrm, inputs, outputs)
 
 	if err != nil {
-		println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		panic(types.CX_RUNTIME_ERROR)
 	}
 
@@ -75,7 +77,7 @@ func OpRegexpFind(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXVa
 	exp := types.Read_str(prgrm.Memory, expOffset(inputs[0]))
 	r, ok := regexps[exp]
 	if !ok {
-		println("regexp: Find on a Regexp that did not compile: " + exp)
+		fmt.Fprintln(os.Stderr, "regexp: Find on a Regexp that did not compile: "+exp)
 		panic(types.CX_RUNTIME_ERROR)
 	}
 

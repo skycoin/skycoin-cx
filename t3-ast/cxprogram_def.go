@@ -2,10 +2,10 @@ package ast
 
 import (
 	"bufio"
-	"os"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
 	"github.com/skycoin/skycoin-cx/t1-constants"
+	sandbox "github.com/skycoin/skycoin-cx/t1-cx-runtime-sandbox"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
 
@@ -57,7 +57,7 @@ type CXProgram struct {
 
 	// ProgramSandboxRoot is the directory every program file opcode resolves
 	// in, opened once at run start, see #433. Nil means file opcodes fail.
-	ProgramSandboxRoot *os.Root
+	ProgramSandboxRoot *sandbox.Root
 
 	// ProgramInputValues and ProgramOutputValues hold the operands of the
 	// native opcode the old loop runs, sized by RunBuffersPrepare (#407).

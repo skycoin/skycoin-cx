@@ -223,7 +223,7 @@ func runStart(args []string) (options cxCmdFlags, cxArgs []string, sourceCode []
 	// options, file pointers, filenames
 	cxArgs, sourceCode, fileNames, err := sourceargs.Parse(commandLine.Args(), true)
 	if err != nil {
-		println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(types.CX_COMPILATION_ERROR)
 	}
 
