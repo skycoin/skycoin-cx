@@ -1,7 +1,9 @@
 # TinyGo and microcontrollers
 
-This page describes the TinyGo builds of cx. They are an alternative to the
-Go builds, which stay the default everywhere.
+This page describes the TinyGo builds of cx: the vm with a program image on
+a microcontroller, native programs of the LLVM target linked by TinyGo, and
+cx itself. They are an alternative to the Go builds, which stay the default
+everywhere.
 
 ## The vm on a microcontroller
 
@@ -68,6 +70,40 @@ With TinyGo 0.45.0-dev of the 0magnet fork and `-stack-size=16K`, all 236
 records of the image-core form pass on each of the five targets. wasip1
 needs `wasm-opt` (`WASMOPT`). The Cortex-M3 build is 80 KB of flash and
 6 KB of static RAM. Nothing has run on a real board yet.
+
+## The LLVM target with TinyGo
+
+`cx build --target=llvm` compiles with the clang on the PATH, see
+[LlvmTarget.md](LlvmTarget.md). `--llvm-linker=tinygo` uses TinyGo instead,
+and cx picks it by itself when there is no clang but a `tinygo` (`CX_TINYGO`
+names another). It compiles the module with `tinygo clang` and builds it,
+with the C runtime, into a small TinyGo program whose main calls the
+program. TinyGo then brings the C library, compiler-rt, startup code and
+linker script of the target.
+
+`--llvm-tinygo-target=<target>` cross compiles for a TinyGo target, such as
+`pico` or `cortex-m-qemu`. `CX_TINYGO_FLAGS` adds flags to `tinygo build`, such
+as `-serial=uart`. The triple, cpu and features come from
+`tinygo info -json`, and the extension of `-o` picks the file format, as
+for `tinygo build`: `.elf`, `.hex`, `.bin` or `.uf2`.
+
+```
+./bin/cx build --target=llvm --llvm-tinygo-target=pico -stack-size=4K hello.cx -o hello.uf2
+```
+
+The TinyGo program leaves out the net library of the C runtime, so a
+program that uses it is refused. The runtime defines `CX_RT_TINYGO`, which
+shrinks its output buffer to 1 KB and ends the process through `os.Exit`.
+
+TinyGo builds picolibc with a printf for integers only, so the runtime
+writes integers itself and, in a TinyGo program, formats floats with
+`strconv.AppendFloat` on the Go side, as vm does.
+
+A hello world, a division by zero and the fib benchmark, cross compiled
+this way, print what vm prints on cortex-m-qemu, riscv-qemu, wasip1 and,
+in Espressif QEMU, esp32c3-generic and esp32-generic. A pico build links
+to a 25 KB UF2, which has run on no board yet. QEMU passes no exit code
+from a Cortex-M or an ESP32.
 
 ## cx with TinyGo
 

@@ -68,6 +68,9 @@ type Options struct {
 	// program that uses a system library its run does not enable (D119).
 	RefusalLine string
 	RefusalCode int32
+	// EntryName names the function that runs the program, main when it is
+	// empty. A TinyGo program, which has its own main, calls it by this name.
+	EntryName string
 }
 
 // Stats counts the instructions of a module by how they were emitted.
@@ -202,7 +205,11 @@ func (e *emitter) entry() {
 	image := e.image
 	e.body.Reset()
 	attachment := e.debugEntry()
-	fmt.Fprintf(&e.body, "define i32 @main()%s {\nentry:\n", attachment)
+	entryName := e.options.EntryName
+	if entryName == "" {
+		entryName = "main"
+	}
+	fmt.Fprintf(&e.body, "define i32 @%s()%s {\nentry:\n", entryName, attachment)
 	e.declare("cx_rt_start", "declare void @cx_rt_start(i32)")
 	e.line("call void @cx_rt_start(i32 %d)", e.options.StopCodes[StopDivideByZero])
 	if e.options.RefusalLine != "" {

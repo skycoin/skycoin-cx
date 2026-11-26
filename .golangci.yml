@@ -85,7 +85,7 @@ linters:
       - linters:
           - gosec
         text: "G(204|702):"
-        path: (_test\.go|t11-cx/build_llvm\.go|t5-cxos/op_os\.go)
+        path: (_test\.go|t11-cx/build_llvm\.go|t11-cx/build_llvm_tinygo\.go|t5-cxos/op_os\.go)
       # Tests run the binaries they build on the files they write, in their
       # own temporary directories.
       - linters:

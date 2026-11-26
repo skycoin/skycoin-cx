@@ -13,6 +13,24 @@
 #include <fcntl.h>
 #include <io.h>
 #endif
+// CX_RT_TINYGO builds the runtime into a TinyGo program, which cx build
+// --linker=tinygo writes, see docs/Microcontrollers.md. It leaves out the
+// net library, and the Go side ends the process with os.Exit.
+#ifdef CX_RT_TINYGO
+#define CX_RT_NET_NONE
+void cx_rt_tinygo_exit(int32_t code);
+#define CX_RT_EXIT cx_rt_tinygo_exit
+#ifndef CX_RT_OUT_SIZE
+#define CX_RT_OUT_SIZE 1024
+#endif
+#else
+#define CX_RT_EXIT exit
+#endif
+// CX_RT_OUT_SIZE is the size of the output buffer.
+#ifndef CX_RT_OUT_SIZE
+#define CX_RT_OUT_SIZE (1 << 16)
+#endif
+#ifndef CX_RT_NET_NONE
 #ifdef _WIN32
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
@@ -74,10 +92,37 @@ static int cx_socket_error(void) { return errno; }
 static int cx_socket_would_block(void) { return errno == EAGAIN || errno == EWOULDBLOCK; }
 static int cx_socket_in_progress(void) { return errno == EINPROGRESS; }
 #endif
+#endif
 // CX_EXIT_INTERNAL_ERROR is types.CX_INTERNAL_ERROR.
 #define CX_EXIT_INTERNAL_ERROR 3
 
-static char out[1 << 16];
+static char out[CX_RT_OUT_SIZE];
+
+// An ARM core without unaligned access, such as the Cortex-M0+, reaches cx_mem
+// through these helpers of the ARM run time ABI (IHI 0043, section 4.4.3),
+// which the compiler-rt of TinyGo leaves out.
+#if defined(CX_RT_TINYGO) && defined(__ARM_EABI__) && !defined(__ARM_FEATURE_UNALIGNED)
+int __aeabi_uread4(void *address) {
+	const volatile uint8_t *p = address;
+	return (int)((uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24);
+}
+int __aeabi_uwrite4(int value, void *address) {
+	volatile uint8_t *p = address;
+	for (int i = 0; i < 4; i++)
+		p[i] = (uint8_t)((uint32_t)value >> (8 * i));
+	return value;
+}
+long long __aeabi_uread8(void *address) {
+	const uint8_t *p = address;
+	return (long long)((uint64_t)(uint32_t)__aeabi_uread4((void *)p) | (uint64_t)(uint32_t)__aeabi_uread4((void *)(p + 4)) << 32);
+}
+long long __aeabi_uwrite8(long long value, void *address) {
+	uint8_t *p = address;
+	__aeabi_uwrite4((int)(uint32_t)value, p);
+	__aeabi_uwrite4((int)(uint32_t)((uint64_t)value >> 32), p + 4);
+	return value;
+}
+#endif
 static size_t outLen;
 static uint32_t testFailures;
 static int32_t divideCode;
@@ -102,20 +147,43 @@ static void put(const char *s, size_t n) {
 
 static void putc1(char c) { put(&c, 1); }
 
-static void putI64(int64_t v) {
-	char b[24];
-	put(b, (size_t)snprintf(b, sizeof b, "%lld", (long long)v));
-}
-
+// putU64 and putI64 write v in decimal without printf, whose %llu the
+// integer only printf of a small C library, such as picolibc in TinyGo, lacks.
 static void putU64(uint64_t v) {
 	char b[24];
-	put(b, (size_t)snprintf(b, sizeof b, "%llu", (unsigned long long)v));
+	size_t n = sizeof b;
+	do {
+		b[--n] = (char)('0' + v % 10);
+		v /= 10;
+	} while (v != 0);
+	put(b + n, sizeof b - n);
 }
+
+static void putI64(int64_t v) {
+	if (v < 0) {
+		putc1('-');
+		putU64(-(uint64_t)v);
+		return;
+	}
+	putU64((uint64_t)v);
+}
+
+#ifdef CX_RT_TINYGO
+// cx_rt_tinygo_float_append writes strconv.AppendFloat(v, format, precision,
+// bits) to out and returns its length. The Go side of a TinyGo program has it,
+// as the printf of picolibc in TinyGo formats no float.
+int32_t cx_rt_tinygo_float_append(double v, int32_t format, int32_t precision, int32_t bits, char *out, int32_t room);
+#endif
 
 // putFloat writes v as strconv.AppendFloat(v, 'g', -1, bits) does: the
 // shortest digits that read back as the same value, the %e form when the
 // decimal exponent is below -4 or at least 6.
 static void putFloat(double v, int bits) {
+#ifdef CX_RT_TINYGO
+	char g[64];
+	put(g, (size_t)cx_rt_tinygo_float_append(v, 'g', -1, bits, g, (int32_t)sizeof g));
+	return;
+#endif
 	if (isnan(v)) {
 		put("NaN", 3);
 		return;
@@ -204,7 +272,11 @@ void cx_rt_print_value_ui64(uint64_t v, int32_t verb) { (void)verb, putU64(v); }
 void cx_rt_print_value_f32(float v, int32_t verb) {
 	if (verb == 'f') {
 		char b[400];
+#ifdef CX_RT_TINYGO
+		put(b, (size_t)cx_rt_tinygo_float_append(v, 'f', 7, 64, b, (int32_t)sizeof b));
+#else
 		put(b, (size_t)snprintf(b, sizeof b, "%.7f", (double)v));
+#endif
 		return;
 	}
 	putFloat(v, 32);
@@ -212,7 +284,11 @@ void cx_rt_print_value_f32(float v, int32_t verb) {
 void cx_rt_print_value_f64(double v, int32_t verb) {
 	if (verb == 'f') {
 		char b[400];
+#ifdef CX_RT_TINYGO
+		put(b, (size_t)cx_rt_tinygo_float_append(v, 'f', 16, 64, b, (int32_t)sizeof b));
+#else
 		put(b, (size_t)snprintf(b, sizeof b, "%.16f", v));
+#endif
 		return;
 	}
 	putFloat(v, 64);
@@ -275,7 +351,7 @@ void cx_rt_stop(int32_t code, const char *text) {
 	putc1('\n');
 	flush();
 	fflush(stdout);
-	exit(code);
+	CX_RT_EXIT(code);
 }
 
 int32_t cx_rt_finish(int32_t assertCode) {
@@ -293,7 +369,7 @@ int32_t cx_rt_finish(int32_t assertCode) {
 static void cx_rt_assert(const char *message) {
 	fprintf(stderr, "assert failed: precondition violated: %s\n", message);
 	fflush(stderr);
-	exit(3);
+	CX_RT_EXIT(3);
 }
 
 // cipherHashStateTaken marks the taken states of the cipher library, as
@@ -476,6 +552,7 @@ CX_CONVERT_FROM(ui64, uint64_t)
 CX_CONVERT_FROM(f32, float)
 CX_CONVERT_FROM(f64, double)
 
+#ifndef CX_RT_NET_NONE
 // The net library, decision D119, as t1-netbatch runs it: sockets are read
 // when the program calls net.Update, everything that arrived becomes one
 // batch sorted by socket handle, and the writes of a batch are sent at the
@@ -865,7 +942,7 @@ static int32_t netReplayUnquote(char *quoted) {
 static void netReplayFail(const char *path, const char *problem) {
 	fprintf(stderr, "library net: %s: %s\n", path, problem);
 	fflush(stderr);
-	exit(CX_EXIT_INTERNAL_ERROR);
+	CX_RT_EXIT(CX_EXIT_INTERNAL_ERROR);
 }
 
 static void netReplayLoad(const char *path) {
@@ -1546,6 +1623,7 @@ CX_NET_FUNCTION(udp_peer_resolve) {
 	netAddress address;
 	netBlockI32Write(&block, netAddressParse(text, &address) ? netPeerFind(&address) : 0);
 }
+#endif
 
 // The file opcodes that run on vm, decision D119. Every function that opens
 // a file takes or returns a str and runs on the old loop only, so a program

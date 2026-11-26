@@ -20,6 +20,10 @@ per function, the source line of each instruction, and the name and type of
 each variable kept in a register, from `ImageLocals`, so a debugger such as
 gdb or lldb shows CX names.
 
+Without a clang, or with `--llvm-linker=tinygo`, cx build links with
+TinyGo instead, and `--llvm-tinygo-target=pico` cross compiles for a TinyGo
+target, see [Microcontrollers.md](Microcontrollers.md#the-llvm-target-with-tinygo).
+
 ## What it compiles
 
 `t3-cx-compiler-llvm` reads the `ir.Image` that `lower.Program` makes, see

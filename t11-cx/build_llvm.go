@@ -12,6 +12,7 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-cxhash"
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	llvm "github.com/skycoin/skycoin-cx/t3-cx-compiler-llvm"
@@ -60,6 +61,14 @@ func buildLlvm(options buildOptions) int {
 	prgrm.CxIrState.StringPool.StringPoolFreeze()
 	llvmOptions := buildLlvmOptions()
 	llvmOptions.Debug = options.buildOptionsDebug
+	linker, problem := buildLlvmLinkerChoose(options)
+	if problem != "" {
+		return buildFail(problem)
+	}
+	tinygoLink := linker == buildLlvmLinkerTinygo && !strings.HasSuffix(options.buildOptionsOutput, buildLlvmExtension)
+	if tinygoLink {
+		llvmOptions.EntryName = buildLlvmTinygoEntryName
+	}
 	image, _, outside := core.ExecutorLower(prgrm)
 	if code := core.CoreOperationRefused(prgrm); code != 0 {
 		// The program is refused before it runs, as cx refuses it, so its
@@ -70,6 +79,9 @@ func buildLlvm(options buildOptions) int {
 	if outside != "" {
 		fmt.Fprintf(os.Stderr, "cx build: cannot run on vm: %s\n", outside)
 		return types.CX_RUNTIME_NOT_IMPLEMENTED
+	}
+	if tinygoLink && image.ImageOperationsEnabled.OpcodeSetLibraryAny(constants.LibraryNumberNet) {
+		return buildFail("the program uses the net library, which --llvm-linker=tinygo leaves out")
 	}
 	module, stats, err := llvm.Emit(&image, llvmOptions)
 	if err != nil {
@@ -89,6 +101,9 @@ func buildLlvm(options buildOptions) int {
 	modulePath := strings.TrimSuffix(output, ".exe") + buildLlvmExtension
 	if err := os.WriteFile(modulePath, module, 0o644); err != nil {
 		return buildFail(err.Error())
+	}
+	if tinygoLink {
+		return buildLlvmTinygoNative(modulePath, output, options.buildOptionsLlvmTinygoTarget, options.buildOptionsDebug)
 	}
 	return buildLlvmNative(modulePath, output, options.buildOptionsDebug)
 }
@@ -118,7 +133,7 @@ func buildLlvmClang() string {
 func buildLlvmNative(modulePath string, output string, debug bool) int {
 	clang := buildLlvmClang()
 	if clang == "" {
-		return buildFail(fmt.Sprintf("wrote %s but found no clang to compile it into %s, install clang, set %s or give an output ending in .ll", modulePath, output, buildLlvmClangEnv))
+		return buildFail(fmt.Sprintf("wrote %s but found no clang to compile it into %s, install clang or TinyGo, set %s or give an output ending in .ll", modulePath, output, buildLlvmClangEnv))
 	}
 	directory, err := os.MkdirTemp("", "cx-llvm-")
 	if err != nil {

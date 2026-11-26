@@ -26,13 +26,15 @@ const buildCoreName = "cx-core"
 // buildOptions holds the flags of cx build. buildOptionsCompile are the
 // arguments left for the compiler, the source files and the cx flags.
 type buildOptions struct {
-	buildOptionsOutput  string
-	buildOptionsCore    string
-	buildOptionsHelp    bool
-	buildOptionsTarget  string
-	buildOptionsStats   bool
-	buildOptionsDebug   bool
-	buildOptionsCompile []string
+	buildOptionsOutput           string
+	buildOptionsCore             string
+	buildOptionsHelp             bool
+	buildOptionsTarget           string
+	buildOptionsStats            bool
+	buildOptionsDebug            bool
+	buildOptionsLlvmLinker       string
+	buildOptionsLlvmTinygoTarget string
+	buildOptionsCompile          []string
 }
 
 // buildRun runs cx build with args, the arguments after "build", and returns
@@ -160,6 +162,10 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 			target = &options.buildOptionsOutput
 		case "core":
 			target = &options.buildOptionsCore
+		case "llvm-linker":
+			target = &options.buildOptionsLlvmLinker
+		case "llvm-tinygo-target":
+			target = &options.buildOptionsLlvmTinygoTarget
 		case "target":
 			target = &options.buildOptionsTarget
 		case "llvm-stats":
@@ -320,6 +326,12 @@ and passes its own command line arguments to it as os.Args.
 --llvm-debug        With --target=llvm, add DWARF debug information: the
                     source line of each instruction and the name and type
                     of each variable kept in a register.
+--llvm-linker name  With --target=llvm, clang or tinygo. tinygo builds the
+                    executable with TinyGo, the default when there is no
+                    clang but a tinygo (or CX_TINYGO).
+--llvm-tinygo-target name
+                    With --target=llvm, cross compile for this TinyGo
+                    target, such as pico, with tinygo.
 
 The core has no parser. It links a system library only when the program
 calls it and --enable enables it, and only the cipher library brings a
