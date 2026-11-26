@@ -78,12 +78,13 @@ linters:
       # with the 0755 and 0644 modes that go build uses.
       - linters:
           - gosec
-        text: "G(301|304|306):"
+        text: "G(301|304|306|703):"
       # cx build --target=llvm runs clang, and the CX os.Run opcode runs the
-      # command its program gives. Tests run the cx binaries they build.
+      # command its program gives. Tests run the cx binaries they build, and
+      # the image-core form the runner CX_EXECUTION_RECORDS_IMAGE_CORE names.
       - linters:
           - gosec
-        text: "G204:"
+        text: "G(204|702):"
         path: (_test\.go|t11-cx/build_llvm\.go|t5-cxos/op_os\.go)
       # Tests run the binaries they build on the files they write, in their
       # own temporary directories.

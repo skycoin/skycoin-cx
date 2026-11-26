@@ -62,10 +62,16 @@ func buildRun(args []string) int {
 		if problem != "" {
 			return buildFail("no output file, " + problem + ", give one with -o, see cx build --help")
 		}
+		if options.buildOptionsTarget == buildTargetImage {
+			output = strings.TrimSuffix(output, ".exe") + buildImageExtension
+		}
 		options.buildOptionsOutput = output
 	}
 	if !parseProgram(compileOptions, fileNames, sourceCode) {
 		return types.CX_COMPILATION_ERROR
+	}
+	if options.buildOptionsTarget == buildTargetImage {
+		return buildImage(options)
 	}
 	if options.buildOptionsTarget == buildTargetLlvm {
 		return buildLlvm(options)
@@ -178,9 +184,9 @@ func buildOptionsParse(args []string) (options buildOptions, problem string) {
 	switch options.buildOptionsTarget {
 	case "":
 		options.buildOptionsTarget = buildTargetCore
-	case buildTargetCore, buildTargetLlvm:
+	case buildTargetCore, buildTargetLlvm, buildTargetImage:
 	default:
-		return options, fmt.Sprintf("unknown --target %q, want %s or %s", options.buildOptionsTarget, buildTargetCore, buildTargetLlvm)
+		return options, fmt.Sprintf("unknown --target %q, want %s, %s or %s", options.buildOptionsTarget, buildTargetCore, buildTargetLlvm, buildTargetImage)
 	}
 	return options, ""
 }
@@ -285,7 +291,7 @@ func buildFileFail(fileError *sandbox.FileError) int {
 }
 
 func buildUsagePrint() {
-	fmt.Printf(`Usage: cx build [cx flags] source-files [-o output] [--core path] [--target core|llvm]
+	fmt.Printf(`Usage: cx build [cx flags] source-files [-o output] [--core path] [--target core|llvm|image]
 
 Compiles the program and writes output, one executable file that holds the
 core binary, the serialized program and a trailer. The core runs the program
@@ -305,6 +311,10 @@ and passes its own command line arguments to it as os.Args.
                     clang (or CX_CLANG) to a native executable, output.
                     An output ending in .ll gets the IR alone. It needs a
                     program that runs on vm and calls no system library.
+                    image writes the image vm runs, output.cximage, for
+                    cx-core-image, the vm runner for microcontrollers. Give
+                    -stack-size to fit the board, see
+                    docs/Microcontrollers.md.
 --llvm-stats        With --target=llvm, print how each scalar opcode was
                     emitted, inline or as a call into the runtime.
 --llvm-debug        With --target=llvm, add DWARF debug information: the

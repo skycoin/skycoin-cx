@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo build-image-core build-mcu run-mcu release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -95,6 +95,25 @@ build-tinygo: ## Build cx and cx-core with TinyGo, ./bin/cx-tinygo and ./bin/cx-
 
 build-wasm-tinygo: ## Build cx for js/wasm with TinyGo, ./bin/cx-tinygo.wasm, which runs with the wasm_exec.js of TinyGo
 	$(TINYGO) build -target=wasm -tags="$(TAGS)" -o ./bin/cx-tinygo.wasm ./t11-cx
+
+# MCU_TARGET is a TinyGo target, MCU_PROGRAM the program build-mcu and
+# run-mcu embed and MCU_STACK the vm stack it gets.
+MCU_TARGET ?= cortex-m-qemu
+MCU_PROGRAM ?= tests/examples/hello-world.cx
+MCU_STACK ?= 16K
+
+build-image-core: ## Build cx-core-image, which runs the image cx build --target=image writes, with Go
+	go build -tags=cxcore -o ./bin/cx-core-image$(EXE) ./t4-cx-core-image
+
+build-mcu: ## Build MCU_PROGRAM into cx-core-image for the TinyGo target MCU_TARGET, ./bin/cx-mcu-MCU_TARGET.elf
+	go build -o ./bin/$(CXEXE) ./t11-cx
+	./bin/$(CXEXE) build --target=image -stack-size=$(MCU_STACK) $(MCU_PROGRAM) -o t4-cx-core-image/program.cximage
+	$(TINYGO) build -target=$(MCU_TARGET) -tags="cxcore cximageembed" -o ./bin/cx-mcu-$(MCU_TARGET).elf ./t4-cx-core-image
+
+run-mcu: ## Run MCU_PROGRAM on vm in the emulator of MCU_TARGET: cortex-m-qemu, riscv-qemu, wasip1, esp32 or esp32c3
+	go build -o ./bin/$(CXEXE) ./t11-cx
+	./bin/$(CXEXE) build --target=image -stack-size=$(MCU_STACK) $(MCU_PROGRAM) -o ./bin/mcu.cximage
+	CX_MCU_TARGET=$(MCU_TARGET) TINYGO=$(TINYGO) ./t4-cx-core-image/emulator-run.sh ./bin/mcu.cximage
 
 build-tests: build ## Build the cx program test runner
 	go build -o ./bin/cxtest ./t1-cxtest

@@ -79,15 +79,16 @@ func executionRecordHash(data []byte) string {
 type executionRecordForm string
 
 const (
-	executionRecordFormOld      executionRecordForm = "old"
-	executionRecordFormVm       executionRecordForm = "vm"
-	executionRecordFormImageOld executionRecordForm = "image-old"
-	executionRecordFormImageVm  executionRecordForm = "image-vm"
-	executionRecordFormBuilt    executionRecordForm = "built"
-	executionRecordFormNative   executionRecordForm = "native"
+	executionRecordFormOld       executionRecordForm = "old"
+	executionRecordFormVm        executionRecordForm = "vm"
+	executionRecordFormImageOld  executionRecordForm = "image-old"
+	executionRecordFormImageVm   executionRecordForm = "image-vm"
+	executionRecordFormBuilt     executionRecordForm = "built"
+	executionRecordFormNative    executionRecordForm = "native"
+	executionRecordFormImageCore executionRecordForm = "image-core"
 )
 
-var executionRecordForms = []executionRecordForm{executionRecordFormOld, executionRecordFormVm, executionRecordFormImageOld, executionRecordFormImageVm, executionRecordFormBuilt, executionRecordFormNative}
+var executionRecordForms = []executionRecordForm{executionRecordFormOld, executionRecordFormVm, executionRecordFormImageOld, executionRecordFormImageVm, executionRecordFormBuilt, executionRecordFormNative, executionRecordFormImageCore}
 
 // executionRecordCallStack starts the call stack vm prints after a runtime
 // error. A native program prints the error line and no call stack, so its
@@ -315,7 +316,7 @@ type executionRecordHarness struct {
 }
 
 // executionRecordsCxEnv names a cx binary, such as a TinyGo build, to run
-// the old, vm, built and native forms with. The image-old and image-vm
+// the old, vm, built, native and image-core forms with. The image-old and image-vm
 // forms and the program hashes still run in the test binary.
 const executionRecordsCxEnv = "CX_EXECUTION_RECORDS_CX"
 
@@ -606,6 +607,7 @@ func TestExecutionRecords(t *testing.T) {
 	dir := t.TempDir()
 	cores := buildTestCores(t, dir)
 	clang := buildLlvmClang()
+	imageCore := executionRecordImageCore(t, dir)
 
 	type outcome struct {
 		programHash string
@@ -643,6 +645,16 @@ func TestExecutionRecords(t *testing.T) {
 				forms[executionRecordFormNative] = executionRecordFormOutcome{note: "no clang on this machine, set " + buildLlvmClangEnv + " or install clang"}
 			default:
 				forms[executionRecordFormNative] = harness.native(dir, i, record.name, input)
+			}
+			switch {
+			case executionRecordVmOutside(vmRun):
+				forms[executionRecordFormImageCore] = executionRecordFormOutcome{note: "does not lower"}
+			case executionRecordRunFlag(record.name) != "":
+				forms[executionRecordFormImageCore] = executionRecordFormOutcome{note: "passes the run time flag " + executionRecordRunFlag(record.name)}
+			case len(input.arguments) > 0 || input.stdin != "":
+				forms[executionRecordFormImageCore] = executionRecordFormOutcome{note: "takes arguments or stdin"}
+			default:
+				forms[executionRecordFormImageCore] = harness.imageCore(dir, i, imageCore, record.name)
 			}
 
 			if flag := executionRecordRunFlag(record.name); flag != "" {
@@ -706,7 +718,7 @@ func TestExecutionRecords(t *testing.T) {
 			if run.timedOut || run.exitCode != record.exitCode {
 				return false
 			}
-			if cut := bytes.Index(recorded, executionRecordCallStack); form == executionRecordFormNative && cut >= 0 {
+			if cut := bytes.Index(recorded, executionRecordCallStack); (form == executionRecordFormNative || form == executionRecordFormImageCore) && cut >= 0 {
 				return bytes.Equal(run.stdout, append(recorded[:cut:cut], '\n'))
 			}
 			return executionRecordHash(run.stdout) == record.outputHash
@@ -961,4 +973,53 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 		env = append(env, "CX_NET_REPLAY="+input.replayPath)
 	}
 	return executionRecordFormOutcome{run: executionRecordProcess(harness.t, output, env, harness.tests, input.stdin, input.arguments...), applicable: true}
+}
+
+// executionRecordsImageCoreEnv names a cx-core-image to run the image-core
+// form with in place of the Go build, such as a TinyGo build or a script
+// that runs one under wasmtime or QEMU, see docs/Microcontrollers.md.
+const executionRecordsImageCoreEnv = "CX_EXECUTION_RECORDS_IMAGE_CORE"
+
+// executionRecordsImageFlagsEnv holds cx flags for the image build of the
+// image-core form, such as -stack-size=16K for a microcontroller.
+const executionRecordsImageFlagsEnv = "CX_EXECUTION_RECORDS_IMAGE_FLAGS"
+
+// executionRecordImageCore returns the runner of the image-core form, the
+// one executionRecordsImageCoreEnv names or cx-core-image built into dir.
+func executionRecordImageCore(t *testing.T, dir string) string {
+	if path := os.Getenv(executionRecordsImageCoreEnv); path != "" {
+		return path
+	}
+	path := filepath.Join(dir, "cx-core-image")
+	if runtime.GOOS == "windows" {
+		path += ".exe"
+	}
+	tags := "cxcore"
+	if types.POINTER_SIZE == 8 {
+		tags += ",ptr64"
+	}
+	if out, err := exec.Command("go", "build", "-o", path, "-tags", tags, "../t4-cx-core-image").CombinedOutput(); err != nil {
+		t.Fatalf("go build of cx-core-image: %v\n%s", err, out)
+	}
+	return path
+}
+
+// imageCore writes the image of name with cx build --target=image and runs
+// it with runner, the image-core form.
+func (harness executionRecordHarness) imageCore(dir string, index int, runner string, name string) executionRecordFormOutcome {
+	output := filepath.Join(dir, fmt.Sprintf("image-%d.cximage", index))
+	buildArgs := append([]string{buildCommand, "--target=" + buildTargetImage}, strings.Fields(os.Getenv(executionRecordsImageFlagsEnv))...)
+	buildArgs = append(buildArgs, strings.Fields(name)...)
+	buildArgs = append(buildArgs, "-o", output)
+	build := executionRecordProcess(harness.t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
+	switch {
+	case build.exitCode != types.CX_SUCCESS && bytes.Contains(build.stderr, []byte("which cx-core-image does not link")):
+		return executionRecordFormOutcome{note: "uses the file or net library"}
+	case build.exitCode == types.CX_RUNTIME_LIBRARY_DISABLED:
+		return executionRecordFormOutcome{note: "is refused before it runs"}
+	case build.exitCode != types.CX_SUCCESS:
+		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=image failed"}
+	}
+	defer os.Remove(output)
+	return executionRecordFormOutcome{run: executionRecordProcess(harness.t, runner, nil, harness.tests, "", output), applicable: true}
 }

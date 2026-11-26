@@ -3,29 +3,17 @@ package printer
 import (
 	"fmt"
 	"runtime/debug"
-	"strconv"
 
 	"github.com/skycoin/skycoin-cx/t0-types"
-	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 	"github.com/skycoin/skycoin-cx/t2-globals"
 	"github.com/skycoin/skycoin-cx/t3-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 )
 
-// printerVmStopMessages is what the old loop prints after the error string
-// for each vm error, the value its panic carried.
-var printerVmStopMessages = [vm.StopCount]string{
-	vm.StopDivideByZero:   "runtime error: integer divide by zero",
-	vm.StopStackOverflow:  constants.STACK_OVERFLOW_ERROR,
-	vm.StopOpcodeInvalid:  "invalid image opcode",
-	vm.StopIndexNegative:  strconv.Itoa(types.CX_RUNTIME_INVALID_CAST),
-	vm.StopAddressInvalid: "address outside the stack and data segment",
-}
-
 // PrinterVmStopMessage is what vm prints after the error string for stop.
 func PrinterVmStopMessage(stop vm.Stop) string {
-	return printerVmStopMessages[stop]
+	return vm.StopMessages[stop]
 }
 
 // printerVmStopLine returns the file and line of the instruction machine
@@ -58,7 +46,7 @@ func PrinterVmErrorPrint(prgrm *ast.CXProgram, machine *vm.Machine, stop vm.Stop
 	image := machine.MachineImage
 	fileName, lineNumber := printerVmStopLine(machine)
 	code := int(vm.StopExitCodes[stop])
-	message := printerVmStopMessages[stop]
+	message := vm.StopMessages[stop]
 	fmt.Printf("%s, %s, %v", PrinterErrorHeader(fileName, lineNumber), ast.ErrorString(code), message)
 
 	copy(prgrm.Memory, machine.MachineMemory[:ir.ImageDataEnd(image)])

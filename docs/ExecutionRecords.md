@@ -93,6 +93,7 @@ the compiler and two runs on the old loop. Those two are listed by hand in
 | image-vm | the same on vm, when every function lowers |
 | built | the executable `cx build` writes, which runs vm when the program lowers and the old loop otherwise. Not for a program that passes a run time flag of cx, such as `--executor`, which a built program cannot take, or one that uses an opcode the core leaves out. `-heap-max` is stored in the built program, so programs that pass it are compared |
 | native | the executable `cx build --target=llvm` writes, see [LlvmTarget.md](LlvmTarget.md), when the program lowers, passes no run time flag and calls no system library. It needs clang and is listed as not run without one. After a runtime error it prints the error line and no call stack, so its stdout is checked against the recorded stdout up to the call stack |
+| image-core | the image `cx build --target=image` writes, run by `t4-cx-core-image`, see [Microcontrollers.md](Microcontrollers.md), when the program lowers, passes no run time flag, takes no arguments or stdin and uses no file or net library. `CX_EXECUTION_RECORDS_IMAGE_CORE` names another runner, such as a TinyGo build in an emulator, and `CX_EXECUTION_RECORDS_IMAGE_FLAGS` adds cx flags to the image build. Its stdout is checked as the native one is |
 
 ## The harness
 
@@ -102,7 +103,7 @@ the hash of stdout with the record. A mismatch names the record, the form
 and the first line that differs from the recorded stdout.
 
 `CX_EXECUTION_RECORDS_CX` names another cx, such as a TinyGo build, that
-runs the old, vm, built and native forms in place of the test binary, see
+runs the old, vm, built, native and image-core forms in place of the test binary, see
 [Microcontrollers.md](Microcontrollers.md).
 
 ```

@@ -6,7 +6,10 @@
 package vm
 
 import (
+	"strconv"
+
 	"github.com/skycoin/skycoin-cx/t0-types"
+	"github.com/skycoin/skycoin-cx/t1-constants"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 )
 
@@ -53,6 +56,16 @@ var StopExitCodes = [StopCount]int32{
 	StopOpcodeInvalid:  types.CX_RUNTIME_NOT_IMPLEMENTED,
 	StopIndexNegative:  types.CX_RUNTIME_INVALID_CAST,
 	StopAddressInvalid: types.CX_RUNTIME_ERROR,
+}
+
+// StopMessages is what vm prints after the error string for each error
+// stop, the value the panic of the old loop carried. Read only.
+var StopMessages = [StopCount]string{
+	StopDivideByZero:   "runtime error: integer divide by zero",
+	StopStackOverflow:  constants.STACK_OVERFLOW_ERROR,
+	StopOpcodeInvalid:  "invalid image opcode",
+	StopIndexNegative:  strconv.Itoa(types.CX_RUNTIME_INVALID_CAST),
+	StopAddressInvalid: "address outside the stack and data segment",
 }
 
 // Resumable reports whether the caller may Resume after stop.
