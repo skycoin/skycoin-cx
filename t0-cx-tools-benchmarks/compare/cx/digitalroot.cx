@@ -1,0 +1,41 @@
+package main
+
+// The digital root and additive persistence, base 10, of every n below
+// 1200000. Each n folds root + 10 * persistence.
+
+func fnv(h ui64, v ui64) (out ui64) {
+	out = (h ^ v) * 1099511628211UL
+}
+
+func digitSum(n i32) (out i32) {
+	out = 0
+	for ; n > 0; n = n / 10 {
+		out = out + n%10
+	}
+}
+
+func main() {
+	var h ui64
+	h = 14695981039346656037UL
+	var ok bool
+	ok = true
+	var n i32
+	var root i32
+	var persistence i32
+	for n = 1; n < 1200000; n++ {
+		root = n
+		persistence = 0
+		for root >= 10 {
+			root = digitSum(root)
+			persistence++
+		}
+		h = fnv(h, i32.ui64(root+10*persistence))
+		ok = ok && root == 1+(n-1)%9
+	}
+	ui64.print(h)
+	if ok {
+		printf("digitalroot pass\n")
+	} else {
+		printf("digitalroot FAIL\n")
+	}
+}

@@ -199,7 +199,7 @@ generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-c
 
 check: check-tiers llvm-clang check-inits check-ifaces check-names check-parser check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, naming, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
 
-bench-compare: ## Time the t0-cx-tools-benchmarks/compare programs in cx, C, Python 3 and Bash (needs clang, python3, taskset)
+bench-compare: ## Time the t0-cx-tools-benchmarks/compare programs in cx, Go, Python 3 and Bash (needs python3, taskset, and clang for cx native)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx-command-cx
 	go build -tags="$(TAGS) cxopcount" -o ./bin/cx-opcount$(EXE) ./t11-cx-command-cx
 	./t0-cx-tools-benchmarks/compare/run.sh

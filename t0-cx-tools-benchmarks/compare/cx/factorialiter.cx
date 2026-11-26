@@ -1,0 +1,39 @@
+package main
+
+// n! for n 0 to 20 with a loop, 120000 times. 20! is the largest that fits
+// a ui64.
+
+func fnv(h ui64, v ui64) (out ui64) {
+	out = (h ^ v) * 1099511628211UL
+}
+
+func factorial(n ui64) (out ui64) {
+	out = 1UL
+	var k ui64
+	for k = 2UL; k <= n; k++ {
+		out = out * k
+	}
+}
+
+func main() {
+	var h ui64
+	h = 14695981039346656037UL
+	var ok bool
+	ok = true
+	var f ui64
+	var n ui64
+	var round i32
+	for round = 0; round < 120000; round++ {
+		for n = 0UL; n <= 20UL; n++ {
+			f = factorial(n)
+			h = fnv(h, f)
+		}
+		ok = ok && f == 2432902008176640000UL
+	}
+	ui64.print(h)
+	if ok {
+		printf("factorialiter pass\n")
+	} else {
+		printf("factorialiter FAIL\n")
+	}
+}

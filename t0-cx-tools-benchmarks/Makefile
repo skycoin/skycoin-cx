@@ -1,10 +1,10 @@
 CX ?= ../bin/cx
-CXBENCH := ackermann-recurssive digital-root factorial-iterative factorial-recursive
+CXBENCH := ackermann digitalroot factorialiter factorialrec structs structserialize
 
 all: cx go
 
 cx:
-	@for b in $(CXBENCH); do echo "== $$b"; time $(CX) cx/$$b.cx; done
+	@for b in $(CXBENCH); do echo "== $$b"; time $(CX) compare/cx/$$b.cx; done
 
 go:
 	go test -run xxx -bench . ./.

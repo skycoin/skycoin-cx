@@ -203,22 +203,28 @@ prints what vm prints. See [docs/LlvmTarget.md](docs/LlvmTarget.md).
 
 ## Performance
 
-`t0-cx-tools-benchmarks/compare` holds six long benchmarks, each in CX, C, Python 3
-and Bash with the same algorithm, and each prints a hash of its results that
-`TestCompareExpected` derives from the math. `make bench-compare` times them
-and needs clang, python3 and taskset. It is not part of `make check`. The
-numbers below are from
-[#470](https://github.com/skycoin/skycoin-cx/pull/470), in milliseconds with
-the start up time taken off, the median of 5 runs pinned to one core.
+`t0-cx-tools-benchmarks/compare` holds twelve long benchmarks, each in CX and
+pure Go with the same algorithm, six of them in Python 3 and Bash too, and
+each prints a hash of its results that `TestCompareExpected` derives from the
+math. `make bench-compare` times them and needs python3, taskset and, for the
+native column, clang. It is not part of `make check`. The numbers below are
+in milliseconds with the start up time taken off, the median of 3 runs pinned
+to one core.
 
-| benchmark | cx old loop | cx vm | C -O2 | Python 3.14 |
-|---|---:|---:|---:|---:|
-| count | 18417 | 842 | 0 (folded) | 2624 |
-| fib | 13143 | 1138 | 24.9 | 1124 |
-| array | 10205 | 846 | 3.6 | 577 |
-| struct | 9695 | 924 | 3.4 | 594 |
-| memtest | 22956 | 1443 | 12.6 | 2057 |
-| primes | 11550 | 762 | 63.0 | 1421 |
+| benchmark | cx vm | Go |
+|---|---:|---:|
+| count | 838 | 18.0 |
+| fib | 1186 | 35.8 |
+| array | 857 | 6.9 |
+| struct | 974 | 6.6 |
+| memtest | 1396 | 26.4 |
+| primes | 792 | 66.4 |
+| ackermann | 957 | 71.8 |
+| digitalroot | 969 | 20.2 |
+| factorialiter | 982 | 19.0 |
+| factorialrec | 966 | 15.3 |
+| structs | 939 | 15.6 |
+| structserialize | 974 | 7.7 |
 
 See [t0-cx-tools-benchmarks/README.md](t0-cx-tools-benchmarks/README.md).
 

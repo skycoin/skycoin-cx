@@ -1,7 +1,7 @@
 # benchmark scale hash
-# full is the size the cx, c and python programs run at, bash the smaller
-# size the bash programs default to. compare_test.go derives every hash from
-# the closed form or an independent prime test, not from running a program.
+# full is the size the cx, Go and Python programs run at, bash the smaller
+# size the Bash programs default to. compare_test.go derives every hash from
+# a closed form or an independent test, not from running a program.
 count full 17370372864278721183
 count bash 11410959382411819791
 fib full 173487872732728998
@@ -14,3 +14,9 @@ memtest full 874058405928975501
 memtest bash 7377915752544696461
 primes full 13592104564658177911
 primes bash 4234126189016467776
+ackermann full 12527265164435849795
+digitalroot full 8618106338015250303
+factorialiter full 8804920398540991525
+factorialrec full 15857701542187683429
+structs full 10410555262193015445
+structserialize full 13362541594780105509

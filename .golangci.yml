@@ -102,8 +102,6 @@ linters:
       # linter. Fixing a file removes its rule, and the list only shrinks.
       - path: ^t0-cx-tools-benchmarks/compare_test\.go$
         linters: [errcheck]
-      - path: ^t0-cx-tools-benchmarks/digitalroot\.go$
-        linters: [unconvert]
       - path: ^t0-cx-core-floatparse/atof\.go$
         linters: [nakedret, staticcheck, unparam]
       - path: ^t0-cx-core-floatparse/floatparse_test\.go$

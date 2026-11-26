@@ -355,19 +355,25 @@ func TestRunVmLibraryCallAllocs(t *testing.T) {
 // runs in milliseconds on the old loop. The code paths, prints included, stay
 // those of the full size, only the pass line prints FAIL.
 var runCompareScale = map[string][][2]string{
-	"count":   {{"i < 30000000", "i < 30000"}},
-	"fib":     {{"r = fib(34)", "r = fib(12)"}},
-	"array":   {{"round < 400", "round < 2"}},
-	"struct":  {{"round < 80000", "round < 20"}},
-	"memtest": {{"n = 1048576", "n = 4096"}, {"walk = 65536", "walk = 256"}},
-	"primes":  {{"n = 2000000", "n = 2000"}, {"k < 300000UL", "k < 300UL"}, {"round < 20", "round < 1"}},
+	"count":           {{"i < 30000000", "i < 30000"}},
+	"fib":             {{"r = fib(34)", "r = fib(12)"}},
+	"array":           {{"round < 400", "round < 2"}},
+	"struct":          {{"round < 80000", "round < 20"}},
+	"memtest":         {{"n = 1048576", "n = 4096"}, {"walk = 65536", "walk = 256"}},
+	"primes":          {{"n = 2000000", "n = 2000"}, {"k < 300000UL", "k < 300UL"}, {"round < 20", "round < 1"}},
+	"ackermann":       {{"round < 350", "round < 2"}},
+	"digitalroot":     {{"n < 1200000", "n < 1200"}},
+	"factorialiter":   {{"round < 120000", "round < 2"}},
+	"factorialrec":    {{"round < 50000", "round < 2"}},
+	"structs":         {{"round < 60", "round < 1"}, {"size = 100000", "size = 100"}},
+	"structserialize": {{"round < 76000", "round < 20"}},
 }
 
 // runComparePrograms are the t0-cx-tools-benchmarks/compare programs at the scale of
 // runCompareScale. They allocate nothing during a run (#407).
 func runComparePrograms(tb testing.TB) []runBenchProgram {
 	var programs []runBenchProgram
-	for _, name := range []string{"count", "fib", "array", "struct", "memtest", "primes"} {
+	for _, name := range []string{"count", "fib", "array", "struct", "memtest", "primes", "ackermann", "digitalroot", "factorialiter", "factorialrec", "structs", "structserialize"} {
 		source, err := os.ReadFile(filepath.Join("..", "t0-cx-tools-benchmarks", "compare", "cx", name+".cx"))
 		if err != nil {
 			tb.Fatal(err)

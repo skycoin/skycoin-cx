@@ -139,7 +139,7 @@ Counts are files, not rows.
 | Repo | Path | Files | Action | Now in | Reason |
 |---|---|---:|---|---|---|
 | cx-benchmark | `benchmarks/` | 4 | merge | `skycoin-cx/t0-cx-tools-benchmarks, t0-cx-tools-benchmarkserialize` | CX struct benchmarks and their Go side (structser) |
-| cx-benchmark | `benchmarks/cx-benchmarks/` | 5 | merge | `skycoin-cx/t0-cx-tools-benchmarks/cx` | CX versions of the algorithms |
+| cx-benchmark | `benchmarks/cx-benchmarks/` | 5 | merge | `skycoin-cx/t0-cx-tools-benchmarks/compare/cx` | CX versions of the algorithms |
 | cx-benchmark | `benchmarks/golang-benchmarks/` | 9 | merge | `skycoin-cx/t0-cx-tools-benchmarks` | Go versions for comparison, one file each |
 | cx-benchmark | `benchmarks/python-benchmarks/` | 6 | delete | - | Python comparison, not part of a Go repo |
 | cx-benchmark | `README.md` | 1 | merge | `skycoin-cx/t0-cx-tools-benchmarks/README.md` | Rewritten |

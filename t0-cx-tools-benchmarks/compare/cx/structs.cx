@@ -1,0 +1,45 @@
+package main
+
+// Fills and reads a struct of two 100000 element arrays 60 times.
+
+type benchmark struct {
+	a [100000]i32
+	b [100000]i64
+}
+
+var bm benchmark
+
+func fnv(h ui64, v ui64) (out ui64) {
+	out = (h ^ v) * 1099511628211UL
+}
+
+func main() {
+	global bm
+	var h ui64
+	h = 14695981039346656037UL
+	var ok bool
+	ok = true
+	var sum i64
+	var size i32
+	size = 100000
+	var c i32
+	var round i32
+	for round = 0; round < 60; round++ {
+		for c = 0; c < size; c++ {
+			bm.a[c] = c + round
+			bm.b[c] = i32.i64(c) * 3L
+		}
+		sum = 0L
+		for c = 0; c < size; c++ {
+			sum = sum + i32.i64(bm.a[c]) + bm.b[c]
+		}
+		h = fnv(h, i64.ui64(sum))
+		ok = ok && sum == 19999800000L+100000L*i32.i64(round)
+	}
+	ui64.print(h)
+	if ok {
+		printf("structs pass\n")
+	} else {
+		printf("structs FAIL\n")
+	}
+}

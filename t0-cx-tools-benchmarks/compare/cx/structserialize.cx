@@ -1,0 +1,76 @@
+package main
+
+// Encodes a point and a struct of 16 i32 into a 72 byte little endian buffer
+// and decodes them back, 76000 times. CX has no struct serializer, so the
+// encoding is written out by hand.
+
+type point struct {
+	x i32
+	y i32
+}
+
+type numbers struct {
+	ints [16]i32
+}
+
+var buf [72]ui8
+
+func fnv(h ui64, v ui64) (out ui64) {
+	out = (h ^ v) * 1099511628211UL
+}
+
+func encode(at i32, v i32) {
+	global buf
+	buf[at] = i32.ui8(v & 255)
+	buf[at+1] = i32.ui8((v >> 8) & 255)
+	buf[at+2] = i32.ui8((v >> 16) & 255)
+	buf[at+3] = i32.ui8((v >> 24) & 255)
+}
+
+func decode(at i32) (out i32) {
+	global buf
+	out = ui8.i32(buf[at]) | ui8.i32(buf[at+1])<<8 | ui8.i32(buf[at+2])<<16 | ui8.i32(buf[at+3])<<24
+}
+
+func main() {
+	var h ui64
+	h = 14695981039346656037UL
+	var ok bool
+	ok = true
+	var p point
+	var q point
+	var in numbers
+	var out numbers
+	var sum i64
+	var k i32
+	var round i32
+	for round = 0; round < 76000; round++ {
+		p.x = round
+		p.y = 2 * round
+		for k = 0; k < 16; k++ {
+			in.ints[k] = 16*round + k
+		}
+		encode(0, p.x)
+		encode(4, p.y)
+		for k = 0; k < 16; k++ {
+			encode(8+4*k, in.ints[k])
+		}
+		q.x = decode(0)
+		q.y = decode(4)
+		for k = 0; k < 16; k++ {
+			out.ints[k] = decode(8 + 4*k)
+		}
+		sum = i32.i64(q.x) + i32.i64(q.y)
+		for k = 0; k < 16; k++ {
+			sum = sum + i32.i64(out.ints[k])
+		}
+		h = fnv(h, i64.ui64(sum))
+		ok = ok && sum == 259L*i32.i64(round)+120L
+	}
+	ui64.print(h)
+	if ok {
+		printf("structserialize pass\n")
+	} else {
+		printf("structserialize FAIL\n")
+	}
+}

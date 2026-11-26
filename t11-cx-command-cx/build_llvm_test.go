@@ -310,7 +310,7 @@ func TestLlvmCompareBenchmarks(t *testing.T) {
 		}
 	}
 	harness := executionRecordHarnessNew(t)
-	for _, bench := range []string{"count", "fib", "array", "struct", "memtest", "primes"} {
+	for _, bench := range []string{"count", "fib", "array", "struct", "memtest", "primes", "ackermann", "digitalroot", "factorialiter", "factorialrec", "structs", "structserialize"} {
 		output := filepath.Join(t.TempDir(), bench)
 		if goruntime.GOOS == "windows" {
 			output += ".exe"
