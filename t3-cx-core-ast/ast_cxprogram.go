@@ -76,10 +76,9 @@ func (cxprogram *CXProgram) PackageInArrayAdd(pkg *CXPackage) CXPackageIndex {
 	return CXPackageIndex(pkg.Index)
 }
 
-// VIOLATION STRHOT-231: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) PackageFromArrayGet(index CXPackageIndex) (*CXPackage, error) {
 	if int(index) > (len(cxprogram.CXPackages) - 1) {
-		return nil, fmt.Errorf("error: CXPackages[%d]: index out of bounds", index)
+		return nil, CXProgramLookupError{CXProgramLookupErrorCodePackageIndex, int(index)}
 	}
 
 	// OBJMODEL: state.CXPackageMng.CXPackageGet(gid), phase 5 #362.
@@ -266,7 +265,7 @@ func (cxprogram *CXProgram) StructFromArrayGet(index CXStructIndex) *CXStruct {
 	}
 
 	if int(index) > (len(cxprogram.CXStructs) - 1) {
-		panic(fmt.Errorf("error: CXStructs[%d]: index out of bounds", index))
+		panic(CXProgramLookupError{CXProgramLookupErrorCodeStructIndex, int(index)})
 	}
 
 	// OBJMODEL: state.CXStructMng.CXStructGet(gid), phase 5 #337.
@@ -279,11 +278,10 @@ func (cxprogram *CXProgram) StructFromArrayGet(index CXStructIndex) *CXStruct {
 
 // CXLineGet returns the line in slot index of the program's CXLineMng. An
 // expression keeps the slot index, not the Gid, until phase 5 of CXLine.
-// VIOLATION STRHOT-233: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXLineGet(index int) (*CXLine, error) {
 	lineMng := &cxprogram.CxIrState.CXLineMng
 	if index < 0 || index >= int(lineMng.CXLineMngNext) {
-		return nil, fmt.Errorf("error: CXLines[%d]: index out of bounds", index)
+		return nil, CXProgramLookupError{CXProgramLookupErrorCodeLineIndex, index}
 	}
 
 	gid := objmodel.GidCompose(CXLineGidTypeTag, lineMng.CXLineMngGenerations[index], uint32(index))
@@ -293,21 +291,19 @@ func (cxprogram *CXProgram) CXLineGet(index int) (*CXLine, error) {
 // CXArgGet returns the argument in slot index of the program's
 // CXArgumentMng. An argument is named by its slot index, not its Gid, until
 // phase 5 of CXArgument.
-// VIOLATION STRHOT-234: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXArgGet(index CXArgumentIndex) *CXArgument {
 	argumentMng := &cxprogram.CxIrState.CXArgumentMng
 	if index < 0 || int(index) >= int(argumentMng.CXArgumentMngNext) {
-		panic(fmt.Errorf("error: CXArgs[%d]: index out of bounds", index))
+		panic(CXProgramLookupError{CXProgramLookupErrorCodeArgumentIndex, int(index)})
 	}
 
 	gid := objmodel.GidCompose(CXArgumentGidTypeTag, argumentMng.CXArgumentMngGenerations[index], uint32(index))
 	return argumentMng.CXArgumentGet(CXArgumentGid(gid))
 }
 
-// VIOLATION STRHOT-235: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXAtomicOpGet(index int) (*CXAtomicOperator, error) {
 	if index > (len(cxprogram.CXAtomicOps) - 1) {
-		return nil, fmt.Errorf("error: CXAtomicOps[%d]: index out of bounds", index)
+		return nil, CXProgramLookupError{CXProgramLookupErrorCodeAtomicOperatorIndex, index}
 	}
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorGet(gid), phase 5 #342.
@@ -365,7 +361,6 @@ func (cxprogram *CXProgram) CXTypeSignatureCopyAlloc(src *CXTypeSignature) (CXTy
 // CXTypeSignatureFromArrayGet returns the type signature in slot index of
 // the program's CXTypeSignatureMng, or nil for -1. A type signature is named
 // by its slot index, not its Gid, until phase 5 of CXTypeSignature.
-// VIOLATION STRHOT-236: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXTypeSignatureFromArrayGet(index CXTypeSignatureIndex) *CXTypeSignature {
 	if index == -1 {
 		return nil
@@ -373,7 +368,7 @@ func (cxprogram *CXProgram) CXTypeSignatureFromArrayGet(index CXTypeSignatureInd
 
 	typeSignatureMng := &cxprogram.CxIrState.CXTypeSignatureMng
 	if index < 0 || int(index) >= int(typeSignatureMng.CXTypeSignatureMngNext) {
-		panic(fmt.Errorf("error: CXTypeSignature[%d]: index out of bounds", index))
+		panic(CXProgramLookupError{CXProgramLookupErrorCodeTypeSignatureIndex, int(index)})
 	}
 
 	gid := objmodel.GidCompose(CXTypeSignatureGidTypeTag, typeSignatureMng.CXTypeSignatureMngGenerations[index], uint32(index))
@@ -388,7 +383,6 @@ func (cxprogram *CXProgram) CXTypeSignatureFromArrayGet(index CXTypeSignatureInd
 // of the program's CXTypeSignature_ArrayMng, or nil for -1. A type signature's
 // Meta keeps the slot index, not the Gid, until phase 5 of
 // CXTypeSignature_Array.
-// VIOLATION STRHOT-237: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXTypeSignatureArrayFromArrayGet(index int) *CXTypeSignature_Array {
 	if index == -1 {
 		return nil
@@ -396,7 +390,7 @@ func (cxprogram *CXProgram) CXTypeSignatureArrayFromArrayGet(index int) *CXTypeS
 
 	typeSignatureArrayMng := &cxprogram.CxIrState.CXTypeSignature_ArrayMng
 	if index < 0 || index >= int(typeSignatureArrayMng.CXTypeSignature_ArrayMngNext) {
-		panic(fmt.Errorf("error: TypeSignatureForArrays[%d]: index out of bounds", index))
+		panic(CXProgramLookupError{CXProgramLookupErrorCodeTypeSignatureArrayIndex, index})
 	}
 
 	gid := objmodel.GidCompose(CXTypeSignature_ArrayGidTypeTag, typeSignatureArrayMng.CXTypeSignature_ArrayMngGenerations[index], uint32(index))
@@ -411,7 +405,6 @@ func (cxprogram *CXProgram) CXTypeSignatureArrayFromArrayGet(index int) *CXTypeS
 // of the program's CXTypeSignature_StructMng, or nil for -1. A type
 // signature's Meta keeps the slot index, not the Gid, until phase 5 of
 // CXTypeSignature_Struct.
-// VIOLATION STRHOT-238: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) CXTypeSignatureStructFromArrayGet(index int) *CXTypeSignature_Struct {
 	if index == -1 {
 		return nil
@@ -419,7 +412,7 @@ func (cxprogram *CXProgram) CXTypeSignatureStructFromArrayGet(index int) *CXType
 
 	typeSignatureStructMng := &cxprogram.CxIrState.CXTypeSignature_StructMng
 	if index < 0 || index >= int(typeSignatureStructMng.CXTypeSignature_StructMngNext) {
-		panic(fmt.Errorf("error: TypeSignatureForStructs[%d]: index out of bounds", index))
+		panic(CXProgramLookupError{CXProgramLookupErrorCodeTypeSignatureStructIndex, index})
 	}
 
 	gid := objmodel.GidCompose(CXTypeSignature_StructGidTypeTag, typeSignatureStructMng.CXTypeSignature_StructMngGenerations[index], uint32(index))
@@ -608,7 +601,6 @@ func (cxprogram *CXProgram) PointerArgsToTypeSignaturesArrayAdd(cxArgs []*CXArgu
 // ----------------------------------------------------------------
 //                             `CXProgram` Getters
 
-// VIOLATION STRHOT-239: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) OperationGet(expr *CXExpression) (*CXAtomicOperator, *CXLine, error) {
 	switch expr.Type {
 	case CXOperationTypeAtomicOperator:
@@ -640,10 +632,9 @@ func (cxprogram *CXProgram) OperationGet(expr *CXExpression) (*CXAtomicOperator,
 
 	// OBJMODEL: state.CXAtomicOperatorMng.CXAtomicOperatorAlloc(), phase 4 #341.
 	// Now a heap literal, site S0237.
-	return &CXAtomicOperator{}, nil, fmt.Errorf("operation type is not found.")
+	return &CXAtomicOperator{}, nil, CXProgramLookupError{CXProgramLookupErrorCodeOperationTypeMissing, 0}
 }
 
-// VIOLATION STRHOT-240: E, error or assert text, built on a failure branch only, #412.
 func (cxprogram *CXProgram) PreviousCXLineGet(exprs []CXExpression, currIndex int) (*CXLine, error) {
 	// A runtime error while the inputs of an empty function are copied stops at
 	// line 0 of a call with no expressions.
@@ -664,7 +655,7 @@ func (cxprogram *CXProgram) PreviousCXLineGet(exprs []CXExpression, currIndex in
 	}
 	// OBJMODEL: state.CXLineMng.CXLineAlloc(), phase 4 #311.
 	// Now a heap literal, site S0241.
-	return &CXLine{}, fmt.Errorf("CXLine not found.")
+	return &CXLine{}, CXProgramLookupError{CXProgramLookupErrorCodeLineMissing, 0}
 }
 
 func (cxprogram *CXProgram) CXAtomicOpFromExpressionsGet(exprs []CXExpression, currIndex int) (*CXAtomicOperator, error) {

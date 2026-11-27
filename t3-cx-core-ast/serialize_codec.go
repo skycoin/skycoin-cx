@@ -94,9 +94,19 @@ func (decoder *serializeDecoder) serializeDecoderFail(err error) {
 	}
 }
 
-// VIOLATION STRHOT-291: E, error or assert text, built on a failure branch only, #412.
+// serializeMalformedError is a malformed serialized program as a constant
+// format and its operands. Error builds the text only when it is printed (#412).
+type serializeMalformedError struct {
+	serializeMalformedErrorFormat   string
+	serializeMalformedErrorOperands []interface{}
+}
+
+func (malformed serializeMalformedError) Error() string {
+	return fmt.Sprintf("serialized program is malformed: "+malformed.serializeMalformedErrorFormat, malformed.serializeMalformedErrorOperands...)
+}
+
 func (decoder *serializeDecoder) serializeDecoderFailf(format string, args ...interface{}) {
-	decoder.serializeDecoderFail(fmt.Errorf("serialized program is malformed: "+format, args...))
+	decoder.serializeDecoderFail(serializeMalformedError{format, args})
 }
 
 func (decoder *serializeDecoder) serializeDecoderRemaining() int {

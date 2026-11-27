@@ -90,6 +90,7 @@ A new area takes the next free block and is added here in the same change.
 | 5000 - 5999 | Package loader | `PackageLoaderError` | `t1-cx-tools-packageloader` | planned |
 | 6000 - 6999 | LZ4 compression | `LZ4CodecError` | `t0-cx-core-compression` | planned |
 | 7000 - 7999 | Compiler | `CompileErrorRecord`, held as a list | `t3-cx-core-ast` | exists |
+| 8000 - 8999 | Program table lookups | `CXProgramLookupError` | `t3-cx-core-ast` | exists |
 
 A planned struct does not exist yet. Its block and name are reserved for the
 phases of #196. Until then those packages return a Go `error` or an error
@@ -119,7 +120,7 @@ Only a binary's `main` turns a class A error into an exit code.
 
 ## Error records today
 
-Three error records exist.
+Four error records exist.
 
 - `FileError` in `t1-cx-runtime-sandbox/file_error.go` is the class A struct for file
   calls. Its failure codes are `FileErrorCodeNotFound` (1001) to
@@ -213,6 +214,10 @@ Three error records exist.
   old loop in `CXProgram.RuntimeError`. Its code is a `CX_RUNTIME_*` or
   `CX_ASSERT` exit code from `t0-cx-core-valuetypes`, and it also keeps the panic value,
   the call stack position and the expression index.
+- `CXProgramLookupError` in `t3-cx-core-ast/cxprogram_lookup_error.go` is a
+  failed lookup in a table of the program, a `CXProgramLookupErrorCode` from
+  8001 and the index. The program getters return it or panic with it, and its
+  `Error` method builds the text only when it is printed (#412).
 
 The two records are described in [CX programs](#cx-programs) below.
 

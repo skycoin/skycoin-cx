@@ -128,7 +128,7 @@ STRHOT-114 O removed t4-cx-runtime-opcodes/op_str.go OpStrTrimSpace fixed, byte 
 STRHOT-115 O removed t4-cx-runtime-opcodes/op_str.go OpStrEqualByValue fixed, byte views of CX memory and the format buffer
 STRHOT-116 O removed t4-cx-runtime-opcodes/op_str.go OpStrCompareByValue fixed, byte views of CX memory and the format buffer
 STRHOT-117 O removed t4-cx-runtime-opcodes/op_str.go OpStrByteLength fixed, byte views of CX memory and the format buffer
-STRHOT-118 E open t4-cx-runtime-opcodes/op_testing.go assert O fixed, the failure text remains
+STRHOT-118 E removed t4-cx-runtime-opcodes/op_testing.go assert appends the failure line to the format buffer, assertFailurePrint, #412
 STRHOT-119 O removed t4-cx-runtime-opcodes/op_testing.go panicIf not on the run path at dfcc46ab
 STRHOT-120 B open t4-cx-runtime-opcodes/op_testing.go OpStrError
 STRHOT-121 O removed t4-cx-runtime-opcodes/op_ui16.go OpUI16ToStr fixed, byte views of CX memory and the format buffer
@@ -241,16 +241,16 @@ STRHOT-227 E removed t0-cx-core-compression/codec.go *Codec.Decompress not on th
 STRHOT-228 E removed t1-cx-core-objmodel/gid.go GidCompose the check passes the integers to GidComposeFailureReport, a STRHOT REPORTER, #412
 STRHOT-229 P removed t3-cx-core-ast/ast_cxargument.go CXArgumentDebugFileLine returns the file name as a view of the string pool, #412
 STRHOT-230 P removed t3-cx-core-ast/ast_cxatomicoperator.go *CXAtomicOperator.OperatorNameGet not on the run path, the stack dump reads OperatorNameBytesGet, #412
-STRHOT-231 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.PackageFromArrayGet
+STRHOT-231 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.PackageFromArrayGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
 STRHOT-232 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.GetFunctionFromArray deleted, functions are read by Gid through CXFunctionGet, #352
-STRHOT-233 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXLineGet
-STRHOT-234 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXArgGet
-STRHOT-235 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXAtomicOpGet
-STRHOT-236 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureFromArrayGet
-STRHOT-237 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureArrayFromArrayGet
-STRHOT-238 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureStructFromArrayGet
-STRHOT-239 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.OperationGet
-STRHOT-240 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.PreviousCXLineGet
+STRHOT-233 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXLineGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-234 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXArgGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-235 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXAtomicOpGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-236 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureFromArrayGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-237 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureArrayFromArrayGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-238 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureStructFromArrayGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-239 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.OperationGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
+STRHOT-240 E removed t3-cx-core-ast/ast_cxprogram.go *CXProgram.PreviousCXLineGet fails with a CXProgramLookupError, whose Error builds the text when it is printed, #412
 STRHOT-241 E removed t3-cx-core-ast/ast_memory.go SequenceAllocate not on the run path at dfcc46ab
 STRHOT-242 E removed t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-243 E removed t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugAlloc not on the run path at dfcc46ab
@@ -288,20 +288,20 @@ STRHOT-274 E removed t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolB
 STRHOT-275 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolFind
 STRHOT-276 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolInit
 STRHOT-277 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolIntern
-STRHOT-278 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolText
+STRHOT-278 B removed t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolText not on the run path since the struct reference error and the failed assert stopped building text, #412
 STRHOT-279 P removed t3-cx-core-ast/ast_cxtype_signature.go *CXTypeSignature.TypeStringGet not on the run path, printing appends with ValueTypeNameAppend, #412
 STRHOT-280 P removed t3-cx-core-ast/ast_cxtype_signature.go *CXTypeSignature.ValueTypeNameGet not on the run path, printing appends with ValueTypeNameAppend, #412
 STRHOT-281 B open t3-cx-core-ast/ast_memory.go StrAllocate O fixed, boundary opcodes only
 STRHOT-282 B open t3-cx-core-ast/ast_memory.go StrAllocateAt O fixed, boundary opcodes only
 STRHOT-283 B removed t3-cx-core-ast/ast_names.go *CXProgram.CXProgramNameFind not on the run path since op_aff.go was deleted, D5 #500
-STRHOT-284 B open t3-cx-core-ast/ast_names.go *CXProgram.CXProgramNameText
-STRHOT-285 E open t3-cx-core-ast/ast_names.go *CXProgram.CXProgramSourceFileText
+STRHOT-284 B removed t3-cx-core-ast/ast_names.go *CXProgram.CXProgramNameText not on the run path since serializeStructReference keeps the name bytes, #412
+STRHOT-285 E removed t3-cx-core-ast/ast_names.go *CXProgram.CXProgramSourceFileText not on the run path, the failed assert prints the file with CXProgramSourceFileBytes, #412
 STRHOT-286 B removed t3-cx-core-ast/libraries.go *CXFunction.BuiltInName not on the run path since op_aff.go was deleted, D5 #500
-STRHOT-287 E open t3-cx-core-ast/libraries.go libraryCall
-STRHOT-288 E open t3-cx-core-ast/libraries.go RuntimeLibraryDisabledMessage
+STRHOT-287 E removed t3-cx-core-ast/libraries.go libraryCall panics with RuntimeLibraryDisabled, the library number, whose Error builds the text when it is printed, #412
+STRHOT-288 E removed t3-cx-core-ast/libraries.go RuntimeLibraryDisabledMessage not on the run path, RuntimeLibraryDisabled.Error calls it when the error is printed, #412
 STRHOT-289 B open t3-cx-core-ast/serialize_codec.go deserializeUint8
 STRHOT-290 B open t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderBool
-STRHOT-291 E open t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderFailf
+STRHOT-291 E removed t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderFailf keeps the format and operands in a serializeMalformedError, whose Error builds the text, #412
 STRHOT-292 B open t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderIntRange
 STRHOT-293 B open t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderIntValue
 STRHOT-294 B open t3-cx-core-ast/serialize_codec.go *serializeDecoder.serializeDecoderLength
@@ -321,8 +321,8 @@ STRHOT-307 B open t3-cx-core-ast/serialize.go deserializeStructReference
 STRHOT-308 B open t3-cx-core-ast/serialize.go deserializeTypeSignatures
 STRHOT-309 B removed t3-cx-core-ast/serialize.go encodeCXProgram appends a constant only, not an operation
 STRHOT-310 B open t3-cx-core-ast/serialize.go SerializedHeaderCheck
-STRHOT-311 E open t3-cx-core-ast/serialize.go serializeStructReference
-STRHOT-312 E open t3-cx-core-ast/serialize.go serializeUnusedManagersCheck
+STRHOT-311 E removed t3-cx-core-ast/serialize.go serializeStructReference fails with a serializeStructMissingError, whose Error builds the text, #412
+STRHOT-312 E removed t3-cx-core-ast/serialize.go serializeUnusedManagersCheck fails with a serializeUnusedManagerError, whose Error builds the text, #412
 STRHOT-313 E removed t3-cx-core-ast/sourcefilemng.go *SourceFileMng.SourceFilePath the check passes the Gid to objmodel.GidFirstGenerationFailureReport, a STRHOT REPORTER, #412
 STRHOT-314 P removed t3-cx-core-ast/tostring.go printPointer appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
 STRHOT-315 P removed t3-cx-core-ast/tostring.go printStructPointer appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
@@ -331,7 +331,7 @@ STRHOT-317 B removed t4-cx-runtime-opcodes/op_aff.go affFunction op_aff.go delet
 STRHOT-318 O removed t4-cx-runtime-opcodes/op_str.go OpStrBytesOfString fixed, byte views of CX memory and the format buffer
 STRHOT-319 O removed t4-cx-runtime-opcodes/op_str.go OpStrStringOfBytes fixed, byte views of CX memory and the format buffer
 STRHOT-320 P removed t4-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412
-STRHOT-321 E open t4-cx-library-regexp/op_regexp.go OpRegexpMustCompile
+STRHOT-321 E removed t4-cx-library-regexp/op_regexp.go OpRegexpMustCompile a failed compile calls regexpMustCompileFailureReport, a STRHOT REPORTER, #412
 STRHOT-322 B cxfx t2-cx-core-stringpool/string_view.go StringView O fixed, only the t6-cx-library-graphics GLFW, gltext and file boundaries call it, D92
 STRHOT-323 E removed t6-cx-library-graphics/state.go cxfxHandleAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
 STRHOT-324 E removed t6-cx-library-graphics/state.go cxfxTableFullAssertFailure a STRHOT REPORTER, its callers pass integers only, #412

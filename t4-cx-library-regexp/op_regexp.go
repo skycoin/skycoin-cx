@@ -44,15 +44,20 @@ func regexpCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXV
 }
 
 // OpRegexpMustCompile is a wrapper for golang's `regexp`'s `MustCompile`.
-// VIOLATION STRHOT-321: E, error or assert text, built on a failure branch only, #412.
 func OpRegexpMustCompile(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	err := regexpCompile(prgrm, inputs, outputs)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		panic(valuetypes.CXRuntimeError)
+		regexpMustCompileFailureReport(err)
 	}
+}
 
+// regexpMustCompileFailureReport writes the error of a failed MustCompile to
+// standard error and stops the program with CXRuntimeError.
+// STRHOT REPORTER: builds the text of the Go regexp error, #412.
+func regexpMustCompileFailureReport(err error) {
+	fmt.Fprintln(os.Stderr, err.Error())
+	panic(valuetypes.CXRuntimeError)
 }
 
 // OpRegexpCompile is a wrapper for golang's `regexp`'s `MustCompile`.

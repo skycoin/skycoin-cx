@@ -39,8 +39,8 @@ free number, and a fixed one is marked removed, never deleted.
   opcode runs: file and process opcodes, regexp, tcp, the CPU
   profile, read and serialize.
 
-I and O are what #412 removes. P, E and B may stay with their comment. No I,
-O or P code is open. The str to f32 and f64 opcodes parse with
+B codes may stay with their comment. No I, O, P or E code is open, apart
+from one E code of the cxfx build. The str to f32 and f64 opcodes parse with
 t0-cx-core-floatparse, a port of strconv.ParseFloat that reads bytes and
 returns the same bits and errors (D92). Printing appends to the format buffer
 of the program, names viewed from the string pool and the byte tables of the
@@ -73,8 +73,11 @@ if manager.CXLineMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidC
 
 The generated managers and the Gid checks of t1-cx-core-objmodel report this
 way, and only reporters call the asserts of t0-cx-core-assert from the run
-path. A runtime error of a CX program is data in `RuntimeErrorRecord` until
-the loop has returned, see [ErrorHandling.md](ErrorHandling.md#cx-programs).
+path. A failure that a CX program or its caller gets back, such as
+`CXProgramLookupError`, `RuntimeLibraryDisabled` or a serializer error, is
+a struct of integers or byte views whose `Error` method builds the text when
+it is printed. A runtime error of a CX program is data in
+`RuntimeErrorRecord` until the loop has returned, see [ErrorHandling.md](ErrorHandling.md#cx-programs).
 
 ## Check
 

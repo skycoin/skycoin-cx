@@ -146,9 +146,30 @@ func encodeCXProgram(prgrm *CXProgram, includeMemory bool) ([]byte, SerializedSi
 	return encoder.serializeEncoderBytes, sizes, nil
 }
 
+// serializeUnusedMngError is a manager the serialized form does not carry
+// that holds objects, as its type tag. Error builds the text when it is
+// printed (#412).
+type serializeUnusedMngError struct {
+	serializeUnusedMngErrorTypeTag objmodel.TypeTag
+}
+
+func (unused serializeUnusedMngError) Error() string {
+	return fmt.Sprintf("cannot serialize the program: %sMng holds objects and the serialized form does not carry them yet", objmodel.GidTypeTagNameTable[unused.serializeUnusedMngErrorTypeTag])
+}
+
+// serializeStructMissingError is a struct that is referenced but is not in
+// CXStructs, as its name viewed from the string pool. Error builds the text
+// when it is printed (#412).
+type serializeStructMissingError struct {
+	serializeStructMissingErrorName []byte
+}
+
+func (missing serializeStructMissingError) Error() string {
+	return fmt.Sprintf("cannot serialize the program: struct %q is referenced but is not in CXStructs", string(missing.serializeStructMissingErrorName))
+}
+
 // serializeUnusedManagersCheck fails when a manager that no compile stage
 // fills yet holds an object, since the serialized form does not carry it.
-// VIOLATION STRHOT-312: E, error or assert text, built on a failure branch only, #412.
 func serializeUnusedManagersCheck(state *CxIrState) error {
 	unused := []struct {
 		typeTag objmodel.TypeTag
@@ -164,7 +185,7 @@ func serializeUnusedManagersCheck(state *CxIrState) error {
 	}
 	for _, unusedMng := range unused {
 		if unusedMng.used {
-			return fmt.Errorf("cannot serialize the program: %sMng holds objects and the serialized form does not carry them yet", objmodel.GidTypeTagNameTable[unusedMng.typeTag])
+			return serializeUnusedMngError{unusedMng.typeTag}
 		}
 	}
 	return nil
@@ -195,7 +216,6 @@ func decompressCopy(codec SerializeCodec, b []byte) ([]byte, error) {
 
 // serializeStructReference returns the index in prgrm.CXStructs of the struct
 // a pointer field names, or -1 for nil.
-// VIOLATION STRHOT-311: E, error or assert text, built on a failure branch only, #412.
 func serializeStructReference(prgrm *CXProgram, strct *CXStruct) (int64, error) {
 	if strct == nil {
 		return -1, nil
@@ -206,7 +226,7 @@ func serializeStructReference(prgrm *CXProgram, strct *CXStruct) (int64, error) 
 			return int64(strct.Index), nil
 		}
 	}
-	return 0, fmt.Errorf("cannot serialize the program: struct %q is referenced but is not in CXStructs", prgrm.CXProgramNameText(strct.Name))
+	return 0, serializeStructMissingError{prgrm.CXProgramNameBytes(strct.Name)}
 }
 
 // VIOLATION STRHOT-307: B, the serializer, compiler code run by an opcode, #412.

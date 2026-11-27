@@ -55,12 +55,18 @@ func (fn *CXFunction) BuiltInNameBytes() []byte {
 }
 
 // RuntimeLibraryDisabled is the panic value of a call into a system library
-// the run did not enable. It is the message the runtime error prints.
-type RuntimeLibraryDisabled string
+// the run did not enable, the library number. Error builds the message the
+// runtime error prints, after the run (#412).
+type RuntimeLibraryDisabled struct {
+	RuntimeLibraryDisabledLibrary int
+}
+
+func (disabled RuntimeLibraryDisabled) Error() string {
+	return RuntimeLibraryDisabledMessage(disabled.RuntimeLibraryDisabledLibrary)
+}
 
 // RuntimeLibraryDisabledMessage is the message of a call into the disabled
 // library number.
-// VIOLATION STRHOT-288: E, error or assert text, built on a failure branch only, #412.
 func RuntimeLibraryDisabledMessage(library int) string {
 	name := opcodetable.LibraryNameOf(library)
 	return "library " + name + " is not enabled, enable it with --enable=" + name
@@ -68,10 +74,9 @@ func RuntimeLibraryDisabledMessage(library int) string {
 
 // libraryCall runs library function fn through the switch of its library
 // after the sandbox check, one indexed load and compare.
-// VIOLATION STRHOT-287: E, error or assert text, built on a failure branch only, #412.
 func libraryCall(prgrm *CXProgram, fn *CXFunction, inputs []CXValue, outputs []CXValue) {
 	if !prgrm.ProgramLibrariesEnabled[fn.LibraryNumber] {
-		panic(RuntimeLibraryDisabled(RuntimeLibraryDisabledMessage(fn.LibraryNumber)))
+		panic(RuntimeLibraryDisabled{fn.LibraryNumber})
 	}
 	dispatch := LibraryDispatches[fn.LibraryNumber]
 	if dispatch == nil || !dispatch(prgrm, fn.LibraryFunctionNumber, inputs, outputs) {

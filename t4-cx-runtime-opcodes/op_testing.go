@@ -2,7 +2,8 @@ package opcodes
 
 import (
 	"bytes"
-	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/skycoin/skycoin-cx/t0-cx-core-valuetypes"
 	// GCREACH: t3-cx-core-ast owns the heap and the GC roots. This file allocates strs, which
@@ -19,7 +20,6 @@ func AssertFailed() bool {
 }
 
 // TODO: Rework
-// VIOLATION STRHOT-118: E, the text of a failed assert, built only when it fails, #412.
 func assert(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) (same bool) {
 	var byts1, byts2 []byte
 	var inp0 *ast.CXArgument
@@ -77,20 +77,30 @@ func assert(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) (
 
 	same = bytes.Equal(byts1, byts2)
 	if !same {
-		message := inputs[2].StrBytesGet(prgrm)
-		call := prgrm.CurrentCallGet()
-		// expr := call.Operator.Expressions[call.Line]
-		cxLine, _ := prgrm.PreviousCXLineGet(prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions, call.Line)
-
-		if len(message) != 0 {
-			fmt.Printf("%s: %d: result was not equal to the expected value; %s\n", prgrm.CXProgramSourceFileText(cxLine.FileName), cxLine.LineNumber, message)
-		} else {
-			fmt.Printf("%s: %d: result was not equal to the expected value\n", prgrm.CXProgramSourceFileText(cxLine.FileName), cxLine.LineNumber)
-		}
+		assertFailurePrint(prgrm, inputs[2].StrBytesGet(prgrm))
 	}
 
 	assertSuccess = assertSuccess && same
 	return same
+}
+
+// assertFailurePrint writes "file: line: result was not equal to the expected
+// value", then "; message" when message is not empty, in one write as
+// fmt.Printf did. It appends to the format buffer, so it builds no string.
+func assertFailurePrint(prgrm *ast.CXProgram, message []byte) {
+	call := prgrm.CurrentCallGet()
+	cxLine, _ := prgrm.PreviousCXLineGet(prgrm.CxIrState.CXFunctionMng.CXFunctionGet(call.Operator).Expressions, call.Line)
+	line := append(formatBuffer(prgrm), prgrm.CXProgramSourceFileBytes(cxLine.FileName)...)
+	line = append(line, ": "...)
+	line = strconv.AppendInt(line, int64(cxLine.LineNumber), 10)
+	line = append(line, ": result was not equal to the expected value"...)
+	if len(message) != 0 {
+		line = append(line, "; "...)
+		line = append(line, message...)
+	}
+	line = append(line, '\n')
+	os.Stdout.Write(line)
+	formatBufferKeep(prgrm, line)
 }
 
 func OpAssertValue(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
