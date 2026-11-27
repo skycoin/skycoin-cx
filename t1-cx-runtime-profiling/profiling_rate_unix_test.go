@@ -59,7 +59,9 @@ func profilingRateTestChildRun(path string) {
 	if err != nil {
 		panic(err)
 	}
-	os.Stderr.WriteString("stderr restored\n")
+	if _, err := os.Stderr.WriteString("stderr restored\n"); err != nil {
+		panic(err)
+	}
 	if err := stop(); err != nil {
 		panic(err)
 	}
@@ -68,12 +70,11 @@ func profilingRateTestChildRun(path string) {
 // profilingRateTestPeriodRead returns field 12, period, of the gzipped
 // perftools.profiles.Profile message at path.
 func profilingRateTestPeriodRead(path string) (int64, error) {
-	f, err := os.Open(path)
+	zipped, err := os.ReadFile(path)
 	if err != nil {
 		return 0, err
 	}
-	defer f.Close()
-	unzipped, err := gzip.NewReader(f)
+	unzipped, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
 		return 0, err
 	}
