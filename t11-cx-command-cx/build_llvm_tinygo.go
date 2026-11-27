@@ -109,7 +109,47 @@ func buildLlvmTinygoTargetRead(tinygo string, target string) (buildLlvmTinygoTar
 	if codeGeneration.buildLlvmTinygoTargetTriple == "" {
 		return codeGeneration, fmt.Errorf("%s info -json %s gives no llvm-target", tinygo, target)
 	}
+	if codeGeneration.buildLlvmTinygoTargetTriple == buildLlvmTinygoTripleWasi {
+		version, err := exec.Command(tinygo, "version").Output()
+		if err != nil {
+			return codeGeneration, fmt.Errorf("%s version: %v", tinygo, err)
+		}
+		codeGeneration.buildLlvmTinygoTargetTriple = buildLlvmTinygoTripleClang(codeGeneration.buildLlvmTinygoTargetTriple, buildLlvmTinygoLlvmMajorParse(version))
+	}
 	return codeGeneration, nil
+}
+
+// The wasm triples of TinyGo. LLVM 22 deprecated the first for the second.
+const (
+	buildLlvmTinygoTripleWasi   = "wasm32-unknown-wasi"
+	buildLlvmTinygoTripleWasip1 = "wasm32-unknown-wasip1"
+)
+
+// buildLlvmTinygoTripleClang returns triple as TinyGo passes it to clang for
+// LLVM llvmMajor, as compileopts.LLVMTriple of tinygo-org/tinygo#6309 does.
+func buildLlvmTinygoTripleClang(triple string, llvmMajor int) string {
+	if triple == buildLlvmTinygoTripleWasi && llvmMajor >= 22 {
+		return buildLlvmTinygoTripleWasip1
+	}
+	return triple
+}
+
+// buildLlvmTinygoLlvmMajorParse returns the LLVM major version in the output
+// of tinygo version, or 0 when it has none.
+func buildLlvmTinygoLlvmMajorParse(version []byte) int {
+	marker := []byte("LLVM version ")
+	start := bytes.Index(version, marker)
+	if start < 0 {
+		return 0
+	}
+	major := 0
+	for _, digit := range version[start+len(marker):] {
+		if digit < '0' || digit > '9' {
+			break
+		}
+		major = major*10 + int(digit-'0')
+	}
+	return major
 }
 
 // buildLlvmTinygoMain is the Go side of the TinyGo program: main runs the

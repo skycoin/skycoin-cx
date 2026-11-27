@@ -91,3 +91,22 @@ func TestBuildLlvmTinygo(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildLlvmTinygoTripleClang(t *testing.T) {
+	cases := []struct {
+		version string
+		triple  string
+		want    string
+	}{
+		{"tinygo version 0.44.0 linux/amd64 (using go version go1.27.3 and LLVM version 23.1.3)", buildLlvmTinygoTripleWasi, buildLlvmTinygoTripleWasip1},
+		{"tinygo version 0.40.0 linux/amd64 (using go version go1.25.0 and LLVM version 22.1.0)", buildLlvmTinygoTripleWasi, buildLlvmTinygoTripleWasip1},
+		{"tinygo version 0.39.0 linux/amd64 (using go version go1.25.0 and LLVM version 20.1.1)", buildLlvmTinygoTripleWasi, buildLlvmTinygoTripleWasi},
+		{"tinygo version 0.44.0 linux/amd64 (using go version go1.27.3 and LLVM version 23.1.3)", "thumbv6m-unknown-unknown-eabi", "thumbv6m-unknown-unknown-eabi"},
+		{"no version here", buildLlvmTinygoTripleWasi, buildLlvmTinygoTripleWasi},
+	}
+	for _, c := range cases {
+		if got := buildLlvmTinygoTripleClang(c.triple, buildLlvmTinygoLlvmMajorParse([]byte(c.version))); got != c.want {
+			t.Errorf("%q %s: got %s, want %s", c.version, c.triple, got, c.want)
+		}
+	}
+}
