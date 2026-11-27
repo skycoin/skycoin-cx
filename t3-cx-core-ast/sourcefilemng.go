@@ -52,15 +52,13 @@ func (manager *SourceFileMng) SourceFileIntern(path stringpool.StringGid) Source
 
 // SourceFilePath returns the path of the file gid names. SourceFileGidNil
 // gives StringGidNil.
-// VIOLATION STRHOT-313: E, error or assert text, built on a failure branch only, #412.
 func (manager *SourceFileMng) SourceFilePath(gid SourceFileGid) stringpool.StringGid {
 	if gid == SourceFileGidNil {
 		return stringpool.StringGidNil
 	}
 	slot := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != SourceFileGidTypeTag || objmodel.GidGeneration(int64(gid)) != objmodel.GidGenerationFirst || uint64(slot) >= uint64(len(manager.SourceFileMngPaths)) {
-		objmodel.GidAssertFailure(int64(gid), SourceFileGidTypeTag, len(manager.SourceFileMngPaths))
-		assert.PreconditionTrue(false, fmt.Sprintf("SourceFile Gid %#x has generation %#x, want %#x", int64(gid), objmodel.GidGeneration(int64(gid)), objmodel.GidGenerationFirst))
+		objmodel.GidFirstGenerationFailureReport(int64(gid), SourceFileGidTypeTag, len(manager.SourceFileMngPaths))
 	}
 	return manager.SourceFileMngPaths[slot]
 }

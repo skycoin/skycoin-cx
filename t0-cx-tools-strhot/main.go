@@ -1,7 +1,8 @@
 // Command strhot finds the string operations reachable from the run loop of
 // the old executor and checks that each one has a STRHOT code (#412). The
 // run path is RunCxAst and every opcode handler, followed through static
-// calls into this module. check-strhot.sh runs it, see docs/StringsHotPath.md.
+// calls into this module, except into a STRHOT REPORTER. check-strhot.sh runs
+// it, see docs/StringsHotPath.md.
 package main
 
 import (
@@ -58,12 +59,20 @@ type function struct {
 	calls            []string
 	sites            []site
 	opcodeGoFunction bool
-	parent           string // the caller it was first reached from
+	// reporter is a function whose doc comment says STRHOT REPORTER. The
+	// walk does not enter it, see docs/StringsHotPath.md.
+	reporter bool
+	// reporterProblem is why a reporter breaks the reporter rule, or "".
+	reporterProblem string
+	parent          string // the caller it was first reached from
 	// position is file:first line-last line of the declaration.
 	position string
 }
 
 var codePattern = regexp.MustCompile(`VIOLATION (STRHOT-[0-9]{3}): ([A-Z]?)`)
+
+// reporterMarker in a doc comment makes a function a reporter.
+const reporterMarker = "STRHOT REPORTER"
 
 func main() {
 	tags := flag.String("tags", "", "build tags")
@@ -233,6 +242,10 @@ func scanFile(fset *token.FileSet, typeFacts *types.Info, f *ast.File, rel strin
 		funcCode, funcClass := "", ""
 		if fd.Doc != nil {
 			funcCode, funcClass = firstCode(fd.Doc.Text())
+			if strings.Contains(fd.Doc.Text(), reporterMarker) {
+				fn.reporter = true
+				fn.reporterProblem = reporterCheck(obj.Type().(*types.Signature), fd.Body)
+			}
 		}
 		short := shortName(obj)
 		var stack []ast.Node
@@ -270,6 +283,40 @@ func scanFile(fset *token.FileSet, typeFacts *types.Info, f *ast.File, rel strin
 			return true
 		})
 	}
+}
+
+// reporterCheck returns why a reporter breaks the rule of
+// docs/StringsHotPath.md, or "". A reporter takes no string, so its callers
+// hand it integers only, and its last statement ends the process: a failed
+// assert of false, assert.Unreachable, panic or os.Exit.
+func reporterCheck(sig *types.Signature, body *ast.BlockStmt) string {
+	for i := 0; i < sig.Params().Len(); i++ {
+		if involvesString(sig.Params().At(i).Type()) {
+			return "a STRHOT reporter takes a string parameter"
+		}
+	}
+	if len(body.List) > 0 {
+		if stmt, ok := body.List[len(body.List)-1].(*ast.ExprStmt); ok {
+			if call, ok := stmt.X.(*ast.CallExpr); ok {
+				switch f := ast.Unparen(call.Fun).(type) {
+				case *ast.Ident:
+					if f.Name == "panic" {
+						return ""
+					}
+				case *ast.SelectorExpr:
+					switch f.Sel.Name {
+					case "Exit", "Unreachable":
+						return ""
+					case "PreconditionTrue", "InvariantTrue", "PostconditionTrue":
+						if id, ok := call.Args[0].(*ast.Ident); ok && id.Name == "false" {
+							return ""
+						}
+					}
+				}
+			}
+		}
+	}
+	return "a STRHOT reporter does not end with a failed assert, panic or os.Exit"
 }
 
 // firstCode returns the first STRHOT code in text and the class written after it.
@@ -495,7 +542,7 @@ func reachable(functions map[string]*function) []*function {
 	var queue []string
 	from := ""
 	add := func(name string) {
-		if !seen[name] && functions[name] != nil {
+		if !seen[name] && functions[name] != nil && !functions[name].reporter {
 			seen[name] = true
 			functions[name].parent = from
 			queue = append(queue, name)
@@ -585,6 +632,17 @@ func report(w io.Writer, functions map[string]*function, codes map[string]codeEn
 	}
 	if mode != reportCheck {
 		return 0
+	}
+	var reporterProblems []string
+	for _, fn := range functions {
+		if fn.reporterProblem != "" {
+			reporterProblems = append(reporterProblems, fmt.Sprintf("%s: %s: %s", fn.position, fn.name, fn.reporterProblem))
+		}
+	}
+	sort.Strings(reporterProblems)
+	for _, problem := range reporterProblems {
+		fmt.Fprintln(w, problem)
+		rc = 1
 	}
 	var stale []string
 	for code, entry := range codes {

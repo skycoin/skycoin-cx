@@ -23,13 +23,9 @@ type CXPackageMng struct {
 }
 
 // CXPackageMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-253: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXPackageMng) CXPackageMngInit(capacity int, growable bool) {
-	if manager.CXPackageMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXPackageMngInit on a manager holding %d objects", manager.CXPackageMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXPackageMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXPackageMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXPackageGidTypeTag, manager.CXPackageMngLen, capacity)
 	}
 	*manager = CXPackageMng{
 		CXPackageMngObjects:     make([]CXPackage, capacity),
@@ -97,11 +93,7 @@ func (manager *CXPackageMng) CXPackageGet(gid CXPackageGid) *CXPackage {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXPackageGidTypeTag || uint64(index) >= uint64(len(manager.CXPackageMngObjects)) ||
 		!manager.CXPackageMngLive[index] || manager.CXPackageMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXPackageGidTypeTag, len(manager.CXPackageMngObjects))
-		if !manager.CXPackageMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXPackageGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXPackageGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXPackageMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXPackageGidTypeTag, len(manager.CXPackageMngObjects), manager.CXPackageMngLive, manager.CXPackageMngGenerations)
 	}
 	return &manager.CXPackageMngObjects[index]
 }

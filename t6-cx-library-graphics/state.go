@@ -106,14 +106,14 @@ var cxfxState State
 
 // cxfxHandleAssertFailure ends the program for a handle out of its table's
 // range or naming a freed or never created slot.
-// VIOLATION STRHOT-323: E, the assert text of a bad handle, built only when it fails, #432.
+// STRHOT REPORTER: builds the assert text of a bad handle from the integers, #412.
 func cxfxHandleAssertFailure(kind CxfxHandleKind, handle int32) {
 	var names = [...]string{"window", "font", "texture pixels", "gif", "callback"}
 	assert.PreconditionTrue(false, fmt.Sprintf("cxfx %s handle %d is out of range, freed or never created", names[kind], handle))
 }
 
 // cxfxTableFullAssertFailure ends the program when a table has no free slot.
-// VIOLATION STRHOT-324: E, the assert text of a full table, built only when it fails, #432.
+// STRHOT REPORTER: builds the assert text of a full table from the integers, #412.
 func cxfxTableFullAssertFailure(kind CxfxHandleKind, count int) {
 	var names = [...]string{"window", "font", "texture pixels", "gif", "callback"}
 	assert.PreconditionTrue(false, fmt.Sprintf("cxfx %s table is full, it holds %d", names[kind], count))

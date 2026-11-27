@@ -23,13 +23,9 @@ type CXFunctionMng struct {
 }
 
 // CXFunctionMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-249: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXFunctionMng) CXFunctionMngInit(capacity int, growable bool) {
-	if manager.CXFunctionMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXFunctionMngInit on a manager holding %d objects", manager.CXFunctionMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXFunctionMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXFunctionMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXFunctionGidTypeTag, manager.CXFunctionMngLen, capacity)
 	}
 	*manager = CXFunctionMng{
 		CXFunctionMngObjects:     make([]CXFunction, capacity),
@@ -93,16 +89,11 @@ func (manager *CXFunctionMng) CXFunctionRelease(gid CXFunctionGid) {
 
 // CXFunctionGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-// VIOLATION STRHOT-352: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXFunctionMng) CXFunctionGet(gid CXFunctionGid) *CXFunction {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXFunctionGidTypeTag || uint64(index) >= uint64(len(manager.CXFunctionMngObjects)) ||
 		!manager.CXFunctionMngLive[index] || manager.CXFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXFunctionGidTypeTag, len(manager.CXFunctionMngObjects))
-		if !manager.CXFunctionMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXFunctionGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXFunctionGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXFunctionMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXFunctionGidTypeTag, len(manager.CXFunctionMngObjects), manager.CXFunctionMngLive, manager.CXFunctionMngGenerations)
 	}
 	return &manager.CXFunctionMngObjects[index]
 }

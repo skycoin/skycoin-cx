@@ -12,12 +12,12 @@
 # path) or cxfx (open in t6-cx-library-graphics, which only the build with the cxfx tag has,
 # checked by ./check-strhot.sh -tags cxfx, #432).
 STRHOT-001 I removed t1-cx-core-objmodel/gid.go GidCheck not on the run path at dfcc46ab
-STRHOT-002 E open t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugGet
-STRHOT-003 E open t3-cx-core-ast/cxargument_mng.go *CXArgumentMng.CXArgumentGet
-STRHOT-004 E open t3-cx-core-ast/cxline_mng.go *CXLineMng.CXLineGet
-STRHOT-005 E open t3-cx-core-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet
-STRHOT-006 E open t3-cx-core-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureGet
-STRHOT-007 E open t3-cx-core-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructGet
+STRHOT-002 E removed t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
+STRHOT-003 E removed t3-cx-core-ast/cxargument_mng.go *CXArgumentMng.CXArgumentGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
+STRHOT-004 E removed t3-cx-core-ast/cxline_mng.go *CXLineMng.CXLineGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
+STRHOT-005 E removed t3-cx-core-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.CXTypeSignature_ArrayGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
+STRHOT-006 E removed t3-cx-core-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
+STRHOT-007 E removed t3-cx-core-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
 STRHOT-008 O removed t0-cx-core-valuetypes/types_string.go AllocWrite_str_data not on the run path at dfcc46ab
 STRHOT-009 B removed t0-cx-core-valuetypes/types_string.go Read_str_data deleted, only the affordance opcodes used it, D5 #500
 STRHOT-010 O removed t0-cx-core-valuetypes/types_string.go Write_str not on the run path at dfcc46ab
@@ -233,12 +233,12 @@ STRHOT-219 P removed t3-cx-core-ast/tostring.go printSeparator not on the run pa
 STRHOT-220 P removed t3-cx-core-ast/tostring.go readAtomic appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
 STRHOT-221 P removed t3-cx-core-ast/tostring.go argValueAt appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
 STRHOT-222 P removed t3-cx-core-ast/tostring.go GetPrintableValue appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
-STRHOT-223 E open t0-cx-core-assert/assert.go PreconditionTrue
-STRHOT-224 E open t0-cx-core-assert/assert.go InvariantTrue
-STRHOT-225 E open t0-cx-core-assert/assert.go assertCrash
+STRHOT-223 E removed t0-cx-core-assert/assert.go PreconditionTrue no longer on the run path, only STRHOT REPORTERs assert, #412
+STRHOT-224 E removed t0-cx-core-assert/assert.go InvariantTrue no longer on the run path, only STRHOT REPORTERs assert, #412
+STRHOT-225 E removed t0-cx-core-assert/assert.go assertCrash no longer on the run path, only STRHOT REPORTERs assert, #412
 STRHOT-226 E removed t0-cx-core-compression/codec.go *Codec.Compress not on the run path at dfcc46ab
 STRHOT-227 E removed t0-cx-core-compression/codec.go *Codec.Decompress not on the run path at dfcc46ab
-STRHOT-228 E open t1-cx-core-objmodel/gid.go GidCompose
+STRHOT-228 E removed t1-cx-core-objmodel/gid.go GidCompose the check passes the integers to GidComposeFailureReport, a STRHOT REPORTER, #412
 STRHOT-229 P removed t3-cx-core-ast/ast_cxargument.go CXArgumentDebugFileLine returns the file name as a view of the string pool, #412
 STRHOT-230 P removed t3-cx-core-ast/ast_cxatomicoperator.go *CXAtomicOperator.OperatorNameGet not on the run path, the stack dump reads OperatorNameBytesGet, #412
 STRHOT-231 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.PackageFromArrayGet
@@ -252,25 +252,25 @@ STRHOT-238 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.CXTypeSignatureStru
 STRHOT-239 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.OperationGet
 STRHOT-240 E open t3-cx-core-ast/ast_cxprogram.go *CXProgram.PreviousCXLineGet
 STRHOT-241 E removed t3-cx-core-ast/ast_memory.go SequenceAllocate not on the run path at dfcc46ab
-STRHOT-242 E open t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugMngInit
+STRHOT-242 E removed t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-243 E removed t3-cx-core-ast/cxargumentdebug_mng.go *CXArgumentDebugMng.CXArgumentDebugAlloc not on the run path at dfcc46ab
-STRHOT-244 E open t3-cx-core-ast/cxargument_mng.go *CXArgumentMng.CXArgumentMngInit
+STRHOT-244 E removed t3-cx-core-ast/cxargument_mng.go *CXArgumentMng.CXArgumentMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-245 E removed t3-cx-core-ast/cxargument_mng.go *CXArgumentMng.CXArgumentAlloc not on the run path at dfcc46ab
-STRHOT-246 E open t3-cx-core-ast/cxatomicoperator_mng.go *CXAtomicOperatorMng.CXAtomicOperatorMngInit
-STRHOT-247 E open t3-cx-core-ast/cxcall_mng.go *CXCallMng.CXCallMngInit
-STRHOT-248 E open t3-cx-core-ast/cxexpression_mng.go *CXExpressionMng.CXExpressionMngInit
-STRHOT-249 E open t3-cx-core-ast/cxfunction_mng.go *CXFunctionMng.CXFunctionMngInit
-STRHOT-250 E open t3-cx-core-ast/cxline_mng.go *CXLineMng.CXLineMngInit
+STRHOT-246 E removed t3-cx-core-ast/cxatomicoperator_mng.go *CXAtomicOperatorMng.CXAtomicOperatorMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-247 E removed t3-cx-core-ast/cxcall_mng.go *CXCallMng.CXCallMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-248 E removed t3-cx-core-ast/cxexpression_mng.go *CXExpressionMng.CXExpressionMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-249 E removed t3-cx-core-ast/cxfunction_mng.go *CXFunctionMng.CXFunctionMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-250 E removed t3-cx-core-ast/cxline_mng.go *CXLineMng.CXLineMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-251 E removed t3-cx-core-ast/cxline_mng.go *CXLineMng.CXLineAlloc not on the run path at dfcc46ab
-STRHOT-252 E open t3-cx-core-ast/cxnativefunction_mng.go *CXNativeFunctionMng.CXNativeFunctionMngInit
-STRHOT-253 E open t3-cx-core-ast/cxpackage_mng.go *CXPackageMng.CXPackageMngInit
-STRHOT-254 E open t3-cx-core-ast/cxprogram_mng.go *CXProgramMng.CXProgramMngInit
-STRHOT-255 E open t3-cx-core-ast/cxstruct_mng.go *CXStructMng.CXStructMngInit
-STRHOT-256 E open t3-cx-core-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.CXTypeSignature_ArrayMngInit
+STRHOT-252 E removed t3-cx-core-ast/cxnativefunction_mng.go *CXNativeFunctionMng.CXNativeFunctionMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-253 E removed t3-cx-core-ast/cxpackage_mng.go *CXPackageMng.CXPackageMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-254 E removed t3-cx-core-ast/cxprogram_mng.go *CXProgramMng.CXProgramMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-255 E removed t3-cx-core-ast/cxstruct_mng.go *CXStructMng.CXStructMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
+STRHOT-256 E removed t3-cx-core-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.CXTypeSignature_ArrayMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-257 E removed t3-cx-core-ast/cxtypesignaturearray_mng.go *CXTypeSignature_ArrayMng.CXTypeSignature_ArrayAlloc not on the run path at dfcc46ab
-STRHOT-258 E open t3-cx-core-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureMngInit
+STRHOT-258 E removed t3-cx-core-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-259 E removed t3-cx-core-ast/cxtypesignature_mng.go *CXTypeSignatureMng.CXTypeSignatureAlloc not on the run path at dfcc46ab
-STRHOT-260 E open t3-cx-core-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructMngInit
+STRHOT-260 E removed t3-cx-core-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructMngInit the check passes the integers to objmodel.GidManagerInitFailureReport, a STRHOT REPORTER, #412
 STRHOT-261 E removed t3-cx-core-ast/cxtypesignaturestruct_mng.go *CXTypeSignature_StructMng.CXTypeSignature_StructAlloc not on the run path at dfcc46ab
 STRHOT-262 E removed t3-cx-core-ast/error.go ErrorHeader not on the run path at dfcc46ab
 STRHOT-263 E removed t3-cx-core-ast/error.go ErrorString not on the run path at dfcc46ab
@@ -283,8 +283,8 @@ STRHOT-269 B open t1-cx-runtime-sandbox/path.go PathFromBytes
 STRHOT-270 B open t1-cx-runtime-sandbox/path.go FileCreate
 STRHOT-271 B open t1-cx-runtime-sandbox/path.go pathFileError
 STRHOT-272 B open t1-cx-runtime-sandbox/path.go FileOpen
-STRHOT-273 E open t1-cx-core-objmodel/gid.go GidAssertFailure
-STRHOT-274 E open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolBytes
+STRHOT-273 E removed t1-cx-core-objmodel/gid.go GidAssertFailure only STRHOT REPORTERs and Release call it, #412
+STRHOT-274 E removed t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolBytes the check passes the Gid to objmodel.GidFirstGenerationFailureReport, a STRHOT REPORTER, #412
 STRHOT-275 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolFind
 STRHOT-276 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolInit
 STRHOT-277 B open t2-cx-core-stringpool/stringpool.go *StringPool.StringPoolIntern
@@ -323,7 +323,7 @@ STRHOT-309 B removed t3-cx-core-ast/serialize.go encodeCXProgram appends a const
 STRHOT-310 B open t3-cx-core-ast/serialize.go SerializedHeaderCheck
 STRHOT-311 E open t3-cx-core-ast/serialize.go serializeStructReference
 STRHOT-312 E open t3-cx-core-ast/serialize.go serializeUnusedManagersCheck
-STRHOT-313 E open t3-cx-core-ast/sourcefilemng.go *SourceFileMng.SourceFilePath
+STRHOT-313 E removed t3-cx-core-ast/sourcefilemng.go *SourceFileMng.SourceFilePath the check passes the Gid to objmodel.GidFirstGenerationFailureReport, a STRHOT REPORTER, #412
 STRHOT-314 P removed t3-cx-core-ast/tostring.go printPointer appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
 STRHOT-315 P removed t3-cx-core-ast/tostring.go printStructPointer appends bytes to the format buffer, PrintableValueAppend in print_value.go, #407
 STRHOT-316 E removed t4-cx-runtime-opcodes/libraries.go opLibraryCall removed with the opcode registration (D21)
@@ -333,12 +333,12 @@ STRHOT-319 O removed t4-cx-runtime-opcodes/op_str.go OpStrStringOfBytes fixed, b
 STRHOT-320 P removed t4-cx-runtime-printer/stack.go printerStackValueLine appends names viewed from the string pool, #412
 STRHOT-321 E open t4-cx-library-regexp/op_regexp.go OpRegexpMustCompile
 STRHOT-322 B cxfx t2-cx-core-stringpool/string_view.go StringView O fixed, only the t6-cx-library-graphics GLFW, gltext and file boundaries call it, D92
-STRHOT-323 E cxfx t6-cx-library-graphics/state.go cxfxHandleAssertFailure
-STRHOT-324 E cxfx t6-cx-library-graphics/state.go cxfxTableFullAssertFailure
+STRHOT-323 E removed t6-cx-library-graphics/state.go cxfxHandleAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
+STRHOT-324 E removed t6-cx-library-graphics/state.go cxfxTableFullAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
 STRHOT-325 B removed t6-cx-library-graphics/op_opengl.go decodeImg fixed, picks the decoder by the first bytes of the file, #432
-STRHOT-326 E open t1-cx-library-cipherstate/cipherstate.go hashStateAssertFailure
-STRHOT-327 E open t1-cx-library-cipherstate/cipherstate.go hashStateFullAssertFailure
-STRHOT-328 E open t4-cx-library-netopcodes/op_net.go netReplayEndAssertFailure
+STRHOT-326 E removed t1-cx-library-cipherstate/cipherstate.go hashStateAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
+STRHOT-327 E removed t1-cx-library-cipherstate/cipherstate.go hashStateFullAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
+STRHOT-328 E removed t4-cx-library-netopcodes/op_net.go netReplayEndAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
 STRHOT-329 B open t4-cx-library-netopcodes/op_net.go OpNetTCPListen
 STRHOT-330 B open t4-cx-library-netopcodes/op_net.go OpNetTCPDial
 STRHOT-331 B open t4-cx-library-netopcodes/op_net.go OpNetUDPListen
@@ -346,7 +346,7 @@ STRHOT-332 B open t4-cx-library-netopcodes/op_net.go OpNetUDPDial
 STRHOT-333 B open t4-cx-library-netopcodes/op_net.go OpNetUDPPeerResolve
 STRHOT-334 B removed t4-cx-library-netopcodes/op_net.go blockStr a vm form, not on the run path of the old loop
 STRHOT-335 B open t1-cx-library-networkbatch/socket.go netUDPReadLoop
-STRHOT-336 E open t4-cx-library-netopcodes/op_net.go netBufferAssertFailure
+STRHOT-336 E removed t4-cx-library-netopcodes/op_net.go netBufferAssertFailure a STRHOT REPORTER, its callers pass integers only, #412
 STRHOT-337 B open t4-cx-library-netopcodes/op_net.go netAddress
 STRHOT-338 B open t1-cx-library-networkbatch/socket.go netTCPReadLoop
 STRHOT-339 B open t1-cx-library-networkbatch/socket.go NetTCPListen
@@ -362,6 +362,6 @@ STRHOT-348 B open t1-cx-library-networkbatch/replay.go netPayloadQuote
 STRHOT-349 B open t1-cx-runtime-sandbox/path.go FileOpenReadWrite
 STRHOT-350 B open t1-cx-runtime-sandbox/path.go FileRemove
 STRHOT-351 B open t3-cx-core-ast/serialize.go deserializeOpcodeSet
-STRHOT-352 E open t3-cx-core-ast/cxfunction_mng.go *CXFunctionMng.CXFunctionGet
+STRHOT-352 E removed t3-cx-core-ast/cxfunction_mng.go *CXFunctionMng.CXFunctionGet the check passes the Gid and the slot arrays to objmodel.GidGetFailureReport, a STRHOT REPORTER, #412
 STRHOT-353 B open t3-cx-core-ast/serialize.go deserializeFunctions
 STRHOT-354 B open t1-cx-runtime-sandbox/root.go rootFileOpen

@@ -23,13 +23,9 @@ type CXArgumentMng struct {
 }
 
 // CXArgumentMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-244: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXArgumentMng) CXArgumentMngInit(capacity int, growable bool) {
-	if manager.CXArgumentMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentMngInit on a manager holding %d objects", manager.CXArgumentMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXArgumentMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXArgumentGidTypeTag, manager.CXArgumentMngLen, capacity)
 	}
 	*manager = CXArgumentMng{
 		CXArgumentMngObjects:     make([]CXArgument, capacity),
@@ -93,16 +89,11 @@ func (manager *CXArgumentMng) CXArgumentRelease(gid CXArgumentGid) {
 
 // CXArgumentGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-// VIOLATION STRHOT-003: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXArgumentMng) CXArgumentGet(gid CXArgumentGid) *CXArgument {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXArgumentGidTypeTag || uint64(index) >= uint64(len(manager.CXArgumentMngObjects)) ||
 		!manager.CXArgumentMngLive[index] || manager.CXArgumentMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXArgumentGidTypeTag, len(manager.CXArgumentMngObjects))
-		if !manager.CXArgumentMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXArgumentMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXArgumentGidTypeTag, len(manager.CXArgumentMngObjects), manager.CXArgumentMngLive, manager.CXArgumentMngGenerations)
 	}
 	return &manager.CXArgumentMngObjects[index]
 }

@@ -41,15 +41,9 @@ type {{.Object}}Mng struct {
 }
 
 // {{.Object}}MngInit sets the Cap and whether the grow boundary may grow it.
-{{- if .StrhotInit}}
-// VIOLATION {{.StrhotInit}}: E, the assert text of a bad Init, built only when it fails, #412.
-{{- end}}
 func (manager *{{.Object}}Mng) {{.Object}}MngInit(capacity int, growable bool) {
-	if manager.{{.Object}}MngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("{{.Object}}MngInit on a manager holding %d objects", manager.{{.Object}}MngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("{{.Object}}MngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.{{.Object}}MngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport({{.Object}}GidTypeTag, manager.{{.Object}}MngLen, capacity)
 	}
 	*manager = {{.Object}}Mng{
 		{{.Object}}MngObjects:     make([]{{.Object}}, capacity),
@@ -113,18 +107,11 @@ func (manager *{{.Object}}Mng) {{.Object}}Release(gid {{.Object}}Gid) {
 
 // {{.Object}}Get returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-{{- if .StrhotGet}}
-// VIOLATION {{.StrhotGet}}: E, the assert text of a bad Gid, built only when the check fails, #412.
-{{- end}}
 func (manager *{{.Object}}Mng) {{.Object}}Get(gid {{.Object}}Gid) *{{.Object}} {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != {{.Object}}GidTypeTag || uint64(index) >= uint64(len(manager.{{.Object}}MngObjects)) ||
 		!manager.{{.Object}}MngLive[index] || manager.{{.Object}}MngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), {{.Object}}GidTypeTag, len(manager.{{.Object}}MngObjects))
-		if !manager.{{.Object}}MngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("{{.Object}}Get of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("{{.Object}}Get of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.{{.Object}}MngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), {{.Object}}GidTypeTag, len(manager.{{.Object}}MngObjects), manager.{{.Object}}MngLive, manager.{{.Object}}MngGenerations)
 	}
 	return &manager.{{.Object}}MngObjects[index]
 }

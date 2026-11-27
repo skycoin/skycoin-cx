@@ -14,9 +14,10 @@ The run path is `RunCxAst` in t4-cx-runtime-interpreter and every opcode handler
 function with the `OpcodeGoFunction` signature, followed through static calls
 into this module. `t0-cx-tools-strhot` type checks the packages of the `cx`
 build with the default tags and walks those calls. Interface calls and
-function values other than handlers are not followed. t6-cx-library-graphics is built only
-with `-tags cxfx`, and its codes have the status `cxfx`, open in that build
-only. `./check-strhot.sh -tags cxfx` checks it (#432).
+function values other than handlers are not followed, and neither are calls
+into a reporter, see [Reporters](#reporters). t6-cx-library-graphics is built
+only with `-tags cxfx`, and its codes have the status `cxfx`, open in that
+build only. `./check-strhot.sh -tags cxfx` checks it (#432).
 
 A string operation is a comparison, concatenation, switch, index, slice or
 range on a string, a conversion between a string and bytes, a lookup in a
@@ -54,8 +55,26 @@ its statement or above its function, which then covers every site in it.
 func (cxprogram *CXProgram) CXArgGet(index CXArgumentIndex) *CXArgument {
 ```
 
-The manager functions are generated, so their codes are in the table of
-t0-cx-core-objmodelgen.
+## Reporters
+
+A failure branch hands the integers, Gids and byte views of the failure to
+a reporter, a function whose doc comment says `STRHOT REPORTER`. The
+reporter builds the text and ends the process, so the text is built only
+after the run has failed. The walk does not enter a reporter. The check
+fails on a reporter that takes a string parameter, so its callers pass no
+text, and on one whose last statement is not a failed assert of `false`,
+`assert.Unreachable`, `panic` or `os.Exit`.
+
+```go
+if manager.CXLineMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+	objmodel.GidMngInitFailureReport(CXLineGidTypeTag, manager.CXLineMngLen, capacity)
+}
+```
+
+The generated managers and the Gid checks of t1-cx-core-objmodel report this
+way, and only reporters call the asserts of t0-cx-core-assert from the run
+path. A runtime error of a CX program is data in `RuntimeErrorRecord` until
+the loop has returned, see [ErrorHandling.md](ErrorHandling.md#cx-programs).
 
 ## Check
 

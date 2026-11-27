@@ -23,7 +23,7 @@ func netUpdate(waitMilliseconds int32) int32 {
 
 // netReplayEndAssertFailure ends a program that asks for an update the
 // replay record does not hold.
-// VIOLATION STRHOT-328: E, the assert text of a replay past its record, built only when it fails, #508.
+// STRHOT REPORTER: builds the assert text of a replay past its record, #412.
 func netReplayEndAssertFailure() {
 	assert.PreconditionTrue(false, fmt.Sprintf("the net replay record has no update %d, or one of its entries names a socket the program did not open", networkbatch.NetUpdateNumber()))
 }
@@ -40,7 +40,7 @@ func netBufferView(prgrm *ast.CXProgram, value *ast.CXValue) []byte {
 
 // netBufferAssertFailure ends a program that passes a buffer that is not a
 // ui8 array.
-// VIOLATION STRHOT-336: E, the assert text of a buffer that is not a ui8 array, built only when it fails, #508.
+// STRHOT REPORTER: holds the assert text of a buffer that is not a ui8 array, #412.
 func netBufferAssertFailure() {
 	assert.PreconditionTrue(false, "a net buffer must be a ui8 array, such as var buffer [1024]ui8")
 }

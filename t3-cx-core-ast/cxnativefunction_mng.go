@@ -23,13 +23,9 @@ type CXNativeFunctionMng struct {
 }
 
 // CXNativeFunctionMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-252: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXNativeFunctionMng) CXNativeFunctionMngInit(capacity int, growable bool) {
-	if manager.CXNativeFunctionMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXNativeFunctionMngInit on a manager holding %d objects", manager.CXNativeFunctionMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXNativeFunctionMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXNativeFunctionMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXNativeFunctionGidTypeTag, manager.CXNativeFunctionMngLen, capacity)
 	}
 	*manager = CXNativeFunctionMng{
 		CXNativeFunctionMngObjects:     make([]CXNativeFunction, capacity),
@@ -97,11 +93,7 @@ func (manager *CXNativeFunctionMng) CXNativeFunctionGet(gid CXNativeFunctionGid)
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXNativeFunctionGidTypeTag || uint64(index) >= uint64(len(manager.CXNativeFunctionMngObjects)) ||
 		!manager.CXNativeFunctionMngLive[index] || manager.CXNativeFunctionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXNativeFunctionGidTypeTag, len(manager.CXNativeFunctionMngObjects))
-		if !manager.CXNativeFunctionMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXNativeFunctionGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXNativeFunctionGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXNativeFunctionMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXNativeFunctionGidTypeTag, len(manager.CXNativeFunctionMngObjects), manager.CXNativeFunctionMngLive, manager.CXNativeFunctionMngGenerations)
 	}
 	return &manager.CXNativeFunctionMngObjects[index]
 }

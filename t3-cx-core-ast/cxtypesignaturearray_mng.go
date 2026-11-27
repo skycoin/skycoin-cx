@@ -23,13 +23,9 @@ type CXTypeSignature_ArrayMng struct {
 }
 
 // CXTypeSignature_ArrayMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-256: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXTypeSignature_ArrayMng) CXTypeSignature_ArrayMngInit(capacity int, growable bool) {
-	if manager.CXTypeSignature_ArrayMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXTypeSignature_ArrayMngInit on a manager holding %d objects", manager.CXTypeSignature_ArrayMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXTypeSignature_ArrayMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXTypeSignature_ArrayMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXTypeSignature_ArrayGidTypeTag, manager.CXTypeSignature_ArrayMngLen, capacity)
 	}
 	*manager = CXTypeSignature_ArrayMng{
 		CXTypeSignature_ArrayMngObjects:     make([]CXTypeSignature_Array, capacity),
@@ -93,16 +89,11 @@ func (manager *CXTypeSignature_ArrayMng) CXTypeSignature_ArrayRelease(gid CXType
 
 // CXTypeSignature_ArrayGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-// VIOLATION STRHOT-005: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXTypeSignature_ArrayMng) CXTypeSignature_ArrayGet(gid CXTypeSignature_ArrayGid) *CXTypeSignature_Array {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXTypeSignature_ArrayGidTypeTag || uint64(index) >= uint64(len(manager.CXTypeSignature_ArrayMngObjects)) ||
 		!manager.CXTypeSignature_ArrayMngLive[index] || manager.CXTypeSignature_ArrayMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXTypeSignature_ArrayGidTypeTag, len(manager.CXTypeSignature_ArrayMngObjects))
-		if !manager.CXTypeSignature_ArrayMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXTypeSignature_ArrayGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXTypeSignature_ArrayGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXTypeSignature_ArrayMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXTypeSignature_ArrayGidTypeTag, len(manager.CXTypeSignature_ArrayMngObjects), manager.CXTypeSignature_ArrayMngLive, manager.CXTypeSignature_ArrayMngGenerations)
 	}
 	return &manager.CXTypeSignature_ArrayMngObjects[index]
 }

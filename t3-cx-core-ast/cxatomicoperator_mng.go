@@ -23,13 +23,9 @@ type CXAtomicOperatorMng struct {
 }
 
 // CXAtomicOperatorMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-246: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXAtomicOperatorMng) CXAtomicOperatorMngInit(capacity int, growable bool) {
-	if manager.CXAtomicOperatorMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorMngInit on a manager holding %d objects", manager.CXAtomicOperatorMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXAtomicOperatorMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXAtomicOperatorGidTypeTag, manager.CXAtomicOperatorMngLen, capacity)
 	}
 	*manager = CXAtomicOperatorMng{
 		CXAtomicOperatorMngObjects:     make([]CXAtomicOperator, capacity),
@@ -97,11 +93,7 @@ func (manager *CXAtomicOperatorMng) CXAtomicOperatorGet(gid CXAtomicOperatorGid)
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXAtomicOperatorGidTypeTag || uint64(index) >= uint64(len(manager.CXAtomicOperatorMngObjects)) ||
 		!manager.CXAtomicOperatorMngLive[index] || manager.CXAtomicOperatorMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXAtomicOperatorGidTypeTag, len(manager.CXAtomicOperatorMngObjects))
-		if !manager.CXAtomicOperatorMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXAtomicOperatorGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXAtomicOperatorMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXAtomicOperatorGidTypeTag, len(manager.CXAtomicOperatorMngObjects), manager.CXAtomicOperatorMngLive, manager.CXAtomicOperatorMngGenerations)
 	}
 	return &manager.CXAtomicOperatorMngObjects[index]
 }

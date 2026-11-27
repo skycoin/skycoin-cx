@@ -23,13 +23,9 @@ type CXArgumentDebugMng struct {
 }
 
 // CXArgumentDebugMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-242: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXArgumentDebugMng) CXArgumentDebugMngInit(capacity int, growable bool) {
-	if manager.CXArgumentDebugMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentDebugMngInit on a manager holding %d objects", manager.CXArgumentDebugMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentDebugMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXArgumentDebugMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXArgumentDebugGidTypeTag, manager.CXArgumentDebugMngLen, capacity)
 	}
 	*manager = CXArgumentDebugMng{
 		CXArgumentDebugMngObjects:     make([]CXArgumentDebug, capacity),
@@ -93,16 +89,11 @@ func (manager *CXArgumentDebugMng) CXArgumentDebugRelease(gid CXArgumentDebugGid
 
 // CXArgumentDebugGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-// VIOLATION STRHOT-002: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXArgumentDebugMng) CXArgumentDebugGet(gid CXArgumentDebugGid) *CXArgumentDebug {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXArgumentDebugGidTypeTag || uint64(index) >= uint64(len(manager.CXArgumentDebugMngObjects)) ||
 		!manager.CXArgumentDebugMngLive[index] || manager.CXArgumentDebugMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXArgumentDebugGidTypeTag, len(manager.CXArgumentDebugMngObjects))
-		if !manager.CXArgumentDebugMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentDebugGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXArgumentDebugGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXArgumentDebugMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXArgumentDebugGidTypeTag, len(manager.CXArgumentDebugMngObjects), manager.CXArgumentDebugMngLive, manager.CXArgumentDebugMngGenerations)
 	}
 	return &manager.CXArgumentDebugMngObjects[index]
 }

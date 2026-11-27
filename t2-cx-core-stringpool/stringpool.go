@@ -49,7 +49,7 @@ func (pool *StringPool) StringPoolInit(slotCap int, arenaCap int) {
 // VIOLATION STRHOT-277: B, name text for compiler code run by an opcode, #412.
 func (pool *StringPool) StringPoolIntern(bytes []byte) StringGid {
 	if pool.StringPoolFrozen {
-		assert.PreconditionTrue(false, fmt.Sprintf("StringPoolIntern of %q on a frozen pool", string(bytes)))
+		stringPoolInternFrozenReport(bytes)
 	}
 	if len(bytes) == 0 {
 		return StringGidNil
@@ -59,7 +59,7 @@ func (pool *StringPool) StringPoolIntern(bytes []byte) StringGid {
 	}
 	slot := len(pool.StringPoolOffsets)
 	if uint64(slot) >= objmodel.GidCapMax || uint64(len(pool.StringPoolArena))+uint64(len(bytes)) > uint64(^uint32(0)) {
-		assert.InvariantTrue(false, fmt.Sprintf("StringPool full at %d strings and %d bytes", slot, len(pool.StringPoolArena)))
+		stringPoolFullReport(slot, len(pool.StringPoolArena))
 	}
 	offset := len(pool.StringPoolArena)
 	pool.StringPoolArena = append(pool.StringPoolArena, bytes...)
@@ -101,15 +101,13 @@ func (pool *StringPool) StringPoolFreeze() {
 
 // StringPoolBytes returns a view into the arena of the string gid names. The
 // caller must not write to it. StringGidNil gives an empty slice.
-// VIOLATION STRHOT-274: E, error or assert text, built on a failure branch only, #412.
 func (pool *StringPool) StringPoolBytes(gid StringGid) []byte {
 	if gid == StringGidNil {
 		return nil
 	}
 	slot := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != StringGidTypeTag || objmodel.GidGeneration(int64(gid)) != objmodel.GidGenerationFirst || uint64(slot) >= uint64(len(pool.StringPoolOffsets)) {
-		objmodel.GidAssertFailure(int64(gid), StringGidTypeTag, len(pool.StringPoolOffsets))
-		assert.PreconditionTrue(false, fmt.Sprintf("String Gid %#x has generation %#x, want %#x", int64(gid), objmodel.GidGeneration(int64(gid)), objmodel.GidGenerationFirst))
+		objmodel.GidFirstGenerationFailureReport(int64(gid), StringGidTypeTag, len(pool.StringPoolOffsets))
 	}
 	offset := pool.StringPoolOffsets[slot]
 	return pool.StringPoolArena[offset : offset+pool.StringPoolLengths[slot] : offset+pool.StringPoolLengths[slot]]
@@ -136,4 +134,22 @@ func (pool *StringPool) StringPoolText(gid StringGid) string {
 		return ""
 	}
 	return unsafe.String(&bytes[0], len(bytes))
+}
+
+// stringPoolInternFrozenReport asserts the StringPoolIntern of text on a
+// frozen pool.
+// STRHOT REPORTER: builds the assert text from the bytes, #412.
+//
+//go:noinline
+func stringPoolInternFrozenReport(text []byte) {
+	assert.PreconditionTrue(false, fmt.Sprintf("StringPoolIntern of %q on a frozen pool", string(text)))
+}
+
+// stringPoolFullReport asserts a pool that holds slots strings in an arena
+// of arenaLength bytes and has no room for one more.
+// STRHOT REPORTER: builds the assert text from the integers, #412.
+//
+//go:noinline
+func stringPoolFullReport(slots int, arenaLength int) {
+	assert.InvariantTrue(false, fmt.Sprintf("StringPool full at %d strings and %d bytes", slots, arenaLength))
 }

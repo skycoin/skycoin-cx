@@ -23,13 +23,9 @@ type CXLineMng struct {
 }
 
 // CXLineMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-250: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXLineMng) CXLineMngInit(capacity int, growable bool) {
-	if manager.CXLineMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXLineMngInit on a manager holding %d objects", manager.CXLineMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXLineMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXLineMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXLineGidTypeTag, manager.CXLineMngLen, capacity)
 	}
 	*manager = CXLineMng{
 		CXLineMngObjects:     make([]CXLine, capacity),
@@ -93,16 +89,11 @@ func (manager *CXLineMng) CXLineRelease(gid CXLineGid) {
 
 // CXLineGet returns a borrowed pointer to the object. It is stale after the
 // next grow boundary or a Release of gid.
-// VIOLATION STRHOT-004: E, the assert text of a bad Gid, built only when the check fails, #412.
 func (manager *CXLineMng) CXLineGet(gid CXLineGid) *CXLine {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXLineGidTypeTag || uint64(index) >= uint64(len(manager.CXLineMngObjects)) ||
 		!manager.CXLineMngLive[index] || manager.CXLineMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXLineGidTypeTag, len(manager.CXLineMngObjects))
-		if !manager.CXLineMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXLineGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXLineGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXLineMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXLineGidTypeTag, len(manager.CXLineMngObjects), manager.CXLineMngLive, manager.CXLineMngGenerations)
 	}
 	return &manager.CXLineMngObjects[index]
 }

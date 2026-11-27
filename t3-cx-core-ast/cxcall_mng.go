@@ -23,13 +23,9 @@ type CXCallMng struct {
 }
 
 // CXCallMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-247: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXCallMng) CXCallMngInit(capacity int, growable bool) {
-	if manager.CXCallMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXCallMngInit on a manager holding %d objects", manager.CXCallMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXCallMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXCallMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXCallGidTypeTag, manager.CXCallMngLen, capacity)
 	}
 	*manager = CXCallMng{
 		CXCallMngObjects:     make([]CXCall, capacity),
@@ -97,11 +93,7 @@ func (manager *CXCallMng) CXCallGet(gid CXCallGid) *CXCall {
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXCallGidTypeTag || uint64(index) >= uint64(len(manager.CXCallMngObjects)) ||
 		!manager.CXCallMngLive[index] || manager.CXCallMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXCallGidTypeTag, len(manager.CXCallMngObjects))
-		if !manager.CXCallMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXCallGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXCallGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXCallMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXCallGidTypeTag, len(manager.CXCallMngObjects), manager.CXCallMngLive, manager.CXCallMngGenerations)
 	}
 	return &manager.CXCallMngObjects[index]
 }

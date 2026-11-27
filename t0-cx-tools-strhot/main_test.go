@@ -40,6 +40,21 @@ func line(b []byte) {
 	_ = string(b)
 	_ = b[0]
 }
+
+// STRHOT REPORTER: test.
+func reported(n int) {
+	_ = fmt.Sprint(n)
+	panic("constant")
+}
+
+// STRHOT REPORTER: test.
+func reportedText(s string) {
+	_ = s + "x"
+}
+
+func reportedCaller(n int) {
+	reported(n)
+}
 `
 
 func testFunctions(t *testing.T) map[string]*function {
@@ -95,6 +110,7 @@ func TestReport(t *testing.T) {
 		"x.go:9: plain: concat on the run path without a STRHOT code",
 		`x.go:27: STRHOT-002 says class "E", strhot-codes.txt O`,
 		"STRHOT-003 has no site on the run path",
+		"x.reportedText: a STRHOT reporter takes a string parameter",
 	} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("report output lacks %q:\n%s", want, out.String())
@@ -112,5 +128,18 @@ func TestBuildTagsCxfx(t *testing.T) {
 	codesCxfxOpen(codes)
 	if codes["STRHOT-001"].cxfx {
 		t.Error("a cxfx code stayed cxfx in the cxfx build")
+	}
+}
+
+func TestReporterNotWalked(t *testing.T) {
+	functions := testFunctions(t)
+	functions["x.reportedCaller"].opcodeGoFunction = true
+	for _, fn := range reachable(functions) {
+		if fn.name == "x.reported" {
+			t.Error("the walk entered the reporter x.reported")
+		}
+	}
+	if problem := functions["x.reported"].reporterProblem; problem != "" {
+		t.Errorf("x.reported breaks the reporter rule: %s", problem)
 	}
 }

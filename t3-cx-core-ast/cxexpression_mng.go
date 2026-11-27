@@ -23,13 +23,9 @@ type CXExpressionMng struct {
 }
 
 // CXExpressionMngInit sets the Cap and whether the grow boundary may grow it.
-// VIOLATION STRHOT-248: E, the assert text of a bad Init, built only when it fails, #412.
 func (manager *CXExpressionMng) CXExpressionMngInit(capacity int, growable bool) {
-	if manager.CXExpressionMngLen != 0 {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXExpressionMngInit on a manager holding %d objects", manager.CXExpressionMngLen))
-	}
-	if capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
-		assert.PreconditionTrue(false, fmt.Sprintf("CXExpressionMngInit capacity %d outside 0 to %d", capacity, objmodel.GidCapMax))
+	if manager.CXExpressionMngLen != 0 || capacity < 0 || uint64(capacity) > objmodel.GidCapMax {
+		objmodel.GidMngInitFailureReport(CXExpressionGidTypeTag, manager.CXExpressionMngLen, capacity)
 	}
 	*manager = CXExpressionMng{
 		CXExpressionMngObjects:     make([]CXExpression, capacity),
@@ -97,11 +93,7 @@ func (manager *CXExpressionMng) CXExpressionGet(gid CXExpressionGid) *CXExpressi
 	index := objmodel.GidIndex(int64(gid))
 	if objmodel.GidTypeTag(int64(gid)) != CXExpressionGidTypeTag || uint64(index) >= uint64(len(manager.CXExpressionMngObjects)) ||
 		!manager.CXExpressionMngLive[index] || manager.CXExpressionMngGenerations[index] != objmodel.GidGeneration(int64(gid)) {
-		objmodel.GidAssertFailure(int64(gid), CXExpressionGidTypeTag, len(manager.CXExpressionMngObjects))
-		if !manager.CXExpressionMngLive[index] {
-			assert.PreconditionTrue(false, fmt.Sprintf("CXExpressionGet of slot %d, which is not live, a stale Gid %#x", index, int64(gid)))
-		}
-		assert.PreconditionTrue(false, fmt.Sprintf("CXExpressionGet of a stale Gid %#x, slot %d is at generation %d", int64(gid), index, manager.CXExpressionMngGenerations[index]))
+		objmodel.GidGetFailureReport(int64(gid), CXExpressionGidTypeTag, len(manager.CXExpressionMngObjects), manager.CXExpressionMngLive, manager.CXExpressionMngGenerations)
 	}
 	return &manager.CXExpressionMngObjects[index]
 }
