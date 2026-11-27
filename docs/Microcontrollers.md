@@ -69,7 +69,31 @@ go test -count=1 -run '^TestExecutionRecords$' ./t11-cx-command-cx
 With TinyGo 0.45.0-dev of the 0magnet fork and `-stack-size=16K`, all 236
 records of the image-core form pass on each of the five targets. wasip1
 needs `wasm-opt` (`WASMOPT`). The Cortex-M3 build is 80 KB of flash and
-6 KB of static RAM. Nothing has run on a real board yet.
+6 KB of static RAM.
+
+### On a board
+
+`make flash-mcu MCU_TARGET=<target> MCU_PORT=<port>` builds the image of
+MCU_PROGRAM into the runner with the marker lines and flashes it with
+`tinygo flash`. TinyGo finds the port when MCU_PORT is empty.
+
+```
+make flash-mcu MCU_TARGET=xiao-esp32c6 MCU_PORT=/dev/ttyACM0
+```
+
+On an ESP32-C6 board, flashed and read over the USB-Serial-JTAG port of the
+chip with TinyGo 0.44.0-dev of the 0magnet fork and `-stack-size=16K`, 196
+of the 236 records of the image-core form ran and all passed. The other 40
+were not run. The runner is 104 to 123 KB of flash and 6 KB of static RAM,
+and each record but one finishes within a few milliseconds.
+
+* The program runs once at reset, and the USB-Serial-JTAG port drops what
+  the chip writes while no host reads it. Open the port first and then reset
+  the chip, by its button or by pulsing RTS with DTR low.
+* The ROM prints `SHA-256 comparison failed` for a TinyGo image on the C6
+  and boots it anyway.
+* `-serial=uart` runs UART0 at half the baud rate with a TinyGo before
+  commit 64056730, which selects the 80 MHz UART clock on the C6.
 
 ## The LLVM target with TinyGo
 
