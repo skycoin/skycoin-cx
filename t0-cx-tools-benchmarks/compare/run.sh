@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Runs every benchmark in cx (old loop, vm and native through the LLVM
-# target), Go, Python 3 and Bash, pinned
+# target), Go, Lua, Python 3 and Bash, pinned
 # to one core. It prints the median of RUNS runs, the same less the median
 # start up time of an empty program in that language (net), the CX
 # operations per net millisecond, and the net time relative to Go.
 # A run that prints another hash or no pass line is listed as wrong. A
-# benchmark with no Python or Bash version skips that language.
+# benchmark with no Python or Bash version skips that language. Lua is
+# skipped when there is no LUA binary, which must be Lua 5.4 or later.
 #
 # CX is the cx binary and CXOPCOUNT one built with -tags cxopcount. The Go
 # versions are the t0-cx-tools-benchmarks command. Bash runs the smaller bash
@@ -18,8 +19,12 @@ CPU=${CPU:-2}
 CX=${CX:-../../bin/cx}
 CXOPCOUNT=${CXOPCOUNT:-../../bin/cx-opcount}
 BENCHES=${BENCHES:-count fib array struct memtest primes ackermann digitalroot factorialiter factorialrec structs structserialize}
-LANGS=${LANGS:-cx-old cx-vm cx-native go python bash}
+LANGS=${LANGS:-cx-old cx-vm cx-native go lua python bash}
 PYTHON=${PYTHON:-python3}
+LUA=${LUA:-lua}
+if [[ " $LANGS " == *" lua "* ]] && ! command -v "$LUA" >/dev/null; then
+	LANGS=${LANGS/lua/}
+fi
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -40,6 +45,7 @@ expected() { awk -v b="$1" -v s="$2" '$1 == b && $2 == s { print $3 }' expected.
 # present tells whether a benchmark has a version in a language.
 present() {
 	case $2 in
+	lua) [[ -f lua/$1.lua ]] ;;
 	python) [[ -f python/$1.py ]] ;;
 	bash) [[ -f bash/$1.sh ]] ;;
 	*) true ;;
@@ -52,6 +58,7 @@ command_of() {
 	cx-vm) echo "$CX --executor=vm cx/$1.cx" ;;
 	cx-native) echo "$work/$1-native" ;;
 	go) echo "$work/benchmarks $1" ;;
+	lua) echo "$LUA lua/$1.lua" ;;
 	python) echo "$PYTHON -I python/$1.py" ;;
 	bash) echo "bash bash/$1.sh" ;;
 	esac
@@ -64,6 +71,7 @@ empty_of() {
 	cx-vm) echo "$CX --executor=vm $work/empty.cx" ;;
 	cx-native) echo "$work/empty-native" ;;
 	go) echo "$work/benchmarks" ;;
+	lua) echo "$LUA -v" ;;
 	python) echo "$PYTHON -I -c pass" ;;
 	bash) echo "bash -c :" ;;
 	esac

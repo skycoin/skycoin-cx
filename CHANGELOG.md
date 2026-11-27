@@ -81,6 +81,7 @@
 
 #### Added
 
+- Lua versions of the twelve `t0-cx-tools-benchmarks/compare` programs in `compare/lua`, for Lua 5.4 and later. They print the hashes of `compare/expected.txt`, `TestCompareLua` checks them when a Lua 5.4 or later is on PATH, the ubuntu check jobs install `lua5.4`, and `compare/run.sh` times them in a `lua` column
 - `cx build --target=llvm` links with TinyGo when there is no clang but a `tinygo`, or with `--llvm-linker=tinygo`, and `--llvm-tinygo-target` cross compiles for a TinyGo target such as `pico`, with its C library, startup code and linker script. The C runtime prints numbers without printf, which the C library of TinyGo cannot format (decision D131)
 - `cx build --target=image` writes the image vm runs to a file, and `t4-cx-core-image` runs it on vm with no parser, compiler or AST, so it builds with TinyGo for a microcontroller. `make build-mcu` and `make run-mcu` embed an image in it for a TinyGo target and run it in QEMU or wasmtime, and the new `image-core` form of the execution records checks it (decision D129). See docs/Microcontrollers.md
 - `make build-tinygo` and `make build-wasm-tinygo` build cx with TinyGo, an alternative to the Go builds, which stay the default. A TinyGo build checks sandbox paths in Go, as TinyGo has no `os.Root`, and hashes with a portable BLAKE3 that a Go test checks against `lukechampine.com/blake3` (decisions D130 and D132). `CX_EXECUTION_RECORDS_CX` runs the execution records with another cx, and a TinyGo cx passes all of them. See docs/Microcontrollers.md

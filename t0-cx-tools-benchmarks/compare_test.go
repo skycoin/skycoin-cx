@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"math/big"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -248,5 +251,49 @@ func BenchmarkCompare(b *testing.B) {
 				program()
 			}
 		})
+	}
+}
+
+// compareLuaFind returns a Lua 5.4 or later interpreter on PATH, or "" when
+// there is none. The Lua versions need its 64 bit integers.
+func compareLuaFind() string {
+	for _, name := range []string{"lua5.5", "lua5.4", "lua"} {
+		path, err := exec.LookPath(name)
+		if err != nil {
+			continue
+		}
+		version, err := exec.Command(path, "-e", "io.write(_VERSION)").Output()
+		if err != nil {
+			continue
+		}
+		var major, minor int
+		if _, err := fmt.Sscanf(string(version), "Lua %d.%d", &major, &minor); err == nil && (major > 5 || major == 5 && minor >= 4) {
+			return path
+		}
+	}
+	return ""
+}
+
+// TestCompareLua runs every compare/lua program and checks its output
+// against the full line of compare/expected.txt. It skips without Lua 5.4.
+func TestCompareLua(t *testing.T) {
+	if testing.Short() {
+		t.Skip("runs every benchmark at full scale")
+	}
+	lua := compareLuaFind()
+	if lua == "" {
+		t.Skip("no Lua 5.4 or later on PATH")
+	}
+	hashes := compareExpectedRead(t)
+	for name := range comparePrograms {
+		output, err := exec.Command(lua, filepath.Join("compare", "lua", name+".lua")).Output()
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		want := fmt.Sprintf("%d\n%s pass\n", hashes[[2]string{name, "full"}], name)
+		if got := strings.ReplaceAll(string(output), "\r\n", "\n"); got != want {
+			t.Errorf("%s: printed %q, want %q", name, got, want)
+		}
 	}
 }

@@ -3,9 +3,11 @@
 `compare/` holds twelve long benchmarks. Each has a CX version in
 `compare/cx/` and a pure Go version in this directory, the command
 `t0-cx-tools-benchmarks`, which runs one benchmark by name. The first six
-also have Python 3 and Bash versions. Every version runs the same algorithm
-at the same size, folds every result into a 64 bit FNV-1a hash, one 64 bit
-word per step, prints it and prints `pass` when the results match the math.
+also have Python 3 and Bash versions. All twelve have a Lua version in
+`compare/lua/`, which needs Lua 5.4 or later for its 64 bit integers.
+Every version runs the same algorithm at the same size, folds every result
+into a 64 bit FNV-1a hash, one 64 bit word per step, prints it and prints
+`pass` when the results match the math.
 
 - `primes` counts the primes below 2,000,000 with a sieve (148933), the
   primes below 300,000 with deterministic Miller-Rabin, bases 2, 7 and 61
@@ -29,10 +31,11 @@ word per step, prints it and prints `pass` when the results match the math.
 Bash runs smaller sizes, the `bash` lines of `compare/expected.txt`.
 `TestCompareExpected` derives every hash there from closed forms, math/big
 and independent tests. `TestComparePrograms` runs the Go versions against
-it. `make bench-compare` builds cx and a cx with `-tags cxopcount`, which
+it, and `TestCompareLua` the Lua versions when a Lua 5.4 or later is on
+PATH. `make bench-compare` builds cx and a cx with `-tags cxopcount`, which
 prints the operations each loop ran, and runs `compare/run.sh`. It needs
-python3 and taskset, and clang for the native column of
-`cx build --target=llvm`.
+python3 and taskset, Lua 5.4 or later (`LUA=lua5.4`) for the Lua column,
+and clang for the native column of `cx build --target=llvm`.
 
 `../t0-cx-tools-benchmarkserialize` is the 2021 Go program that serializes
 the same structs with the encoder of Skycoin.
