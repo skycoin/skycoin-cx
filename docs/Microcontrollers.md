@@ -82,10 +82,10 @@ make flash-mcu MCU_TARGET=xiao-esp32c6 MCU_PORT=/dev/ttyACM0
 ```
 
 On an ESP32-C6 board, flashed and read over the USB-Serial-JTAG port of the
-chip with TinyGo 0.44.0-dev of the 0magnet fork and `-stack-size=16K`, 196
-of the 236 records of the image-core form ran and all passed. The other 40
-were not run. The runner is 104 to 123 KB of flash and 6 KB of static RAM,
-and each record but one finishes within a few milliseconds.
+chip with TinyGo 0.44.0-dev of the 0magnet fork and `-stack-size=16K`, all
+236 records of the image-core form pass. The runner is 104 to 123 KB of
+flash and 6 KB of static RAM, and each record but one finishes within a
+few milliseconds.
 
 * The program runs once at reset, and the USB-Serial-JTAG port drops what
   the chip writes while no host reads it. Open the port first and then reset
