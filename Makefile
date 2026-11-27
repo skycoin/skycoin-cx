@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo build-image-core build-mcu run-mcu flash-mcu release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-parser check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo build-image-core build-mcu run-mcu flash-mcu release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-386 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-parser check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -136,6 +136,13 @@ test-ptr64: ## Run the stable CX program tests with a ptr64 build
 	go build -o ./bin/cxtest ./t1-cx-tools-programtest
 	./bin/cxtest --cxpath=$(CURDIR)/bin/cx64$(EXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
 
+test-386: ## Run the stable CX program tests with a GOARCH=386 build, where the Go int is 32 bits as on TinyGo js/wasm and microcontrollers. Runs on linux/amd64 only, which runs 386 binaries natively
+	@case "$$(go env GOHOSTOS)/$$(go env GOHOSTARCH)" in linux/amd64) ;; *) echo "test-386: skipped on $$(go env GOHOSTOS)/$$(go env GOHOSTARCH)"; exit 0;; esac; \
+	set -e; \
+	GOARCH=386 go build -tags="$(TAGS)" -o ./bin/cx386$(EXE) ./t11-cx-command-cx; \
+	go build -o ./bin/cxtest ./t1-cx-tools-programtest; \
+	./bin/cxtest --cxpath=$(CURDIR)/bin/cx386$(EXE) --wdir=./tests --log=fail,stderr --disable-tests=gui,issue
+
 test-go: ## Run the Go unit tests
 	go test ./...
 
@@ -204,7 +211,7 @@ check-opcodes: ## Check that the opcode and library tables and switches are up t
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-cx-core-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-cx-core-ast
 
-check: check-tiers llvm-clang check-inits check-ifaces check-names check-parser check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 ## tier, init, interface, naming, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default and ptr64)
+check: check-tiers llvm-clang check-inits check-ifaces check-names check-parser check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 test-386 ## tier, init, interface, naming, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default, ptr64 and 386)
 
 bench-compare: ## Time the t0-cx-tools-benchmarks/compare programs in cx, Go, Python 3 and Bash (needs python3, taskset, and clang for cx native)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx-command-cx

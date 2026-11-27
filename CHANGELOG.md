@@ -176,6 +176,7 @@
 
 #### Fixed
 
+- `return` works where the Go int is 32 bits, as on TinyGo js/wasm, microcontrollers and GOARCH=386. Its jump took MaxInt32 lines, so line + lines + 1 wrapped to a negative line, and the lowering stopped at `lower: jump to expression -2147483643` while the old loop indexed a negative expression. It takes `ast.ThenLinesReturn`, 1 << 30, instead. The new `make test-386`, part of `make check`, runs the program tests with a 386 build on linux/amd64
 - The grammars `cxpartialparsing.y` and `parsingcompletor.y` call the renamed functions again, so `make build-parser` writes the committed parsers. The new `make check-parser`, part of `make check`, fails when it would not (#569)
 - cx no longer panics when CXPATH is unset and the user lookup fails, as on js/wasm. It takes the home directory from $HOME, and without one it says so and runs on
 - A program that uses a library opcode its run does not enable is refused by `execute.RunCompiled` and `lower.Program` as well as by `core.ExecutorRun`, through the new `CXProgram.CXProgramOperationRefused`, so an embedder with its own executor cannot run it (D119). `lower.Program` reports it as `ReasonOperationRefused` and lowers nothing

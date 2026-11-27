@@ -19,3 +19,7 @@ type CXAtomicOperator struct {
 	ThenLines int
 	ElseLines int
 }
+
+// ThenLinesReturn is the ThenLines of a return, a jump past the last expression.
+// Line + ThenLinesReturn + 1 must fit a 32-bit int, so it is not MaxInt32.
+const ThenLinesReturn = 1 << 30

@@ -216,6 +216,8 @@ func TestRunAllocs(t *testing.T) {
 	initProgram()
 	for _, p := range append(runBenchPrograms(t), runComparePrograms(t)...) {
 		t.Run(p.name, func(t *testing.T) {
+			// With GC off, the programs of earlier subtests fill a 32-bit address space.
+			runtime.GC()
 			discardStdout(t)
 			var compiled []*ast.CXProgram
 			for i := 0; i <= runs; i++ {

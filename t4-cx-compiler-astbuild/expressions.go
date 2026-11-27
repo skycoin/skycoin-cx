@@ -1173,7 +1173,7 @@ func ReturnExpressionsJmpAdd(prgrm *ast.CXProgram, exprs ReturnExpressions) []as
 
 	// simulating a label so it gets executed without evaluating a predicate
 	expression.Label = temporaryVariableNameGenerate(prgrm, opcodetable.LabelPrefix)
-	expression.ThenLines = valuetypes.MaxInt32
+	expression.ThenLines = ast.ThenLinesReturn
 	expression.Package = ast.CXPackageIndex(pkg.Index)
 
 	retExprs = append(retExprs, *exprCXLine, *expr)
