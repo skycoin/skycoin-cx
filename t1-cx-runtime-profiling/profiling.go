@@ -62,12 +62,7 @@ func CPUProfileStartFile(path string, profRate int) (stop func() error, err erro
 // VIOLATION STRHOT-016: B, hands a path or text to Go or the OS, #412.
 // VIOLATION VMALLOC-018: a system library call allocates in Go and the OS, #407.
 func CPUProfileStartOnFile(f *os.File, profRate int) (stop func() error, err error) {
-	// test against default value to avoid warning
-	if profRate != 100 {
-		profilingCPURateSet(profRate)
-	}
-
-	if err := pprof.StartCPUProfile(f); err != nil {
+	if err := profilingCPUStartAtRate(f, profRate); err != nil {
 		f.Close()
 		return nil, fmt.Errorf("start CPU profile: %w", err)
 	}
