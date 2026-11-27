@@ -22,7 +22,10 @@ gdb or lldb shows CX names.
 
 Without a clang, or with `--llvm-linker=tinygo`, cx build links with
 TinyGo instead, and `--llvm-tinygo-target=pico` cross compiles for a TinyGo
-target, see [Microcontrollers.md](Microcontrollers.md#the-llvm-target-with-tinygo).
+target, see [Microcontrollers.md](Microcontrollers.md#the-llvm-target-with-tinygo). TinyGo builds
+with `-no-debug` unless `--llvm-debug` is given, since its DWARF made a wasip1
+fib 1.34 MB instead of 74 KB and did not change the speed. `CX_TINYGO_FLAGS`
+adds flags after it, so `CX_TINYGO_FLAGS=-no-debug=false` keeps the DWARF.
 
 ## What it compiles
 

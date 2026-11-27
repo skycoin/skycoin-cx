@@ -107,7 +107,8 @@ linker script of the target.
 
 `--llvm-tinygo-target=<target>` cross compiles for a TinyGo target, such as
 `pico` or `cortex-m-qemu`. `CX_TINYGO_FLAGS` adds flags to `tinygo build`, such
-as `-serial=uart`. The triple, cpu and features come from
+as `-serial=uart`. cx passes `-no-debug` before them unless `--llvm-debug`
+is given. The triple, cpu and features come from
 `tinygo info -json`, and the extension of `-o` picks the file format, as
 for `tinygo build`: `.elf`, `.hex`, `.bin` or `.uf2`.
 

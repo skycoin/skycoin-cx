@@ -325,7 +325,8 @@ and passes its own command line arguments to it as os.Args.
                     emitted, inline or as a call into the runtime.
 --llvm-debug        With --target=llvm, add DWARF debug information: the
                     source line of each instruction and the name and type
-                    of each variable kept in a register.
+                    of each variable kept in a register. Without it,
+                    tinygo builds with -no-debug.
 --llvm-linker name  With --target=llvm, clang or tinygo. tinygo builds the
                     executable with TinyGo, the default when there is no
                     clang but a tinygo (or CX_TINYGO).

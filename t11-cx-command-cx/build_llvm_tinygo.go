@@ -203,6 +203,11 @@ func buildLlvmTinygoNative(modulePath string, output string, target string, debu
 	if target != "" {
 		args = append(args, "-target="+target)
 	}
+	// TinyGo keeps DWARF by default, which made fib for wasip1 1.34 MB instead
+	// of 74 KB. CX_TINYGO_FLAGS comes after it, so -no-debug=false still wins.
+	if !debug {
+		args = append(args, "-no-debug")
+	}
 	args = append(args, strings.Fields(os.Getenv(buildLlvmTinygoFlagsEnv))...)
 	if err := buildLlvmTinygoRun(tinygo, directory, append(args, ".")); err != nil {
 		return buildFail(err.Error())
