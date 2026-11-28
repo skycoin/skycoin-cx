@@ -33,6 +33,7 @@ var dispatchGroups = []dispatchGroup{
 	{opcodetable.OpcodeGroupReflect, "t4-cx-library-reflectopcodes/reflect_dispatch", "reflectopcodes", "ReflectOpcodeDispatch", "", "", "", ""},
 	{opcodetable.OpcodeGroupSerialize, "t4-cx-library-serializeopcodes/serialize_dispatch", "serializeopcodes", "SerializeOpcodeDispatch", "", "", "", ""},
 	{opcodetable.OpcodeGroupMeta, "t4-cx-library-metaopcodes/meta_dispatch", "metaopcodes", "MetaOpcodeDispatch", "", "", "", ""},
+	{opcodetable.OpcodeGroupCxir, "t4-cx-library-cxiropcodes/cxir_dispatch", "cxiropcodes", "CxirOpcodeDispatch", "", "", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.

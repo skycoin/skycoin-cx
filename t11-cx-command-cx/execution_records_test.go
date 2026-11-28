@@ -963,6 +963,8 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 	buildArgs = append(buildArgs, "-o", output)
 	build := executionRecordProcess(harness.t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 	switch {
+	case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte(buildLlvmCxirRefusal)):
+		return executionRecordFormOutcome{note: "uses the cxir library, which has no native form"}
 	case build.exitCode != valuetypes.CXSuccess:
 		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=llvm failed"}
 	}

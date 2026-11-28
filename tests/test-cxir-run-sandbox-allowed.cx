@@ -1,0 +1,36 @@
+package main
+
+import "sys/os"
+import "sys/cxir"
+
+// The image of test-cxir-run-sandbox.cx runs when the program enables the
+// terminal library, which this program also calls, and is refused once
+// its library opcode has no call frame before it (decision D153).
+
+func nameOf(text [24]ui8, length i32) (name i64) {
+	name = cxir.CxStringPoolTextAppend(text, length)
+}
+
+func opcodeOf(text [24]ui8, length i32) (opcode ui16) {
+	opcode = i32.ui16(cxir.CxOpcodeByNameGet(nameOf(text, length)))
+}
+
+func main() {
+	var image i64 = cxir.CxProgramImageCreate()
+	var function i32 = cxir.CxProgramFunctionAppend(image, nameOf([24]ui8{109UB, 97UB, 105UB, 110UB}, 4), 4)
+	var status i32 = cxir.CxProgramImageEntryMainFunctionSet(image, function)
+	var in cxir.CxInstruction
+	in.Opcode = opcodeOf([24]ui8{67UB, 97UB, 108UB, 108UB, 70UB, 114UB, 97UB, 109UB, 101UB}, 9)
+	in.N = 4U
+	var pc i32 = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	in.Opcode = opcodeOf([24]ui8{84UB, 101UB, 114UB, 109UB, 105UB, 110UB, 97UB, 108UB, 65UB, 114UB, 103UB, 67UB, 111UB, 117UB, 110UB, 116UB}, 16)
+	in.N = 0U
+	pc = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	var arg cxir.CxInstruction = in
+	in.Opcode = opcodeOf([24]ui8{82UB, 101UB, 116UB, 117UB, 114UB, 110UB}, 6)
+	pc = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	printf("run an image that counts the arguments %d\n", cxir.CxProgramImageRun(image))
+	status = cxir.CxProgramFunctionInstructionWrite(image, function, 0, arg)
+	printf("without its call frame %d\n", cxir.CxProgramImageRun(image))
+	printf("the program has %d arguments\n", os.ArgCount())
+}

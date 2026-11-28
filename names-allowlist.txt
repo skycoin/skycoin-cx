@@ -140,6 +140,18 @@ t2-cx-runtime-ir/ir.go|field|Image|ImageData
 t2-cx-runtime-ir/ir.go|field|Image|ImageDataStart
 t2-cx-runtime-ir/ir.go|function||ImageDataEnd
 t3-cx-core-ast/affordance.go|enum_value||AffordanceMemoryData
+
+# The sys/cxir functions that read and write the data segment of an image,
+# named in the proposal of decision D153.
+t1-cx-core-opcodetable/opcodes.go|constant||OpcodeCxirCxProgramImageDataRead
+t1-cx-core-opcodetable/opcodes.go|constant||OpcodeCxirCxProgramImageDataStartGet
+t1-cx-core-opcodetable/opcodes.go|constant||OpcodeCxirCxProgramImageDataWrite
+t2-cx-runtime-ir/ir.go|enum_value||OpcodeCxirCxProgramImageDataRead
+t2-cx-runtime-ir/ir.go|enum_value||OpcodeCxirCxProgramImageDataStartGet
+t2-cx-runtime-ir/ir.go|enum_value||OpcodeCxirCxProgramImageDataWrite
+t4-cx-library-cxiropcodes/op_cxir.go|function||OpCxProgramImageDataRead
+t4-cx-library-cxiropcodes/op_cxir.go|function||OpCxProgramImageDataStartGet
+t4-cx-library-cxiropcodes/op_cxir.go|function||OpCxProgramImageDataWrite
 t3-cx-core-ast/ast_cxprogram.go|struct||DataSegmentStruct
 t3-cx-core-ast/cxprogram_def.go|field|CXProgram|Data
 t3-cx-compiler-llvm/llvm.go|field|emitter|dataEnd

@@ -870,6 +870,40 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{920, "meta.CxPackageDefinitionFinish", 2611280003, 0, 0},
 	{921, "meta.CxPackageDefinitionNameGet", 2611280003, 0, 0},
 	{922, "meta.CxStringPoolTextAppend", 2611280003, 0, 0},
+	{923, "cxir.CxProgramImageCurrentGet", 2611280004, 0, 0},
+	{924, "cxir.CxProgramImageCreate", 2611280004, 0, 0},
+	{925, "cxir.CxProgramImageFunctionCountGet", 2611280004, 0, 0},
+	{926, "cxir.CxProgramImageEntryMainFunctionGet", 2611280004, 0, 0},
+	{927, "cxir.CxProgramImageEntryInitFunctionGet", 2611280004, 0, 0},
+	{928, "cxir.CxProgramImageStackSizeInBytesGet", 2611280004, 0, 0},
+	{929, "cxir.CxProgramImageDataStartGet", 2611280004, 0, 0},
+	{930, "cxir.CxProgramImageDataRead", 2611280004, 0, 0},
+	{931, "cxir.CxProgramImageDataWrite", 2611280004, 0, 0},
+	{932, "cxir.CxProgramImageFileEncode", 2611280004, 0, 0},
+	{933, "cxir.CxProgramImageFileDecode", 2611280004, 0, 0},
+	{934, "cxir.CxProgramImageRun", 2611280004, 0, 0},
+	{935, "cxir.CxProgramFunctionNameGet", 2611280004, 0, 0},
+	{936, "cxir.CxProgramFunctionFrameSizeInBytesGet", 2611280004, 0, 0},
+	{937, "cxir.CxProgramFunctionInputCountGet", 2611280004, 0, 0},
+	{938, "cxir.CxProgramFunctionInputSlotRead", 2611280004, 0, 0},
+	{939, "cxir.CxProgramFunctionOutputCountGet", 2611280004, 0, 0},
+	{940, "cxir.CxProgramFunctionOutputSlotRead", 2611280004, 0, 0},
+	{941, "cxir.CxProgramFunctionLocalCountGet", 2611280004, 0, 0},
+	{942, "cxir.CxProgramFunctionLocalRead", 2611280004, 0, 0},
+	{943, "cxir.CxProgramFunctionAppend", 2611280004, 0, 0},
+	{944, "cxir.CxProgramFunctionInstructionCountGet", 2611280004, 0, 0},
+	{945, "cxir.CxProgramFunctionInstructionRead", 2611280004, 0, 0},
+	{946, "cxir.CxProgramFunctionInstructionWrite", 2611280004, 0, 0},
+	{947, "cxir.CxProgramFunctionInstructionAppend", 2611280004, 0, 0},
+	{948, "cxir.CxOpcodeNameGet", 2611280004, 0, 0},
+	{949, "cxir.CxOpcodeByNameGet", 2611280004, 0, 0},
+	{950, "cxir.CxOpcodeLibraryRequiredGet", 2611280004, 0, 0},
+	{951, "cxir.CxSourceLineAtProgramCounterRead", 2611280004, 0, 0},
+	{952, "cxir.CxSourceFileNameGet", 2611280004, 0, 0},
+	{953, "cxir.CxProgramImageEntryMainFunctionSet", 2611280004, 0, 0},
+	{954, "cxir.CxProgramLocalNameGet", 2611280004, 0, 0},
+	{955, "cxir.CxStringPoolTextAppend", 2611280004, 0, 0},
+	{956, "cxir.CxStringPoolTextRead", 2611280004, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -1175,6 +1209,42 @@ const (
 	OpcodeMetaCxPackageDefinitionFinish        = 920
 	OpcodeMetaCxPackageDefinitionNameGet       = 921
 	OpcodeMetaCxStringPoolTextAppend           = 922
+
+	// The cxir library, decision D153.
+	OpcodeCxirCxProgramImageCurrentGet             = 923
+	OpcodeCxirCxProgramImageCreate                 = 924
+	OpcodeCxirCxProgramImageFunctionCountGet       = 925
+	OpcodeCxirCxProgramImageEntryMainFunctionGet   = 926
+	OpcodeCxirCxProgramImageEntryInitFunctionGet   = 927
+	OpcodeCxirCxProgramImageStackSizeInBytesGet    = 928
+	OpcodeCxirCxProgramImageDataStartGet           = 929
+	OpcodeCxirCxProgramImageDataRead               = 930
+	OpcodeCxirCxProgramImageDataWrite              = 931
+	OpcodeCxirCxProgramImageFileEncode             = 932
+	OpcodeCxirCxProgramImageFileDecode             = 933
+	OpcodeCxirCxProgramImageRun                    = 934
+	OpcodeCxirCxProgramFunctionNameGet             = 935
+	OpcodeCxirCxProgramFunctionFrameSizeInBytesGet = 936
+	OpcodeCxirCxProgramFunctionInputCountGet       = 937
+	OpcodeCxirCxProgramFunctionInputSlotRead       = 938
+	OpcodeCxirCxProgramFunctionOutputCountGet      = 939
+	OpcodeCxirCxProgramFunctionOutputSlotRead      = 940
+	OpcodeCxirCxProgramFunctionLocalCountGet       = 941
+	OpcodeCxirCxProgramFunctionLocalRead           = 942
+	OpcodeCxirCxProgramFunctionAppend              = 943
+	OpcodeCxirCxProgramFunctionInstructionCountGet = 944
+	OpcodeCxirCxProgramFunctionInstructionRead     = 945
+	OpcodeCxirCxProgramFunctionInstructionWrite    = 946
+	OpcodeCxirCxProgramFunctionInstructionAppend   = 947
+	OpcodeCxirCxOpcodeNameGet                      = 948
+	OpcodeCxirCxOpcodeByNameGet                    = 949
+	OpcodeCxirCxOpcodeLibraryRequiredGet           = 950
+	OpcodeCxirCxSourceLineAtProgramCounterRead     = 951
+	OpcodeCxirCxSourceFileNameGet                  = 952
+	OpcodeCxirCxProgramImageEntryMainFunctionSet   = 953
+	OpcodeCxirCxProgramLocalNameGet                = 954
+	OpcodeCxirCxStringPoolTextAppend               = 955
+	OpcodeCxirCxStringPoolTextRead                 = 956
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OpResize = 210

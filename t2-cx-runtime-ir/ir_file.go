@@ -19,86 +19,169 @@ const ImageFileVersion = 3
 // ImageFileEncode returns image as bytes that ImageFileDecode reads back,
 // every field little endian in declaration order.
 func ImageFileEncode(image *Image) []byte {
-	file := []byte(ImageFileMagic)
-	file = binary.LittleEndian.AppendUint32(file, ImageFileVersion)
-	file = binary.LittleEndian.AppendUint32(file, uint32(OpcodeCount))
-	file = binary.LittleEndian.AppendUint32(file, InstrSize)
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(image.ImageFuncs)))
+	file := make([]byte, ImageFileEncodedSize(image))
+	ImageFileEncodeInto(file, image)
+	return file
+}
+
+// ImageFileEncodedSize returns the size of the file ImageFileEncode writes.
+func ImageFileEncodedSize(image *Image) int {
+	writer := imageFileWriter{}
+	writer.imageWrite(image)
+	return writer.imageFileWriterAt
+}
+
+// ImageFileEncodeInto writes the file of image into file, which holds at
+// least ImageFileEncodedSize bytes, and returns its size, -1 when file is
+// shorter. It allocates nothing, so sys/cxir encodes in the run (D153).
+func ImageFileEncodeInto(file []byte, image *Image) int {
+	size := ImageFileEncodedSize(image)
+	if len(file) < size {
+		return -1
+	}
+	writer := imageFileWriter{imageFileWriterBytes: file}
+	writer.imageWrite(image)
+	return size
+}
+
+// imageFileWriter writes the fields of an image file in order. Without
+// bytes it only counts them.
+type imageFileWriter struct {
+	imageFileWriterBytes []byte
+	imageFileWriterAt    int
+}
+
+func (writer *imageFileWriter) uint16Write(value uint16) {
+	if writer.imageFileWriterBytes != nil {
+		binary.LittleEndian.PutUint16(writer.imageFileWriterBytes[writer.imageFileWriterAt:], value)
+	}
+	writer.imageFileWriterAt += 2
+}
+
+func (writer *imageFileWriter) uint32Write(value uint32) {
+	if writer.imageFileWriterBytes != nil {
+		binary.LittleEndian.PutUint32(writer.imageFileWriterBytes[writer.imageFileWriterAt:], value)
+	}
+	writer.imageFileWriterAt += 4
+}
+
+func (writer *imageFileWriter) uint64Write(value uint64) {
+	if writer.imageFileWriterBytes != nil {
+		binary.LittleEndian.PutUint64(writer.imageFileWriterBytes[writer.imageFileWriterAt:], value)
+	}
+	writer.imageFileWriterAt += 8
+}
+
+func (writer *imageFileWriter) bytesWrite(bytes []byte) {
+	writer.uint32Write(uint32(len(bytes)))
+	if writer.imageFileWriterBytes != nil {
+		copy(writer.imageFileWriterBytes[writer.imageFileWriterAt:], bytes)
+	}
+	writer.imageFileWriterAt += len(bytes)
+}
+
+func (writer *imageFileWriter) stringsWrite(strs []string) {
+	writer.uint32Write(uint32(len(strs)))
+	for _, str := range strs {
+		writer.uint32Write(uint32(len(str)))
+		if writer.imageFileWriterBytes != nil {
+			copy(writer.imageFileWriterBytes[writer.imageFileWriterAt:], str)
+		}
+		writer.imageFileWriterAt += len(str)
+	}
+}
+
+func (writer *imageFileWriter) slotsWrite(slots []Slot) {
+	writer.uint32Write(uint32(len(slots)))
+	for _, slot := range slots {
+		writer.uint32Write(slot.SlotOffset)
+		writer.uint32Write(slot.SlotSize)
+	}
+}
+
+// imageFileMagicBytes is ImageFileMagic as bytes, which the run path
+// compares and writes without a string.
+var imageFileMagicBytes = [...]byte{'C', 'X', 'I', 'M', 'A', 'G', 'E', 0}
+
+// imageWrite writes every field of image.
+func (writer *imageFileWriter) imageWrite(image *Image) {
+	writer.imageWriteHead(image)
+	writer.stringsWrite(image.ImageFileNames)
+	writer.stringsWrite(image.ImageFuncNames)
+	writer.imageWriteLocals(image)
+	writer.stringsWrite(image.ImageLocalNames)
+	writer.imageWriteTail(image)
+}
+
+// imageWriteHead writes the fields before the file names. With
+// imageWriteLocals and imageWriteTail it writes every field but the name
+// tables, so ImageStore writes those from its names without a string.
+func (writer *imageFileWriter) imageWriteHead(image *Image) {
+	if writer.imageFileWriterBytes != nil {
+		copy(writer.imageFileWriterBytes, imageFileMagicBytes[:])
+	}
+	writer.imageFileWriterAt += len(imageFileMagicBytes)
+	writer.uint32Write(ImageFileVersion)
+	writer.uint32Write(uint32(OpcodeCount))
+	writer.uint32Write(InstrSize)
+	writer.uint32Write(uint32(len(image.ImageFuncs)))
 	for i := range image.ImageFuncs {
 		fn := &image.ImageFuncs[i]
-		file = binary.LittleEndian.AppendUint32(file, uint32(len(fn.FuncCode)))
-		for _, in := range fn.FuncCode {
-			file = binary.LittleEndian.AppendUint16(file, uint16(in.InstrOpcode))
-			file = binary.LittleEndian.AppendUint16(file, uint16(in.InstrMode))
+		writer.uint32Write(uint32(len(fn.FuncCode)))
+		for j := range fn.FuncCode {
+			in := &fn.FuncCode[j]
+			writer.uint16Write(uint16(in.InstrOpcode))
+			writer.uint16Write(uint16(in.InstrMode))
 			for _, operand := range [...]uint32{in.InstrA, in.InstrB, in.InstrC, in.InstrD, in.InstrN, in.InstrM, in.InstrAux} {
-				file = binary.LittleEndian.AppendUint32(file, operand)
+				writer.uint32Write(operand)
 			}
 		}
-		file = binary.LittleEndian.AppendUint32(file, fn.FuncFrameSize)
-		file = imageFileSlotsAppend(file, fn.FuncInputs)
-		file = imageFileSlotsAppend(file, fn.FuncOutputs)
+		writer.uint32Write(fn.FuncFrameSize)
+		writer.slotsWrite(fn.FuncInputs)
+		writer.slotsWrite(fn.FuncOutputs)
 		for _, value := range [...]uint32{fn.FuncLineFirst, fn.FuncLineCount, fn.FuncLocalFirst, fn.FuncLocalCount} {
-			file = binary.LittleEndian.AppendUint32(file, value)
+			writer.uint32Write(value)
 		}
 	}
-	file = imageFileBytesAppend(file, image.ImageData)
+	writer.bytesWrite(image.ImageData)
 	for _, value := range [...]uint32{image.ImageDataStart, image.ImageStackSize, image.ImageScratchSize} {
-		file = binary.LittleEndian.AppendUint32(file, value)
+		writer.uint32Write(value)
 	}
-	file = imageFileBytesAppend(file, image.ImageText)
-	file = binary.LittleEndian.AppendUint32(file, image.ImageEntryInit)
-	file = binary.LittleEndian.AppendUint32(file, image.ImageEntryMain)
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(image.ImageLines)))
+	writer.bytesWrite(image.ImageText)
+	writer.uint32Write(image.ImageEntryInit)
+	writer.uint32Write(image.ImageEntryMain)
+	writer.uint32Write(uint32(len(image.ImageLines)))
 	for _, line := range image.ImageLines {
-		file = binary.LittleEndian.AppendUint32(file, line.LinePc)
-		file = binary.LittleEndian.AppendUint32(file, line.LineFile)
-		file = binary.LittleEndian.AppendUint32(file, line.LineNumber)
+		writer.uint32Write(line.LinePc)
+		writer.uint32Write(line.LineFile)
+		writer.uint32Write(line.LineNumber)
 	}
-	file = imageFileStringsAppend(file, image.ImageFileNames)
-	file = imageFileStringsAppend(file, image.ImageFuncNames)
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(image.ImageLocals)))
+}
+
+// imageWriteLocals writes the variables, after the function names.
+func (writer *imageFileWriter) imageWriteLocals(image *Image) {
+	writer.uint32Write(uint32(len(image.ImageLocals)))
 	for _, local := range image.ImageLocals {
-		file = binary.LittleEndian.AppendUint32(file, local.LocalOffset)
-		file = binary.LittleEndian.AppendUint32(file, local.LocalSize)
-		file = binary.LittleEndian.AppendUint32(file, local.LocalName)
-		file = binary.LittleEndian.AppendUint32(file, local.LocalTypeName)
-		file = binary.LittleEndian.AppendUint32(file, uint32(int32(local.LocalType)))
+		writer.uint32Write(local.LocalOffset)
+		writer.uint32Write(local.LocalSize)
+		writer.uint32Write(local.LocalName)
+		writer.uint32Write(local.LocalTypeName)
+		writer.uint32Write(uint32(int32(local.LocalType)))
 	}
-	file = imageFileStringsAppend(file, image.ImageLocalNames)
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(image.ImageReadOnly)))
+}
+
+// imageWriteTail writes the fields after the variable names.
+func (writer *imageFileWriter) imageWriteTail(image *Image) {
+	writer.uint32Write(uint32(len(image.ImageReadOnly)))
 	for _, span := range image.ImageReadOnly {
-		file = binary.LittleEndian.AppendUint32(file, span.SpanStart)
-		file = binary.LittleEndian.AppendUint32(file, span.SpanEnd)
+		writer.uint32Write(span.SpanStart)
+		writer.uint32Write(span.SpanEnd)
 	}
-	file = binary.LittleEndian.AppendUint32(file, opcodetable.OpcodeSetWordCount)
+	writer.uint32Write(opcodetable.OpcodeSetWordCount)
 	for _, word := range image.ImageOperationsEnabled {
-		file = binary.LittleEndian.AppendUint64(file, word)
+		writer.uint64Write(word)
 	}
-	file = binary.LittleEndian.AppendUint32(file, uint32(image.ImageOutputMode))
-	return file
-}
-
-func imageFileSlotsAppend(file []byte, slots []Slot) []byte {
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(slots)))
-	for _, slot := range slots {
-		file = binary.LittleEndian.AppendUint32(file, slot.SlotOffset)
-		file = binary.LittleEndian.AppendUint32(file, slot.SlotSize)
-	}
-	return file
-}
-
-func imageFileBytesAppend(file []byte, bytes []byte) []byte {
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(bytes)))
-	return append(file, bytes...)
-}
-
-func imageFileStringsAppend(file []byte, strs []string) []byte {
-	file = binary.LittleEndian.AppendUint32(file, uint32(len(strs)))
-	for _, str := range strs {
-		file = binary.LittleEndian.AppendUint32(file, uint32(len(str)))
-		file = append(file, str...)
-	}
-	return file
+	writer.uint32Write(uint32(image.ImageOutputMode))
 }
 
 // ImageFileProblem says why ImageFileDecode refused a file.

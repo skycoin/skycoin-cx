@@ -30,6 +30,7 @@ var coreImportsAllowed = map[string]bool{
 	"t3-cx-core-ast":                 true,
 	"t3-cx-runtime-vm":               true,
 	"t4-cx-compiler-lower":           true,
+	"t4-cx-library-cxiropcodes":      true,
 	"t4-cx-library-metaopcodes":      true,
 	"t4-cx-runtime-interpreter":      true,
 	"t4-cx-runtime-opcodes":          true,

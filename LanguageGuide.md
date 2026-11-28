@@ -1,3 +1,4 @@
+| `cxir` | every function of `sys/cxir`, see [The cxir library](#the-cxir-library) |
 # Table of Contents
 
 * [Syntax](#syntax)
@@ -26,6 +27,7 @@
     * [The reflect library](#the-reflect-library)
     * [The serialize library](#the-serialize-library)
     * [The meta library](#the-meta-library)
+    * [The cxir library](#the-cxir-library)
     * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -1023,7 +1025,7 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect`, `serialize` or `meta` and does not
+A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect`, `serialize`, `meta` or `cxir` and does not
 enable it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
@@ -1063,7 +1065,7 @@ a program that reads its arguments or input, and
 
 Every function of `cipher` is its own opcode, 796 to 804, and every
 function of `net`, 805 to 819, every function of `file`, 820 to 875,
-and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, every function of `serialize`, 905 to 907, and every function of `meta`, 908 to 922 (decision D119). The compiler turns every call of `os.Run`, the one
+and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, every function of `serialize`, 905 to 907, every function of `meta`, 908 to 922, and every function of `cxir`, 923 to 956 (decision D119). The compiler turns every call of `os.Run`, the one
 function of `process`, into the opcode `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
@@ -1383,6 +1385,116 @@ func main() {
 	status = meta.CxStructDefinitionFieldAppend(t, y, meta.CxArrayTypeCreate(reflect.CxTypeOfValueGet(number), 2))
 	status = meta.CxStructDefinitionFinish(t)
 	printf("fields %d, size %d, y at %d\n", reflect.CxStructFieldCountGet(t), reflect.CxTypeSizeInBytesGet(t), reflect.CxStructFieldOffsetInBytesGet(t, 1))
+}
+```
+
+### [The cxir library](#table-of-contents)
+
+`sys/cxir` reads the image of the running program and builds, encodes,
+decodes and runs other images, for a compiler written in CX (decision
+D153). It is the system library `cxir`, off unless a run enables it with
+`--enable=cxir`. It runs on the old loop, on vm, in an image and in a
+built program, and no call allocates. A native executable holds machine
+code and no image, so `cx build --target=llvm` refuses a program that
+calls it.
+
+An image is an `i64` handle. `cxir.CxProgramImageCurrentGet` gives the
+image of the running program, which is read only: the loader checked it
+once, and a change would skip that check. On the old loop it is the image
+vm would run, and a program that does not lower has none.
+`cxir.CxProgramImageCreate` and `cxir.CxProgramImageFileDecode` give
+writable images. A function is an `i32` id and an instruction a `pc`.
+
+| function | returns |
+|---|---|
+| `cxir.CxProgramImageCurrentGet()` | `i64` the running image, 0 when there is none |
+| `cxir.CxProgramImageCreate()` | `i64` a new empty image, 0 when the store is full |
+| `cxir.CxProgramImageFunctionCountGet(image i64)` | `i32` functions |
+| `cxir.CxProgramImageEntryMainFunctionGet(image i64)` | `i32` the main function, -1 for none |
+| `cxir.CxProgramImageEntryInitFunctionGet(image i64)` | `i32` the `*init` function, -1 for none |
+| `cxir.CxProgramImageEntryMainFunctionSet(image i64, function i32)` | `i32` 0 |
+| `cxir.CxProgramImageStackSizeInBytesGet(image i64)` | `i32` stack size |
+| `cxir.CxProgramImageDataStartGet(image i64)` | `i32` address of the data segment |
+| `cxir.CxProgramImageDataRead(image i64, offset i32, buffer)` | `i32` bytes of the data segment copied from `offset` |
+| `cxir.CxProgramImageDataWrite(image i64, offset i32, buffer)` | `i32` bytes written at `offset`, which grows the segment |
+| `cxir.CxProgramImageFileEncode(image i64, buffer)` | `i32` size of the `.cximage` file written into the `ui8` array |
+| `cxir.CxProgramImageFileDecode(buffer, length i32)` | `i64` image of the first `length` bytes, -1 for a refused file |
+| `cxir.CxProgramImageRun(image i64)` | `i32` exit code of the image, -1 when it is refused |
+| `cxir.CxProgramFunctionNameGet(image i64, function i32)` | `i64` name |
+| `cxir.CxProgramFunctionFrameSizeInBytesGet(image i64, function i32)` | `i32` frame size |
+| `cxir.CxProgramFunctionInputCountGet(image i64, function i32)` | `i32` inputs |
+| `cxir.CxProgramFunctionInputSlotRead(image i64, function i32, ordinal i32, slot)` | `i32` 0, `slot` is a `cxir.CxFrameSlot` |
+| `cxir.CxProgramFunctionOutputCountGet(image i64, function i32)` | `i32` outputs |
+| `cxir.CxProgramFunctionOutputSlotRead(image i64, function i32, ordinal i32, slot)` | `i32` 0 |
+| `cxir.CxProgramFunctionLocalCountGet(image i64, function i32)` | `i32` variables |
+| `cxir.CxProgramFunctionLocalRead(image i64, function i32, ordinal i32, local)` | `i32` 0, `local` is a `cxir.CxFrameLocal` |
+| `cxir.CxProgramLocalNameGet(image i64, localName i32)` | `i64` name of the `Name` or `TypeName` of a variable |
+| `cxir.CxProgramFunctionAppend(image i64, name i64, frameSize i32)` | `i32` id of a new function with no code |
+| `cxir.CxProgramFunctionInstructionCountGet(image i64, function i32)` | `i32` instructions |
+| `cxir.CxProgramFunctionInstructionRead(image i64, function i32, pc i32, instruction)` | `i32` 0, `instruction` is a `cxir.CxInstruction` |
+| `cxir.CxProgramFunctionInstructionWrite(image i64, function i32, pc i32, instruction)` | `i32` 0 |
+| `cxir.CxProgramFunctionInstructionAppend(image i64, function i32, instruction)` | `i32` pc of the new instruction |
+| `cxir.CxOpcodeNameGet(opcode i32)` | `i64` name of an image opcode, as `I32Add` |
+| `cxir.CxOpcodeByNameGet(name i64)` | `i32` image opcode, -1 for none |
+| `cxir.CxOpcodeLibraryRequiredGet(opcode i32)` | `bool` the opcode is a library function a run must enable |
+| `cxir.CxSourceLineAtProgramCounterRead(image i64, function i32, pc i32, line)` | `i32` 0, `line` is a `cxir.CxSourceLine` |
+| `cxir.CxSourceFileNameGet(image i64, sourceFile i32)` | `i64` name of a source file |
+| `cxir.CxStringPoolTextAppend(buffer, length i32)` | `i64` name of the first `length` bytes of the `ui8` array |
+| `cxir.CxStringPoolTextRead(name i64, buffer)` | `i32` bytes of the name copied into the `ui8` array |
+
+A refused call changes nothing. It returns 0 for a handle or a name, but -1
+from `cxir.CxProgramImageFileDecode`, and -1 for anything else. The four
+structs have the fields and sizes of the image records of [IR.md](docs/IR.md), packed:
+
+| struct | fields |
+|---|---|
+| `cxir.CxInstruction`, 32 bytes | `Opcode ui16`, `Mode ui16`, `A`, `B`, `C`, `D`, `N`, `M`, `Aux ui32` |
+| `cxir.CxFrameSlot`, 8 bytes | `Offset`, `Size ui32` |
+| `cxir.CxFrameLocal`, 20 bytes | `Offset`, `Size`, `Name`, `TypeName ui32`, `Type i32` |
+| `cxir.CxSourceLine`, 12 bytes | `ProgramCounter`, `File`, `Number ui32` |
+
+* Opcode numbers change from one cx version to the next, as the image
+  file says, so a program looks an opcode up by its name.
+* Equal texts give equal names, so a name compares by its value.
+* An image from `cxir.CxProgramImageCreate` has a stack of 64 KiB and its
+  data segment after it. Writing an instruction with a library opcode
+  enables that operation in the image.
+* `cxir.CxProgramImageRun` runs the image in a fresh machine, `*init` and
+  then main, and its prints follow the prints of the program. It first
+  checks the image as `cx-core-image` checks a `.cximage`: the layout, the
+  entries and tables, every opcode, jump, call and operand, and the
+  library operations against the ones the image enables, so a damaged
+  image is refused and never runs. The image may use only the library
+  operations the running program enables. An image runs on a machine
+  without `cxir.CxProgramImageRun`, so it cannot run another. A failed
+  test counts, and an error ends the image with its exit code and prints
+  nothing.
+* The running image, and an image while it runs, refuse every write.
+* A program that calls `cxir` gets room for 4 images of 256 functions,
+  8192 instructions, 64 KiB of data and 16 KiB of text each, 4096 names
+  and a 2 MiB machine for a run. A call that needs more is refused.
+
+```cx
+package main
+
+import "sys/cxir"
+
+func main() {
+	var image i64 = cxir.CxProgramImageCreate()
+	var name i64 = cxir.CxStringPoolTextAppend([4]ui8{109UB, 97UB, 105UB, 110UB}, 4)
+	var function i32 = cxir.CxProgramFunctionAppend(image, name, 0)
+	var status i32 = cxir.CxProgramImageEntryMainFunctionSet(image, function)
+	var data [4]ui8
+	data[0] = 42UB
+	status = cxir.CxProgramImageDataWrite(image, 0, data)
+	var in cxir.CxInstruction
+	in.Opcode = i32.ui16(cxir.CxOpcodeByNameGet(cxir.CxStringPoolTextAppend([8]ui8{73UB, 51UB, 50UB, 80UB, 114UB, 105UB, 110UB, 116UB}, 8)))
+	in.A = i32.ui32(cxir.CxProgramImageDataStartGet(image))
+	var pc i32 = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	in.Opcode = i32.ui16(cxir.CxOpcodeByNameGet(cxir.CxStringPoolTextAppend([6]ui8{82UB, 101UB, 116UB, 117UB, 114UB, 110UB}, 6)))
+	in.A = 0U
+	pc = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	printf("exit code %d\n", cxir.CxProgramImageRun(image))
 }
 ```
 

@@ -85,6 +85,9 @@ func buildLlvm(options buildOptions) int {
 	if tinygoLink && image.ImageOperationsEnabled.OpcodeSetLibraryAny(opcodetable.LibraryNumberNet) {
 		return buildFail("the program uses the net library, which --llvm-linker=tinygo leaves out")
 	}
+	if buildLlvmCxirUsed(&image) {
+		return buildFail(buildLlvmCxirRefusal)
+	}
 	if llvmOptions.RefusalLine == "" {
 		fmt.Fprint(os.Stderr, buildCallGraphReport(&image, options.buildOptionsDepthQuiet))
 	}
@@ -250,4 +253,21 @@ func buildLlvmRuntime(clang string, directory string, defines []string) (string,
 // second thread, which a native program starts (decision D142).
 func buildLlvmOutputThread(mode output.Mode) bool {
 	return mode == output.ModeThread
+}
+
+// buildLlvmCxirRefusal is why a program that calls sys/cxir has no native
+// form: a native executable holds machine code, not an image to read, and
+// has no vm to run one (decision D153).
+const buildLlvmCxirRefusal = "the program uses the cxir library, which has no native form, run it with cx or build an image"
+
+// buildLlvmCxirUsed reports whether image calls a function of sys/cxir.
+func buildLlvmCxirUsed(image *ir.Image) bool {
+	for i := range image.ImageFuncs {
+		for _, in := range image.ImageFuncs[i].FuncCode {
+			if ir.OpcodeCxir(in.InstrOpcode) {
+				return true
+			}
+		}
+	}
+	return false
 }
