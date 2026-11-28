@@ -78,6 +78,8 @@ func CxirOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, ou
 		OpCxStringPoolTextAppend(prgrm, inputs, outputs)
 	case 956:
 		OpCxStringPoolTextRead(prgrm, inputs, outputs)
+	case 957:
+		OpCxProgramImageRelease(prgrm, inputs, outputs)
 	default:
 		return false
 	}

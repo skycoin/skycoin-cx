@@ -24,26 +24,12 @@ const buildImageExtension = ".cximage"
 // refused. -stack-size sets the stack of the image, which a microcontroller
 // needs far below the 1 MB default.
 func buildImage(options buildOptions) int {
-	prgrm := astbuild.AST
-	core.LibrariesEnabledResolve(prgrm)
-	for library, enabled := range prgrm.ProgramLibrariesEnabled {
-		prgrm.ProgramLibrariesEnabled[library] = enabled && prgrm.ProgramLibrariesUsed[library]
-		if !prgrm.ProgramLibrariesUsed[library] {
-			prgrm.ProgramOperationsEnabled.OpcodeSetLibraryRemove(library)
-		}
+	image, problem, code := core.ExecutorImageBuild(astbuild.AST)
+	if problem != "" {
+		fmt.Fprintf(os.Stderr, "cx build: %s\n", problem)
+		return int(code)
 	}
-	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
-	prgrm.CxIrState.StringPool.StringPoolFreeze()
-	if code := core.OperationRefused(prgrm); code != 0 {
-		fmt.Fprintf(os.Stderr, "cx build: %s\n", core.OperationRefusalLine(prgrm, code))
-		return valuetypes.CXRuntimeLibraryDisabled
-	}
-	image, _, outside := core.ExecutorLower(prgrm)
-	if outside != "" {
-		fmt.Fprintf(os.Stderr, "cx build: cannot run on vm: %s\n", outside)
-		return valuetypes.CXRuntimeNotImplemented
-	}
-	for _, library := range [...]int{opcodetable.LibraryNumberFile, opcodetable.LibraryNumberNet} {
+	for _, library := range [...]int{opcodetable.LibraryNumberFile, opcodetable.LibraryNumberNet, opcodetable.LibraryNumberCompiler} {
 		if image.ImageOperationsEnabled.OpcodeSetLibraryAny(library) {
 			return buildFail(fmt.Sprintf("the program uses the %s library, which cx-core-image does not link", opcodetable.LibraryTable[library-1].LibraryName))
 		}

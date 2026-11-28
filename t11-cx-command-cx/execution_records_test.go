@@ -670,6 +670,8 @@ func TestExecutionRecords(t *testing.T) {
 				switch {
 				case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte("opcodes it does not include")):
 					forms[executionRecordFormBuilt] = executionRecordFormOutcome{note: "uses opcodes outside the core"}
+				case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte(buildCoreCompilerRefusal)):
+					forms[executionRecordFormBuilt] = executionRecordFormOutcome{note: "uses the compiler library, which no core links"}
 				case build.exitCode != valuetypes.CXSuccess:
 					forms[executionRecordFormBuilt] = executionRecordFormOutcome{run: build, applicable: true, note: "cx build failed"}
 				default:
@@ -965,6 +967,8 @@ func (harness executionRecordHarness) native(dir string, index int, name string,
 	switch {
 	case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte(buildLlvmCxirRefusal)):
 		return executionRecordFormOutcome{note: "uses the cxir library, which has no native form"}
+	case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte(buildLlvmCompilerRefusal)):
+		return executionRecordFormOutcome{note: "uses the compiler library, which has no native form"}
 	case build.exitCode != valuetypes.CXSuccess:
 		return executionRecordFormOutcome{run: build, applicable: true, note: "cx build --target=llvm failed"}
 	}
@@ -1016,7 +1020,7 @@ func (harness executionRecordHarness) imageCore(dir string, index int, runner st
 	build := executionRecordProcess(harness.t, harness.cxExecutable, []string{"CX_TEST_RUN_MAIN=1"}, harness.tests, "", buildArgs...)
 	switch {
 	case build.exitCode != valuetypes.CXSuccess && bytes.Contains(build.stderr, []byte("which cx-core-image does not link")):
-		return executionRecordFormOutcome{note: "uses the file or net library"}
+		return executionRecordFormOutcome{note: "uses the file, net or compiler library"}
 	case build.exitCode == valuetypes.CXRuntimeLibraryDisabled:
 		return executionRecordFormOutcome{note: "is refused before it runs"}
 	case build.exitCode != valuetypes.CXSuccess:

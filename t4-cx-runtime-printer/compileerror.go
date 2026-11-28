@@ -210,3 +210,24 @@ func printerCompileErrorsSort(pending []ast.CompileErrorRecord) {
 		return pending[left].CompileErrorRecordColumn < pending[right].CompileErrorRecordColumn
 	})
 }
+
+// CompileErrorsCollect returns the compile errors of prgrm in the order and
+// text CompileErrorsPrint prints them, without the warnings and without the
+// newline, with the line of each, for the compiler library (D152).
+func CompileErrorsCollect(prgrm *ast.CXProgram) (lines []int, texts [][]byte) {
+	records := append([]ast.CompileErrorRecord(nil), prgrm.CxIrState.CompileErrorList.CompileErrorListRecords...)
+	printerCompileErrorsSort(records)
+	for i := range records {
+		record := &records[i]
+		if (i > 0 && *record == records[i-1]) || ast.CompileErrorCodeWarning(record.CompileErrorRecordCode) {
+			continue
+		}
+		text := CompileErrorAppend(nil, prgrm, record)
+		if len(text) > 0 && text[len(text)-1] == '\n' {
+			text = text[:len(text)-1]
+		}
+		lines = append(lines, record.CompileErrorRecordLine)
+		texts = append(texts, text)
+	}
+	return lines, texts
+}

@@ -157,7 +157,7 @@ func main() {
 		}
 		total = total + cxir.CxStringPoolTextRead(mainName, name) + cxir.CxOpcodeByNameGet(mainName)
 		total = total + cxir.CxProgramImageFileEncode(image, file)
-		if cxir.CxProgramImageFileDecode(file, 312) == 0L {
+		if cxir.CxProgramImageFileDecode(file, 320) == 0L {
 			total = total + 1
 		}
 		total = total + cxir.CxProgramImageRun(image)

@@ -214,3 +214,9 @@ func OpCxStringPoolTextAppend(prgrm *ast.CXProgram, inputs []ast.CXValue, output
 func OpCxStringPoolTextRead(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
 	outputs[0].I32Set(prgrm, store().ImageStoreStringPoolTextRead(inputs[0].I64Get(prgrm), valueBytes(prgrm, &inputs[1])))
 }
+
+// OpCxProgramImageRelease frees a writable image for the next create,
+// decode or compile, 0 or -1 (D152).
+func OpCxProgramImageRelease(prgrm *ast.CXProgram, inputs []ast.CXValue, outputs []ast.CXValue) {
+	outputs[0].I32Set(prgrm, store().ImageStoreImageRelease(inputs[0].I64Get(prgrm)))
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-compileropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-cxiropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-metaopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"
@@ -74,7 +75,11 @@ func executorFailureDescribe(prgrm *ast.CXProgram, failure lower.Failure) string
 // CXAssert after a failed test, or the code of a runtime error, which it
 // prints like printer.RuntimeErrorPrint.
 func ExecutorVmRun(prgrm *ast.CXProgram, image *ir.Image) int32 {
-	return ExecutorVmRunMachine(prgrm, vm.MachineNew(image, ExecutorOutputSize))
+	machine := vm.MachineNew(image, ExecutorOutputSize)
+	if ir.ImageCompilerEnabled(image) {
+		machine.MachineCompiler = compileropcodes.VmOpcodeRun
+	}
+	return ExecutorVmRunMachine(prgrm, machine)
 }
 
 // ExecutorVmRunMachine runs the image of machine from a reset machine, see
@@ -171,6 +176,11 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 	}
 	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
 	prgrm.CxIrState.StringPool.StringPoolFreeze()
+	compilerActive := LibrariesActive(prgrm)[opcodetable.LibraryNumberCompiler]
+	if compilerActive {
+		// vm passes its type table and image store to every call (D152).
+		compileropcodes.LibraryPrepare(&prgrm.ProgramOperationsEnabled, prgrm.ProgramOutputMode, nil, nil)
+	}
 
 	if executor != ExecutorOld {
 		image, _, outside := ExecutorLower(prgrm)
@@ -186,13 +196,16 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 	reflectopcodes.LibraryPrepare(prgrm)
 	serializeopcodes.LibraryPrepare(reflectopcodes.Library.LibraryTypeTable)
 	metaopcodes.LibraryPrepare(reflectopcodes.Library.LibraryTypeTable)
-	if LibrariesActive(prgrm)[opcodetable.LibraryNumberCxir] {
+	if LibrariesActive(prgrm)[opcodetable.LibraryNumberCxir] || compilerActive {
 		// The old loop reads the image vm would run, lowered once here (D153).
 		var current *ir.Image
 		if image, _, outside := ExecutorLower(prgrm); outside == "" {
 			current = &image
 		}
 		cxiropcodes.LibraryPrepare(current, &prgrm.ProgramOperationsEnabled)
+	}
+	if compilerActive {
+		compileropcodes.LibraryPrepare(&prgrm.ProgramOperationsEnabled, prgrm.ProgramOutputMode, reflectopcodes.Library.LibraryTypeTable.ReflectTableBytes, cxiropcodes.Library.LibraryImageStore)
 	}
 	interpreter.RunPrepare(prgrm)
 	if err := interpreter.RunCompiled(prgrm, 0, cxArgs); err != nil {
@@ -205,4 +218,28 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 		return valuetypes.CXAssert
 	}
 	return valuetypes.CXSuccess
+}
+
+// ExecutorImageBuild keeps the enabled libraries prgrm calls and lowers it
+// to the image cx build --target=image writes, which the compiler library
+// builds too (decision D152). When the program has no image it returns why
+// and the exit code of cx build.
+func ExecutorImageBuild(prgrm *ast.CXProgram) (image ir.Image, problem string, code int32) {
+	LibrariesEnabledResolve(prgrm)
+	for library, enabled := range prgrm.ProgramLibrariesEnabled {
+		prgrm.ProgramLibrariesEnabled[library] = enabled && prgrm.ProgramLibrariesUsed[library]
+		if !prgrm.ProgramLibrariesUsed[library] {
+			prgrm.ProgramOperationsEnabled.OpcodeSetLibraryRemove(library)
+		}
+	}
+	prgrm.CxIrState.CxIrStateManagerGrowBoundary()
+	prgrm.CxIrState.StringPool.StringPoolFreeze()
+	if refused := OperationRefused(prgrm); refused != 0 {
+		return image, OperationRefusalLine(prgrm, refused), valuetypes.CXRuntimeLibraryDisabled
+	}
+	image, _, outside := ExecutorLower(prgrm)
+	if outside != "" {
+		return image, "cannot run on vm: " + outside, valuetypes.CXRuntimeNotImplemented
+	}
+	return image, "", valuetypes.CXSuccess
 }

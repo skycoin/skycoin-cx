@@ -1,4 +1,3 @@
-| `cxir` | every function of `sys/cxir`, see [The cxir library](#the-cxir-library) |
 # Table of Contents
 
 * [Syntax](#syntax)
@@ -28,6 +27,7 @@
     * [The serialize library](#the-serialize-library)
     * [The meta library](#the-meta-library)
     * [The cxir library](#the-cxir-library)
+    * [The compiler library](#the-compiler-library)
     * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -1012,6 +1012,8 @@ cx --enable=file,net program.cx
 | `reflect` | every function of `sys/reflect`, see [The reflect library](#the-reflect-library) |
 | `serialize` | every function of `sys/serialize`, see [The serialize library](#the-serialize-library) |
 | `meta` | every function of `sys/meta`, see [The meta library](#the-meta-library) |
+| `cxir` | every function of `sys/cxir`, see [The cxir library](#the-cxir-library) |
+| `compiler` | every function of `sys/compiler`, see [The compiler library](#the-compiler-library) |
 
 `os.Exit`, `sys/time`, `sys/regexp` and `sys/string` are not system
 libraries. They end the program, read the clock or compute, and always
@@ -1025,7 +1027,7 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect`, `serialize`, `meta` or `cxir` and does not
+A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect`, `serialize`, `meta`, `cxir` or `compiler` and does not
 enable it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
@@ -1065,7 +1067,7 @@ a program that reads its arguments or input, and
 
 Every function of `cipher` is its own opcode, 796 to 804, and every
 function of `net`, 805 to 819, every function of `file`, 820 to 875,
-and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, every function of `serialize`, 905 to 907, every function of `meta`, 908 to 922, and every function of `cxir`, 923 to 956 (decision D119). The compiler turns every call of `os.Run`, the one
+and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, every function of `serialize`, 905 to 907, every function of `meta`, 908 to 922, every function of `cxir`, 923 to 957, and every function of `compiler`, 958 to 974 (decision D119). The compiler turns every call of `os.Run`, the one
 function of `process`, into the opcode `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
@@ -1441,6 +1443,7 @@ writable images. A function is an `i32` id and an instruction a `pc`.
 | `cxir.CxSourceFileNameGet(image i64, sourceFile i32)` | `i64` name of a source file |
 | `cxir.CxStringPoolTextAppend(buffer, length i32)` | `i64` name of the first `length` bytes of the `ui8` array |
 | `cxir.CxStringPoolTextRead(name i64, buffer)` | `i32` bytes of the name copied into the `ui8` array |
+| `cxir.CxProgramImageRelease(image i64)` | `i32` 0 when the image is freed for the next create, decode or compile, -1 for the running image, one that runs or no image |
 
 A refused call changes nothing. It returns 0 for a handle or a name, but -1
 from `cxir.CxProgramImageFileDecode`, and -1 for anything else. The four
@@ -1473,6 +1476,8 @@ structs have the fields and sizes of the image records of [IR.md](docs/IR.md), p
 * A program that calls `cxir` gets room for 4 images of 256 functions,
   8192 instructions, 64 KiB of data and 16 KiB of text each, 4096 names
   and a 2 MiB machine for a run. A call that needs more is refused.
+  `cxir.CxProgramImageRelease` frees the room of an image, and its handle
+  then names no image (D152).
 
 ```cx
 package main
@@ -1495,6 +1500,90 @@ func main() {
 	in.A = 0U
 	pc = cxir.CxProgramFunctionInstructionAppend(image, function, in)
 	printf("exit code %d\n", cxir.CxProgramImageRun(image))
+}
+```
+
+### [The compiler library](#table-of-contents)
+
+`sys/compiler` runs the CX compiler of cx on source text a program hands
+it: parse, check and lower (decision D152). It is the system library
+`compiler`, off unless a run enables it with `--enable=compiler`, and it
+runs on the old loop and on vm inside cx. A lowered program is an image of
+[the cxir library](#the-cxir-library), so a program reads, encodes and
+runs it with `sys/cxir` and enables `cxir` too. The structs and functions
+of a parsed program are handles of [the reflect library](#the-reflect-library),
+read with `sys/reflect`.
+
+The library drives the Go compiler, which no cx build core, no
+`cx-core-image` and no native executable holds, so `cx build` refuses a
+program that calls it for every target. Run it with cx.
+
+A source file is the first `length` bytes of a `ui8` array and a name of
+`sys/cxir`, `cxir.CxStringPoolTextAppend`. A parse or compile takes every
+file appended since the last one and forgets them. An AST is an `i64`
+handle, a package an `i32` ordinal.
+
+| function | returns |
+|---|---|
+| `compiler.CxCompilerSourceFileAppend(fileName i64, source, length i32)` | `i32` ordinal of the file, -1 for no name, a bad length or no room |
+| `compiler.CxCompilerSourceParse()` | `i64` AST, -1 after a syntax error or when every AST is in use |
+| `compiler.CxCompilerProgramTypeCheck(ast i64)` | `i32` errors of the AST, 0 for none, -1 for no AST |
+| `compiler.CxCompilerProgramLower(ast i64)` | `i64` image of an AST without errors, -1 when it has errors, does not lower or does not fit |
+| `compiler.CxCompilerProgramCompile()` | `i64` image of the appended files, parsed, checked and lowered, -1 on any error |
+| `compiler.CxCompilerErrorCountGet()` | `i32` errors of the last parse, lower or compile |
+| `compiler.CxCompilerErrorMessageRead(error i32, buffer)` | `i32` bytes of the message copied into the `ui8` array, -1 for no error |
+| `compiler.CxCompilerErrorSourceLineGet(error i32)` | `i32` line of the error, 0 for none, -1 for no error |
+| `compiler.CxCompilerAstRelease(ast i64)` | `i32` 0 when the AST is freed, -1 for no AST |
+| `compiler.CxAstPackageCountGet(ast i64)` | `i32` packages the source declares |
+| `compiler.CxAstPackageNameGet(ast i64, package i32)` | `i64` name of the package, a name of `sys/cxir` |
+| `compiler.CxAstPackageFunctionCountGet(ast i64, package i32)` | `i32` functions, without methods and `*init` |
+| `compiler.CxAstPackageFunctionGet(ast i64, package i32, function i32)` | `i64` reflect function handle |
+| `compiler.CxAstPackageStructCountGet(ast i64, package i32)` | `i32` structs |
+| `compiler.CxAstPackageStructGet(ast i64, package i32, struct i32)` | `i64` reflect struct type handle |
+| `compiler.CxAstPackageGlobalCountGet(ast i64, package i32)` | `i32` globals |
+| `compiler.CxAstPackageGlobalNameGet(ast i64, package i32, global i32)` | `i64` name of the global, a name of `sys/cxir` |
+
+A refused call changes nothing and returns -1, or 0 for a handle or a name
+the AST reads give.
+
+* The image of `compiler.CxCompilerProgramCompile` is the file
+  `cx build --target=image` writes for the same file name and source, byte
+  for byte. It is compiled with the library operations and output mode of
+  the running program, and keeps those the program uses, as cx build does.
+  So `cxir.CxProgramImageRun` runs it as a run of cx with the same
+  `--enable` runs the program. An image that calls `compiler` does not run.
+* The Go compiler checks types while it parses, so
+  `compiler.CxCompilerProgramTypeCheck` counts the errors the parse found.
+  A program with type errors has an AST, a syntax error gives none.
+* An error message is the line cx prints for it, as
+  `error: main.cx:5:15 cannot assign value of type 'i32' to identifier 'y' of type 'bool'`,
+  in the order cx prints them. The library keeps the first 64 and 16 KiB of
+  their text.
+* Functions and structs come in name order, globals in declaration order.
+  The first struct or function read of an AST adds the types of its
+  declarations to the type table of reflect, in the room a program that
+  calls `compiler` or `meta` keeps there. When they do not fit, every
+  struct and function read of the AST returns 0. Types are never removed,
+  so the room fills as a run reads more ASTs.
+* A program that calls `compiler` gets room for 16 source files and
+  256 KiB of source, 4 ASTs, the 64 errors, and the image store of
+  `sys/cxir`. A parse, lower or compile runs the Go compiler, which
+  allocates. Every other call allocates nothing.
+
+```cx
+package main
+
+import "sys/compiler"
+import "sys/cxir"
+
+func main() {
+	var source [64]ui8 = [64]ui8{112UB, 97UB, 99UB, 107UB, 97UB, 103UB, 101UB, 32UB, 109UB, 97UB, 105UB, 110UB, 10UB,
+		102UB, 117UB, 110UB, 99UB, 32UB, 109UB, 97UB, 105UB, 110UB, 40UB, 41UB, 32UB, 123UB, 10UB,
+		9UB, 112UB, 114UB, 105UB, 110UB, 116UB, 102UB, 40UB, 34UB, 104UB, 105UB, 92UB, 110UB, 34UB, 41UB, 10UB, 125UB, 10UB}
+	var name i64 = cxir.CxStringPoolTextAppend([6]ui8{104UB, 105UB, 46UB, 99UB, 120UB}, 5)
+	var file i32 = compiler.CxCompilerSourceFileAppend(name, source, 45)
+	var image i64 = compiler.CxCompilerProgramCompile()
+	printf("errors %d, exit code %d\n", compiler.CxCompilerErrorCountGet(), cxir.CxProgramImageRun(image))
 }
 ```
 

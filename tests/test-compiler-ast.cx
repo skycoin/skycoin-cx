@@ -1,0 +1,90 @@
+package main
+
+import "sys/compiler"
+import "sys/cxir"
+import "sys/os"
+import "sys/reflect"
+
+// Parses the program on standard input and reads its packages, functions,
+// structs and globals. The structs and functions are sys/reflect handles,
+// read with the reflect functions (D152).
+
+func sourceRead() (source [4096]ui8, size i32) {
+	var line [256]ui8
+	var i i32
+	var length i32 = os.InputLineRead(line)
+	for length >= 0 {
+		for i = 0; i < length; i++ {
+			source[size] = line[i]
+			size++
+		}
+		source[size] = 10UB
+		size++
+		length = os.InputLineRead(line)
+	}
+}
+
+// namePrint prints the bytes of a cxir name.
+func namePrint(label str, name i64) {
+	var text [32]ui8
+	var length i32 = cxir.CxStringPoolTextRead(name, text)
+	printf("%s %d bytes:", label, length)
+	var i i32
+	for i = 0; i < length; i++ {
+		printf(" %d", text[i])
+	}
+	printf("\n")
+}
+
+// reflectNamePrint prints the bytes of a reflect name.
+func reflectNamePrint(label str, name i64) {
+	var text [32]ui8
+	var length i32 = reflect.CxStringPoolTextRead(name, text)
+	printf("%s %d bytes:", label, length)
+	var i i32
+	for i = 0; i < length; i++ {
+		printf(" %d", text[i])
+	}
+	printf("\n")
+}
+
+func main() {
+	var source [4096]ui8
+	var size i32
+	source, size = sourceRead()
+	var file i32 = compiler.CxCompilerSourceFileAppend(cxir.CxStringPoolTextAppend([6]ui8{97UB, 115UB, 116UB, 46UB, 99UB, 120UB}, 6), source, size)
+	var ast i64 = compiler.CxCompilerSourceParse()
+	printf("file %d, parsed %v, type check %d, packages %d\n", file, ast > 0L, compiler.CxCompilerProgramTypeCheck(ast), compiler.CxAstPackageCountGet(ast))
+	namePrint("package", compiler.CxAstPackageNameGet(ast, 0))
+
+	var i i32
+	var count i32 = compiler.CxAstPackageFunctionCountGet(ast, 0)
+	printf("functions %d\n", count)
+	var function i64
+	for i = 0; i < count; i++ {
+		function = compiler.CxAstPackageFunctionGet(ast, 0, i)
+		reflectNamePrint("function", reflect.CxFunctionNameGet(function))
+		printf("inputs %d, outputs %d\n", reflect.CxFunctionInputCountGet(function), reflect.CxFunctionOutputCountGet(function))
+	}
+
+	count = compiler.CxAstPackageStructCountGet(ast, 0)
+	printf("structs %d\n", count)
+	var strct i64 = compiler.CxAstPackageStructGet(ast, 0, 0)
+	reflectNamePrint("struct", reflect.CxTypeNameGet(strct))
+	printf("kind %d, size %d, fields %d, methods %d\n", reflect.CxTypeKindGet(strct), reflect.CxTypeSizeInBytesGet(strct), reflect.CxStructFieldCountGet(strct), reflect.CxStructMethodCountGet(strct))
+	reflectNamePrint("field 1", reflect.CxStructFieldNameGet(strct, 1))
+	printf("field 1 at %d, kind %d\n", reflect.CxStructFieldOffsetInBytesGet(strct, 1), reflect.CxTypeKindGet(reflect.CxStructFieldTypeGet(strct, 1)))
+	reflectNamePrint("method", reflect.CxStructMethodNameGet(strct, 0))
+	printf("the same struct again %v\n", compiler.CxAstPackageStructGet(ast, 0, 0) == strct)
+
+	count = compiler.CxAstPackageGlobalCountGet(ast, 0)
+	printf("globals %d\n", count)
+	for i = 0; i < count; i++ {
+		namePrint("global", compiler.CxAstPackageGlobalNameGet(ast, 0, i))
+	}
+	printf("no package %d, no struct %d, no global %d, no AST %d\n", compiler.CxAstPackageFunctionCountGet(ast, 1), compiler.CxAstPackageStructGet(ast, 0, 1), compiler.CxAstPackageGlobalNameGet(ast, 0, 9), compiler.CxAstPackageCountGet(0L))
+
+	var image i64 = compiler.CxCompilerProgramLower(ast)
+	printf("lowered %v, run %d\n", image > 0L, cxir.CxProgramImageRun(image))
+	printf("release the image %d, again %d\n", cxir.CxProgramImageRelease(image), cxir.CxProgramImageRelease(image))
+}

@@ -369,6 +369,28 @@ const (
 	OpcodeCxirCxProgramLocalNameGet
 	OpcodeCxirCxStringPoolTextAppend
 	OpcodeCxirCxStringPoolTextRead
+	OpcodeCxirCxProgramImageRelease
+	// The compiler opcodes, one per function of the compiler library in the
+	// order of its opcode numbers, decision D152. They drive the Go compiler
+	// through the runner of the machine and keep their images in its
+	// ImageStore. InstrAux is the address of the type table of reflect.
+	OpcodeCompilerCxCompilerSourceFileAppend
+	OpcodeCompilerCxCompilerSourceParse
+	OpcodeCompilerCxCompilerProgramTypeCheck
+	OpcodeCompilerCxCompilerProgramLower
+	OpcodeCompilerCxCompilerProgramCompile
+	OpcodeCompilerCxCompilerErrorCountGet
+	OpcodeCompilerCxCompilerErrorMessageRead
+	OpcodeCompilerCxCompilerErrorSourceLineGet
+	OpcodeCompilerCxAstPackageCountGet
+	OpcodeCompilerCxAstPackageNameGet
+	OpcodeCompilerCxAstPackageFunctionCountGet
+	OpcodeCompilerCxAstPackageFunctionGet
+	OpcodeCompilerCxAstPackageStructCountGet
+	OpcodeCompilerCxAstPackageStructGet
+	OpcodeCompilerCxAstPackageGlobalCountGet
+	OpcodeCompilerCxAstPackageGlobalNameGet
+	OpcodeCompilerCxCompilerAstRelease
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -678,7 +700,7 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeCxirCxStringPoolTextRead
+	OpcodeLibraryLast  = OpcodeCompilerCxCompilerAstRelease
 )
 
 // OpcodeReflectFirst and OpcodeReflectLast bound the opcodes of the reflect
@@ -725,9 +747,10 @@ func OpcodeMeta(op Opcode) bool {
 }
 
 // OpcodeTypeTableUses reports whether op reads or writes the type table of
-// the reflect library, an opcode of the reflect, serialize or meta library.
+// the reflect library, an opcode of the reflect, serialize, meta or compiler
+// library. The compiler library adds the types of a parsed program (D152).
 func OpcodeTypeTableUses(op Opcode) bool {
-	return OpcodeTypeTableReads(op) || OpcodeMeta(op)
+	return OpcodeTypeTableReads(op) || OpcodeMeta(op) || OpcodeCompiler(op)
 }
 
 // OpcodeLibrary reports whether op is an opcode of a system library.
@@ -739,10 +762,23 @@ func OpcodeLibrary(op Opcode) bool {
 // in the order of opcodetable.OpcodeCxirCxProgramImageCurrentGet on.
 const (
 	OpcodeCxirFirst = OpcodeCxirCxProgramImageCurrentGet
-	OpcodeCxirLast  = OpcodeCxirCxStringPoolTextRead
+	OpcodeCxirLast  = OpcodeCxirCxProgramImageRelease
 )
 
 // OpcodeCxir reports whether op is an opcode of the cxir library.
 func OpcodeCxir(op Opcode) bool {
 	return op >= OpcodeCxirFirst && op <= OpcodeCxirLast
+}
+
+// OpcodeCompilerFirst and OpcodeCompilerLast bound the opcodes of the
+// compiler library, in the order of
+// opcodetable.OpcodeCompilerCxCompilerSourceFileAppend on.
+const (
+	OpcodeCompilerFirst = OpcodeCompilerCxCompilerSourceFileAppend
+	OpcodeCompilerLast  = OpcodeCompilerCxCompilerAstRelease
+)
+
+// OpcodeCompiler reports whether op is an opcode of the compiler library.
+func OpcodeCompiler(op Opcode) bool {
+	return op >= OpcodeCompilerFirst && op <= OpcodeCompilerLast
 }

@@ -44,6 +44,9 @@ const (
 	// OpcodeGroupCxir is the cxir library in t4-cx-library-cxiropcodes, in every
 	// build and every core (decision D153).
 	OpcodeGroupCxir
+	// OpcodeGroupCompiler is the compiler library in t4-cx-library-compileropcodes,
+	// in every build of cx and in no core, as it drives the Go compiler (decision D152).
+	OpcodeGroupCompiler
 	OpcodeGroupCount
 )
 
@@ -182,6 +185,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupSerialize: true,
 	OpcodeGroupMeta:      true,
 	OpcodeGroupCxir:      true,
+	OpcodeGroupCompiler:  true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
@@ -195,6 +199,7 @@ var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupSerialize: LibraryNumberSerialize,
 	OpcodeGroupMeta:      LibraryNumberMeta,
 	OpcodeGroupCxir:      LibraryNumberCxir,
+	OpcodeGroupCompiler:  LibraryNumberCompiler,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

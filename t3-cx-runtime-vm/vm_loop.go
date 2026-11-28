@@ -998,6 +998,10 @@ func (machine *Machine) slow() Stop {
 			cxirOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, machine.MachineImageStore, machine.MachineImage)
 			return stopSlow
 		}
+		if ir.OpcodeCompiler(in.InstrOpcode) && machine.MachineCompiler != nil {
+			machine.MachineCompiler(in.InstrOpcode, mem, machine.MachineStackPointer, in.InstrAux, machine.MachineImageStore)
+			return stopSlow
+		}
 		machine.machineResumePc = machine.MachinePc
 		return StopOpcodeInvalid
 	}

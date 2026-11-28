@@ -147,9 +147,11 @@ type coreImageLibrary struct {
 // of this command leaves out, as it builds with the cxcore tag and no
 // cxcorelibrary tag. Cipher runs inside the vm and needs no tag. The ranges
 // keep the opcode tables of t1-cx-core-opcodetable, 36 KB, out of a microcontroller.
+// The compiler library drives the Go compiler, which no image runner links.
 var coreImageLibrariesUnlinked = [...]coreImageLibrary{
 	{opcodetable.LibraryNumberFile, opcodetable.OpcodeFileGetWorkingDirectory, opcodetable.OpcodeFileRemove},
 	{opcodetable.LibraryNumberNet, opcodetable.OpcodeNetUpdate, opcodetable.OpcodeNetUDPPeerResolve},
+	{opcodetable.LibraryNumberCompiler, opcodetable.OpcodeCompilerCxCompilerSourceFileAppend, opcodetable.OpcodeCompilerCxCompilerAstRelease},
 }
 
 // coreImageOpcodesEnabled reports whether set holds an opcode from first to

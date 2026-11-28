@@ -85,7 +85,10 @@ func buildLlvm(options buildOptions) int {
 	if tinygoLink && image.ImageOperationsEnabled.OpcodeSetLibraryAny(opcodetable.LibraryNumberNet) {
 		return buildFail("the program uses the net library, which --llvm-linker=tinygo leaves out")
 	}
-	if buildLlvmCxirUsed(&image) {
+	if buildLlvmOpcodeUsed(&image, ir.OpcodeCompiler) {
+		return buildFail(buildLlvmCompilerRefusal)
+	}
+	if buildLlvmOpcodeUsed(&image, ir.OpcodeCxir) {
 		return buildFail(buildLlvmCxirRefusal)
 	}
 	if llvmOptions.RefusalLine == "" {
@@ -260,11 +263,17 @@ func buildLlvmOutputThread(mode output.Mode) bool {
 // has no vm to run one (decision D153).
 const buildLlvmCxirRefusal = "the program uses the cxir library, which has no native form, run it with cx or build an image"
 
-// buildLlvmCxirUsed reports whether image calls a function of sys/cxir.
-func buildLlvmCxirUsed(image *ir.Image) bool {
+// buildLlvmCompilerRefusal is why a program that calls sys/compiler has no
+// native form: it runs the Go compiler of cx, which a native executable does
+// not hold, and makes images that need vm (decision D152).
+const buildLlvmCompilerRefusal = "the program uses the compiler library, which has no native form, run it with cx"
+
+// buildLlvmOpcodeUsed reports whether image has an opcode of library, which
+// reports whether an opcode is one of its own.
+func buildLlvmOpcodeUsed(image *ir.Image, library func(ir.Opcode) bool) bool {
 	for i := range image.ImageFuncs {
 		for _, in := range image.ImageFuncs[i].FuncCode {
-			if ir.OpcodeCxir(in.InstrOpcode) {
+			if library(in.InstrOpcode) {
 				return true
 			}
 		}

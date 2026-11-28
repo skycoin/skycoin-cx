@@ -1,0 +1,21 @@
+file 0, parsed true, type check 0, packages 1
+package 4 bytes: 109 97 105 110
+functions 2
+function 3 bytes: 97 100 100
+inputs 2, outputs 1
+function 4 bytes: 109 97 105 110
+inputs 0, outputs 0
+structs 1
+struct 5 bytes: 80 111 105 110 116
+kind 2, size 12, fields 2, methods 1
+field 1 1 bytes: 89
+field 1 at 4, kind 1
+method 3 bytes: 83 117 109
+the same struct again true
+globals 2
+global 6 bytes: 79 114 105 103 105 110
+global 5 bytes: 99 111 117 110 116
+no package -1, no struct 0, no global 0, no AST -1
+count 3
+lowered true, run 0
+release the image 0, again -1

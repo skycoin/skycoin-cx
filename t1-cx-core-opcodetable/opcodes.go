@@ -904,6 +904,24 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{954, "cxir.CxProgramLocalNameGet", 2611280004, 0, 0},
 	{955, "cxir.CxStringPoolTextAppend", 2611280004, 0, 0},
 	{956, "cxir.CxStringPoolTextRead", 2611280004, 0, 0},
+	{957, "cxir.CxProgramImageRelease", 2611280005, 0, 0},
+	{958, "compiler.CxCompilerSourceFileAppend", 2611280005, 0, 0},
+	{959, "compiler.CxCompilerSourceParse", 2611280005, 0, 0},
+	{960, "compiler.CxCompilerProgramTypeCheck", 2611280005, 0, 0},
+	{961, "compiler.CxCompilerProgramLower", 2611280005, 0, 0},
+	{962, "compiler.CxCompilerProgramCompile", 2611280005, 0, 0},
+	{963, "compiler.CxCompilerErrorCountGet", 2611280005, 0, 0},
+	{964, "compiler.CxCompilerErrorMessageRead", 2611280005, 0, 0},
+	{965, "compiler.CxCompilerErrorSourceLineGet", 2611280005, 0, 0},
+	{966, "compiler.CxAstPackageCountGet", 2611280005, 0, 0},
+	{967, "compiler.CxAstPackageNameGet", 2611280005, 0, 0},
+	{968, "compiler.CxAstPackageFunctionCountGet", 2611280005, 0, 0},
+	{969, "compiler.CxAstPackageFunctionGet", 2611280005, 0, 0},
+	{970, "compiler.CxAstPackageStructCountGet", 2611280005, 0, 0},
+	{971, "compiler.CxAstPackageStructGet", 2611280005, 0, 0},
+	{972, "compiler.CxAstPackageGlobalCountGet", 2611280005, 0, 0},
+	{973, "compiler.CxAstPackageGlobalNameGet", 2611280005, 0, 0},
+	{974, "compiler.CxCompilerAstRelease", 2611280005, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -1245,6 +1263,26 @@ const (
 	OpcodeCxirCxProgramLocalNameGet                = 954
 	OpcodeCxirCxStringPoolTextAppend               = 955
 	OpcodeCxirCxStringPoolTextRead                 = 956
+	OpcodeCxirCxProgramImageRelease                = 957
+
+	// The compiler library, decision D152.
+	OpcodeCompilerCxCompilerSourceFileAppend   = 958
+	OpcodeCompilerCxCompilerSourceParse        = 959
+	OpcodeCompilerCxCompilerProgramTypeCheck   = 960
+	OpcodeCompilerCxCompilerProgramLower       = 961
+	OpcodeCompilerCxCompilerProgramCompile     = 962
+	OpcodeCompilerCxCompilerErrorCountGet      = 963
+	OpcodeCompilerCxCompilerErrorMessageRead   = 964
+	OpcodeCompilerCxCompilerErrorSourceLineGet = 965
+	OpcodeCompilerCxAstPackageCountGet         = 966
+	OpcodeCompilerCxAstPackageNameGet          = 967
+	OpcodeCompilerCxAstPackageFunctionCountGet = 968
+	OpcodeCompilerCxAstPackageFunctionGet      = 969
+	OpcodeCompilerCxAstPackageStructCountGet   = 970
+	OpcodeCompilerCxAstPackageStructGet        = 971
+	OpcodeCompilerCxAstPackageGlobalCountGet   = 972
+	OpcodeCompilerCxAstPackageGlobalNameGet    = 973
+	OpcodeCompilerCxCompilerAstRelease         = 974
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OpResize = 210

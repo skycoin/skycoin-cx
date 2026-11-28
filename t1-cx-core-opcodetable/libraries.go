@@ -29,7 +29,8 @@ const (
 	LibraryNumberSerialize = 7
 	LibraryNumberMeta      = 8
 	LibraryNumberCxir      = 9
-	LibraryCount           = 10
+	LibraryNumberCompiler  = 10
+	LibraryCount           = 11
 )
 
 // LibraryPolicyEnabledWhenImported is the default policy for a library that
@@ -61,6 +62,7 @@ var LibraryTable = [...]Library{
 	{LibraryNumberSerialize, "serialize", 2611280002, false, true},
 	{LibraryNumberMeta, "meta", 2611280003, false, true},
 	{LibraryNumberCxir, "cxir", 2611280004, false, true},
+	{LibraryNumberCompiler, "compiler", 2611280005, false, false},
 }
 
 // LibraryByName returns the library named name.

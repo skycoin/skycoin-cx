@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t4-cx-compiler-astbuild"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-compileropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-netopcodes"
 	"github.com/skycoin/skycoin-cx/t5-cx-library-fileopcodes"
 	"github.com/skycoin/skycoin-cx/t7-cx-runtime-libraries"
 )
 
 func TestMain(m *testing.M) {
+	compileropcodes.LibraryCompilerSet(compilerLibrary{})
 	if os.Getenv("CX_TEST_RUN_MAIN") == "1" {
 		os.Args = append([]string{"cx"}, os.Args[1:]...)
 		main()

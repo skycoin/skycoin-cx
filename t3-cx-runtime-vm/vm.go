@@ -117,11 +117,20 @@ type Machine struct {
 	machineDataEnd      uint32
 	machinePrintCursor  uint32
 	MachineFrames       [ir.ImageCallDepthMax]Frame
-	// MachineImageStore holds the images of sys/cxir and MachineImageRunner
-	// runs them, nil for an image that does not enable the cxir library.
+	// MachineImageStore holds the images of sys/cxir and sys/compiler and
+	// MachineImageRunner runs them, nil for an image that enables neither.
 	MachineImageStore  *ir.ImageStore
 	MachineImageRunner *ImageRunner
+	// MachineCompiler runs the opcodes of sys/compiler, nil where the Go
+	// compiler is not linked and for an image CxProgramImageRun runs.
+	MachineCompiler CompilerOpcodeRunner
 }
+
+// CompilerOpcodeRunner runs the sys/compiler opcode op on the block at
+// offset of memory, decision D152. table is the address of the type table
+// of reflect and store holds the images. vm does not link the Go compiler,
+// so cx gives the machine a runner that does.
+type CompilerOpcodeRunner func(op ir.Opcode, memory []byte, offset uint32, table uint32, store *ir.ImageStore)
 
 // MachineNew sizes the memory of a machine for image and gives it an output
 // buffer of outputSize bytes, at least MachineOutputMin.
@@ -130,7 +139,7 @@ func MachineNew(image *ir.Image, outputSize int) *Machine {
 	machine.machineDataEnd = ir.ImageDataEnd(image)
 	machine.MachineMemory = make([]byte, int(machine.machineDataEnd)+int(image.ImageScratchSize)+ir.ImageCheckTailSize)
 	machine.MachineOutput = make([]byte, 0, max(outputSize, MachineOutputMin))
-	if ir.ImageCxirEnabled(image) {
+	if ir.ImageCxirEnabled(image) || ir.ImageCompilerEnabled(image) {
 		machine.MachineImageStore = ir.ImageStoreNew(ir.ImageStoreRoomDefault)
 		machine.MachineImageStore.ImageStoreCurrentSet(image)
 		machine.MachineImageRunner = ImageRunnerNew(machine.MachineImageStore, &image.ImageOperationsEnabled)

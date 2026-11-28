@@ -1,0 +1,47 @@
+package main
+
+import "sys/compiler"
+import "sys/cxir"
+import "sys/os"
+
+// Compiles the program on standard input with sys/compiler, named by the
+// first argument or program.cx. It prints the size and FNV-1a hash of the
+// image, which match the file cx build --target=image writes for that file,
+// then runs the image (D152).
+
+func main() {
+	var name [256]ui8 = [256]ui8{112UB, 114UB, 111UB, 103UB, 114UB, 97UB, 109UB, 46UB, 99UB, 120UB}
+	var nameLength i32 = 10
+	if os.ArgCount() > 0 {
+		nameLength = os.ArgRead(0, name)
+	}
+	var source [65536]ui8
+	var line [1024]ui8
+	var size i32
+	var i i32
+	var length i32 = os.InputLineRead(line)
+	for length >= 0 {
+		for i = 0; i < length; i++ {
+			source[size] = line[i]
+			size++
+		}
+		source[size] = 10UB
+		size++
+		length = os.InputLineRead(line)
+	}
+	var file i32 = compiler.CxCompilerSourceFileAppend(cxir.CxStringPoolTextAppend(name, nameLength), source, size)
+	var image i64 = compiler.CxCompilerProgramCompile()
+	var errors i32 = compiler.CxCompilerErrorCountGet()
+	printf("file %d, image %v, errors %d\n", file, image > 0L, errors)
+	if image < 0L {
+		return
+	}
+	var encoded [65536]ui8
+	var encodedSize i32 = cxir.CxProgramImageFileEncode(image, encoded)
+	var hash ui32 = 2166136261U
+	for i = 0; i < encodedSize; i++ {
+		hash = (hash ^ ui8.ui32(encoded[i])) * 16777619U
+	}
+	printf("image %d bytes, hash %d\n", encodedSize, hash)
+	printf("run %d\n", cxir.CxProgramImageRun(image))
+}

@@ -822,8 +822,9 @@ one loop, and vm fails on a program that does not lower.
   `cipher.HashStateRelease`, every function of `sys/net`, `os.Close`,
   `os.Seek`, `os.Sync`, the three of `terminal` (D142), the 25 of
   `reflect` and the three of `serialize` (D150), the 15 of `meta`
-  (D151) and the 34 of `cxir` (D153), each lower to their own image opcode,
-  `OpcodeCipherHashStateNew` to `OpcodeCxirCxStringPoolTextRead`. A block at sp holds the
+  (D151), the 35 of `cxir` (D153) and the 17 of `compiler` (D152), each
+  lower to their own image opcode,
+  `OpcodeCipherHashStateNew` to `OpcodeCompilerCxCompilerAstRelease`. A block at sp holds the
   inputs then the outputs, packed as `ast.NativeFunctionOf` lays them out,
   with `OpcodeCallFrame`, one `OpcodeCallArg` per input, the opcode, then
   `OpcodeCallResult` per output. A `str` input is a pointer read from the
@@ -848,6 +849,10 @@ one loop, and vm fails on a program that does not lower.
 * A buffer input of a cxir opcode takes a value of any type too, a
   `cxir.CxInstruction` or another struct of sys/cxir that the opcode reads
   or fills in place.
+* A program that uses `compiler` gets the table with the room of `meta`,
+  where the library adds the types of a parsed program at its first struct
+  or function read. A compiler opcode carries the address of the table in
+  `InstrAux`, and the table is not a read only span (D152).
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,
@@ -917,6 +922,14 @@ as `execute.RunCompiled` does.
   the output buffer, so a full output or a flush of the image stops the
   first machine at that instruction, which goes on with the image after
   `Resume`. That machine has no runner, so an image cannot run another.
+* `Machine.MachineCompiler` runs the opcodes of sys/compiler, a
+  `vm.CompilerOpcodeRunner` cx gives the machine, since vm does not link the
+  Go compiler (D152). A machine without one stops at a compiler opcode with
+  `StopOpcodeInvalid`. The store is made for an image that enables
+  `compiler` as for `cxir`, and `vm.ImageRunner` refuses an image that
+  enables `compiler`, so its machine never needs a runner.
+  `cxir.CxProgramImageRelease` frees a slot of the store, whose next image
+  Gid takes the next generation.
 * The memory of a machine ends with `ir.ImageCheckTailSize` zero bytes
   after the scratch, which no instruction of a lowered program reaches.
 

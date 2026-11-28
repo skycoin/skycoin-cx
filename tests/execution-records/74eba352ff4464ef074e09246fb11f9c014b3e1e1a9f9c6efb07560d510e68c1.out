@@ -1,7 +1,7 @@
 functions 1, main 0, 2 instructions, stack 65536, data at 65536
 42
 run 0
-encoded 312 bytes, encoded again equal true
+encoded 320 bytes, encoded again equal true
 42
 run decoded 0
 encode into 16 bytes -1, decode a cut file -1
