@@ -2,12 +2,15 @@
 
 package ast
 
-import objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+import (
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+)
 
 // CXArgumentGid names one CXArgument in its manager, see docs/ObjectModel.md.
 type CXArgumentGid int64
 
 const (
-	CXArgumentGidTypeTag objmodel.TypeTag = 0x09
+	CXArgumentGidTypeTag objmodel.TypeTag = gidtag.CXArgument
 	CXArgumentGidNil     CXArgumentGid    = 0
 )

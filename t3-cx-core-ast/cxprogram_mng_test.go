@@ -5,6 +5,7 @@ package ast
 import (
 	"testing"
 
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
@@ -128,7 +129,7 @@ var CXProgramMngTestAsserts = map[string]struct {
 	"get negative": {func(manager *CXProgramMng) { manager.CXProgramGet(-1) }, "is nil or negative"},
 	"get other type": {func(manager *CXProgramMng) {
 		manager.CXProgramAlloc()
-		manager.CXProgramGet(CXProgramGid(objmodel.GidCompose(0x02, 1, 0)))
+		manager.CXProgramGet(CXProgramGid(objmodel.GidCompose(gidtag.CXPackage, 1, 0)))
 	}, "has type tag"},
 	"get index at cap": {func(manager *CXProgramMng) {
 		manager.CXProgramAlloc()

@@ -136,6 +136,7 @@
 
 #### Changed
 
+- Every Gid type tag is a row of `gidtag.Table` in the new t0-cx-core-gidtag, with its value, variant, range and owner (decision D154). `make generate-gidtags` writes a constant per tag and `gidtag.NameTable`, which `objmodel.GidTypeTagNameTable` now is, and `make check-gidtags` is part of `make check`. The IR, string pool, reflect, meta, cxir and compiler tag constants refer to the table, and one test over it replaces the tag tests of each library. No tag value changes. See docs/GidVariants.md
 - `cx build --target=llvm` gives the call depth parameter and its check only to a function in a cycle of calls or one that calls into a cycle (decision D144, optimizations/0004). A program without recursion has no depth check, and without recursion the stack check is left out when the stack the call graph gives fits. vm and the image runner are unchanged
 - The net, regexp, read and str error opcodes build no Go string, decision D139 (#412). `networkbatch.NetTCPListen`, `NetTCPDial`, `NetUDPListen`, `NetUDPDial` and `NetUDPPeerResolve` take the address as bytes, which `networkbatch.NetAddressAppend` joins, and a dialing socket keeps its address in a fixed array. The regexp library keeps its expressions in a string pool and their compiled forms in `regexp.CompiledMng` instead of a map keyed by Go strings, and compiles an expression once. `ast.ErrorBytes` gives the text of an error code as bytes. check-strhot no longer counts `errors.Is`, `errors.As` and `errors.Unwrap`, which build no text
 

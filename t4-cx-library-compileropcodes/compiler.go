@@ -8,6 +8,7 @@
 package compileropcodes
 
 import (
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	"github.com/skycoin/skycoin-cx/t0-cx-runtime-output"
 	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
 	reflecttable "github.com/skycoin/skycoin-cx/t2-cx-library-reflecttable"
@@ -17,9 +18,8 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 )
 
-// AstTag is the tag of an AST handle, in the reflect, meta, cxir and
-// compiler range 0x40 to 0x5F of gid-variants D154.
-const AstTag uint8 = 0x44
+// AstTag is the tag of an AST handle, see docs/GidVariants.md.
+const AstTag uint8 = gidtag.CompilerAst
 
 // The Gid layout of t1-cx-core-objmodel, bits 0 to 31 the index, 32 to 55
 // the generation and 56 to 63 the tag.

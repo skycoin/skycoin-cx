@@ -2,12 +2,15 @@
 
 package ast
 
-import objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+import (
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+)
 
 // CXNativeFunctionGid names one CXNativeFunction in its manager, see docs/ObjectModel.md.
 type CXNativeFunctionGid int64
 
 const (
-	CXNativeFunctionGidTypeTag objmodel.TypeTag    = 0x04
+	CXNativeFunctionGidTypeTag objmodel.TypeTag    = gidtag.CXNativeFunction
 	CXNativeFunctionGidNil     CXNativeFunctionGid = 0
 )

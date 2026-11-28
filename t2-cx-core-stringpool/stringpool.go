@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
@@ -18,7 +19,7 @@ import (
 type StringGid int64
 
 const (
-	StringGidTypeTag objmodel.TypeTag = 0x0F
+	StringGidTypeTag objmodel.TypeTag = gidtag.String
 	StringGidNil     StringGid        = 0
 )
 

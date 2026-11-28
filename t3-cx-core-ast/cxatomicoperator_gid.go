@@ -2,12 +2,15 @@
 
 package ast
 
-import objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+import (
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+)
 
 // CXAtomicOperatorGid names one CXAtomicOperator in its manager, see docs/ObjectModel.md.
 type CXAtomicOperatorGid int64
 
 const (
-	CXAtomicOperatorGidTypeTag objmodel.TypeTag    = 0x07
+	CXAtomicOperatorGidTypeTag objmodel.TypeTag    = gidtag.CXAtomicOperator
 	CXAtomicOperatorGidNil     CXAtomicOperatorGid = 0
 )

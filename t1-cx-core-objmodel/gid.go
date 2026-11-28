@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 )
 
 // TypeTag names the object type of a Gid, 0x01 to 0x7F.
@@ -128,3 +129,7 @@ func GidFirstGenerationFailureReport(gid int64, typeTag TypeTag, capacity int) {
 	GidAssertFailure(gid, typeTag, capacity)
 	assert.PreconditionTrue(false, fmt.Sprintf("%s Gid %#x has generation %#x, want %#x", GidTypeTagNameTable[typeTag], gid, GidGeneration(gid), GidGenerationFirst))
 }
+
+// GidTypeTagNameTable names the object type of each type tag, from the
+// generated gidtag.NameTable. An unused tag has an empty name.
+var GidTypeTagNameTable = gidtag.NameTable

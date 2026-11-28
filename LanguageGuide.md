@@ -1208,7 +1208,9 @@ A type is an `i64` handle: bits 0 to 31 the type number, 32 to 39 the
 kind, 40 to 55 the generation and 56 to 63 the tag `0x40` (decision
 D153). A method gives an `i64` function handle, tag `0x41`. A name is an
 `i64` Gid, of the type name pool (tag `0x11`) for a type and of the member
-name pool (tag `0x0F`) for a field, a method or a function. A getter of an
+name pool (tag `0x0F`) for a field, a method or a function. The tags
+and bit layouts of every handle are in
+[docs/GidVariants.md](docs/GidVariants.md). A getter of an
 `i32` returns -1 and a getter of an `i64` returns 0 for a handle that is
 not of the kind it reads or an ordinal out of range.
 
@@ -1400,7 +1402,7 @@ built program, and no call allocates. A native executable holds machine
 code and no image, so `cx build --target=llvm` refuses a program that
 calls it.
 
-An image is an `i64` handle. `cxir.CxProgramImageCurrentGet` gives the
+An image is an `i64` handle, tag `0x43` (see [docs/GidVariants.md](docs/GidVariants.md)). `cxir.CxProgramImageCurrentGet` gives the
 image of the running program, which is read only: the loader checked it
 once, and a change would skip that check. On the old loop it is the image
 vm would run, and a program that does not lower has none.
@@ -1521,7 +1523,7 @@ program that calls it for every target. Run it with cx.
 A source file is the first `length` bytes of a `ui8` array and a name of
 `sys/cxir`, `cxir.CxStringPoolTextAppend`. A parse or compile takes every
 file appended since the last one and forgets them. An AST is an `i64`
-handle, a package an `i32` ordinal.
+handle, tag `0x44` (see [docs/GidVariants.md](docs/GidVariants.md)), a package an `i32` ordinal.
 
 | function | returns |
 |---|---|

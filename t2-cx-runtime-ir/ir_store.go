@@ -4,17 +4,16 @@ import (
 	"bytes"
 	"encoding/binary"
 
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	"github.com/skycoin/skycoin-cx/t0-cx-core-valuetypes"
 	"github.com/skycoin/skycoin-cx/t0-cx-runtime-output"
 	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
 )
 
-// The tags of the handles of sys/cxir, see gid-variants D154. ImageTag is a
-// library resource in the reflect, meta and cxir range 0x40 to 0x5F and
-// ImageNameTag an interned pool in 0x01 to 0x1F.
+// The tags of the handles of sys/cxir, see docs/GidVariants.md.
 const (
-	ImageTag     uint8 = 0x43
-	ImageNameTag uint8 = 0x12
+	ImageTag     uint8 = gidtag.CxirImage
+	ImageNameTag uint8 = gidtag.CxirName
 )
 
 // imageStoreGeneration is the generation of the running image, of every

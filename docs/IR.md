@@ -116,7 +116,8 @@ A function is finished by `actions.FunctionHeader`, which adds the
 
 The rest of the program lives in flat slices, called arenas here. IR
 objects refer to each other by index into these slices, as integer types
-such as `CXStructIndex`, or by Gid into a manager, such as `CXFunctionGid`.
+such as `CXStructIndex`, or by Gid into a manager, such as `CXFunctionGid`. The tag and layout of each
+Gid are in [GidVariants.md](GidVariants.md).
 
 | Arena | Element | Index type | Getter |
 | --- | --- | --- | --- |

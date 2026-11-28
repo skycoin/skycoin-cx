@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"math"
 
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	"github.com/skycoin/skycoin-cx/t0-cx-core-valuetypes"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
@@ -38,9 +39,9 @@ var MetaRoomDefault = MetaRoom{
 	MetaRoomNameBytes:   4096,
 }
 
-// PackageTag is the tag of a package handle of the meta library, in the
-// reflect range of gid-variants D154.
-const PackageTag objmodel.TypeTag = 0x42
+// PackageTag is the tag of a package handle of the meta library, see
+// docs/GidVariants.md.
+const PackageTag objmodel.TypeTag = gidtag.MetaPackage
 
 // The words of a package record.
 const (

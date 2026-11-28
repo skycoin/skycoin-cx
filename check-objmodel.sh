@@ -5,7 +5,7 @@
 # or Get of a managed type.
 rc=0
 go run ./t0-cx-core-objmodelgen -dir t3-cx-core-ast -check || rc=1
-objs=$(sed -n 's/^[[:space:]]*{"\([A-Za-z_]*\)", 0x.*/\1/p' t0-cx-core-objmodelgen/main.go | paste -sd'|' -)
+objs=$(sed -n 's/^[[:space:]]*{"\([A-Za-z_]*\)", ".*/\1/p' t0-cx-core-objmodelgen/main.go | paste -sd'|' -)
 [ -n "$objs" ] || { echo "no object types read from t0-cx-core-objmodelgen/main.go"; exit 1; }
 files=$(find . -path ./vendor -prune -o -path ./.git -prune -o -path ./.claude -prune -o -name '*.go' -print | sed 's#^\./##')
 for f in $(echo "$files" | grep '_def\.go$'); do
