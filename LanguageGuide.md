@@ -1548,7 +1548,10 @@ the AST reads give.
 
 * The image of `compiler.CxCompilerProgramCompile` is the file
   `cx build --target=image` writes for the same file name and source, byte
-  for byte. It is compiled with the library operations and output mode of
+  for byte. cx build keeps a file name as `filepath.Clean` gives it, with
+  the separator of the system, and the library keeps the name it is given,
+  so a program passes it the same. It is compiled with the library
+  operations and output mode of
   the running program, and keeps those the program uses, as cx build does.
   So `cxir.CxProgramImageRun` runs it as a run of cx with the same
   `--enable` runs the program. An image that calls `compiler` does not run.

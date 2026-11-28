@@ -64,7 +64,6 @@ func TestRunCompilerImagesMatchBuild(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		name = filepath.ToSlash(name)
 		source, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -327,6 +326,7 @@ func TestRunCompilerImagesInOneRun(t *testing.T) {
 	encoded := make([]byte, 1<<20)
 	dir := t.TempDir()
 	for i, name := range []string{"examples/testing-packages.cx", "examples/hello-world.cx", "issue-218.cx", "test-var-grouped.cx", "examples/fibonacci-recursive.cx", "examples/testing-packages.cx"} {
+		name = filepath.FromSlash(name)
 		output := filepath.Join(dir, fmt.Sprintf("program-%d.cximage", i))
 		if build, stderr := buildTestProcess(t, executable, []string{"CX_TEST_RUN_MAIN=1"}, tests, buildCommand, "--target="+buildTargetImage, name, "-o", output); build.exitCode != valuetypes.CXSuccess {
 			t.Fatalf("%s: cx build exits %d: %s", name, build.exitCode, stderr)
