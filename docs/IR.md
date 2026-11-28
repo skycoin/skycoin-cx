@@ -819,9 +819,9 @@ one loop, and vm fails on a program that does not lower.
   opcode (D119).
 * The library opcodes that run on vm, `cipher.HashStateNew`,
   `cipher.HashStateRelease`, every function of `sys/net`, `os.Close`,
-  `os.Seek`, `os.Sync` and the three of `terminal` (D142), each lower to
-  their own image opcode, `OpcodeCipherHashStateNew` to
-  `OpcodeTerminalInputLineRead`. A block at sp holds the
+  `os.Seek`, `os.Sync`, the three of `terminal` (D142) and the 25 of
+  `reflect` (D150), each lower to their own image opcode,
+  `OpcodeCipherHashStateNew` to `OpcodeReflectCxStringPoolTextRead`. A block at sp holds the
   inputs then the outputs, packed as `ast.NativeFunctionOf` lays them out,
   with `OpcodeCallFrame`, one `OpcodeCallArg` per input, the opcode, then
   `OpcodeCallResult` per output. A `str` input is a pointer read from the
@@ -830,6 +830,13 @@ one loop, and vm fails on a program that does not lower.
   `OpcodeAddressOf` writes, see [Networking.md](Networking.md). They run in
   the slow path and check nothing, as the loader refuses a program that
   uses an operation the run does not enable (D119).
+* A program that uses `reflect` gets its type table, built by
+  `ast.ReflectTableBuild`, appended to the data segment before any function
+  lowers, as a read only span. Each reflect opcode carries the address of
+  the table in `InstrAux`, and `OpcodeReflectCxTypeOfValueGet` the type
+  number of its input in `InstrN`, which the compiler knows, so its input is
+  not lowered. A value or buffer input of a reflect opcode takes a value of
+  any type, a struct variable whose field the opcode reads or writes in place.
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,

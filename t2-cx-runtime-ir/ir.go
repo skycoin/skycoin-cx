@@ -279,6 +279,35 @@ const (
 	OpcodeTerminalArgCount
 	OpcodeTerminalArgRead
 	OpcodeTerminalInputLineRead
+	// The reflect opcodes, one per function of the reflect library in the
+	// order of its opcode numbers, decision D150. InstrAux is the address of
+	// the type table in the data segment and InstrN the type number of the
+	// value of OpcodeReflectCxTypeOfValueGet.
+	OpcodeReflectCxTypeOfValueGet
+	OpcodeReflectCxTypeKindGet
+	OpcodeReflectCxTypeNameGet
+	OpcodeReflectCxTypeSizeInBytesGet
+	OpcodeReflectCxTypeAlignmentInBytesGet
+	OpcodeReflectCxStructFieldCountGet
+	OpcodeReflectCxStructFieldNameGet
+	OpcodeReflectCxStructFieldTypeGet
+	OpcodeReflectCxStructFieldOffsetInBytesGet
+	OpcodeReflectCxStructFieldOrdinalByNameGet
+	OpcodeReflectCxStructFieldValueRead
+	OpcodeReflectCxStructFieldValueWrite
+	OpcodeReflectCxStructMethodCountGet
+	OpcodeReflectCxStructMethodNameGet
+	OpcodeReflectCxStructMethodFunctionGet
+	OpcodeReflectCxArrayLengthGet
+	OpcodeReflectCxArrayElementTypeGet
+	OpcodeReflectCxSliceElementTypeGet
+	OpcodeReflectCxPointerElementTypeGet
+	OpcodeReflectCxFunctionNameGet
+	OpcodeReflectCxFunctionInputCountGet
+	OpcodeReflectCxFunctionInputTypeGet
+	OpcodeReflectCxFunctionOutputCountGet
+	OpcodeReflectCxFunctionOutputTypeGet
+	OpcodeReflectCxStringPoolTextRead
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -588,8 +617,20 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeTerminalInputLineRead
+	OpcodeLibraryLast  = OpcodeReflectCxStringPoolTextRead
 )
+
+// OpcodeReflectFirst and OpcodeReflectLast bound the opcodes of the reflect
+// library, in the order of opcodetable.OpcodeReflectCxTypeOfValueGet on.
+const (
+	OpcodeReflectFirst = OpcodeReflectCxTypeOfValueGet
+	OpcodeReflectLast  = OpcodeReflectCxStringPoolTextRead
+)
+
+// OpcodeReflect reports whether op is an opcode of the reflect library.
+func OpcodeReflect(op Opcode) bool {
+	return op >= OpcodeReflectFirst && op <= OpcodeReflectLast
+}
 
 // OpcodeLibrary reports whether op is an opcode of a system library.
 func OpcodeLibrary(op Opcode) bool {

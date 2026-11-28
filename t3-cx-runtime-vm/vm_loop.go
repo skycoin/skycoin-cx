@@ -922,6 +922,15 @@ func (machine *Machine) slow() Stop {
 		terminalOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer)
 	case ir.OpcodeTerminalArgCount, ir.OpcodeTerminalArgRead:
 		terminalOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer)
+	case ir.OpcodeReflectCxTypeOfValueGet, ir.OpcodeReflectCxTypeKindGet, ir.OpcodeReflectCxTypeNameGet, ir.OpcodeReflectCxTypeSizeInBytesGet,
+		ir.OpcodeReflectCxTypeAlignmentInBytesGet, ir.OpcodeReflectCxStructFieldCountGet, ir.OpcodeReflectCxStructFieldNameGet,
+		ir.OpcodeReflectCxStructFieldTypeGet, ir.OpcodeReflectCxStructFieldOffsetInBytesGet, ir.OpcodeReflectCxStructFieldOrdinalByNameGet,
+		ir.OpcodeReflectCxStructFieldValueRead, ir.OpcodeReflectCxStructFieldValueWrite, ir.OpcodeReflectCxStructMethodCountGet,
+		ir.OpcodeReflectCxStructMethodNameGet, ir.OpcodeReflectCxStructMethodFunctionGet, ir.OpcodeReflectCxArrayLengthGet,
+		ir.OpcodeReflectCxArrayElementTypeGet, ir.OpcodeReflectCxSliceElementTypeGet, ir.OpcodeReflectCxPointerElementTypeGet,
+		ir.OpcodeReflectCxFunctionNameGet, ir.OpcodeReflectCxFunctionInputCountGet, ir.OpcodeReflectCxFunctionInputTypeGet,
+		ir.OpcodeReflectCxFunctionOutputCountGet, ir.OpcodeReflectCxFunctionOutputTypeGet, ir.OpcodeReflectCxStringPoolTextRead:
+		reflectOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, in.InstrAux, in.InstrN)
 	case ir.OpcodePrintValue:
 		machine.MachineOutput = printValue(machine.MachineOutput, mem, a, valuetypes.Code(in.InstrM), byte(in.InstrN))
 	case ir.OpcodeTestEqual:

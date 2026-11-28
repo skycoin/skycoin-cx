@@ -1,0 +1,8 @@
+id copied 4 bytes 7 0 0 0
+flags copied 2 bytes 0 3
+balance wrote 8 bytes, balance 258
+id wrote 4 bytes, id 42, balance 258, rate 1.5000000
+short buffer -1
+short buffer write -1, balance 258
+no field -1
+not a struct -1

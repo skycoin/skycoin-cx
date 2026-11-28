@@ -1,0 +1,134 @@
+// Reads scalar, struct, array, slice, pointer and function types through the
+// reflect library (decision D150). Run with --enable=reflect. Without it the
+// program is refused before it runs.
+
+package main
+
+import "sys/reflect"
+
+var lower [26]str = [26]str{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+var upper [26]str = [26]str{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+var digits [10]str = [10]str{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+
+type Point struct {
+	x    i32
+	y    f64
+	name str
+	tags [3]i16
+	next *Point
+	list []i32
+}
+
+func (p Point) Scale(factor i32) (scaled Point) {
+	scaled = p
+}
+
+func (p Point) Area() (area f64, valid bool) {
+	area = 0.0D
+	valid = true
+}
+
+// nameShow prints the text of a type or member name, printf has no %c.
+func nameShow(label str, name i64) {
+	global lower
+	global upper
+	global digits
+	var buffer [32]ui8
+	var length i32
+	var i i32
+	var character i32
+	length = reflect.CxStringPoolTextRead(name, buffer)
+	printf("%s ", label)
+	if length < 0 {
+		printf("(none)\n")
+		return
+	}
+	for i = 0; i < length; i++ {
+		character = ui8.i32(buffer[i])
+		if character >= 97 && character <= 122 {
+			printf("%s", lower[character-97])
+		} else if character >= 65 && character <= 90 {
+			printf("%s", upper[character-65])
+		} else if character >= 48 && character <= 57 {
+			printf("%s", digits[character-48])
+		} else if character == 46 {
+			printf(".")
+		} else {
+			printf("?")
+		}
+	}
+	printf("\n")
+}
+
+func typeShow(label str, t i64) {
+	printf("%s kind %d size %d alignment %d\n", label, reflect.CxTypeKindGet(t), reflect.CxTypeSizeInBytesGet(t), reflect.CxTypeAlignmentInBytesGet(t))
+}
+
+func main() {
+	var count i32
+	var number f64
+	var p Point
+	var row [4]ui8
+	var values []f32
+	var target *Point
+	var t i64
+	var f i64
+	var i i32
+
+	t = reflect.CxTypeOfValueGet(count)
+	typeShow("i32", t)
+	nameShow("name", reflect.CxTypeNameGet(t))
+	t = reflect.CxTypeOfValueGet(number)
+	typeShow("f64", t)
+	nameShow("name", reflect.CxTypeNameGet(t))
+
+	t = reflect.CxTypeOfValueGet(row)
+	typeShow("array", t)
+	printf("array length %d\n", reflect.CxArrayLengthGet(t))
+	typeShow("array element", reflect.CxArrayElementTypeGet(t))
+	nameShow("array element name", reflect.CxTypeNameGet(reflect.CxArrayElementTypeGet(t)))
+	nameShow("array name", reflect.CxTypeNameGet(t))
+
+	t = reflect.CxTypeOfValueGet(values)
+	typeShow("slice", t)
+	nameShow("slice element name", reflect.CxTypeNameGet(reflect.CxSliceElementTypeGet(t)))
+
+	t = reflect.CxTypeOfValueGet(target)
+	typeShow("pointer", t)
+	nameShow("pointer element name", reflect.CxTypeNameGet(reflect.CxPointerElementTypeGet(t)))
+
+	t = reflect.CxTypeOfValueGet(p)
+	typeShow("struct", t)
+	nameShow("struct name", reflect.CxTypeNameGet(t))
+	count = reflect.CxStructFieldCountGet(t)
+	printf("fields %d\n", count)
+	for i = 0; i < count; i++ {
+		nameShow("field", reflect.CxStructFieldNameGet(t, i))
+		printf("  offset %d ordinal by name %d\n", reflect.CxStructFieldOffsetInBytesGet(t, i), reflect.CxStructFieldOrdinalByNameGet(t, reflect.CxStructFieldNameGet(t, i)))
+		typeShow("  type", reflect.CxStructFieldTypeGet(t, i))
+	}
+	if reflect.CxPointerElementTypeGet(reflect.CxStructFieldTypeGet(t, 4)) == t {
+		printf("next points to the struct\n")
+	}
+	printf("tags length %d\n", reflect.CxArrayLengthGet(reflect.CxStructFieldTypeGet(t, 3)))
+
+	count = reflect.CxStructMethodCountGet(t)
+	printf("methods %d\n", count)
+	for i = 0; i < count; i++ {
+		nameShow("method", reflect.CxStructMethodNameGet(t, i))
+		f = reflect.CxStructMethodFunctionGet(t, i)
+		nameShow("  function", reflect.CxFunctionNameGet(f))
+		printf("  inputs %d outputs %d\n", reflect.CxFunctionInputCountGet(f), reflect.CxFunctionOutputCountGet(f))
+		nameShow("  first input", reflect.CxTypeNameGet(reflect.CxFunctionInputTypeGet(f, 0)))
+		nameShow("  last input", reflect.CxTypeNameGet(reflect.CxFunctionInputTypeGet(f, reflect.CxFunctionInputCountGet(f)-1)))
+		nameShow("  first output", reflect.CxTypeNameGet(reflect.CxFunctionOutputTypeGet(f, 0)))
+	}
+
+	// A handle of the wrong kind or out of range gives -1 or 0.
+	t = reflect.CxTypeOfValueGet(count)
+	printf("wrong kind %d %d %d %d\n", reflect.CxStructFieldCountGet(t), reflect.CxArrayLengthGet(t), reflect.CxFunctionInputCountGet(t), reflect.CxSliceElementTypeGet(t))
+	t = reflect.CxTypeOfValueGet(p)
+	printf("out of range %d %d %d\n", reflect.CxStructFieldOffsetInBytesGet(t, 6), reflect.CxStructFieldTypeGet(t, -1), reflect.CxStructMethodFunctionGet(t, 2))
+	printf("no handle %d %d\n", reflect.CxTypeKindGet(0L), reflect.CxTypeSizeInBytesGet(12345L))
+	nameShow("no name", 0L)
+}

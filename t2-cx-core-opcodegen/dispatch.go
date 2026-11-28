@@ -30,6 +30,7 @@ var dispatchGroups = []dispatchGroup{
 	{opcodetable.OpcodeGroupCipher, "t4-cx-library-cipher/cipher_dispatch", "cipher", "CipherOpcodeDispatch", "!nocipher", "nocipher", "", ""},
 	{opcodetable.OpcodeGroupNet, "t4-cx-library-netopcodes/net_dispatch", "netopcodes", "NetOpcodeDispatch", "", "", "", ""},
 	{opcodetable.OpcodeGroupFile, "t5-cx-library-fileopcodes/file_dispatch", "fileopcodes", "FileOpcodeDispatch", "!nocxos", "nocxos", "", ""},
+	{opcodetable.OpcodeGroupReflect, "t4-cx-library-reflectopcodes/reflect_dispatch", "reflectopcodes", "ReflectOpcodeDispatch", "", "", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.

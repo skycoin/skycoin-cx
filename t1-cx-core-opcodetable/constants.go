@@ -17,7 +17,7 @@ const OsArgs = "Args"
 // LanguageVersionCurrent is the language version this CX implements, a
 // yymmddnnnn integer stored in serialized programs as CXProgram.Version.
 // See the Language versions section of LanguageGuide.md.
-const LanguageVersionCurrent int64 = 2611270002
+const LanguageVersionCurrent int64 = 2611280001
 
 const NonAssignPrefix = "nonAssign"
 const LocalPrefix = "*tmp"

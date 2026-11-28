@@ -1841,3 +1841,332 @@ void cx_rt_terminal_input_line_read(uint8_t *mem, uint64_t size, uint32_t ptrSiz
 #endif
 	memcpy(block + 2 * ptrSize, &copied, 4);
 }
+
+// The reflect opcodes, decision D150. table is the address of the type
+// table of t2-cx-library-reflecttable in mem and typeIndex the type number
+// of cx_rt_reflect_cx_type_of_value_get. They read the block as
+// reflectOpcodeRun of the vm does and the table as its Go functions do.
+typedef struct {
+	const uint8_t *bytes;
+	uint64_t size;
+} reflectTable;
+
+static reflectTable reflectTableAt(uint8_t *mem, uint64_t size, uint32_t table) {
+	reflectTable t = {mem, 0};
+	if (table < size) {
+		t.bytes = mem + table;
+		t.size = size - table;
+	}
+	return t;
+}
+
+static int32_t reflectWord(reflectTable t, int64_t index) {
+	int32_t v = 0;
+	if (index >= 0 && (uint64_t)index * 4 + 4 <= t.size)
+		memcpy(&v, t.bytes + index * 4, 4);
+	return v;
+}
+
+// The header words, record sizes and fields of reflecttable.
+enum {
+	reflectHeaderTypeCount, reflectHeaderTypes, reflectHeaderFields, reflectHeaderMethods,
+	reflectHeaderFunctionCount, reflectHeaderFunctions, reflectHeaderParameters,
+	reflectHeaderTypeNameCount, reflectHeaderTypeNames, reflectHeaderMemberNameCount,
+	reflectHeaderMemberNames, reflectHeaderNameBytes,
+	reflectTypeKind = 0, reflectTypeSize, reflectTypeAlignment, reflectTypeName, reflectTypeElement,
+	reflectTypeLength, reflectTypeFieldFirst, reflectTypeFieldCount, reflectTypeMethodFirst,
+	reflectTypeMethodCount, reflectTypeFunction, reflectTypeWords,
+	reflectFieldName = 0, reflectFieldType, reflectFieldOffset, reflectFieldWords,
+	reflectMethodName = 0, reflectMethodFunction, reflectMethodWords,
+	reflectFunctionName = 0, reflectFunctionInputCount, reflectFunctionOutputCount,
+	reflectFunctionParameterFirst, reflectFunctionWords,
+	reflectKindStruct = 2, reflectKindArray = 3, reflectKindSlice = 4, reflectKindPointer = 5, reflectKindFunction = 6,
+};
+
+#define reflectTagType 0x40
+#define reflectTagFunction 0x41
+#define reflectTagTypeName 0x11
+#define reflectTagMemberName 0x0F
+
+static int32_t reflectRecord(reflectTable t, int section, int32_t number, int size, int field) {
+	return reflectWord(t, (int64_t)reflectWord(t, section) / 4 + (int64_t)number * size + field);
+}
+
+static int64_t reflectInterned(uint64_t tag, int32_t index) {
+	return (int64_t)(tag << 56 | 1ull << 32 | (uint64_t)(uint32_t)index);
+}
+
+static int64_t reflectTypeHandle(reflectTable t, int32_t index) {
+	if (index < 0 || index >= reflectWord(t, reflectHeaderTypeCount))
+		return 0;
+	uint64_t kind = (uint8_t)reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeKind);
+	return (int64_t)((uint64_t)reflectTagType << 56 | 1ull << 40 | kind << 32 | (uint64_t)(uint32_t)index);
+}
+
+// reflectTypeIndex returns the type number of handle, -1 for no type of t
+// or one not of kind, any kind for 0.
+static int32_t reflectTypeIndex(reflectTable t, int64_t handle, int32_t kind) {
+	uint64_t h = (uint64_t)handle;
+	if (h >> 56 != reflectTagType || (h >> 40 & 0xffff) != 1)
+		return -1;
+	uint64_t index = h & 0xffffffffu;
+	if (index >= (uint64_t)(uint32_t)reflectWord(t, reflectHeaderTypeCount) || reflectWord(t, reflectHeaderTypeCount) <= 0)
+		return -1;
+	int32_t recordKind = reflectRecord(t, reflectHeaderTypes, (int32_t)index, reflectTypeWords, reflectTypeKind);
+	if (recordKind != (int32_t)(h >> 32 & 0xff) || (kind != 0 && recordKind != kind))
+		return -1;
+	return (int32_t)index;
+}
+
+static int32_t reflectTypeWordOr(reflectTable t, int64_t handle, int32_t kind, int field, int32_t none) {
+	int32_t index = reflectTypeIndex(t, handle, kind);
+	return index < 0 ? none : reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, field);
+}
+
+// reflectMember returns word field of member ordinal of a struct type,
+// fields or methods, and 0 in *found when there is none.
+static int32_t reflectMember(reflectTable t, int64_t handle, int32_t ordinal, int first, int count, int section, int size, int field, int *found) {
+	int32_t index = reflectTypeIndex(t, handle, reflectKindStruct);
+	*found = 0;
+	if (index < 0 || ordinal < 0 || ordinal >= reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, count))
+		return 0;
+	*found = 1;
+	return reflectRecord(t, section, reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, first) + ordinal, size, field);
+}
+
+static int32_t reflectField(reflectTable t, int64_t handle, int32_t ordinal, int field, int *found) {
+	return reflectMember(t, handle, ordinal, reflectTypeFieldFirst, reflectTypeFieldCount, reflectHeaderFields, reflectFieldWords, field, found);
+}
+
+static int32_t reflectMethod(reflectTable t, int64_t handle, int32_t ordinal, int field, int *found) {
+	return reflectMember(t, handle, ordinal, reflectTypeMethodFirst, reflectTypeMethodCount, reflectHeaderMethods, reflectMethodWords, field, found);
+}
+
+// reflectFunctionIndex returns the function record of a function handle or
+// a function type, -1 for any other handle.
+static int32_t reflectFunctionIndex(reflectTable t, int64_t handle) {
+	uint64_t h = (uint64_t)handle;
+	if (h >> 56 == reflectTagType) {
+		int32_t index = reflectTypeWordOr(t, handle, reflectKindFunction, reflectTypeFunction, -1);
+		return index;
+	}
+	uint64_t index = h & 0xffffffffu;
+	if (h >> 56 != reflectTagFunction || (h >> 32 & 0xffffff) != 1 || index >= (uint64_t)(uint32_t)reflectWord(t, reflectHeaderFunctionCount) || reflectWord(t, reflectHeaderFunctionCount) <= 0)
+		return -1;
+	return (int32_t)index;
+}
+
+static int64_t reflectFunctionParameter(reflectTable t, int64_t handle, int32_t ordinal, int outputs) {
+	int32_t index = reflectFunctionIndex(t, handle);
+	if (index < 0)
+		return 0;
+	int32_t inputCount = reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionInputCount);
+	int32_t count = inputCount, skip = 0;
+	if (outputs)
+		count = reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionOutputCount), skip = inputCount;
+	if (ordinal < 0 || ordinal >= count)
+		return 0;
+	int32_t first = reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionParameterFirst);
+	return reflectTypeHandle(t, reflectRecord(t, reflectHeaderParameters, first + skip + ordinal, 1, 0));
+}
+
+// reflectBlockBytes returns the memory whose address and size are at at, and
+// 0 in *room when it lies outside mem.
+static uint8_t *reflectBlockBytes(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *at, uint64_t *room) {
+	uint64_t address = readPtr(at, 0, ptrSize);
+	uint64_t length = readPtr(at, ptrSize, ptrSize);
+	if (address + length > size) {
+		*room = 0;
+		return mem;
+	}
+	*room = length;
+	return mem + address;
+}
+
+static int32_t reflectFieldValueCopy(reflectTable t, uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block, int write) {
+	uint64_t valueRoom, bufferRoom;
+	uint8_t *value = reflectBlockBytes(mem, size, ptrSize, block, &valueRoom);
+	int64_t handle;
+	int32_t ordinal;
+	memcpy(&handle, block + 2 * ptrSize, 8);
+	memcpy(&ordinal, block + 2 * ptrSize + 8, 4);
+	uint8_t *buffer = reflectBlockBytes(mem, size, ptrSize, block + 2 * ptrSize + 12, &bufferRoom);
+	int found;
+	int32_t offset = reflectField(t, handle, ordinal, reflectFieldOffset, &found);
+	if (!found)
+		return -1;
+	int32_t fieldType = reflectField(t, handle, ordinal, reflectFieldType, &found);
+	int32_t fieldSize = reflectTypeWordOr(t, reflectTypeHandle(t, fieldType), 0, reflectTypeSize, -1);
+	if (offset < 0 || fieldSize < 0 || (uint64_t)offset + (uint64_t)fieldSize > valueRoom || (uint64_t)fieldSize > bufferRoom)
+		return -1;
+	if (write)
+		memmove(value + offset, buffer, (size_t)fieldSize);
+	else
+		memmove(buffer, value + offset, (size_t)fieldSize);
+	return fieldSize;
+}
+
+static int32_t reflectNameTextRead(reflectTable t, int64_t name, uint8_t *buffer, uint64_t room) {
+	uint64_t n = (uint64_t)name;
+	int countWord = reflectHeaderMemberNameCount, entriesWord = reflectHeaderMemberNames;
+	if (n >> 56 == reflectTagTypeName)
+		countWord = reflectHeaderTypeNameCount, entriesWord = reflectHeaderTypeNames;
+	else if (n >> 56 != reflectTagMemberName)
+		return -1;
+	uint64_t index = n & 0xffffffffu;
+	if ((n >> 32 & 0xffffff) != 1 || reflectWord(t, countWord) <= 0 || index >= (uint64_t)(uint32_t)reflectWord(t, countWord))
+		return -1;
+	int64_t offset = (int64_t)reflectWord(t, reflectHeaderNameBytes) + reflectRecord(t, entriesWord, (int32_t)index, 2, 0);
+	int64_t length = reflectRecord(t, entriesWord, (int32_t)index, 2, 1);
+	if (offset < 0 || length < 0 || (uint64_t)(offset + length) > t.size)
+		return -1;
+	if ((uint64_t)length > room)
+		length = (int64_t)room;
+	memcpy(buffer, t.bytes + offset, (size_t)length);
+	return (int32_t)length;
+}
+
+#define CX_RT_REFLECT(name) void cx_rt_reflect_##name(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block, uint32_t table, uint32_t typeIndex)
+#define CX_RT_REFLECT_ARGS \
+	reflectTable t = reflectTableAt(mem, size, table); \
+	int64_t handle; \
+	int32_t ordinal; \
+	memcpy(&handle, block, 8); \
+	memcpy(&ordinal, block + 8, 4); \
+	(void)ptrSize, (void)typeIndex, (void)ordinal
+#define CX_RT_REFLECT_I32(at, v) do { int32_t r = (v); memcpy(block + (at), &r, 4); } while (0)
+#define CX_RT_REFLECT_I64(at, v) do { int64_t r = (v); memcpy(block + (at), &r, 8); } while (0)
+
+CX_RT_REFLECT(cx_type_of_value_get) {
+	reflectTable t = reflectTableAt(mem, size, table);
+	CX_RT_REFLECT_I64(2 * ptrSize, reflectTypeHandle(t, (int32_t)typeIndex));
+}
+CX_RT_REFLECT(cx_type_kind_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, 0, reflectTypeKind, 0));
+}
+CX_RT_REFLECT(cx_type_name_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t name = reflectTypeWordOr(t, handle, 0, reflectTypeName, -1);
+	CX_RT_REFLECT_I64(8, name < 0 ? 0 : reflectInterned(reflectTagTypeName, name));
+}
+CX_RT_REFLECT(cx_type_size_in_bytes_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, 0, reflectTypeSize, -1));
+}
+CX_RT_REFLECT(cx_type_alignment_in_bytes_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, 0, reflectTypeAlignment, -1));
+}
+CX_RT_REFLECT(cx_struct_field_count_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, reflectKindStruct, reflectTypeFieldCount, -1));
+}
+CX_RT_REFLECT(cx_struct_field_name_get) {
+	CX_RT_REFLECT_ARGS;
+	int found;
+	int32_t name = reflectField(t, handle, ordinal, reflectFieldName, &found);
+	CX_RT_REFLECT_I64(12, found ? reflectInterned(reflectTagMemberName, name) : 0);
+}
+CX_RT_REFLECT(cx_struct_field_type_get) {
+	CX_RT_REFLECT_ARGS;
+	int found;
+	int32_t fieldType = reflectField(t, handle, ordinal, reflectFieldType, &found);
+	CX_RT_REFLECT_I64(12, found ? reflectTypeHandle(t, fieldType) : 0);
+}
+CX_RT_REFLECT(cx_struct_field_offset_in_bytes_get) {
+	CX_RT_REFLECT_ARGS;
+	int found;
+	int32_t offset = reflectField(t, handle, ordinal, reflectFieldOffset, &found);
+	CX_RT_REFLECT_I32(12, found ? offset : -1);
+}
+CX_RT_REFLECT(cx_struct_field_ordinal_by_name_get) {
+	CX_RT_REFLECT_ARGS;
+	int64_t name;
+	memcpy(&name, block + 8, 8);
+	int32_t count = reflectTypeWordOr(t, handle, reflectKindStruct, reflectTypeFieldCount, -1), result = -1;
+	for (int32_t i = 0; i < count; i++) {
+		int found;
+		int32_t fieldName = reflectField(t, handle, i, reflectFieldName, &found);
+		if (found && reflectInterned(reflectTagMemberName, fieldName) == name) {
+			result = i;
+			break;
+		}
+	}
+	CX_RT_REFLECT_I32(16, result);
+}
+CX_RT_REFLECT(cx_struct_field_value_read) {
+	reflectTable t = reflectTableAt(mem, size, table);
+	(void)typeIndex;
+	CX_RT_REFLECT_I32(4 * ptrSize + 12, reflectFieldValueCopy(t, mem, size, ptrSize, block, 0));
+}
+CX_RT_REFLECT(cx_struct_field_value_write) {
+	reflectTable t = reflectTableAt(mem, size, table);
+	(void)typeIndex;
+	CX_RT_REFLECT_I32(4 * ptrSize + 12, reflectFieldValueCopy(t, mem, size, ptrSize, block, 1));
+}
+CX_RT_REFLECT(cx_struct_method_count_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, reflectKindStruct, reflectTypeMethodCount, -1));
+}
+CX_RT_REFLECT(cx_struct_method_name_get) {
+	CX_RT_REFLECT_ARGS;
+	int found;
+	int32_t name = reflectMethod(t, handle, ordinal, reflectMethodName, &found);
+	CX_RT_REFLECT_I64(12, found ? reflectInterned(reflectTagMemberName, name) : 0);
+}
+CX_RT_REFLECT(cx_struct_method_function_get) {
+	CX_RT_REFLECT_ARGS;
+	int found;
+	int32_t function = reflectMethod(t, handle, ordinal, reflectMethodFunction, &found);
+	CX_RT_REFLECT_I64(12, found ? reflectInterned(reflectTagFunction, function) : 0);
+}
+CX_RT_REFLECT(cx_array_length_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I32(8, reflectTypeWordOr(t, handle, reflectKindArray, reflectTypeLength, -1));
+}
+CX_RT_REFLECT(cx_array_element_type_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t element = reflectTypeWordOr(t, handle, reflectKindArray, reflectTypeElement, -1);
+	CX_RT_REFLECT_I64(8, reflectTypeHandle(t, element));
+}
+CX_RT_REFLECT(cx_slice_element_type_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t element = reflectTypeWordOr(t, handle, reflectKindSlice, reflectTypeElement, -1);
+	CX_RT_REFLECT_I64(8, reflectTypeHandle(t, element));
+}
+CX_RT_REFLECT(cx_pointer_element_type_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t element = reflectTypeWordOr(t, handle, reflectKindPointer, reflectTypeElement, -1);
+	CX_RT_REFLECT_I64(8, reflectTypeHandle(t, element));
+}
+CX_RT_REFLECT(cx_function_name_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t index = reflectFunctionIndex(t, handle);
+	int32_t name = index < 0 ? -1 : reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionName);
+	CX_RT_REFLECT_I64(8, name < 0 ? 0 : reflectInterned(reflectTagMemberName, name));
+}
+CX_RT_REFLECT(cx_function_input_count_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t index = reflectFunctionIndex(t, handle);
+	CX_RT_REFLECT_I32(8, index < 0 ? -1 : reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionInputCount));
+}
+CX_RT_REFLECT(cx_function_input_type_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I64(12, reflectFunctionParameter(t, handle, ordinal, 0));
+}
+CX_RT_REFLECT(cx_function_output_count_get) {
+	CX_RT_REFLECT_ARGS;
+	int32_t index = reflectFunctionIndex(t, handle);
+	CX_RT_REFLECT_I32(8, index < 0 ? -1 : reflectRecord(t, reflectHeaderFunctions, index, reflectFunctionWords, reflectFunctionOutputCount));
+}
+CX_RT_REFLECT(cx_function_output_type_get) {
+	CX_RT_REFLECT_ARGS;
+	CX_RT_REFLECT_I64(12, reflectFunctionParameter(t, handle, ordinal, 1));
+}
+CX_RT_REFLECT(cx_string_pool_text_read) {
+	CX_RT_REFLECT_ARGS;
+	uint64_t room;
+	uint8_t *buffer = reflectBlockBytes(mem, size, ptrSize, block + 8, &room);
+	CX_RT_REFLECT_I32(8 + 2 * ptrSize, reflectNameTextRead(t, handle, buffer, room));
+}

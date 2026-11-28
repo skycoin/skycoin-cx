@@ -32,6 +32,9 @@ const (
 	// OpcodeGroupTerminal is the terminal library in t4-cx-library-terminalopcodes, in
 	// every build and every core.
 	OpcodeGroupTerminal
+	// OpcodeGroupReflect is the reflect library in t4-cx-library-reflectopcodes, in
+	// every build and every core (decision D150).
+	OpcodeGroupReflect
 	OpcodeGroupCount
 )
 
@@ -166,6 +169,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupNet:      true,
 	OpcodeGroupFile:     opcodeGroupFileLinked,
 	OpcodeGroupTerminal: true,
+	OpcodeGroupReflect:  true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
@@ -175,6 +179,7 @@ var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupNet:      LibraryNumberNet,
 	OpcodeGroupFile:     LibraryNumberFile,
 	OpcodeGroupTerminal: LibraryNumberTerminal,
+	OpcodeGroupReflect:  LibraryNumberReflect,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

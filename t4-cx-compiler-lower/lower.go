@@ -150,6 +150,11 @@ type state struct {
 	stateLocals      []ir.Local
 	stateLocalNames  map[string]uint32
 	stateReadOnly    []ir.Span
+	// stateReflectTable is the address of the type table of the reflect
+	// library in the data segment and stateReflectTypes the type number of
+	// each reflect.CxTypeOfValueGet input (decision D150).
+	stateReflectTable uint32
+	stateReflectTypes map[ast.CXTypeSignatureIndex]int32
 }
 
 // jumpFixup is a jump target still in expression indexes.
@@ -183,6 +188,9 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageStackSize = s.stateStackSize
 	image.ImageDataStart = s.stateDataStart
 	image.ImageData = append([]byte(nil), prgrm.Memory[s.stateDataStart:s.stateDataEnd]...)
+	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] {
+		s.reflectTableAppend()
+	}
 	functions := prgrm.CXProgramFunctionSlotCount()
 	image.ImageFuncs = make([]ir.Func, functions)
 	image.ImageFuncNames = make([]string, functions)
@@ -438,7 +446,11 @@ func (s *state) builtIn(code []ir.Instr, line int, cxAtomicOp *ast.CXAtomicOpera
 		return code, noFixup, false, ReasonLibraryFunctionOutsideSubset, 0
 	}
 	if libraryOpcode := libraryOpcodeOf(opcode); libraryOpcode != ir.OpcodeInvalid {
-		code, reason := s.libraryCall(code, cxAtomicOp, operator, ir.Instr{InstrOpcode: libraryOpcode})
+		call, reason := s.reflectCall(ir.Instr{InstrOpcode: libraryOpcode}, inputs)
+		if reason != ReasonNone {
+			return code, noFixup, false, reason, 0
+		}
+		code, reason = s.libraryCall(code, cxAtomicOp, operator, call)
 		return code, noFixup, false, reason, 0
 	}
 
@@ -1078,10 +1090,11 @@ func libraryBufferInput(prgrm *ast.CXProgram, signatureIndex ast.CXTypeSignature
 // libraryBuffer lowers a byte buffer input as the address and the byte size
 // of the ui8 array, each a pointer, at offset of the block. The vm form
 // reads or fills memory there, as the old loop does at the array's offset.
-func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex, offset uint32) ([]ir.Instr, ReasonCode) {
+// anyType takes a value of any type, the struct value of the reflect library.
+func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex, offset uint32, anyType bool) ([]ir.Instr, ReasonCode) {
 	prgrm := s.stateProgram
 	signature := prgrm.CXTypeSignatureFromArrayGet(signatureIndex)
-	if signature.Type != ast.TypeArrayAtomic || signature.TypeGet(prgrm) != valuetypes.UI8 {
+	if !anyType && (signature.Type != ast.TypeArrayAtomic || signature.TypeGet(prgrm) != valuetypes.UI8) {
 		return code, ReasonOperandNotScalar
 	}
 	code, p, reason := s.placeOf(code, signatureIndex)
@@ -1156,6 +1169,9 @@ func libraryOpcodeOf(opcode int) ir.Opcode {
 	case opcodetable.OpcodeTerminalInputLineRead:
 		return ir.OpcodeTerminalInputLineRead
 	}
+	if opcode >= opcodetable.OpcodeReflectCxTypeOfValueGet && opcode <= opcodetable.OpcodeReflectCxStringPoolTextRead {
+		return ir.OpcodeReflectFirst + ir.Opcode(opcode-opcodetable.OpcodeReflectCxTypeOfValueGet)
+	}
 	return ir.OpcodeInvalid
 }
 
@@ -1204,7 +1220,10 @@ func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, c
 	code = append(code, ir.Instr{InstrOpcode: ir.OpcodeCallFrame, InstrN: blockSize})
 	for i, signatureIndex := range inputs {
 		if libraryBufferInput(prgrm, calleeInputs[i]) {
-			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset); reason != ReasonNone {
+			if call.InstrOpcode == ir.OpcodeReflectCxTypeOfValueGet {
+				continue
+			}
+			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset, ir.OpcodeReflect(call.InstrOpcode)); reason != ReasonNone {
 				return code, reason
 			}
 			continue

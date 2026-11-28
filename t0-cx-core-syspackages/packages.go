@@ -10,7 +10,7 @@ import (
 var DefaultPackages = []string{
 	// temporary solution until we can implement these packages in pure CX I guess
 	//"al", "gl", "glfw", "time", "http", "os", "explorer", "aff", "gltext", "cx", "json", "regexp", "cipher", "tcp",
-	"al", "gl", "glfw", "time", "os", "gltext", "cx", "cipher", "net", "regexp", "string",
+	"al", "gl", "glfw", "time", "os", "gltext", "cx", "cipher", "net", "reflect", "regexp", "string",
 }
 
 // SysPrefix is the import path prefix of the built-in packages.

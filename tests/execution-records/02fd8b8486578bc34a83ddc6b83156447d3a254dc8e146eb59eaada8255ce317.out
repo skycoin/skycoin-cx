@@ -1,0 +1,53 @@
+i32 kind 1 size 4 alignment 4
+name i32
+f64 kind 1 size 8 alignment 8
+name f64
+array kind 3 size 4 alignment 1
+array length 4
+array element kind 1 size 1 alignment 1
+array element name ui8
+array name (none)
+slice kind 4 size 4 alignment 4
+slice element name f32
+pointer kind 5 size 4 alignment 4
+pointer element name Point
+struct kind 2 size 30 alignment 8
+struct name Point
+fields 6
+field x
+  offset 0 ordinal by name 0
+  type kind 1 size 4 alignment 4
+field y
+  offset 4 ordinal by name 1
+  type kind 1 size 8 alignment 8
+field name
+  offset 12 ordinal by name 2
+  type kind 1 size 4 alignment 4
+field tags
+  offset 16 ordinal by name 3
+  type kind 3 size 6 alignment 2
+field next
+  offset 22 ordinal by name 4
+  type kind 5 size 4 alignment 4
+field list
+  offset 26 ordinal by name 5
+  type kind 4 size 4 alignment 4
+next points to the struct
+tags length 3
+methods 2
+method Area
+  function Point.Area
+  inputs 1 outputs 2
+  first input Point
+  last input Point
+  first output f64
+method Scale
+  function Point.Scale
+  inputs 2 outputs 1
+  first input Point
+  last input i32
+  first output Point
+wrong kind -1 -1 -1 0
+out of range -1 0 0
+no handle 0 -1
+no name (none)

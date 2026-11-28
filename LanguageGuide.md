@@ -23,6 +23,7 @@
     * [The terminal library](#the-terminal-library)
     * [Output modes](#output-modes)
     * [The cipher library](#the-cipher-library)
+    * [The reflect library](#the-reflect-library)
     * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -1004,6 +1005,7 @@ cx --enable=file,net program.cx
 | `process` | `os.Run` |
 | `cipher` | every function of `sys/cipher`, see [The cipher library](#the-cipher-library) |
 | `terminal` | `os.ArgCount`, `os.ArgRead` and `os.InputLineRead`, see [The terminal library](#the-terminal-library). Enabled by default |
+| `reflect` | every function of `sys/reflect`, see [The reflect library](#the-reflect-library) |
 
 `os.Exit`, `sys/time`, `sys/regexp` and `sys/string` are not system
 libraries. They end the program, read the clock or compute, and always
@@ -1017,7 +1019,7 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `file`, `net`, `cipher` or `terminal` and does not
+A program that uses a function of `file`, `net`, `cipher`, `terminal` or `reflect` and does not
 enable it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
@@ -1057,7 +1059,7 @@ a program that reads its arguments or input, and
 
 Every function of `cipher` is its own opcode, 796 to 804, and every
 function of `net`, 805 to 819, every function of `file`, 820 to 875,
-and every function of `terminal`, 876 to 878 (decision D119). The compiler turns every call of `os.Run`, the one
+and every function of `terminal`, 876 to 878, and every function of `reflect`, 880 to 904 (decision D119). The compiler turns every call of `os.Run`, the one
 function of `process`, into the opcode `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
@@ -1182,6 +1184,76 @@ func main() {
 At most 64 hash states are held at once, and a state that was released or
 never returned is an assert. The function numbers, allocations and vm
 support are in [docs/CipherLibrary.md](docs/CipherLibrary.md).
+
+### [The reflect library](#table-of-contents)
+
+`sys/reflect` reads the types of a program and the fields of a struct
+value (decision D150). It is the system library `reflect`, off unless a
+run enables it with `--enable=reflect`, and it runs on the old loop, on
+vm, in an image and in a native executable.
+
+The compiler builds one type table from the values the program passes to
+`reflect.CxTypeOfValueGet` and every type they reach, once before the run.
+Every other function reads that table, so a call allocates nothing.
+
+A type is an `i64` handle: bits 0 to 31 the type number, 32 to 39 the
+kind, 40 to 55 the generation and 56 to 63 the tag `0x40` (decision
+D153). A method gives an `i64` function handle, tag `0x41`. A name is an
+`i64` Gid, of the type name pool (tag `0x11`) for a type and of the member
+name pool (tag `0x0F`) for a field, a method or a function. A getter of an
+`i32` returns -1 and a getter of an `i64` returns 0 for a handle that is
+not of the kind it reads or an ordinal out of range.
+
+| function | returns |
+|---|---|
+| `reflect.CxTypeOfValueGet(value)` | the type of `value`, as the compiler sees it |
+| `reflect.CxTypeKindGet(type i64)` | `i32` kind, 1 scalar, 2 struct, 3 array, 4 slice, 5 pointer, 6 function |
+| `reflect.CxTypeNameGet(type i64)` | the name Gid, 0 for an array, slice or pointer type |
+| `reflect.CxTypeSizeInBytesGet(type i64)` | `i32` size of a value |
+| `reflect.CxTypeAlignmentInBytesGet(type i64)` | `i32` natural alignment. CX packs struct fields, so an offset need not be a multiple of it |
+| `reflect.CxStructFieldCountGet(structType i64)` | `i32` field count |
+| `reflect.CxStructFieldNameGet(structType i64, fieldOrdinal i32)` | the field name Gid |
+| `reflect.CxStructFieldTypeGet(structType i64, fieldOrdinal i32)` | the field type |
+| `reflect.CxStructFieldOffsetInBytesGet(structType i64, fieldOrdinal i32)` | `i32` offset of the field |
+| `reflect.CxStructFieldOrdinalByNameGet(structType i64, fieldName i64)` | `i32` ordinal of the field named by the Gid, -1 if none |
+| `reflect.CxStructFieldValueRead(structValue, structType i64, fieldOrdinal i32, buffer)` | `i32` bytes copied from the field into the `ui8` array, -1 if it does not fit |
+| `reflect.CxStructFieldValueWrite(structValue, structType i64, fieldOrdinal i32, buffer)` | `i32` bytes copied from the `ui8` array into the field of the variable, -1 if the buffer is short |
+| `reflect.CxStructMethodCountGet(structType i64)` | `i32` method count |
+| `reflect.CxStructMethodNameGet(structType i64, methodOrdinal i32)` | the method name Gid, methods in name order |
+| `reflect.CxStructMethodFunctionGet(structType i64, methodOrdinal i32)` | the function handle of the method |
+| `reflect.CxArrayLengthGet(arrayType i64)` | `i32` length |
+| `reflect.CxArrayElementTypeGet(arrayType i64)` | the element type |
+| `reflect.CxSliceElementTypeGet(sliceType i64)` | the element type |
+| `reflect.CxPointerElementTypeGet(pointerType i64)` | the type pointed to |
+| `reflect.CxFunctionNameGet(function i64)` | the function name Gid, `Point.Area` for a method |
+| `reflect.CxFunctionInputCountGet(function i64)` | `i32` input count, the receiver of a method first |
+| `reflect.CxFunctionInputTypeGet(function i64, inputOrdinal i32)` | the input type |
+| `reflect.CxFunctionOutputCountGet(function i64)` | `i32` output count |
+| `reflect.CxFunctionOutputTypeGet(function i64, outputOrdinal i32)` | the output type |
+| `reflect.CxStringPoolTextRead(name i64, buffer)` | `i32` bytes of the name copied into the `ui8` array, -1 for no name |
+
+`structValue` is a struct variable, which the write changes in place, and
+`buffer` a `ui8` array. A field is copied as its bytes, little endian.
+
+```cx
+package main
+
+import "sys/reflect"
+
+type Point struct {
+	x i32
+	y i32
+}
+
+func main() {
+	var p Point
+	var buffer [4]ui8
+	var t i64 = reflect.CxTypeOfValueGet(p)
+	buffer[0] = 7UB
+	var copied i32 = reflect.CxStructFieldValueWrite(p, t, 1, buffer)
+	printf("fields %d, y at %d, copied %d, y %d\n", reflect.CxStructFieldCountGet(t), reflect.CxStructFieldOffsetInBytesGet(t, 1), copied, p.y)
+}
+```
 
 ### [The net library](#table-of-contents)
 

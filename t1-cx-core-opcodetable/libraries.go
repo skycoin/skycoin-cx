@@ -25,7 +25,8 @@ const (
 	LibraryNumberProcess  = 3
 	LibraryNumberCipher   = 4
 	LibraryNumberTerminal = 5
-	LibraryCount          = 6
+	LibraryNumberReflect  = 6
+	LibraryCount          = 7
 )
 
 // LibraryPolicyEnabledWhenImported is the default policy for a library that
@@ -53,6 +54,7 @@ var LibraryTable = [...]Library{
 	{LibraryNumberProcess, "process", 2611230001, false, false},
 	{LibraryNumberCipher, "cipher", 2611240003, false, false},
 	{LibraryNumberTerminal, "terminal", 2611270001, true, true},
+	{LibraryNumberReflect, "reflect", 2611280001, false, true},
 }
 
 // LibraryByName returns the library named name.

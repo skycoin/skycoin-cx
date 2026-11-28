@@ -1,0 +1,57 @@
+// Reads and writes the fields of a struct through the reflect library
+// (decision D150). Run with --enable=reflect.
+
+package main
+
+import "sys/reflect"
+
+type Account struct {
+	id      i32
+	balance i64
+	flags   [2]ui8
+	rate    f32
+}
+
+func main() {
+	var account Account
+	var buffer [8]ui8
+	var t i64
+	var copied i32
+
+	account.id = 7
+	account.balance = 1000L
+	account.flags[1] = 3UB
+	account.rate = 1.5
+	t = reflect.CxTypeOfValueGet(account)
+
+	copied = reflect.CxStructFieldValueRead(account, t, 0, buffer)
+	printf("id copied %d bytes %d %d %d %d\n", copied, ui8.i32(buffer[0]), ui8.i32(buffer[1]), ui8.i32(buffer[2]), ui8.i32(buffer[3]))
+	copied = reflect.CxStructFieldValueRead(account, t, 2, buffer)
+	printf("flags copied %d bytes %d %d\n", copied, ui8.i32(buffer[0]), ui8.i32(buffer[1]))
+
+	// balance is an i64 at offset 4. Write 0x0102 through a little endian
+	// buffer and read it back.
+	buffer[0] = 2UB
+	buffer[1] = 1UB
+	buffer[2] = 0UB
+	buffer[3] = 0UB
+	buffer[4] = 0UB
+	buffer[5] = 0UB
+	buffer[6] = 0UB
+	buffer[7] = 0UB
+	copied = reflect.CxStructFieldValueWrite(account, t, 1, buffer)
+	printf("balance wrote %d bytes, balance %d\n", copied, account.balance)
+
+	buffer[0] = 42UB
+	buffer[1] = 0UB
+	copied = reflect.CxStructFieldValueWrite(account, t, 0, buffer)
+	printf("id wrote %d bytes, id %d, balance %d, rate %f\n", copied, account.id, account.balance, account.rate)
+
+	// A field that does not fit the buffer and an ordinal past the last
+	// field are refused with -1 and change nothing.
+	var small [2]ui8
+	printf("short buffer %d\n", reflect.CxStructFieldValueRead(account, t, 1, small))
+	printf("short buffer write %d, balance %d\n", reflect.CxStructFieldValueWrite(account, t, 1, small), account.balance)
+	printf("no field %d\n", reflect.CxStructFieldValueRead(account, t, 4, buffer))
+	printf("not a struct %d\n", reflect.CxStructFieldValueRead(account, reflect.CxTypeOfValueGet(copied), 0, buffer))
+}

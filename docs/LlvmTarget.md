@@ -111,6 +111,11 @@ The terminal functions read the `argc` and `argv` of `main`, which the
 entry passes to `cx_rt_start`, and standard input with `getchar`. Linked
 by TinyGo they call back into the Go side for `os.Args` and `os.Stdin`.
 
+The reflect functions take two more arguments, the address of the type
+table in `cx_mem` and the type number of `CxTypeOfValueGet`, and read the
+table as `t2-cx-library-reflecttable` does. They need nothing from the Go
+side, so a TinyGo build links the same C.
+
 `OpcodeOutputHandOff` and `OpcodeOutputFlush` call `cx_rt_output_hand_off`
 and `cx_rt_output_flush`. For `--output-mode=thread` cx build compiles the
 runtime with `CX_RT_OUTPUT_THREAD` and `-pthread`, and the hand off copies

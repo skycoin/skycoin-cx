@@ -827,6 +827,31 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{877, "os.ArgRead", 2611270001, 0, 0},
 	{878, "os.InputLineRead", 2611270001, 0, 0},
 	{879, "os.OutputFlush", 2611270002, 0, 0},
+	{880, "reflect.CxTypeOfValueGet", 2611280001, 0, 0},
+	{881, "reflect.CxTypeKindGet", 2611280001, 0, 0},
+	{882, "reflect.CxTypeNameGet", 2611280001, 0, 0},
+	{883, "reflect.CxTypeSizeInBytesGet", 2611280001, 0, 0},
+	{884, "reflect.CxTypeAlignmentInBytesGet", 2611280001, 0, 0},
+	{885, "reflect.CxStructFieldCountGet", 2611280001, 0, 0},
+	{886, "reflect.CxStructFieldNameGet", 2611280001, 0, 0},
+	{887, "reflect.CxStructFieldTypeGet", 2611280001, 0, 0},
+	{888, "reflect.CxStructFieldOffsetInBytesGet", 2611280001, 0, 0},
+	{889, "reflect.CxStructFieldOrdinalByNameGet", 2611280001, 0, 0},
+	{890, "reflect.CxStructFieldValueRead", 2611280001, 0, 0},
+	{891, "reflect.CxStructFieldValueWrite", 2611280001, 0, 0},
+	{892, "reflect.CxStructMethodCountGet", 2611280001, 0, 0},
+	{893, "reflect.CxStructMethodNameGet", 2611280001, 0, 0},
+	{894, "reflect.CxStructMethodFunctionGet", 2611280001, 0, 0},
+	{895, "reflect.CxArrayLengthGet", 2611280001, 0, 0},
+	{896, "reflect.CxArrayElementTypeGet", 2611280001, 0, 0},
+	{897, "reflect.CxSliceElementTypeGet", 2611280001, 0, 0},
+	{898, "reflect.CxPointerElementTypeGet", 2611280001, 0, 0},
+	{899, "reflect.CxFunctionNameGet", 2611280001, 0, 0},
+	{900, "reflect.CxFunctionInputCountGet", 2611280001, 0, 0},
+	{901, "reflect.CxFunctionInputTypeGet", 2611280001, 0, 0},
+	{902, "reflect.CxFunctionOutputCountGet", 2611280001, 0, 0},
+	{903, "reflect.CxFunctionOutputTypeGet", 2611280001, 0, 0},
+	{904, "reflect.CxStringPoolTextRead", 2611280001, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -1083,6 +1108,33 @@ const (
 
 	// The flush of the output modes, decision D142.
 	OpcodeOutputFlush = 879
+
+	// The reflect library, decision D150.
+	OpcodeReflectCxTypeOfValueGet              = 880
+	OpcodeReflectCxTypeKindGet                 = 881
+	OpcodeReflectCxTypeNameGet                 = 882
+	OpcodeReflectCxTypeSizeInBytesGet          = 883
+	OpcodeReflectCxTypeAlignmentInBytesGet     = 884
+	OpcodeReflectCxStructFieldCountGet         = 885
+	OpcodeReflectCxStructFieldNameGet          = 886
+	OpcodeReflectCxStructFieldTypeGet          = 887
+	OpcodeReflectCxStructFieldOffsetInBytesGet = 888
+	OpcodeReflectCxStructFieldOrdinalByNameGet = 889
+	OpcodeReflectCxStructFieldValueRead        = 890
+	OpcodeReflectCxStructFieldValueWrite       = 891
+	OpcodeReflectCxStructMethodCountGet        = 892
+	OpcodeReflectCxStructMethodNameGet         = 893
+	OpcodeReflectCxStructMethodFunctionGet     = 894
+	OpcodeReflectCxArrayLengthGet              = 895
+	OpcodeReflectCxArrayElementTypeGet         = 896
+	OpcodeReflectCxSliceElementTypeGet         = 897
+	OpcodeReflectCxPointerElementTypeGet       = 898
+	OpcodeReflectCxFunctionNameGet             = 899
+	OpcodeReflectCxFunctionInputCountGet       = 900
+	OpcodeReflectCxFunctionInputTypeGet        = 901
+	OpcodeReflectCxFunctionOutputCountGet      = 902
+	OpcodeReflectCxFunctionOutputTypeGet       = 903
+	OpcodeReflectCxStringPoolTextRead          = 904
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OpResize = 210

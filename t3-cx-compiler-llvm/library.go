@@ -12,29 +12,54 @@ import (
 // memory, its size, the pointer size and the block at sp, the inputs and
 // then the outputs as the vm form reads them.
 var libraryRuntimeFunctions = map[ir.Opcode]string{
-	ir.OpcodeCipherHashStateNew:     "cx_rt_cipher_hash_state_new",
-	ir.OpcodeCipherHashStateRelease: "cx_rt_cipher_hash_state_release",
-	ir.OpcodeNetUpdate:              "cx_rt_net_update",
-	ir.OpcodeNetReadyCount:          "cx_rt_net_ready_count",
-	ir.OpcodeNetReadyNext:           "cx_rt_net_ready_next",
-	ir.OpcodeNetClock:               "cx_rt_net_clock",
-	ir.OpcodeNetRead:                "cx_rt_net_read",
-	ir.OpcodeNetWrite:               "cx_rt_net_write",
-	ir.OpcodeNetClose:               "cx_rt_net_close",
-	ir.OpcodeNetTimeoutSet:          "cx_rt_net_timeout_set",
-	ir.OpcodeNetTCPListen:           "cx_rt_net_tcp_listen",
-	ir.OpcodeNetTCPDial:             "cx_rt_net_tcp_dial",
-	ir.OpcodeNetUDPListen:           "cx_rt_net_udp_listen",
-	ir.OpcodeNetUDPDial:             "cx_rt_net_udp_dial",
-	ir.OpcodeNetUDPReadFrom:         "cx_rt_net_udp_read_from",
-	ir.OpcodeNetUDPWriteTo:          "cx_rt_net_udp_write_to",
-	ir.OpcodeNetUDPPeerResolve:      "cx_rt_net_udp_peer_resolve",
-	ir.OpcodeFileClose:              "cx_rt_file_close",
-	ir.OpcodeFileSeek:               "cx_rt_file_seek",
-	ir.OpcodeFileSync:               "cx_rt_file_sync",
-	ir.OpcodeTerminalArgCount:       "cx_rt_terminal_arg_count",
-	ir.OpcodeTerminalArgRead:        "cx_rt_terminal_arg_read",
-	ir.OpcodeTerminalInputLineRead:  "cx_rt_terminal_input_line_read",
+	ir.OpcodeCipherHashStateNew:                   "cx_rt_cipher_hash_state_new",
+	ir.OpcodeCipherHashStateRelease:               "cx_rt_cipher_hash_state_release",
+	ir.OpcodeNetUpdate:                            "cx_rt_net_update",
+	ir.OpcodeNetReadyCount:                        "cx_rt_net_ready_count",
+	ir.OpcodeNetReadyNext:                         "cx_rt_net_ready_next",
+	ir.OpcodeNetClock:                             "cx_rt_net_clock",
+	ir.OpcodeNetRead:                              "cx_rt_net_read",
+	ir.OpcodeNetWrite:                             "cx_rt_net_write",
+	ir.OpcodeNetClose:                             "cx_rt_net_close",
+	ir.OpcodeNetTimeoutSet:                        "cx_rt_net_timeout_set",
+	ir.OpcodeNetTCPListen:                         "cx_rt_net_tcp_listen",
+	ir.OpcodeNetTCPDial:                           "cx_rt_net_tcp_dial",
+	ir.OpcodeNetUDPListen:                         "cx_rt_net_udp_listen",
+	ir.OpcodeNetUDPDial:                           "cx_rt_net_udp_dial",
+	ir.OpcodeNetUDPReadFrom:                       "cx_rt_net_udp_read_from",
+	ir.OpcodeNetUDPWriteTo:                        "cx_rt_net_udp_write_to",
+	ir.OpcodeNetUDPPeerResolve:                    "cx_rt_net_udp_peer_resolve",
+	ir.OpcodeFileClose:                            "cx_rt_file_close",
+	ir.OpcodeFileSeek:                             "cx_rt_file_seek",
+	ir.OpcodeFileSync:                             "cx_rt_file_sync",
+	ir.OpcodeTerminalArgCount:                     "cx_rt_terminal_arg_count",
+	ir.OpcodeTerminalArgRead:                      "cx_rt_terminal_arg_read",
+	ir.OpcodeTerminalInputLineRead:                "cx_rt_terminal_input_line_read",
+	ir.OpcodeReflectCxTypeOfValueGet:              "cx_rt_reflect_cx_type_of_value_get",
+	ir.OpcodeReflectCxTypeKindGet:                 "cx_rt_reflect_cx_type_kind_get",
+	ir.OpcodeReflectCxTypeNameGet:                 "cx_rt_reflect_cx_type_name_get",
+	ir.OpcodeReflectCxTypeSizeInBytesGet:          "cx_rt_reflect_cx_type_size_in_bytes_get",
+	ir.OpcodeReflectCxTypeAlignmentInBytesGet:     "cx_rt_reflect_cx_type_alignment_in_bytes_get",
+	ir.OpcodeReflectCxStructFieldCountGet:         "cx_rt_reflect_cx_struct_field_count_get",
+	ir.OpcodeReflectCxStructFieldNameGet:          "cx_rt_reflect_cx_struct_field_name_get",
+	ir.OpcodeReflectCxStructFieldTypeGet:          "cx_rt_reflect_cx_struct_field_type_get",
+	ir.OpcodeReflectCxStructFieldOffsetInBytesGet: "cx_rt_reflect_cx_struct_field_offset_in_bytes_get",
+	ir.OpcodeReflectCxStructFieldOrdinalByNameGet: "cx_rt_reflect_cx_struct_field_ordinal_by_name_get",
+	ir.OpcodeReflectCxStructFieldValueRead:        "cx_rt_reflect_cx_struct_field_value_read",
+	ir.OpcodeReflectCxStructFieldValueWrite:       "cx_rt_reflect_cx_struct_field_value_write",
+	ir.OpcodeReflectCxStructMethodCountGet:        "cx_rt_reflect_cx_struct_method_count_get",
+	ir.OpcodeReflectCxStructMethodNameGet:         "cx_rt_reflect_cx_struct_method_name_get",
+	ir.OpcodeReflectCxStructMethodFunctionGet:     "cx_rt_reflect_cx_struct_method_function_get",
+	ir.OpcodeReflectCxArrayLengthGet:              "cx_rt_reflect_cx_array_length_get",
+	ir.OpcodeReflectCxArrayElementTypeGet:         "cx_rt_reflect_cx_array_element_type_get",
+	ir.OpcodeReflectCxSliceElementTypeGet:         "cx_rt_reflect_cx_slice_element_type_get",
+	ir.OpcodeReflectCxPointerElementTypeGet:       "cx_rt_reflect_cx_pointer_element_type_get",
+	ir.OpcodeReflectCxFunctionNameGet:             "cx_rt_reflect_cx_function_name_get",
+	ir.OpcodeReflectCxFunctionInputCountGet:       "cx_rt_reflect_cx_function_input_count_get",
+	ir.OpcodeReflectCxFunctionInputTypeGet:        "cx_rt_reflect_cx_function_input_type_get",
+	ir.OpcodeReflectCxFunctionOutputCountGet:      "cx_rt_reflect_cx_function_output_count_get",
+	ir.OpcodeReflectCxFunctionOutputTypeGet:       "cx_rt_reflect_cx_function_output_type_get",
+	ir.OpcodeReflectCxStringPoolTextRead:          "cx_rt_reflect_cx_string_pool_text_read",
 }
 
 // instrLibrary emits a system library opcode: the arguments of the pending
@@ -61,8 +86,16 @@ func (e *emitter) instrLibrary(in *ir.Instr) error {
 		e.line("%s = getelementptr inbounds i8, ptr %s, i64 %d", p, block, offset)
 		e.line("store %s %s, ptr %s, align 1", valueType(e.call.pendingCallSizes[offset]), e.call.pendingCallArgs[offset], p)
 	}
-	e.declare(function, fmt.Sprintf("declare void @%s(ptr, i64, i32, ptr) nounwind", function))
-	e.line("call void @%s(ptr @cx_mem, i64 %d, i32 %d, ptr %s)", function, uint64(e.dataEnd)+uint64(e.image.ImageScratchSize), pointerSize, block)
+	memorySize := uint64(e.dataEnd) + uint64(e.image.ImageScratchSize)
+	if ir.OpcodeReflect(in.InstrOpcode) {
+		// A reflect function also takes the address of the type table and the
+		// type number of CxTypeOfValueGet (decision D150).
+		e.declare(function, fmt.Sprintf("declare void @%s(ptr, i64, i32, ptr, i32, i32) nounwind", function))
+		e.line("call void @%s(ptr @cx_mem, i64 %d, i32 %d, ptr %s, i32 %d, i32 %d)", function, memorySize, pointerSize, block, in.InstrAux, in.InstrN)
+	} else {
+		e.declare(function, fmt.Sprintf("declare void @%s(ptr, i64, i32, ptr) nounwind", function))
+		e.line("call void @%s(ptr @cx_mem, i64 %d, i32 %d, ptr %s)", function, memorySize, pointerSize, block)
+	}
 	e.result = ""
 	e.resultBlock = true
 	e.call = pendingCall{}
