@@ -63,6 +63,21 @@ var libraryRuntimeFunctions = map[ir.Opcode]string{
 	ir.OpcodeSerializeCxSerializeEncodedSizeInBytesGet: "cx_rt_serialize_encoded_size_in_bytes_get",
 	ir.OpcodeSerializeCxSerializeValueEncode:           "cx_rt_serialize_value_encode",
 	ir.OpcodeSerializeCxSerializeValueDecode:           "cx_rt_serialize_value_decode",
+	ir.OpcodeMetaCxStructDefinitionBegin:               "cx_rt_meta_struct_definition_begin",
+	ir.OpcodeMetaCxStructDefinitionFieldAppend:         "cx_rt_meta_struct_definition_field_append",
+	ir.OpcodeMetaCxStructDefinitionMethodAppend:        "cx_rt_meta_struct_definition_method_append",
+	ir.OpcodeMetaCxStructDefinitionFinish:              "cx_rt_meta_struct_definition_finish",
+	ir.OpcodeMetaCxArrayTypeCreate:                     "cx_rt_meta_array_type_create",
+	ir.OpcodeMetaCxSliceTypeCreate:                     "cx_rt_meta_slice_type_create",
+	ir.OpcodeMetaCxPointerTypeCreate:                   "cx_rt_meta_pointer_type_create",
+	ir.OpcodeMetaCxFunctionDefinitionBegin:             "cx_rt_meta_function_definition_begin",
+	ir.OpcodeMetaCxFunctionDefinitionInputAppend:       "cx_rt_meta_function_definition_input_append",
+	ir.OpcodeMetaCxFunctionDefinitionOutputAppend:      "cx_rt_meta_function_definition_output_append",
+	ir.OpcodeMetaCxFunctionDefinitionFinish:            "cx_rt_meta_function_definition_finish",
+	ir.OpcodeMetaCxPackageDefinitionBegin:              "cx_rt_meta_package_definition_begin",
+	ir.OpcodeMetaCxPackageDefinitionFinish:             "cx_rt_meta_package_definition_finish",
+	ir.OpcodeMetaCxPackageDefinitionNameGet:            "cx_rt_meta_package_definition_name_get",
+	ir.OpcodeMetaCxStringPoolTextAppend:                "cx_rt_meta_string_pool_text_append",
 }
 
 // instrLibrary emits a system library opcode: the arguments of the pending
@@ -90,8 +105,8 @@ func (e *emitter) instrLibrary(in *ir.Instr) error {
 		e.line("store %s %s, ptr %s, align 1", valueType(e.call.pendingCallSizes[offset]), e.call.pendingCallArgs[offset], p)
 	}
 	memorySize := uint64(e.dataEnd) + uint64(e.image.ImageScratchSize)
-	if ir.OpcodeTypeTableReads(in.InstrOpcode) {
-		// A reflect or serialize function also takes the address of the type
+	if ir.OpcodeTypeTableUses(in.InstrOpcode) {
+		// A reflect, serialize or meta function also takes the address of the type
 		// table and the type number of CxTypeOfValueGet (decision D150).
 		e.declare(function, fmt.Sprintf("declare void @%s(ptr, i64, i32, ptr, i32, i32) nounwind", function))
 		e.line("call void @%s(ptr @cx_mem, i64 %d, i32 %d, ptr %s, i32 %d, i32 %d)", function, memorySize, pointerSize, block, in.InstrAux, in.InstrN)

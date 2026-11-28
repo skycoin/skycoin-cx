@@ -855,6 +855,21 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{905, "serialize.CxSerializeEncodedSizeInBytesGet", 2611280002, 0, 0},
 	{906, "serialize.CxSerializeValueEncode", 2611280002, 0, 0},
 	{907, "serialize.CxSerializeValueDecode", 2611280002, 0, 0},
+	{908, "meta.CxStructDefinitionBegin", 2611280003, 0, 0},
+	{909, "meta.CxStructDefinitionFieldAppend", 2611280003, 0, 0},
+	{910, "meta.CxStructDefinitionMethodAppend", 2611280003, 0, 0},
+	{911, "meta.CxStructDefinitionFinish", 2611280003, 0, 0},
+	{912, "meta.CxArrayTypeCreate", 2611280003, 0, 0},
+	{913, "meta.CxSliceTypeCreate", 2611280003, 0, 0},
+	{914, "meta.CxPointerTypeCreate", 2611280003, 0, 0},
+	{915, "meta.CxFunctionDefinitionBegin", 2611280003, 0, 0},
+	{916, "meta.CxFunctionDefinitionInputAppend", 2611280003, 0, 0},
+	{917, "meta.CxFunctionDefinitionOutputAppend", 2611280003, 0, 0},
+	{918, "meta.CxFunctionDefinitionFinish", 2611280003, 0, 0},
+	{919, "meta.CxPackageDefinitionBegin", 2611280003, 0, 0},
+	{920, "meta.CxPackageDefinitionFinish", 2611280003, 0, 0},
+	{921, "meta.CxPackageDefinitionNameGet", 2611280003, 0, 0},
+	{922, "meta.CxStringPoolTextAppend", 2611280003, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -1143,6 +1158,23 @@ const (
 	OpcodeSerializeCxSerializeEncodedSizeInBytesGet = 905
 	OpcodeSerializeCxSerializeValueEncode           = 906
 	OpcodeSerializeCxSerializeValueDecode           = 907
+
+	// The meta library, decision D151.
+	OpcodeMetaCxStructDefinitionBegin          = 908
+	OpcodeMetaCxStructDefinitionFieldAppend    = 909
+	OpcodeMetaCxStructDefinitionMethodAppend   = 910
+	OpcodeMetaCxStructDefinitionFinish         = 911
+	OpcodeMetaCxArrayTypeCreate                = 912
+	OpcodeMetaCxSliceTypeCreate                = 913
+	OpcodeMetaCxPointerTypeCreate              = 914
+	OpcodeMetaCxFunctionDefinitionBegin        = 915
+	OpcodeMetaCxFunctionDefinitionInputAppend  = 916
+	OpcodeMetaCxFunctionDefinitionOutputAppend = 917
+	OpcodeMetaCxFunctionDefinitionFinish       = 918
+	OpcodeMetaCxPackageDefinitionBegin         = 919
+	OpcodeMetaCxPackageDefinitionFinish        = 920
+	OpcodeMetaCxPackageDefinitionNameGet       = 921
+	OpcodeMetaCxStringPoolTextAppend           = 922
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OpResize = 210

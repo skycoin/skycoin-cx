@@ -1,0 +1,81 @@
+// Creates array, slice and pointer types, a function signature with a
+// method and a package at run time through the meta library and reads them
+// back through reflect (decision D151). A function definition records a
+// signature only and creates no code. Run with --enable=reflect,meta.
+
+package main
+
+import "sys/meta"
+import "sys/reflect"
+
+var lower [26]str = [26]str{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+
+// nameMake adds the first length character codes as a name.
+func nameMake(codes [8]i32, length i32) (name i64) {
+	var buffer [8]ui8
+	var i i32
+	for i = 0; i < length; i++ {
+		buffer[i] = i32.ui8(codes[i])
+	}
+	name = meta.CxStringPoolTextAppend(buffer, length)
+}
+
+// nameShow prints the text of a lower case name, printf has no %c.
+func nameShow(label str, name i64) {
+	global lower
+	var buffer [16]ui8
+	var length i32
+	var i i32
+	length = reflect.CxStringPoolTextRead(name, buffer)
+	printf("%s ", label)
+	for i = 0; i < length; i++ {
+		printf("%s", lower[ui8.i32(buffer[i])-97])
+	}
+	printf("\n")
+}
+
+func main() {
+	var number i32
+	var flag bool
+	var numbers [4]i32
+	var i32Type i64 = reflect.CxTypeOfValueGet(number)
+	var boolType i64 = reflect.CxTypeOfValueGet(flag)
+
+	var array i64 = meta.CxArrayTypeCreate(i32Type, 4)
+	printf("array kind %d length %d size %d element is i32 %v\n", reflect.CxTypeKindGet(array), reflect.CxArrayLengthGet(array),
+		reflect.CxTypeSizeInBytesGet(array), reflect.CxArrayElementTypeGet(array) == i32Type)
+	printf("array is the compiled [4]i32 %v\n", array == reflect.CxTypeOfValueGet(numbers))
+	var nested i64 = meta.CxArrayTypeCreate(array, 3)
+	printf("nested size %d, created twice is the same %v\n", reflect.CxTypeSizeInBytesGet(nested), meta.CxArrayTypeCreate(array, 3) == nested)
+	var slice i64 = meta.CxSliceTypeCreate(boolType)
+	printf("slice kind %d element is bool %v\n", reflect.CxTypeKindGet(slice), reflect.CxSliceElementTypeGet(slice) == boolType)
+	var pointer i64 = meta.CxPointerTypeCreate(slice)
+	printf("pointer kind %d element is the slice %v\n", reflect.CxTypeKindGet(pointer), reflect.CxPointerElementTypeGet(pointer) == slice)
+
+	// func scale(factor i32, values [4]i32) (scaled [4]i32, ok bool)
+	var scale i64 = meta.CxFunctionDefinitionBegin(nameMake([8]i32{115, 99, 97, 108, 101, 0, 0, 0}, 5))
+	printf("open function inputs %d\n", reflect.CxFunctionInputCountGet(scale))
+	printf("input %d\n", meta.CxFunctionDefinitionInputAppend(scale, nameMake([8]i32{102, 97, 99, 116, 111, 114, 0, 0}, 6), i32Type))
+	printf("input %d\n", meta.CxFunctionDefinitionInputAppend(scale, nameMake([8]i32{118, 97, 108, 117, 101, 115, 0, 0}, 6), array))
+	printf("output %d\n", meta.CxFunctionDefinitionOutputAppend(scale, nameMake([8]i32{115, 99, 97, 108, 101, 100, 0, 0}, 6), array))
+	printf("unnamed output %d\n", meta.CxFunctionDefinitionOutputAppend(scale, 0L, boolType))
+	printf("finish %d\n", meta.CxFunctionDefinitionFinish(scale))
+	nameShow("function", reflect.CxFunctionNameGet(scale))
+	printf("inputs %d outputs %d\n", reflect.CxFunctionInputCountGet(scale), reflect.CxFunctionOutputCountGet(scale))
+	printf("input types i32 %v array %v, output types array %v bool %v\n", reflect.CxFunctionInputTypeGet(scale, 0) == i32Type,
+		reflect.CxFunctionInputTypeGet(scale, 1) == array, reflect.CxFunctionOutputTypeGet(scale, 0) == array, reflect.CxFunctionOutputTypeGet(scale, 1) == boolType)
+
+	// struct vector { items [4]i32 } with the method scale.
+	var vector i64 = meta.CxStructDefinitionBegin(nameMake([8]i32{118, 101, 99, 116, 111, 114, 0, 0}, 6))
+	printf("field %d\n", meta.CxStructDefinitionFieldAppend(vector, nameMake([8]i32{105, 116, 101, 109, 115, 0, 0, 0}, 5), array))
+	printf("method %d\n", meta.CxStructDefinitionMethodAppend(vector, nameMake([8]i32{115, 99, 97, 108, 101, 0, 0, 0}, 5), scale))
+	printf("finish %d\n", meta.CxStructDefinitionFinish(vector))
+	printf("methods %d\n", reflect.CxStructMethodCountGet(vector))
+	nameShow("method", reflect.CxStructMethodNameGet(vector, 0))
+	printf("method function is scale %v\n", reflect.CxStructMethodFunctionGet(vector, 0) == scale)
+
+	var pkg i64 = meta.CxPackageDefinitionBegin(nameMake([8]i32{103, 101, 111, 109, 0, 0, 0, 0}, 4))
+	printf("open package name %d\n", meta.CxPackageDefinitionNameGet(pkg))
+	printf("package finish %d\n", meta.CxPackageDefinitionFinish(pkg))
+	nameShow("package", meta.CxPackageDefinitionNameGet(pkg))
+}

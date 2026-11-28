@@ -4,7 +4,6 @@
 package reflectopcodes
 
 import (
-	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
 	reflecttable "github.com/skycoin/skycoin-cx/t2-cx-library-reflecttable"
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 )
@@ -19,11 +18,11 @@ type LibraryState struct {
 // Library is the state of the reflect library.
 var Library LibraryState
 
-// LibraryPrepare builds the type table of prgrm when it calls the reflect
-// or the serialize library, before the old loop runs it, so no opcode builds anything.
+// LibraryPrepare builds the type table of prgrm when it calls the reflect,
+// the serialize or the meta library, before the old loop runs it, so no opcode builds anything.
 func LibraryPrepare(prgrm *ast.CXProgram) {
 	Library.LibraryTypeTable = ast.ReflectTable{}
-	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] || prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberSerialize] {
+	if ast.ReflectTableUsed(prgrm) {
 		Library.LibraryTypeTable = ast.ReflectTableBuild(prgrm)
 	}
 }
