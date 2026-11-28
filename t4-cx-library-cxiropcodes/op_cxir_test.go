@@ -32,7 +32,7 @@ func TestTagsCollision(t *testing.T) {
 		}
 		used[tag] = name
 	}
-	for _, tag := range []objmodel.TypeTag{ir.ImageTag, ir.ImageNameTag} {
+	for _, tag := range []objmodel.TypeTag{objmodel.TypeTag(ir.ImageTag), objmodel.TypeTag(ir.ImageNameTag)} {
 		if other, taken := used[tag]; taken {
 			t.Errorf("cxir tag %#x is taken by %s", tag, other)
 		}

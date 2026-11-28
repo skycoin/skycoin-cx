@@ -222,7 +222,13 @@ type imageCheckOperands struct {
 // bytes needs only its first byte there, as the tail of the machine holds
 // the rest.
 func (operands imageCheckOperands) operandValid(in *Instr, field int, size uint64, scalar bool) bool {
-	offset := uint64([...]uint32{in.InstrA, in.InstrB, in.InstrC}[field])
+	offset := uint64(in.InstrA)
+	switch field {
+	case 1:
+		offset = uint64(in.InstrB)
+	case 2:
+		offset = uint64(in.InstrC)
+	}
 	if in.InstrMode&(InstrModeFrameA<<field) != 0 {
 		if scalar {
 			return offset < operands.frame
@@ -235,18 +241,22 @@ func (operands imageCheckOperands) operandValid(in *Instr, field int, size uint6
 	return offset+size <= operands.memory
 }
 
+// scalarsValid reports whether the scalar operands of in that fields marks,
+// bit i for operand i, are valid.
+func (operands imageCheckOperands) scalarsValid(in *Instr, fields uint8) bool {
+	for field := 0; field < 3; field++ {
+		if fields&(1<<field) != 0 && !operands.operandValid(in, field, imageCheckScalarSize, true) {
+			return false
+		}
+	}
+	return true
+}
+
 // instrValid reports whether every operand in reads or writes is valid.
 func (operands imageCheckOperands) instrValid(in *Instr) bool {
 	const a, b, c = 0, 1, 2
+	const scalarA, scalarB, scalarC = 1 << a, 1 << b, 1 << c
 	n, m := uint64(in.InstrN), uint64(in.InstrM)
-	scalar := func(fields ...int) bool {
-		for _, field := range fields {
-			if !operands.operandValid(in, field, imageCheckScalarSize, true) {
-				return false
-			}
-		}
-		return true
-	}
 	switch op := in.InstrOpcode; {
 	case op == OpcodeZero:
 		return operands.operandValid(in, a, n, false)
@@ -257,23 +267,23 @@ func (operands imageCheckOperands) instrValid(in *Instr) bool {
 	case op == OpcodeCallResult:
 		return operands.operandValid(in, c, n, false)
 	case op == OpcodeTestEqual:
-		return operands.operandValid(in, a, n, false) && operands.operandValid(in, b, m, false) && scalar(c)
+		return operands.operandValid(in, a, n, false) && operands.operandValid(in, b, m, false) && operands.scalarsValid(in, scalarC)
 	case op == OpcodeAddressLoad:
-		return scalar(a) && operands.operandValid(in, c, n, false)
+		return operands.scalarsValid(in, scalarA) && operands.operandValid(in, c, n, false)
 	case op == OpcodeAddressStore:
-		return operands.operandValid(in, a, n, false) && scalar(c)
+		return operands.operandValid(in, a, n, false) && operands.scalarsValid(in, scalarC)
 	case op == OpcodeJumpIf, op == OpcodePrintValue, op == OpcodePrintStr:
-		return scalar(a)
+		return operands.scalarsValid(in, scalarA)
 	case op == OpcodeAddressIndexStatic:
-		return scalar(b, c)
+		return operands.scalarsValid(in, scalarB|scalarC)
 	case op == OpcodeAddressIndex:
-		return scalar(a, b, c)
+		return operands.scalarsValid(in, scalarA|scalarB|scalarC)
 	case op == OpcodeAddressDerefStatic, op == OpcodeAddressDeref, op == OpcodeAddressPointer:
-		return scalar(a, c)
+		return operands.scalarsValid(in, scalarA|scalarC)
 	case op == OpcodeAddressOf:
-		return scalar(c)
+		return operands.scalarsValid(in, scalarC)
 	case op >= OpcodeBoolNot && op < OpcodeCount:
-		return scalar(a, b, c)
+		return operands.scalarsValid(in, scalarA|scalarB|scalarC)
 	}
 	return true
 }

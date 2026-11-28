@@ -130,7 +130,7 @@ func MachineNew(image *ir.Image, outputSize int) *Machine {
 	machine.machineDataEnd = ir.ImageDataEnd(image)
 	machine.MachineMemory = make([]byte, int(machine.machineDataEnd)+int(image.ImageScratchSize)+ir.ImageCheckTailSize)
 	machine.MachineOutput = make([]byte, 0, max(outputSize, MachineOutputMin))
-	if image.ImageOperationsEnabled.OpcodeSetLibraryAny(opcodetable.LibraryNumberCxir) {
+	if ir.ImageCxirEnabled(image) {
 		machine.MachineImageStore = ir.ImageStoreNew(ir.ImageStoreRoomDefault)
 		machine.MachineImageStore.ImageStoreCurrentSet(image)
 		machine.MachineImageRunner = ImageRunnerNew(machine.MachineImageStore, &image.ImageOperationsEnabled)

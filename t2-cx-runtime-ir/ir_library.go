@@ -48,7 +48,8 @@ var opcodeLibraryRanges = [...]struct {
 // OpcodeLibraryOperation returns the language opcode of the library opcode
 // op, the number ImageOperationsEnabled holds, 0 for any other opcode.
 func OpcodeLibraryOperation(op Opcode) int {
-	for _, libraryRange := range opcodeLibraryRanges {
+	for i := range opcodeLibraryRanges {
+		libraryRange := &opcodeLibraryRanges[i]
 		if op >= libraryRange.opcodeLibraryRangeFirst && op <= libraryRange.opcodeLibraryRangeLast {
 			return libraryRange.opcodeLibraryRangeOperation + int(op-libraryRange.opcodeLibraryRangeFirst)
 		}
@@ -72,4 +73,15 @@ func OpcodeOfLibraryOperation(operation int) Opcode {
 		}
 	}
 	return OpcodeInvalid
+}
+
+// ImageCxirEnabled reports whether image enables an operation of sys/cxir.
+// It reads no opcode table, so cx-core-image links none.
+func ImageCxirEnabled(image *Image) bool {
+	for op := OpcodeCxirFirst; op <= OpcodeCxirLast; op++ {
+		if image.ImageOperationsEnabled.OpcodeSetContains(OpcodeLibraryOperation(op)) {
+			return true
+		}
+	}
+	return false
 }
