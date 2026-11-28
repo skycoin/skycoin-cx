@@ -128,6 +128,10 @@ A program that calls the cxir library has no native form, and cx build
 refuses it. A native executable holds machine code, not an image to read,
 and has no vm to run an image (decision D153).
 
+A program that calls the compiler library has no native form either, and
+cx build refuses it. It runs the Go compiler of cx, which a native
+executable does not hold (decision D152).
+
 `OpcodeOutputHandOff` and `OpcodeOutputFlush` call `cx_rt_output_hand_off`
 and `cx_rt_output_flush`. For `--output-mode=thread` cx build compiles the
 runtime with `CX_RT_OUTPUT_THREAD` and `-pthread`, and the hand off copies

@@ -29,6 +29,12 @@ func SourceStringsParse(sourceCodeStrings []string, fileNames []string) error {
 	return parseSourceStrings(sourceCodeStrings, fileNames)
 }
 
+// SourceStringsParseQuiet is SourceStringsParse without printing the errors,
+// for the compiler library, which hands them to the CX program (D152).
+func SourceStringsParseQuiet(sourceCodeStrings []string, fileNames []string) error {
+	return parseSourceStrings(sourceCodeStrings, fileNames)
+}
+
 // parseSourceStrings is SourceStringsParse without printing the errors, which
 // an imported package leaves to the program that imports it.
 func parseSourceStrings(sourceCodeStrings []string, fileNames []string) error {

@@ -36,17 +36,18 @@ type reflectTableBuilder struct {
 }
 
 // ReflectTableUsed reports whether prgrm calls a library that reads or writes
-// the type table, reflect, serialize or meta.
+// the type table, reflect, serialize, meta or compiler.
 func ReflectTableUsed(prgrm *CXProgram) bool {
 	used := &prgrm.ProgramLibrariesUsed
-	return used[opcodetable.LibraryNumberReflect] || used[opcodetable.LibraryNumberSerialize] || used[opcodetable.LibraryNumberMeta]
+	return used[opcodetable.LibraryNumberReflect] || used[opcodetable.LibraryNumberSerialize] || used[opcodetable.LibraryNumberMeta] || used[opcodetable.LibraryNumberCompiler]
 }
 
 // ReflectTableBuild builds the type table of prgrm from the values its
 // reflect.CxTypeOfValueGet calls pass and every type they reach, in function
 // and expression order, so every form builds the same bytes. It runs before
 // the run, never in the run loop.
-// A program that calls the meta library gets room for the records meta adds.
+// A program that calls the meta library gets room for the records meta adds,
+// and one that calls the compiler library for the types of a parsed program.
 func ReflectTableBuild(prgrm *CXProgram) ReflectTable {
 	rb := &reflectTableBuilder{
 		program:    prgrm,
@@ -55,7 +56,7 @@ func ReflectTableBuild(prgrm *CXProgram) ReflectTable {
 		composites: map[reflectTableComposite]int32{},
 		functions:  map[*CXFunction]int32{},
 	}
-	rb.builder.BuilderMetaRoom = prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberMeta]
+	rb.builder.BuilderMetaRoom = prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberMeta] || prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberCompiler]
 	table := ReflectTable{ReflectTableTypes: map[CXTypeSignatureIndex]int32{}}
 	for index := 0; index < prgrm.CXProgramFunctionSlotCount(); index++ {
 		fn := prgrm.CXProgramFunctionSlotLive(index)
@@ -307,4 +308,27 @@ func (rb *reflectTableBuilder) functionRecord(fn *CXFunction) int32 {
 	rb.builder.BuilderFunctions[index].FunctionInputs = inputs
 	rb.builder.BuilderFunctions[index].FunctionOutputs = outputs
 	return index
+}
+
+// ReflectTableDeclarationsBuild builds a type table of structs and
+// functions of prgrm and every type they reach, for the compiler library,
+// which appends it to the table of the running program (decision D152).
+// structTypes and functionRecords give the record number of each.
+func ReflectTableDeclarationsBuild(prgrm *CXProgram, structs []*CXStruct, functions []*CXFunction) (table []byte, structTypes []int32, functionRecords []int32) {
+	rb := &reflectTableBuilder{
+		program:    prgrm,
+		scalars:    map[valuetypes.Code]int32{},
+		structs:    map[*CXStruct]int32{},
+		composites: map[reflectTableComposite]int32{},
+		functions:  map[*CXFunction]int32{},
+	}
+	structTypes = make([]int32, len(structs))
+	for i, strct := range structs {
+		structTypes[i] = rb.structType(strct)
+	}
+	functionRecords = make([]int32, len(functions))
+	for i, fn := range functions {
+		functionRecords[i] = rb.functionRecord(fn)
+	}
+	return rb.builder.BuilderEncode(), structTypes, functionRecords
 }

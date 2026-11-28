@@ -80,6 +80,9 @@ func buildRun(args []string) int {
 	if options.buildOptionsTarget == buildTargetLlvm {
 		return buildLlvm(options)
 	}
+	if astbuild.AST.ProgramLibrariesUsed[opcodetable.LibraryNumberCompiler] {
+		return buildFail(buildCoreCompilerRefusal)
+	}
 
 	var missing []string
 	for _, code := range core.OpcodesUsed(astbuild.AST) {
@@ -352,3 +355,8 @@ an opcode the core does not include is refused with the list of those
 opcodes.
 `, buildCoreName, buildCoreName)
 }
+
+// buildCoreCompilerRefusal is why cx build makes no executable of a program
+// that calls sys/compiler: it runs the Go compiler of cx, which no core
+// links (decision D152).
+const buildCoreCompilerRefusal = "the program uses the compiler library, which no cx build core links, run it with cx"

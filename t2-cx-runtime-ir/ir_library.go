@@ -43,6 +43,7 @@ var opcodeLibraryRanges = [...]struct {
 	{OpcodeSerializeFirst, OpcodeSerializeLast, opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet},
 	{OpcodeMetaFirst, OpcodeMetaLast, opcodetable.OpcodeMetaCxStructDefinitionBegin},
 	{OpcodeCxirFirst, OpcodeCxirLast, opcodetable.OpcodeCxirCxProgramImageCurrentGet},
+	{OpcodeCompilerFirst, OpcodeCompilerLast, opcodetable.OpcodeCompilerCxCompilerSourceFileAppend},
 }
 
 // OpcodeLibraryOperation returns the language opcode of the library opcode
@@ -79,6 +80,17 @@ func OpcodeOfLibraryOperation(operation int) Opcode {
 // It reads no opcode table, so cx-core-image links none.
 func ImageCxirEnabled(image *Image) bool {
 	for op := OpcodeCxirFirst; op <= OpcodeCxirLast; op++ {
+		if image.ImageOperationsEnabled.OpcodeSetContains(OpcodeLibraryOperation(op)) {
+			return true
+		}
+	}
+	return false
+}
+
+// ImageCompilerEnabled reports whether image enables an operation of
+// sys/compiler, which keeps its images in a store too (D152).
+func ImageCompilerEnabled(image *Image) bool {
+	for op := OpcodeCompilerFirst; op <= OpcodeCompilerLast; op++ {
 		if image.ImageOperationsEnabled.OpcodeSetContains(OpcodeLibraryOperation(op)) {
 			return true
 		}

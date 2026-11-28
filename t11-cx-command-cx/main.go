@@ -17,6 +17,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t10-cx-tools-repl"      // thin: only Repl, TargetFunction; only user of cxrepl, could merge it here, max tier 11 to 10
 	"github.com/skycoin/skycoin-cx/t2-cx-core-environment" // thin: only DebugGolangStackTrace; no depth gain
 	"github.com/skycoin/skycoin-cx/t4-cx-compiler-astbuild"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-compileropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-netopcodes"  // thin: only ConstantsInit; no depth gain
 	"github.com/skycoin/skycoin-cx/t5-cx-library-fileopcodes" // thin: only ConstantsInit; no depth gain
 	core "github.com/skycoin/skycoin-cx/t5-cx-runtime-core"   // thin: only ExecutorRun, ExecutorMemoryLimitsClamp and the executor names; no depth gain
@@ -30,6 +31,7 @@ func main() {
 
 func Run(args []string) {
 	defer operationCountPrint()
+	compileropcodes.LibraryCompilerSet(compilerLibrary{})
 	if len(args) > 0 && args[0] == buildCommand {
 		os.Exit(buildRun(args[1:]))
 	}

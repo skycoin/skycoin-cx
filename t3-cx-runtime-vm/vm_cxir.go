@@ -46,7 +46,7 @@ func (runner *ImageRunner) imageRunnerStart(current *ir.Image, imageGid int64) b
 		return false
 	}
 	size := uint64(ir.ImageDataEnd(image)) + uint64(image.ImageScratchSize)
-	if !ir.ImageOperationsWithin(image, &runner.ImageRunnerOperations) || ir.ImageCheckLabelWords(image) > len(runner.imageRunnerLabels) ||
+	if !ir.ImageOperationsWithin(image, &runner.ImageRunnerOperations) || ir.ImageCompilerEnabled(image) || ir.ImageCheckLabelWords(image) > len(runner.imageRunnerLabels) ||
 		ir.ImageCheck(image, runner.imageRunnerLabels) != ir.ImageCheckProblemNone || size > ImageRunMemoryMax {
 		runner.ImageRunnerStore.ImageStoreRunEnd(imageGid)
 		return false
@@ -58,6 +58,7 @@ func (runner *ImageRunner) imageRunnerStart(current *ir.Image, imageGid int64) b
 	clear(machine.MachineMemory)
 	machine.MachineImageStore = runner.ImageRunnerStore
 	machine.MachineImageRunner = nil
+	machine.MachineCompiler = nil
 	output := machine.MachineOutput
 	machine.Reset()
 	machine.MachineOutput = output
@@ -305,5 +306,7 @@ func cxirOpcodeRun(op ir.Opcode, memory []byte, offset uint32, store *ir.ImageSt
 	case ir.OpcodeCxirCxStringPoolTextRead:
 		name, buffer := block.i64(), block.bytes()
 		block.i32Write(store.ImageStoreStringPoolTextRead(name, buffer))
+	case ir.OpcodeCxirCxProgramImageRelease:
+		block.i32Write(store.ImageStoreImageRelease(block.i64()))
 	}
 }

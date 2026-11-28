@@ -1,0 +1,12 @@
+file 0, parsed true, type check 2, errors kept 2
+error 0 at line 5, 88 bytes, starts with 101 114 114 111 114
+error 1 at line 6, 50 bytes, starts with 101 114 114 111 114
+past the last error: line -1, read -1
+lower a program with errors -1
+compile it -1, errors 2
+parse a syntax error -1
+error 0 at line 2, 73 bytes, starts with 101 114 114 111 114
+past the last error: line -1, read -1
+parse with no source -1, errors 1
+append with no name -1, past the buffer -1
+release 0, again -1, type check after -1

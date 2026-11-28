@@ -17,8 +17,8 @@ const (
 	ImageNameTag uint8 = 0x12
 )
 
-// imageStoreGeneration is the generation of every Gid of an ImageStore,
-// which never releases an image or a name.
+// imageStoreGeneration is the generation of the running image, of every
+// name Gid and of a slot never released. A released slot takes the next.
 const imageStoreGeneration = 1
 
 // The Gid layout of t1-cx-core-objmodel, bits 0 to 31 the index, 32 to 55
@@ -106,6 +106,8 @@ type imageStoreSlot struct {
 	slotSegment          []byte
 	slotText             []byte
 	slotRunning          bool
+	slotUsed             bool
+	slotGeneration       uint32
 }
 
 // ImageStore holds the images a CX program builds or decodes with sys/cxir
@@ -115,7 +117,7 @@ type imageStoreSlot struct {
 type ImageStore struct {
 	ImageStoreRoom         ImageStoreRoom
 	imageStoreSlots        []imageStoreSlot
-	imageStoreCount        int
+	imageStoreNext         int
 	imageStoreNameEntries  []imageStoreNameEntry
 	imageStoreNameBytes    []byte
 	imageStoreNameUsed     int
@@ -146,6 +148,7 @@ func ImageStoreNew(room ImageStoreRoom) *ImageStore {
 	store.imageStoreSlots = make([]imageStoreSlot, room.ImageStoreRoomImages)
 	for i := range store.imageStoreSlots {
 		slot := &store.imageStoreSlots[i]
+		slot.slotGeneration = imageStoreGeneration
 		slot.slotFunctions = make([]Func, room.ImageStoreRoomFunctions)
 		slot.slotInstructions = make([]Instr, room.ImageStoreRoomInstructions)
 		slot.slotSlots = make([]Slot, room.ImageStoreRoomSlots)
@@ -188,27 +191,35 @@ func (store *ImageStore) namesOf(image *Image) *imageStoreNames {
 	if image != nil && image == store.imageStoreCurrent {
 		return &store.imageStoreCurrentNames
 	}
-	for i := range store.imageStoreSlots[:store.imageStoreCount] {
-		if image == &store.imageStoreSlots[i].slotImage {
+	for i := range store.imageStoreSlots {
+		if store.imageStoreSlots[i].slotUsed && image == &store.imageStoreSlots[i].slotImage {
 			return &store.imageStoreSlots[i].slotNames
 		}
 	}
 	return nil
 }
 
-// imageGidCompose returns the image Gid of index, 0 for the running image.
-func imageGidCompose(index int) int64 {
-	return int64(uint64(ImageTag)<<gidTagShift | uint64(imageStoreGeneration)<<gidGenerationShift | uint64(uint32(index)))
+// imageGidCompose returns the image Gid of index and generation, 0 for the
+// running image.
+func imageGidCompose(index int, generation uint32) int64 {
+	return int64(uint64(ImageTag)<<gidTagShift | uint64(generation)<<gidGenerationShift | uint64(uint32(index)))
 }
 
 // imageGidIndex returns the index of imageGid, false when it is no
-// image Gid of store.
+// image Gid of store or names a released image.
 func (store *ImageStore) imageGidIndex(imageGid int64) (int, bool) {
-	if imageGid <= 0 || gidTag(imageGid) != ImageTag || gidGeneration(imageGid) != imageStoreGeneration {
+	if imageGid <= 0 || gidTag(imageGid) != ImageTag {
 		return 0, false
 	}
 	index := int64(gidIndex(imageGid))
-	return int(index), index <= int64(store.imageStoreCount)
+	if index == 0 {
+		return 0, gidGeneration(imageGid) == imageStoreGeneration
+	}
+	if index > int64(len(store.imageStoreSlots)) {
+		return 0, false
+	}
+	slot := &store.imageStoreSlots[index-1]
+	return int(index), slot.slotUsed && gidGeneration(imageGid) == slot.slotGeneration
 }
 
 // imageRead returns the image of imageGid, current for index 0, nil when
@@ -323,7 +334,7 @@ func (store *ImageStore) ImageStoreImageCurrentGet(current *Image) int64 {
 	if current == nil {
 		return 0
 	}
-	return imageGidCompose(0)
+	return imageGidCompose(0, imageStoreGeneration)
 }
 
 // ImageStoreImageCreate returns the Gid of a new empty writable image
@@ -342,10 +353,17 @@ func (store *ImageStore) ImageStoreImageCreate() int64 {
 // slotNext returns the next free slot, reset to an empty image, nil when
 // the store is full.
 func (store *ImageStore) slotNext() *imageStoreSlot {
-	if store.imageStoreCount >= len(store.imageStoreSlots) {
+	store.imageStoreNext = -1
+	for i := range store.imageStoreSlots {
+		if !store.imageStoreSlots[i].slotUsed {
+			store.imageStoreNext = i
+			break
+		}
+	}
+	if store.imageStoreNext < 0 {
 		return nil
 	}
-	slot := &store.imageStoreSlots[store.imageStoreCount]
+	slot := &store.imageStoreSlots[store.imageStoreNext]
 	slot.slotImage = Image{
 		ImageFuncs:     slot.slotFunctions[:0],
 		ImageData:      slot.slotSegment[:0],
@@ -361,10 +379,31 @@ func (store *ImageStore) slotNext() *imageStoreSlot {
 	return slot
 }
 
-// slotCommit counts the slot slotNext returned and returns its Gid.
+// slotCommit marks the slot slotNext returned as used and returns its Gid.
 func (store *ImageStore) slotCommit() int64 {
-	store.imageStoreCount++
-	return imageGidCompose(store.imageStoreCount)
+	slot := &store.imageStoreSlots[store.imageStoreNext]
+	slot.slotUsed = true
+	return imageGidCompose(store.imageStoreNext+1, slot.slotGeneration)
+}
+
+// imageStoreGenerationMax is the largest generation of an image Gid, 24 bits.
+const imageStoreGenerationMax = 0xFFFFFF
+
+// ImageStoreImageRelease frees the writable image of imageGid for the next
+// create or decode and returns 0, -1 for the running image, an image that
+// runs or no image. The slot takes the next generation, so the released Gid
+// names no image (D152).
+func (store *ImageStore) ImageStoreImageRelease(imageGid int64) int32 {
+	slot := store.slotWritable(imageGid)
+	if slot == nil || &slot.slotImage == store.imageStoreCurrent {
+		return -1
+	}
+	slot.slotUsed = false
+	slot.slotGeneration++
+	if slot.slotGeneration > imageStoreGenerationMax {
+		slot.slotGeneration = imageStoreGeneration
+	}
+	return 0
 }
 
 // ImageStoreFunctionCountGet returns the functions of image, -1 for no

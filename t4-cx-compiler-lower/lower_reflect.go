@@ -11,14 +11,15 @@ import (
 // reflectTableAppend appends the type table of the reflect library to the
 // data segment, before any function lowers, so the scratch starts after it.
 // No instruction writes it, so it is read only (decision D150), unless the
-// program calls the meta library, which adds records to it (decision D151).
+// program calls the meta library, which adds records to it (decision D151),
+// or the compiler library, which adds the types of a parsed program (D152).
 func (s *state) reflectTableAppend() {
 	table := ast.ReflectTableBuild(s.stateProgram)
 	s.stateReflectTable = s.stateDataEnd
 	s.stateReflectTypes = table.ReflectTableTypes
 	s.stateImage.ImageData = append(s.stateImage.ImageData, table.ReflectTableBytes...)
 	s.stateDataEnd += uint32(len(table.ReflectTableBytes))
-	if !s.stateProgram.ProgramLibrariesUsed[opcodetable.LibraryNumberMeta] {
+	if used := &s.stateProgram.ProgramLibrariesUsed; !used[opcodetable.LibraryNumberMeta] && !used[opcodetable.LibraryNumberCompiler] {
 		s.stateReadOnly = append(s.stateReadOnly, ir.Span{SpanStart: s.stateReflectTable, SpanEnd: s.stateDataEnd})
 	}
 }
