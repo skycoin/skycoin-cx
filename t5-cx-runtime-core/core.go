@@ -16,6 +16,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-regexp"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-serializeopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
 )
 
@@ -29,6 +30,7 @@ func Register(prgrm *ast.CXProgram, libraryRegisters ...func(prgrm *ast.CXProgra
 	printer.CompileErrorsRegister(prgrm)
 	regexp.PackageRegister(prgrm)
 	reflectopcodes.PackageRegister(prgrm)
+	serializeopcodes.PackageRegister(prgrm)
 	for _, register := range libraryRegisters {
 		register(prgrm)
 	}

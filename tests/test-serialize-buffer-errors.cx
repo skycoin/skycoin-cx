@@ -1,0 +1,66 @@
+// The serialize library refuses a short buffer, a bad buffer and a type
+// that does not encode with -1, and a refused decode changes nothing
+// (decision D150). Run with --enable=reflect,serialize.
+
+package main
+
+import "sys/reflect"
+import "sys/serialize"
+
+type Record struct {
+	id    i32
+	ready bool
+	score i16
+}
+
+type Labelled struct {
+	label str
+}
+
+type Linked struct {
+	id   i32
+	next *Linked
+}
+
+func main() {
+	var record Record
+	var t i64
+	var buffer [16]ui8
+	var short [6]ui8
+	record.id = 7
+	record.ready = true
+	record.score = 9H
+	t = reflect.CxTypeOfValueGet(record)
+
+	printf("encode into 6 bytes %d\n", serialize.CxSerializeValueEncode(record, t, short))
+	printf("encode into 16 bytes %d\n", serialize.CxSerializeValueEncode(record, t, buffer))
+
+	var back Record
+	back.id = 1
+	short[0] = 2UB
+	printf("decode from 6 bytes %d, id %d\n", serialize.CxSerializeValueDecode(short, back, t), back.id)
+
+	// The bool byte must be 0 or 1. The id before it is not written either.
+	buffer[4] = 2UB
+	printf("decode a bool of 2 %d, id %d, ready %v\n", serialize.CxSerializeValueDecode(buffer, back, t), back.id, back.ready)
+	buffer[4] = 1UB
+	printf("decode %d, id %d, ready %v, score %d\n", serialize.CxSerializeValueDecode(buffer, back, t), back.id, back.ready, back.score)
+
+	// A str is the 8 bytes of its handle, and one that names no object in
+	// memory is refused.
+	var labelled Labelled
+	var i i32
+	for i = 0; i < 8; i++ {
+		buffer[i] = 255UB
+	}
+	printf("decode a bad str %d\n", serialize.CxSerializeValueDecode(buffer, labelled, reflect.CxTypeOfValueGet(labelled)))
+
+	// A pointer does not encode, and neither does a handle that is no type.
+	var linked Linked
+	printf("pointer size %d, encode %d\n", serialize.CxSerializeEncodedSizeInBytesGet(reflect.CxTypeOfValueGet(linked)), serialize.CxSerializeValueEncode(linked, reflect.CxTypeOfValueGet(linked), buffer))
+	printf("no type size %d, encode %d, decode %d\n", serialize.CxSerializeEncodedSizeInBytesGet(0L), serialize.CxSerializeValueEncode(record, 0L, buffer), serialize.CxSerializeValueDecode(buffer, record, 0L))
+
+	// The type of a smaller value is refused for a value too small for it.
+	var tiny i8
+	printf("value smaller than its type %d\n", serialize.CxSerializeValueEncode(tiny, t, buffer))
+}

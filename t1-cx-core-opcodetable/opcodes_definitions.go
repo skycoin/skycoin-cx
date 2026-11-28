@@ -754,6 +754,9 @@ var OpcodeDefinitionTable = [...]OpcodeDefinition{
 	{902, "reflect.CxFunctionOutputCountGet", "reflectopcodes.OpCxFunctionOutputCountGet", "i64", "i32", ""},
 	{903, "reflect.CxFunctionOutputTypeGet", "reflectopcodes.OpCxFunctionOutputTypeGet", "i64 i32", "i64", ""},
 	{904, "reflect.CxStringPoolTextRead", "reflectopcodes.OpCxStringPoolTextRead", "i64 und", "i32", ""},
+	{905, "serialize.CxSerializeEncodedSizeInBytesGet", "serializeopcodes.OpCxSerializeEncodedSizeInBytesGet", "i64", "i32", ""},
+	{906, "serialize.CxSerializeValueEncode", "serializeopcodes.OpCxSerializeValueEncode", "und i64 und", "i32", ""},
+	{907, "serialize.CxSerializeValueDecode", "serializeopcodes.OpCxSerializeValueDecode", "und und i64", "i32", ""},
 }
 
 // OpcodeDefinition is one row of OpcodeDefinitionTable.

@@ -35,6 +35,9 @@ const (
 	// OpcodeGroupReflect is the reflect library in t4-cx-library-reflectopcodes, in
 	// every build and every core (decision D150).
 	OpcodeGroupReflect
+	// OpcodeGroupSerialize is the serialize library in t4-cx-library-serializeopcodes, in
+	// every build and every core (decision D150).
+	OpcodeGroupSerialize
 	OpcodeGroupCount
 )
 
@@ -161,25 +164,27 @@ func LibraryFunctionKeyParts(key int) (library int, function int) {
 
 // opcodeGroupLinked says which groups this build links, by its build tags.
 var opcodeGroupLinked = [OpcodeGroupCount]bool{
-	OpcodeGroupCore:     true,
-	OpcodeGroupOsCore:   opcodeGroupOsCoreLinked,
-	OpcodeGroupRegexp:   opcodeGroupRegexpLinked,
-	OpcodeGroupCxfx:     opcodeGroupCxfxLinked,
-	OpcodeGroupCipher:   opcodeGroupCipherLinked,
-	OpcodeGroupNet:      true,
-	OpcodeGroupFile:     opcodeGroupFileLinked,
-	OpcodeGroupTerminal: true,
-	OpcodeGroupReflect:  true,
+	OpcodeGroupCore:      true,
+	OpcodeGroupOsCore:    opcodeGroupOsCoreLinked,
+	OpcodeGroupRegexp:    opcodeGroupRegexpLinked,
+	OpcodeGroupCxfx:      opcodeGroupCxfxLinked,
+	OpcodeGroupCipher:    opcodeGroupCipherLinked,
+	OpcodeGroupNet:       true,
+	OpcodeGroupFile:      opcodeGroupFileLinked,
+	OpcodeGroupTerminal:  true,
+	OpcodeGroupReflect:   true,
+	OpcodeGroupSerialize: true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
 // the functions of a library, 0 for the other groups.
 var opcodeGroupLibrary = [OpcodeGroupCount]int{
-	OpcodeGroupCipher:   LibraryNumberCipher,
-	OpcodeGroupNet:      LibraryNumberNet,
-	OpcodeGroupFile:     LibraryNumberFile,
-	OpcodeGroupTerminal: LibraryNumberTerminal,
-	OpcodeGroupReflect:  LibraryNumberReflect,
+	OpcodeGroupCipher:    LibraryNumberCipher,
+	OpcodeGroupNet:       LibraryNumberNet,
+	OpcodeGroupFile:      LibraryNumberFile,
+	OpcodeGroupTerminal:  LibraryNumberTerminal,
+	OpcodeGroupReflect:   LibraryNumberReflect,
+	OpcodeGroupSerialize: LibraryNumberSerialize,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

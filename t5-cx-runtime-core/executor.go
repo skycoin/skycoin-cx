@@ -14,6 +14,7 @@ import (
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-serializeopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-interpreter"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-opcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-runtime-printer"
@@ -181,6 +182,7 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 	}
 
 	reflectopcodes.LibraryPrepare(prgrm)
+	serializeopcodes.LibraryPrepare(reflectopcodes.Library.LibraryTypeTable)
 	interpreter.RunPrepare(prgrm)
 	if err := interpreter.RunCompiled(prgrm, 0, cxArgs); err != nil {
 		panic(err)

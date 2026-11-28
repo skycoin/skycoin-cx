@@ -7,7 +7,7 @@ import (
 )
 
 // OpcodeSignatureTableSize is one past the highest live opcode number.
-const OpcodeSignatureTableSize = 905
+const OpcodeSignatureTableSize = 908
 
 // OpcodeParameterTable holds the parameters of every opcode signature. Read only.
 var OpcodeParameterTable = [...]OpcodeParameter{
@@ -1893,6 +1893,16 @@ var OpcodeParameterTable = [...]OpcodeParameter{
 	{OpcodeParameterFormAtomic, valuetypes.I64, 0},
 	{OpcodeParameterFormAtomic, valuetypes.UNDEFINED, 0},
 	{OpcodeParameterFormAtomic, valuetypes.I32, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I64, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I32, 0},
+	{OpcodeParameterFormAtomic, valuetypes.UNDEFINED, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I64, 0},
+	{OpcodeParameterFormAtomic, valuetypes.UNDEFINED, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I32, 0},
+	{OpcodeParameterFormAtomic, valuetypes.UNDEFINED, 0},
+	{OpcodeParameterFormAtomic, valuetypes.UNDEFINED, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I64, 0},
+	{OpcodeParameterFormAtomic, valuetypes.I32, 0},
 }
 
 // OpcodeParameterStructTable holds the struct types of struct parameters. Read only.
@@ -2635,6 +2645,9 @@ var OpcodeSignatureTable = [OpcodeSignatureTableSize]OpcodeSignature{
 	902: {OpcodeGroupReflect, true, 1874, 1, 1},
 	903: {OpcodeGroupReflect, true, 1876, 2, 1},
 	904: {OpcodeGroupReflect, true, 1879, 2, 1},
+	905: {OpcodeGroupSerialize, true, 1882, 1, 1},
+	906: {OpcodeGroupSerialize, true, 1884, 3, 1},
+	907: {OpcodeGroupSerialize, true, 1888, 3, 1},
 }
 
 // OpcodeOperatorTable is the typed form of each untyped operator by operand
@@ -3571,6 +3584,9 @@ var OpcodeNameRowTable = [OpcodeSignatureTableSize]uint16{
 	902: 812,
 	903: 813,
 	904: 814,
+	905: 815,
+	906: 816,
+	907: 817,
 }
 
 // NativeNameTable is every name a program calls a built-in by, the opcodes of
@@ -4156,6 +4172,9 @@ var NativeNameTable = [...]NativeName{
 	{"remove", 212},
 	{"resize", 210},
 	{"serialize", 17},
+	{"serialize.CxSerializeEncodedSizeInBytesGet", 905},
+	{"serialize.CxSerializeValueDecode", 907},
+	{"serialize.CxSerializeValueEncode", 906},
 	{"sprintf", 216},
 	{"strerror", 579},
 	{"string.ByteIndexOfFirstSubstring", 574},

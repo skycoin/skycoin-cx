@@ -1,0 +1,76 @@
+// Encodes slices through the serialize library, a slice of i32, a struct
+// holding a slice of structs, and decodes them into slices with room
+// (decision D150). A slice is a 4 byte element count, then its elements.
+// Run with --enable=reflect,serialize.
+
+package main
+
+import "sys/reflect"
+import "sys/serialize"
+
+type Pair struct {
+	key   ui8
+	value i16
+}
+
+type Bag struct {
+	id    i32
+	pairs []Pair
+}
+
+func bytesShow(label str, buffer [64]ui8, count i32) {
+	var i i32
+	printf("%s %d:", label, count)
+	for i = 0; i < count; i++ {
+		printf(" %d", ui8.i32(buffer[i]))
+	}
+	printf("\n")
+}
+
+func main() {
+	var buffer [64]ui8
+	var count i32
+
+	var numbers []i32
+	numbers = append(numbers, 1)
+	numbers = append(numbers, 258)
+	numbers = append(numbers, -1)
+	var t i64
+	t = reflect.CxTypeOfValueGet(numbers)
+	printf("[]i32 encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t))
+	count = serialize.CxSerializeValueEncode(numbers, t, buffer)
+	bytesShow("[]i32", buffer, count)
+
+	var room []i32
+	room = resize(room, 4)
+	count = serialize.CxSerializeValueDecode(buffer, room, t)
+	printf("[]i32 read %d, len %d: %d %d %d\n", count, len(room), room[0], room[1], room[2])
+
+	var none []i32
+	printf("[]i32 into a nil slice read %d, len %d\n", serialize.CxSerializeValueDecode(buffer, none, t), len(none))
+
+	var empty []i32
+	count = serialize.CxSerializeValueEncode(empty, t, buffer)
+	bytesShow("nil []i32", buffer, count)
+
+	var bag Bag
+	var pair Pair
+	bag.id = 5
+	pair.key = 1UB
+	pair.value = 300H
+	bag.pairs = append(bag.pairs, pair)
+	pair.key = 2UB
+	pair.value = -2H
+	bag.pairs = append(bag.pairs, pair)
+	t = reflect.CxTypeOfValueGet(bag)
+	printf("Bag encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t))
+	count = serialize.CxSerializeValueEncode(bag, t, buffer)
+	bytesShow("Bag", buffer, count)
+
+	var bagBack Bag
+	var pairs []Pair
+	pairs = resize(pairs, 2)
+	bagBack.pairs = pairs
+	count = serialize.CxSerializeValueDecode(buffer, bagBack, t)
+	printf("Bag read %d: id %d, %d pairs, %d %d, %d %d\n", count, bagBack.id, len(bagBack.pairs), ui8.i32(bagBack.pairs[0].key), bagBack.pairs[0].value, ui8.i32(bagBack.pairs[1].key), bagBack.pairs[1].value)
+}
