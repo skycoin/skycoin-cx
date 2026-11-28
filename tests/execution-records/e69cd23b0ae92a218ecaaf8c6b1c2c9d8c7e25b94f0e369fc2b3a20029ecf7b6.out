@@ -1,0 +1,23 @@
+empty name 0, length past the buffer 0, negative length 0
+struct with no name 0, with a type handle as name 0
+second open struct 0
+field 0, same name again -1
+field of the open struct itself -1
+field of no type -1, no name -1, bad struct -1
+reflect sees no open struct, fields -1 size -1
+finish 0, again -1
+field after finish -1, fields 1
+method after finish -1
+second open function 0
+method of an open function -1
+output 0, input after an output -1
+output of no type -1, output named by a type -1
+function finish 0, again -1
+method 0, method of no function -1
+finish 0
+second open package 0, package of no name 0
+package finish 0, again -1, finish a type -1
+name of no package 0
+array of no type 0, negative length 0, too large 0
+slice of no type 0, pointer of no type 0
+full after 253 new types, struct 0, slice 0, an existing type true

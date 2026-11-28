@@ -27,7 +27,8 @@ const (
 	LibraryNumberTerminal  = 5
 	LibraryNumberReflect   = 6
 	LibraryNumberSerialize = 7
-	LibraryCount           = 8
+	LibraryNumberMeta      = 8
+	LibraryCount           = 9
 )
 
 // LibraryPolicyEnabledWhenImported is the default policy for a library that
@@ -57,6 +58,7 @@ var LibraryTable = [...]Library{
 	{LibraryNumberTerminal, "terminal", 2611270001, true, true},
 	{LibraryNumberReflect, "reflect", 2611280001, false, true},
 	{LibraryNumberSerialize, "serialize", 2611280002, false, true},
+	{LibraryNumberMeta, "meta", 2611280003, false, true},
 }
 
 // LibraryByName returns the library named name.

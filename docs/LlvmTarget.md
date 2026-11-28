@@ -120,6 +120,10 @@ The serialize functions take the same two arguments and encode as
 `ValueEncode` and `ValueDecode` of that package do. No
 slice lowers to an image, so they refuse a slice type.
 
+The meta functions take the same two arguments and write the table in
+`cx_mem` as the functions of `meta.go` in that package do. A pointer or
+slice type they make has the size of the pointer size cx build passes.
+
 `OpcodeOutputHandOff` and `OpcodeOutputFlush` call `cx_rt_output_hand_off`
 and `cx_rt_output_flush`. For `--output-mode=thread` cx build compiles the
 runtime with `CX_RT_OUTPUT_THREAD` and `-pthread`, and the hand off copies

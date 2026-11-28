@@ -38,6 +38,9 @@ const (
 	// OpcodeGroupSerialize is the serialize library in t4-cx-library-serializeopcodes, in
 	// every build and every core (decision D150).
 	OpcodeGroupSerialize
+	// OpcodeGroupMeta is the meta library in t4-cx-library-metaopcodes, in every
+	// build and every core (decision D151).
+	OpcodeGroupMeta
 	OpcodeGroupCount
 )
 
@@ -174,6 +177,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupTerminal:  true,
 	OpcodeGroupReflect:   true,
 	OpcodeGroupSerialize: true,
+	OpcodeGroupMeta:      true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
@@ -185,6 +189,7 @@ var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupTerminal:  LibraryNumberTerminal,
 	OpcodeGroupReflect:   LibraryNumberReflect,
 	OpcodeGroupSerialize: LibraryNumberSerialize,
+	OpcodeGroupMeta:      LibraryNumberMeta,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

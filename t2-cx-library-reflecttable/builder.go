@@ -42,6 +42,9 @@ type Builder struct {
 	BuilderFunctions   []Function
 	BuilderTypeNames   NamePool
 	BuilderMemberNames NamePool
+	// BuilderMetaRoom keeps room for the records the meta library adds at run
+	// time, set when the program calls it (decision D151).
+	BuilderMetaRoom bool
 }
 
 // NamePool interns names in the order they are first seen.
@@ -76,8 +79,13 @@ func (builder *Builder) BuilderFunctionAdd(record Function) int32 {
 	return int32(len(builder.BuilderFunctions) - 1)
 }
 
-// BuilderEncode returns the table as the bytes every form reads.
+// BuilderEncode returns the table as the bytes every form reads. With
+// BuilderMetaRoom each section keeps the room of MetaRoom after its records.
 func (builder *Builder) BuilderEncode() []byte {
+	room := MetaRoom{}
+	if builder.BuilderMetaRoom {
+		room = MetaRoomDefault
+	}
 	var fields []Field
 	var methods []Method
 	var parameters []int32
@@ -98,25 +106,34 @@ func (builder *Builder) BuilderEncode() []byte {
 
 	var words []int32
 	header := make([]int32, HeaderWordCount)
-	section := func(headerWord int, values []int32) {
+	section := func(headerWord int, values []int32, spare int) {
 		header[headerWord] = int32(4 * (HeaderWordCount + len(words)))
 		words = append(words, values...)
+		words = append(words, make([]int32, spare)...)
 	}
 	header[HeaderTypeCount] = int32(len(builder.BuilderTypes))
-	section(HeaderTypesOffset, types)
+	header[HeaderTypeCapacity] = int32(len(builder.BuilderTypes) + room.MetaRoomTypes)
+	section(HeaderTypesOffset, types, room.MetaRoomTypes*TypeWordCount)
 	fieldWords := make([]int32, 0, len(fields)*FieldWordCount)
 	for _, field := range fields {
 		fieldWords = append(fieldWords, field.FieldName, field.FieldType, field.FieldOffset)
 	}
-	section(HeaderFieldsOffset, fieldWords)
+	header[HeaderFieldCount] = int32(len(fields))
+	header[HeaderFieldCapacity] = int32(len(fields) + room.MetaRoomFields)
+	section(HeaderFieldsOffset, fieldWords, room.MetaRoomFields*FieldWordCount)
 	methodWords := make([]int32, 0, len(methods)*MethodWordCount)
 	for _, method := range methods {
 		methodWords = append(methodWords, method.MethodName, method.MethodFunction)
 	}
-	section(HeaderMethodsOffset, methodWords)
+	header[HeaderMethodCount] = int32(len(methods))
+	header[HeaderMethodCapacity] = int32(len(methods) + room.MetaRoomMethods)
+	section(HeaderMethodsOffset, methodWords, room.MetaRoomMethods*MethodWordCount)
 	header[HeaderFunctionCount] = int32(len(builder.BuilderFunctions))
-	section(HeaderFunctionsOffset, functions)
-	section(HeaderParametersOffset, parameters)
+	header[HeaderFunctionCapacity] = int32(len(builder.BuilderFunctions) + room.MetaRoomFunctions)
+	section(HeaderFunctionsOffset, functions, room.MetaRoomFunctions*FunctionWordCount)
+	header[HeaderParameterCount] = int32(len(parameters))
+	header[HeaderParameterCapacity] = int32(len(parameters) + room.MetaRoomParameters)
+	section(HeaderParametersOffset, parameters, room.MetaRoomParameters)
 
 	var nameBytes []byte
 	entries := func(pool *NamePool) []int32 {
@@ -128,17 +145,25 @@ func (builder *Builder) BuilderEncode() []byte {
 		return values
 	}
 	header[HeaderTypeNameCount] = int32(len(builder.BuilderTypeNames.NamePoolTexts))
-	section(HeaderTypeNamesOffset, entries(&builder.BuilderTypeNames))
+	header[HeaderTypeNameCapacity] = header[HeaderTypeNameCount] + int32(room.MetaRoomTypeNames)
+	section(HeaderTypeNamesOffset, entries(&builder.BuilderTypeNames), room.MetaRoomTypeNames*NameWordCount)
 	header[HeaderMemberNameCount] = int32(len(builder.BuilderMemberNames.NamePoolTexts))
-	section(HeaderMemberNamesOffset, entries(&builder.BuilderMemberNames))
+	header[HeaderMemberNameCapacity] = header[HeaderMemberNameCount] + int32(room.MetaRoomMemberNames)
+	section(HeaderMemberNamesOffset, entries(&builder.BuilderMemberNames), room.MetaRoomMemberNames*NameWordCount)
+	header[HeaderPackageCapacity] = int32(room.MetaRoomPackages)
+	section(HeaderPackagesOffset, nil, room.MetaRoomPackages*PackageWordCount)
 	header[HeaderNameBytesOffset] = int32(4 * (HeaderWordCount + len(words)))
+	header[HeaderNameByteCount] = int32(len(nameBytes))
+	header[HeaderNameByteCapacity] = int32(len(nameBytes) + room.MetaRoomNameBytes)
+	header[HeaderStructOpen], header[HeaderFunctionOpen], header[HeaderPackageOpen] = -1, -1, -1
 
-	table := make([]byte, 0, 4*(HeaderWordCount+len(words))+len(nameBytes))
+	table := make([]byte, 0, 4*(HeaderWordCount+len(words))+len(nameBytes)+room.MetaRoomNameBytes)
 	for _, value := range header {
 		table = binary.LittleEndian.AppendUint32(table, uint32(value))
 	}
 	for _, value := range words {
 		table = binary.LittleEndian.AppendUint32(table, uint32(value))
 	}
-	return append(table, nameBytes...)
+	table = append(table, nameBytes...)
+	return append(table, make([]byte, room.MetaRoomNameBytes)...)
 }

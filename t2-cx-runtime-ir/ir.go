@@ -314,6 +314,24 @@ const (
 	OpcodeSerializeCxSerializeEncodedSizeInBytesGet
 	OpcodeSerializeCxSerializeValueEncode
 	OpcodeSerializeCxSerializeValueDecode
+	// The meta opcodes, one per function of the meta library in the order of
+	// its opcode numbers, decision D151. InstrAux is the address of the type
+	// table of the reflect library in the data segment, which they write.
+	OpcodeMetaCxStructDefinitionBegin
+	OpcodeMetaCxStructDefinitionFieldAppend
+	OpcodeMetaCxStructDefinitionMethodAppend
+	OpcodeMetaCxStructDefinitionFinish
+	OpcodeMetaCxArrayTypeCreate
+	OpcodeMetaCxSliceTypeCreate
+	OpcodeMetaCxPointerTypeCreate
+	OpcodeMetaCxFunctionDefinitionBegin
+	OpcodeMetaCxFunctionDefinitionInputAppend
+	OpcodeMetaCxFunctionDefinitionOutputAppend
+	OpcodeMetaCxFunctionDefinitionFinish
+	OpcodeMetaCxPackageDefinitionBegin
+	OpcodeMetaCxPackageDefinitionFinish
+	OpcodeMetaCxPackageDefinitionNameGet
+	OpcodeMetaCxStringPoolTextAppend
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -623,7 +641,7 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeSerializeCxSerializeValueDecode
+	OpcodeLibraryLast  = OpcodeMetaCxStringPoolTextAppend
 )
 
 // OpcodeReflectFirst and OpcodeReflectLast bound the opcodes of the reflect
@@ -655,6 +673,24 @@ func OpcodeSerialize(op Opcode) bool {
 // reflect library, an opcode of the reflect or the serialize library.
 func OpcodeTypeTableReads(op Opcode) bool {
 	return OpcodeReflect(op) || OpcodeSerialize(op)
+}
+
+// OpcodeMetaFirst and OpcodeMetaLast bound the opcodes of the meta library,
+// in the order of opcodetable.OpcodeMetaCxStructDefinitionBegin on.
+const (
+	OpcodeMetaFirst = OpcodeMetaCxStructDefinitionBegin
+	OpcodeMetaLast  = OpcodeMetaCxStringPoolTextAppend
+)
+
+// OpcodeMeta reports whether op is an opcode of the meta library.
+func OpcodeMeta(op Opcode) bool {
+	return op >= OpcodeMetaFirst && op <= OpcodeMetaLast
+}
+
+// OpcodeTypeTableUses reports whether op reads or writes the type table of
+// the reflect library, an opcode of the reflect, serialize or meta library.
+func OpcodeTypeTableUses(op Opcode) bool {
+	return OpcodeTypeTableReads(op) || OpcodeMeta(op)
 }
 
 // OpcodeLibrary reports whether op is an opcode of a system library.

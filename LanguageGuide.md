@@ -25,6 +25,7 @@
     * [The cipher library](#the-cipher-library)
     * [The reflect library](#the-reflect-library)
     * [The serialize library](#the-serialize-library)
+    * [The meta library](#the-meta-library)
     * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -1008,6 +1009,7 @@ cx --enable=file,net program.cx
 | `terminal` | `os.ArgCount`, `os.ArgRead` and `os.InputLineRead`, see [The terminal library](#the-terminal-library). Enabled by default |
 | `reflect` | every function of `sys/reflect`, see [The reflect library](#the-reflect-library) |
 | `serialize` | every function of `sys/serialize`, see [The serialize library](#the-serialize-library) |
+| `meta` | every function of `sys/meta`, see [The meta library](#the-meta-library) |
 
 `os.Exit`, `sys/time`, `sys/regexp` and `sys/string` are not system
 libraries. They end the program, read the clock or compute, and always
@@ -1021,7 +1023,7 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect` or `serialize` and does not
+A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect`, `serialize` or `meta` and does not
 enable it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
@@ -1061,7 +1063,7 @@ a program that reads its arguments or input, and
 
 Every function of `cipher` is its own opcode, 796 to 804, and every
 function of `net`, 805 to 819, every function of `file`, 820 to 875,
-and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, and every function of `serialize`, 905 to 907 (decision D119). The compiler turns every call of `os.Run`, the one
+and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, every function of `serialize`, 905 to 907, and every function of `meta`, 908 to 922 (decision D119). The compiler turns every call of `os.Run`, the one
 function of `process`, into the opcode `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
@@ -1307,6 +1309,80 @@ func main() {
 	var written i32 = serialize.CxSerializeValueEncode(p, t, buffer)
 	var read i32 = serialize.CxSerializeValueDecode(buffer, q, t)
 	printf("size %d, wrote %d, read %d, x %d, y %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t), written, read, q.x, q.y)
+}
+```
+
+### [The meta library](#table-of-contents)
+
+`sys/meta` builds types, function signatures and packages while the
+program runs, for a compiler written in CX (decision D151). It is the
+system library `meta`, off unless a run enables it with `--enable=meta`.
+It writes the type table of the reflect library, so a type it builds is a
+normal type handle that `reflect` reads and `serialize` encodes. A program
+that reads its types back runs with `--enable=reflect,meta`. It runs on the
+old loop, on vm, in an image and in a native executable, and no call
+allocates.
+
+| function | returns |
+|---|---|
+| `meta.CxStringPoolTextAppend(buffer, length i32)` | `i64` name of the first `length` bytes of the `ui8` array, the name already in the table for the same text |
+| `meta.CxStructDefinitionBegin(name i64)` | `i64` handle of a new open struct type |
+| `meta.CxStructDefinitionFieldAppend(struct i64, name i64, type i64)` | `i32` ordinal of the new field |
+| `meta.CxStructDefinitionMethodAppend(struct i64, name i64, function i64)` | `i32` ordinal of the new method |
+| `meta.CxStructDefinitionFinish(struct i64)` | `i32` 0, the struct now has its offsets and size |
+| `meta.CxArrayTypeCreate(element i64, length i32)` | `i64` array type |
+| `meta.CxSliceTypeCreate(element i64)` | `i64` slice type |
+| `meta.CxPointerTypeCreate(element i64)` | `i64` pointer type |
+| `meta.CxFunctionDefinitionBegin(name i64)` | `i64` handle of a new open function signature |
+| `meta.CxFunctionDefinitionInputAppend(function i64, name i64, type i64)` | `i32` ordinal of the new input |
+| `meta.CxFunctionDefinitionOutputAppend(function i64, name i64, type i64)` | `i32` ordinal of the new output |
+| `meta.CxFunctionDefinitionFinish(function i64)` | `i32` 0 |
+| `meta.CxPackageDefinitionBegin(name i64)` | `i64` handle of a new open package |
+| `meta.CxPackageDefinitionFinish(package i64)` | `i32` 0 |
+| `meta.CxPackageDefinitionNameGet(package i64)` | `i64` name of a finished package |
+
+A refused call returns 0 for a handle and -1 for an ordinal or a status,
+and changes nothing.
+
+* A name comes from `meta.CxStringPoolTextAppend`, or from a reflect name
+  getter. The same text always gives the same name, so a name the program
+  makes matches a name the compiler made.
+* One struct, one function and one package can be open at a time. Reflect
+  sees an open struct or function as no type until its Finish.
+* A field takes a finished type. A pointer may point to the open struct,
+  so a struct can hold a pointer to itself.
+* Finish lays the fields out one after the other with no padding, as CX
+  lays out a struct (D139). A field or method after Finish is refused.
+* The inputs of a function come before its outputs. A parameter name is 0
+  or a name. It is checked and not kept, since the table holds the
+  parameter types only.
+* A function or package definition records a signature or a name. It
+  creates no code. Code comes with `sys/cxir` and the compiler.
+* An array, slice or pointer type that is already in the table is
+  returned, not made again.
+* A program that calls `meta` gets room in the type table for 256 types,
+  1024 fields, 256 methods, 256 functions, 1024 parameters, 256 type
+  names, 1024 member names, 16 packages and 4096 bytes of name text. A
+  call that needs more is refused.
+
+```cx
+package main
+
+import "sys/meta"
+import "sys/reflect"
+
+func main() {
+	var number i32
+	var text [2]ui8
+	text[0] = 120UB
+	text[1] = 121UB
+	var x i64 = meta.CxStringPoolTextAppend(text, 1)
+	var y i64 = meta.CxStringPoolTextAppend(text, 2)
+	var t i64 = meta.CxStructDefinitionBegin(y)
+	var status i32 = meta.CxStructDefinitionFieldAppend(t, x, reflect.CxTypeOfValueGet(number))
+	status = meta.CxStructDefinitionFieldAppend(t, y, meta.CxArrayTypeCreate(reflect.CxTypeOfValueGet(number), 2))
+	status = meta.CxStructDefinitionFinish(t)
+	printf("fields %d, size %d, y at %d\n", reflect.CxStructFieldCountGet(t), reflect.CxTypeSizeInBytesGet(t), reflect.CxStructFieldOffsetInBytesGet(t, 1))
 }
 ```
 

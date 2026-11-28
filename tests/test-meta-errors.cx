@@ -1,0 +1,73 @@
+// The meta library refuses a bad call with 0 for a handle or -1 for an
+// ordinal or a status and changes nothing, and refuses every new type once
+// the room of the type table is used (decision D151). Run with
+// --enable=reflect,meta.
+
+package main
+
+import "sys/meta"
+import "sys/reflect"
+
+// nameMake adds the first length character codes as a name.
+func nameMake(codes [8]i32, length i32) (name i64) {
+	var buffer [8]ui8
+	var i i32
+	for i = 0; i < length; i++ {
+		buffer[i] = i32.ui8(codes[i])
+	}
+	name = meta.CxStringPoolTextAppend(buffer, length)
+}
+
+func main() {
+	var number i32
+	var buffer [8]ui8
+	var i32Type i64 = reflect.CxTypeOfValueGet(number)
+	var a i64 = nameMake([8]i32{97, 0, 0, 0, 0, 0, 0, 0}, 1)
+	var b i64 = nameMake([8]i32{98, 0, 0, 0, 0, 0, 0, 0}, 1)
+
+	printf("empty name %d, length past the buffer %d, negative length %d\n", meta.CxStringPoolTextAppend(buffer, 0),
+		meta.CxStringPoolTextAppend(buffer, 9), meta.CxStringPoolTextAppend(buffer, -1))
+	printf("struct with no name %d, with a type handle as name %d\n", meta.CxStructDefinitionBegin(0L), meta.CxStructDefinitionBegin(i32Type))
+
+	var first i64 = meta.CxStructDefinitionBegin(a)
+	printf("second open struct %d\n", meta.CxStructDefinitionBegin(b))
+	printf("field %d, same name again %d\n", meta.CxStructDefinitionFieldAppend(first, a, i32Type), meta.CxStructDefinitionFieldAppend(first, a, i32Type))
+	printf("field of the open struct itself %d\n", meta.CxStructDefinitionFieldAppend(first, b, first))
+	printf("field of no type %d, no name %d, bad struct %d\n", meta.CxStructDefinitionFieldAppend(first, b, 0L),
+		meta.CxStructDefinitionFieldAppend(first, 0L, i32Type), meta.CxStructDefinitionFieldAppend(i32Type, b, i32Type))
+	printf("reflect sees no open struct, fields %d size %d\n", reflect.CxStructFieldCountGet(first), reflect.CxTypeSizeInBytesGet(first))
+	printf("finish %d, again %d\n", meta.CxStructDefinitionFinish(first), meta.CxStructDefinitionFinish(first))
+	printf("field after finish %d, fields %d\n", meta.CxStructDefinitionFieldAppend(first, b, i32Type), reflect.CxStructFieldCountGet(first))
+	printf("method after finish %d\n", meta.CxStructDefinitionMethodAppend(first, b, 0L))
+
+	var function i64 = meta.CxFunctionDefinitionBegin(a)
+	printf("second open function %d\n", meta.CxFunctionDefinitionBegin(b))
+	var second i64 = meta.CxStructDefinitionBegin(b)
+	printf("method of an open function %d\n", meta.CxStructDefinitionMethodAppend(second, a, function))
+	printf("output %d, input after an output %d\n", meta.CxFunctionDefinitionOutputAppend(function, 0L, i32Type), meta.CxFunctionDefinitionInputAppend(function, a, i32Type))
+	printf("output of no type %d, output named by a type %d\n", meta.CxFunctionDefinitionOutputAppend(function, 0L, 0L), meta.CxFunctionDefinitionOutputAppend(function, i32Type, i32Type))
+	printf("function finish %d, again %d\n", meta.CxFunctionDefinitionFinish(function), meta.CxFunctionDefinitionFinish(function))
+	printf("method %d, method of no function %d\n", meta.CxStructDefinitionMethodAppend(second, a, function), meta.CxStructDefinitionMethodAppend(second, b, i32Type))
+	printf("finish %d\n", meta.CxStructDefinitionFinish(second))
+
+	var pkg i64 = meta.CxPackageDefinitionBegin(a)
+	printf("second open package %d, package of no name %d\n", meta.CxPackageDefinitionBegin(b), meta.CxPackageDefinitionBegin(0L))
+	printf("package finish %d, again %d, finish a type %d\n", meta.CxPackageDefinitionFinish(pkg), meta.CxPackageDefinitionFinish(pkg), meta.CxPackageDefinitionFinish(i32Type))
+	printf("name of no package %d\n", meta.CxPackageDefinitionNameGet(i32Type))
+
+	printf("array of no type %d, negative length %d, too large %d\n", meta.CxArrayTypeCreate(0L, 2), meta.CxArrayTypeCreate(i32Type, -1),
+		meta.CxArrayTypeCreate(meta.CxArrayTypeCreate(i32Type, 65536), 65536))
+	printf("slice of no type %d, pointer of no type %d\n", meta.CxSliceTypeCreate(5L), meta.CxPointerTypeCreate(-1L))
+
+	// Every array length is a new type, until the room is used.
+	var created i32
+	var length i32
+	for length = 1; length < 1000; length++ {
+		if meta.CxArrayTypeCreate(i32Type, length) == 0L {
+			break
+		}
+		created++
+	}
+	printf("full after %d new types, struct %d, slice %d, an existing type %v\n", created, meta.CxStructDefinitionBegin(nameMake([8]i32{99, 0, 0, 0, 0, 0, 0, 0}, 1)),
+		meta.CxSliceTypeCreate(i32Type), meta.CxArrayTypeCreate(i32Type, 1) != 0L)
+}

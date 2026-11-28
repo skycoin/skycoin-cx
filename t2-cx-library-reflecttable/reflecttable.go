@@ -32,6 +32,9 @@ const (
 )
 
 // The words of the table header, each an int32 at four times its number.
+// The words from HeaderFieldCount on are for the meta library (D151): the
+// records in use, the room of each section, and the struct, function and
+// package being defined, -1 when there is none.
 const (
 	HeaderTypeCount = iota
 	HeaderTypesOffset
@@ -45,6 +48,24 @@ const (
 	HeaderMemberNameCount
 	HeaderMemberNamesOffset
 	HeaderNameBytesOffset
+	HeaderFieldCount
+	HeaderMethodCount
+	HeaderParameterCount
+	HeaderNameByteCount
+	HeaderTypeCapacity
+	HeaderFieldCapacity
+	HeaderMethodCapacity
+	HeaderFunctionCapacity
+	HeaderParameterCapacity
+	HeaderTypeNameCapacity
+	HeaderMemberNameCapacity
+	HeaderNameByteCapacity
+	HeaderPackageCount
+	HeaderPackagesOffset
+	HeaderPackageCapacity
+	HeaderStructOpen
+	HeaderFunctionOpen
+	HeaderPackageOpen
 	HeaderWordCount
 )
 
@@ -156,12 +177,17 @@ func typeWord(table []byte, typeGid int64, kind int32, field int) (int32, bool) 
 	return record(table, HeaderTypesOffset, index, TypeWordCount, field), true
 }
 
-// typeHandleOf returns the handle of type number index, 0 for -1.
+// typeGidOf returns the handle of type number index, 0 for -1 and for a
+// struct meta has not finished.
 func typeGidOf(table []byte, index int32) int64 {
 	if index < 0 || index >= word(table, HeaderTypeCount) {
 		return 0
 	}
-	return TypeGidCompose(index, record(table, HeaderTypesOffset, index, TypeWordCount, TypeKind))
+	kind := record(table, HeaderTypesOffset, index, TypeWordCount, TypeKind)
+	if kind == KindInvalid {
+		return 0
+	}
+	return TypeGidCompose(index, kind)
 }
 
 // TypeOfIndex returns the handle of type number index, which the compiler

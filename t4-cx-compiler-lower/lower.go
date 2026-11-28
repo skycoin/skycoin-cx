@@ -188,7 +188,7 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageStackSize = s.stateStackSize
 	image.ImageDataStart = s.stateDataStart
 	image.ImageData = append([]byte(nil), prgrm.Memory[s.stateDataStart:s.stateDataEnd]...)
-	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] || prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberSerialize] {
+	if ast.ReflectTableUsed(prgrm) {
 		s.reflectTableAppend()
 	}
 	functions := prgrm.CXProgramFunctionSlotCount()
@@ -1175,6 +1175,9 @@ func libraryOpcodeOf(opcode int) ir.Opcode {
 	}
 	if opcode >= opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet && opcode <= opcodetable.OpcodeSerializeCxSerializeValueDecode {
 		return ir.OpcodeSerializeFirst + ir.Opcode(opcode-opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet)
+	}
+	if opcode >= opcodetable.OpcodeMetaCxStructDefinitionBegin && opcode <= opcodetable.OpcodeMetaCxStringPoolTextAppend {
+		return ir.OpcodeMetaFirst + ir.Opcode(opcode-opcodetable.OpcodeMetaCxStructDefinitionBegin)
 	}
 	return ir.OpcodeInvalid
 }

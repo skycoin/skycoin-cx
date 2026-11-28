@@ -35,10 +35,18 @@ type reflectTableBuilder struct {
 	functions  map[*CXFunction]int32
 }
 
+// ReflectTableUsed reports whether prgrm calls a library that reads or writes
+// the type table, reflect, serialize or meta.
+func ReflectTableUsed(prgrm *CXProgram) bool {
+	used := &prgrm.ProgramLibrariesUsed
+	return used[opcodetable.LibraryNumberReflect] || used[opcodetable.LibraryNumberSerialize] || used[opcodetable.LibraryNumberMeta]
+}
+
 // ReflectTableBuild builds the type table of prgrm from the values its
 // reflect.CxTypeOfValueGet calls pass and every type they reach, in function
 // and expression order, so every form builds the same bytes. It runs before
 // the run, never in the run loop.
+// A program that calls the meta library gets room for the records meta adds.
 func ReflectTableBuild(prgrm *CXProgram) ReflectTable {
 	rb := &reflectTableBuilder{
 		program:    prgrm,
@@ -47,6 +55,7 @@ func ReflectTableBuild(prgrm *CXProgram) ReflectTable {
 		composites: map[reflectTableComposite]int32{},
 		functions:  map[*CXFunction]int32{},
 	}
+	rb.builder.BuilderMetaRoom = prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberMeta]
 	table := ReflectTable{ReflectTableTypes: map[CXTypeSignatureIndex]int32{}}
 	for index := 0; index < prgrm.CXProgramFunctionSlotCount(); index++ {
 		fn := prgrm.CXProgramFunctionSlotLive(index)

@@ -1,0 +1,1 @@
+error: CX_RUNTIME_LIBRARY_DISABLED, operation meta.CxStructDefinitionFieldAppend is not enabled, enable it with --enable=meta.CxStructDefinitionFieldAppend

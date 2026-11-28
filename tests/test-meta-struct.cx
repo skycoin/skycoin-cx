@@ -1,0 +1,137 @@
+// Builds a struct type at run time through the meta library, reads it back
+// through reflect and encodes and decodes a value of it through serialize
+// (decision D151). Run with --enable=reflect,serialize,meta.
+
+package main
+
+import "sys/meta"
+import "sys/reflect"
+import "sys/serialize"
+
+var lower [26]str = [26]str{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+var upper [26]str = [26]str{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+
+// Account has the layout the meta struct gets, so a value of it encodes
+// through either type.
+type Account struct {
+	id      i32
+	balance i64
+	tags    [2]i16
+}
+
+// nameMake adds the first length character codes as a name.
+func nameMake(codes [8]i32, length i32) (name i64) {
+	var buffer [8]ui8
+	var i i32
+	for i = 0; i < length; i++ {
+		buffer[i] = i32.ui8(codes[i])
+	}
+	name = meta.CxStringPoolTextAppend(buffer, length)
+}
+
+// nameShow prints the text of a type or member name, printf has no %c.
+func nameShow(label str, name i64) {
+	global lower
+	global upper
+	var buffer [16]ui8
+	var length i32
+	var i i32
+	var character i32
+	length = reflect.CxStringPoolTextRead(name, buffer)
+	printf("%s ", label)
+	for i = 0; i < length; i++ {
+		character = ui8.i32(buffer[i])
+		if character >= 97 && character <= 122 {
+			printf("%s", lower[character-97])
+		} else if character >= 65 && character <= 90 {
+			printf("%s", upper[character-65])
+		} else {
+			printf("?")
+		}
+	}
+	printf("\n")
+}
+
+// bytesShow prints the first count bytes of buffer.
+func bytesShow(label str, buffer [32]ui8, count i32) {
+	var i i32
+	printf("%s %d:", label, count)
+	for i = 0; i < count; i++ {
+		printf(" %d", ui8.i32(buffer[i]))
+	}
+	printf("\n")
+}
+
+func main() {
+	var account Account
+	var back Account
+	var number i32
+	var big i64
+	var small i16
+	var buffer [32]ui8
+	var count i32
+	var i i32
+
+	var i32Type i64 = reflect.CxTypeOfValueGet(number)
+	var i64Type i64 = reflect.CxTypeOfValueGet(big)
+	var i16Type i64 = reflect.CxTypeOfValueGet(small)
+
+	// "Ledger" with the fields "id", "balance", "tags" and "next".
+	var ledgerName i64 = nameMake([8]i32{76, 101, 100, 103, 101, 114, 0, 0}, 6)
+	var idName i64 = nameMake([8]i32{105, 100, 0, 0, 0, 0, 0, 0}, 2)
+	var balanceName i64 = nameMake([8]i32{98, 97, 108, 97, 110, 99, 101, 0}, 7)
+	var tagsName i64 = nameMake([8]i32{116, 97, 103, 115, 0, 0, 0, 0}, 4)
+	var nextName i64 = nameMake([8]i32{110, 101, 120, 116, 0, 0, 0, 0}, 4)
+	printf("same text same name %v\n", nameMake([8]i32{105, 100, 0, 0, 0, 0, 0, 0}, 2) == idName)
+	printf("a compiled field name is found %v\n", reflect.CxStructFieldNameGet(reflect.CxTypeOfValueGet(account), 0) == idName)
+
+	var ledger i64 = meta.CxStructDefinitionBegin(ledgerName)
+	printf("open struct size %d, kind %d\n", reflect.CxTypeSizeInBytesGet(ledger), reflect.CxTypeKindGet(ledger))
+	printf("field id %d\n", meta.CxStructDefinitionFieldAppend(ledger, idName, i32Type))
+	printf("field balance %d\n", meta.CxStructDefinitionFieldAppend(ledger, balanceName, i64Type))
+	printf("field tags %d\n", meta.CxStructDefinitionFieldAppend(ledger, tagsName, meta.CxArrayTypeCreate(i16Type, 2)))
+	var selfPointer i64 = meta.CxPointerTypeCreate(ledger)
+	printf("pointer to the open struct reads as no type %d\n", reflect.CxPointerElementTypeGet(selfPointer))
+	printf("finish %d\n", meta.CxStructDefinitionFinish(ledger))
+	printf("pointer to the struct now %v\n", reflect.CxPointerElementTypeGet(selfPointer) == ledger)
+
+	nameShow("type", reflect.CxTypeNameGet(ledger))
+	printf("kind %d size %d alignment %d fields %d methods %d\n", reflect.CxTypeKindGet(ledger), reflect.CxTypeSizeInBytesGet(ledger),
+		reflect.CxTypeAlignmentInBytesGet(ledger), reflect.CxStructFieldCountGet(ledger), reflect.CxStructMethodCountGet(ledger))
+	count = reflect.CxStructFieldCountGet(ledger)
+	for i = 0; i < count; i++ {
+		nameShow("field", reflect.CxStructFieldNameGet(ledger, i))
+		printf("  offset %d size %d same as compiled %v\n", reflect.CxStructFieldOffsetInBytesGet(ledger, i),
+			reflect.CxTypeSizeInBytesGet(reflect.CxStructFieldTypeGet(ledger, i)),
+			reflect.CxStructFieldOffsetInBytesGet(ledger, i) == reflect.CxStructFieldOffsetInBytesGet(reflect.CxTypeOfValueGet(account), i))
+	}
+	printf("ordinal of balance %d\n", reflect.CxStructFieldOrdinalByNameGet(ledger, balanceName))
+	printf("tags length %d\n", reflect.CxArrayLengthGet(reflect.CxStructFieldTypeGet(ledger, 2)))
+
+	// A second struct holds a pointer to the first.
+	var node i64 = meta.CxStructDefinitionBegin(nameMake([8]i32{78, 111, 100, 101, 0, 0, 0, 0}, 4))
+	printf("node next %d\n", meta.CxStructDefinitionFieldAppend(node, nextName, meta.CxPointerTypeCreate(node)))
+	printf("node id %d\n", meta.CxStructDefinitionFieldAppend(node, idName, i32Type))
+	printf("node finish %d\n", meta.CxStructDefinitionFinish(node))
+	printf("node size is a pointer and an i32 %v, next points to node %v\n", reflect.CxTypeSizeInBytesGet(node) == reflect.CxTypeSizeInBytesGet(reflect.CxStructFieldTypeGet(node, 0))+4, reflect.CxPointerElementTypeGet(reflect.CxStructFieldTypeGet(node, 0)) == node)
+
+	// Encode the compiled value through the meta type and decode it back.
+	account.id = 7
+	account.balance = 258L
+	account.tags[0] = 3H
+	account.tags[1] = -1H
+	printf("encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(ledger))
+	count = serialize.CxSerializeValueEncode(account, ledger, buffer)
+	bytesShow("Ledger", buffer, count)
+	count = serialize.CxSerializeValueEncode(account, reflect.CxTypeOfValueGet(account), buffer)
+	bytesShow("Account", buffer, count)
+	count = serialize.CxSerializeValueDecode(buffer, back, ledger)
+	printf("decoded %d: id %d balance %d tags %d %d\n", count, back.id, back.balance, back.tags[0], back.tags[1])
+
+	// Write a field through the meta type and read it back.
+	buffer[0] = 9UB
+	buffer[1] = 0UB
+	buffer[2] = 0UB
+	buffer[3] = 0UB
+	printf("field write %d, id %d\n", reflect.CxStructFieldValueWrite(back, ledger, 0, buffer), back.id)
+}

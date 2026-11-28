@@ -757,6 +757,21 @@ var OpcodeDefinitionTable = [...]OpcodeDefinition{
 	{905, "serialize.CxSerializeEncodedSizeInBytesGet", "serializeopcodes.OpCxSerializeEncodedSizeInBytesGet", "i64", "i32", ""},
 	{906, "serialize.CxSerializeValueEncode", "serializeopcodes.OpCxSerializeValueEncode", "und i64 und", "i32", ""},
 	{907, "serialize.CxSerializeValueDecode", "serializeopcodes.OpCxSerializeValueDecode", "und und i64", "i32", ""},
+	{908, "meta.CxStructDefinitionBegin", "metaopcodes.OpCxStructDefinitionBegin", "i64", "i64", ""},
+	{909, "meta.CxStructDefinitionFieldAppend", "metaopcodes.OpCxStructDefinitionFieldAppend", "i64 i64 i64", "i32", ""},
+	{910, "meta.CxStructDefinitionMethodAppend", "metaopcodes.OpCxStructDefinitionMethodAppend", "i64 i64 i64", "i32", ""},
+	{911, "meta.CxStructDefinitionFinish", "metaopcodes.OpCxStructDefinitionFinish", "i64", "i32", ""},
+	{912, "meta.CxArrayTypeCreate", "metaopcodes.OpCxArrayTypeCreate", "i64 i32", "i64", ""},
+	{913, "meta.CxSliceTypeCreate", "metaopcodes.OpCxSliceTypeCreate", "i64", "i64", ""},
+	{914, "meta.CxPointerTypeCreate", "metaopcodes.OpCxPointerTypeCreate", "i64", "i64", ""},
+	{915, "meta.CxFunctionDefinitionBegin", "metaopcodes.OpCxFunctionDefinitionBegin", "i64", "i64", ""},
+	{916, "meta.CxFunctionDefinitionInputAppend", "metaopcodes.OpCxFunctionDefinitionInputAppend", "i64 i64 i64", "i32", ""},
+	{917, "meta.CxFunctionDefinitionOutputAppend", "metaopcodes.OpCxFunctionDefinitionOutputAppend", "i64 i64 i64", "i32", ""},
+	{918, "meta.CxFunctionDefinitionFinish", "metaopcodes.OpCxFunctionDefinitionFinish", "i64", "i32", ""},
+	{919, "meta.CxPackageDefinitionBegin", "metaopcodes.OpCxPackageDefinitionBegin", "i64", "i64", ""},
+	{920, "meta.CxPackageDefinitionFinish", "metaopcodes.OpCxPackageDefinitionFinish", "i64", "i32", ""},
+	{921, "meta.CxPackageDefinitionNameGet", "metaopcodes.OpCxPackageDefinitionNameGet", "i64", "i64", ""},
+	{922, "meta.CxStringPoolTextAppend", "metaopcodes.OpCxStringPoolTextAppend", "und i32", "i64", ""},
 }
 
 // OpcodeDefinition is one row of OpcodeDefinitionTable.

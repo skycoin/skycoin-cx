@@ -5,6 +5,7 @@ import (
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-cipher"           // thin: only PackageRegister, CipherOpcodeDispatch; registration list and opcode switch, keep
+	"github.com/skycoin/skycoin-cx/t4-cx-library-metaopcodes"      // thin: only PackageRegister, MetaOpcodeDispatch; registration list and opcode switch, keep
 	"github.com/skycoin/skycoin-cx/t4-cx-library-netopcodes"       // thin: only PackageRegister, NetOpcodeDispatch; registration list and opcode switch, keep
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"   // thin: only PackageRegister, ReflectOpcodeDispatch; registration list and opcode switch, keep
 	"github.com/skycoin/skycoin-cx/t4-cx-library-serializeopcodes" // thin: only PackageRegister, SerializeOpcodeDispatch; registration list and opcode switch, keep
@@ -30,6 +31,7 @@ func PackagesRegister(prgrm *ast.CXProgram) {
 	netopcodes.PackageRegister(prgrm)
 	reflectopcodes.PackageRegister(prgrm)
 	serializeopcodes.PackageRegister(prgrm)
+	metaopcodes.PackageRegister(prgrm)
 }
 
 // ProgramMake returns a new empty program. Call PackagesRegister on it to add
@@ -68,8 +70,8 @@ func ProgramMake() *ast.CXProgram {
 }
 
 // OpcodeDispatch is the opcode switch of cx: the core switch, then the
-// switches of the cipher, net, file, reflect and serialize libraries and of cxfx, each of which reports false in
+// switches of the cipher, net, file, reflect, serialize and meta libraries and of cxfx, each of which reports false in
 // a build whose tags leave it out.
 func OpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
-	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || cipher.CipherOpcodeDispatch(prgrm, code, inputs, outputs) || netopcodes.NetOpcodeDispatch(prgrm, code, inputs, outputs) || fileopcodes.FileOpcodeDispatch(prgrm, code, inputs, outputs) || graphics.CxfxOpcodeDispatch(prgrm, code, inputs, outputs) || reflectopcodes.ReflectOpcodeDispatch(prgrm, code, inputs, outputs) || serializeopcodes.SerializeOpcodeDispatch(prgrm, code, inputs, outputs)
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || cipher.CipherOpcodeDispatch(prgrm, code, inputs, outputs) || netopcodes.NetOpcodeDispatch(prgrm, code, inputs, outputs) || fileopcodes.FileOpcodeDispatch(prgrm, code, inputs, outputs) || graphics.CxfxOpcodeDispatch(prgrm, code, inputs, outputs) || reflectopcodes.ReflectOpcodeDispatch(prgrm, code, inputs, outputs) || serializeopcodes.SerializeOpcodeDispatch(prgrm, code, inputs, outputs) || metaopcodes.MetaOpcodeDispatch(prgrm, code, inputs, outputs)
 }

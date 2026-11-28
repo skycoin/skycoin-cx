@@ -1,0 +1,28 @@
+same text same name true
+a compiled field name is found true
+open struct size -1, kind 0
+field id 0
+field balance 1
+field tags 2
+pointer to the open struct reads as no type 0
+finish 0
+pointer to the struct now true
+type Ledger
+kind 2 size 16 alignment 8 fields 3 methods 0
+field id
+  offset 0 size 4 same as compiled true
+field balance
+  offset 4 size 8 same as compiled true
+field tags
+  offset 12 size 4 same as compiled true
+ordinal of balance 1
+tags length 2
+node next 0
+node id 1
+node finish 0
+node size is a pointer and an i32 true, next points to node true
+encoded size 16
+Ledger 16: 7 0 0 0 2 1 0 0 0 0 0 0 3 0 255 255
+Account 16: 7 0 0 0 2 1 0 0 0 0 0 0 3 0 255 255
+decoded 16: id 7 balance 258 tags 3 -1
+field write 4, id 9
