@@ -1,6 +1,5 @@
 // Command objmodelgen writes the Gid file, the manager and the manager test of
-// every IR object type into t3-cx-core-ast, and the type tag name table into
-// t1-cx-core-objmodel, see docs/ObjectModel.md, and the site counts of that
+// every IR object type into t3-cx-core-ast, see docs/ObjectModel.md, and the site counts of that
 // document from docs/objectmodel-sites.csv. The 14 managers differ only in
 // their type, so one template is kept instead of 14 copies.
 //
@@ -26,36 +25,27 @@ import (
 // so the tests can tell objects apart.
 type objmodelgenObject struct {
 	Object    string
-	TypeTag   int
 	MarkerSet string
 	MarkerGet string
 }
 
-// objmodelgenObjects is the type table of docs/ObjectModel.md. A tag is fixed
-// forever, a removed type keeps its tag.
+// objmodelgenObjects is the type table of docs/ObjectModel.md. The type tag
+// of each is the constant of its name in t0-cx-core-gidtag.
 var objmodelgenObjects = []objmodelgenObject{
-	{"CXProgram", 0x01, "OBJ.Version = int64(VALUE)", "int(OBJ.Version)"},
-	{"CXPackage", 0x02, "OBJ.Index = VALUE", "OBJ.Index"},
-	{"CXFunction", 0x03, "OBJ.LineCount = VALUE", "OBJ.LineCount"},
-	{"CXNativeFunction", 0x04, "OBJ.AtomicOPCode = VALUE", "OBJ.AtomicOPCode"},
-	{"CXStruct", 0x05, "OBJ.Index = VALUE", "OBJ.Index"},
-	{"CXExpression", 0x06, "OBJ.Index = VALUE", "OBJ.Index"},
-	{"CXAtomicOperator", 0x07, "OBJ.ThenLines = VALUE", "OBJ.ThenLines"},
-	{"CXLine", 0x08, "OBJ.LineNumber = VALUE", "OBJ.LineNumber"},
-	{"CXArgument", 0x09, "OBJ.PassBy = VALUE", "OBJ.PassBy"},
-	{"CXArgumentDebug", 0x0A, "OBJ.FileLine = VALUE", "OBJ.FileLine"},
-	{"CXTypeSignature", 0x0B, "OBJ.PassBy = VALUE", "OBJ.PassBy"},
-	{"CXTypeSignature_Array", 0x0C, "OBJ.Meta = VALUE", "OBJ.Meta"},
-	{"CXTypeSignature_Struct", 0x0D, "OBJ.Fields = make([]CXArgumentIndex, VALUE)", "len(OBJ.Fields)"},
-	{"CXCall", 0x0E, "OBJ.Line = VALUE", "OBJ.Line"},
-}
-
-// objmodelgenTagOnlyObjects are Gid types with a tag and a name in the table
-// but a hand written manager, such as the string pool and the source files
-// of #413.
-var objmodelgenTagOnlyObjects = []objmodelgenObject{
-	{Object: "String", TypeTag: 0x0F},
-	{Object: "SourceFile", TypeTag: 0x10},
+	{"CXProgram", "OBJ.Version = int64(VALUE)", "int(OBJ.Version)"},
+	{"CXPackage", "OBJ.Index = VALUE", "OBJ.Index"},
+	{"CXFunction", "OBJ.LineCount = VALUE", "OBJ.LineCount"},
+	{"CXNativeFunction", "OBJ.AtomicOPCode = VALUE", "OBJ.AtomicOPCode"},
+	{"CXStruct", "OBJ.Index = VALUE", "OBJ.Index"},
+	{"CXExpression", "OBJ.Index = VALUE", "OBJ.Index"},
+	{"CXAtomicOperator", "OBJ.ThenLines = VALUE", "OBJ.ThenLines"},
+	{"CXLine", "OBJ.LineNumber = VALUE", "OBJ.LineNumber"},
+	{"CXArgument", "OBJ.PassBy = VALUE", "OBJ.PassBy"},
+	{"CXArgumentDebug", "OBJ.FileLine = VALUE", "OBJ.FileLine"},
+	{"CXTypeSignature", "OBJ.PassBy = VALUE", "OBJ.PassBy"},
+	{"CXTypeSignature_Array", "OBJ.Meta = VALUE", "OBJ.Meta"},
+	{"CXTypeSignature_Struct", "OBJ.Fields = make([]CXArgumentIndex, VALUE)", "len(OBJ.Fields)"},
+	{"CXCall", "OBJ.Line = VALUE", "OBJ.Line"},
 }
 
 // objmodelgenHeader starts every generated file, and -check finds stale
@@ -68,14 +58,13 @@ func objmodelgenFileName(obj string) string {
 }
 
 func objmodelgenRender(tmpl *template.Template, name string, object objmodelgenObject) ([]byte, error) {
-	other := 0x01
-	if object.TypeTag == other {
-		other = 0x02
+	other := "CXProgram"
+	if object.Object == other {
+		other = "CXPackage"
 	}
 	templateFields := map[string]any{
 		"Object":   object.Object,
-		"TypeTag":  fmt.Sprintf("0x%02X", object.TypeTag),
-		"OtherTag": fmt.Sprintf("0x%02X", other),
+		"OtherTag": "gidtag." + other,
 		"Set": func(target string, value string) string {
 			return strings.NewReplacer("OBJ", target, "VALUE", value).Replace(object.MarkerSet)
 		},
@@ -95,35 +84,14 @@ func objmodelgenRender(tmpl *template.Template, name string, object objmodelgenO
 	return src, nil
 }
 
-// objmodelgenTagNames is every named tag in tag order.
-func objmodelgenTagNames() []objmodelgenObject {
-	names := append(append([]objmodelgenObject{}, objmodelgenObjects...), objmodelgenTagOnlyObjects...)
-	sort.Slice(names, func(i, j int) bool { return names[i].TypeTag < names[j].TypeTag })
-	return names
-}
-
-// objmodelgenTypeTagNameFile is the generated file of package objmodel.
-const objmodelgenTypeTagNameFile = "gid_typetagname.go"
-
 // objmodelgenFiles returns every generated file by path.
-func objmodelgenFiles(dir string, objmodelDir string) (map[string][]byte, error) {
+func objmodelgenFiles(dir string) (map[string][]byte, error) {
 	tmpl, err := template.New("objmodelgen").Parse(objmodelgenTemplates)
 	if err != nil {
 		return nil, err
 	}
 	files := map[string][]byte{}
-	tags := map[int]string{}
-	for _, object := range objmodelgenTagOnlyObjects {
-		tags[object.TypeTag] = object.Object
-	}
 	for _, object := range objmodelgenObjects {
-		if object.TypeTag < 0x01 || object.TypeTag > 0x7F {
-			return nil, fmt.Errorf("%s: type tag %#x outside 0x01 to 0x7F", object.Object, object.TypeTag)
-		}
-		if previous, ok := tags[object.TypeTag]; ok {
-			return nil, fmt.Errorf("%s and %s share type tag %#x", previous, object.Object, object.TypeTag)
-		}
-		tags[object.TypeTag] = object.Object
 		base := objmodelgenFileName(object.Object)
 		for suffix, name := range map[string]string{"_gid.go": "gid", "_mng.go": "mng", "_mng_test.go": "test"} {
 			src, err := objmodelgenRender(tmpl, name, object)
@@ -133,20 +101,6 @@ func objmodelgenFiles(dir string, objmodelDir string) (map[string][]byte, error)
 			files[filepath.Join(dir, base+suffix)] = src
 		}
 	}
-	names, err := template.New("typetagname").Parse(objmodelgenTypeTagNameTemplate)
-	if err != nil {
-		return nil, err
-	}
-	var buf bytes.Buffer
-	buf.WriteString(objmodelgenHeader)
-	if err := names.Execute(&buf, objmodelgenTagNames()); err != nil {
-		return nil, err
-	}
-	src, err := format.Source(buf.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w\n%s", objmodelgenTypeTagNameFile, err, buf.Bytes())
-	}
-	files[filepath.Join(objmodelDir, objmodelgenTypeTagNameFile)] = src
 	return files, nil
 }
 
@@ -198,12 +152,11 @@ func objmodelgenCheck(dir string, files map[string][]byte) ([]string, error) {
 
 func main() {
 	dir := flag.String("dir", "t3-cx-core-ast", "directory of package ast")
-	objmodelDir := flag.String("objmodeldir", "t1-cx-core-objmodel", "directory of package objmodel")
 	docsDir := flag.String("docsdir", "docs", "directory of ObjectModel.md and objectmodel-sites.csv")
 	root := flag.String("root", ".", "directory whose Go and grammar files hold the site comments")
 	check := flag.Bool("check", false, "report stale files instead of writing them")
 	flag.Parse()
-	files, err := objmodelgenFiles(*dir, *objmodelDir)
+	files, err := objmodelgenFiles(*dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "objmodelgen:", err)
 		os.Exit(1)

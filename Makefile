@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo build-image-core build-mcu run-mcu flash-mcu release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-386 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-parser check-strhot check-strhot-gui test-gui generate-objmodel names-csv check build-parser bench-compare clean help
+.PHONY: records llvm-clang build build-tinygo build-wasm-tinygo build-image-core build-mcu run-mcu flash-mcu release-archives release-notes lint vulncheck build-gui build-debug build-wasm test-wasm build-tests test test-all test-ptr64 test-386 test-go vet vet-gui check-tiers check-inits check-ifaces check-json check-recovers check-objmodel check-names check-parser check-strhot check-strhot-gui test-gui generate-objmodel generate-gidtags check-gidtags names-csv check build-parser bench-compare clean help
 
 CXEXE := cx
 EXE :=
@@ -208,10 +208,16 @@ generate-opcodes: ## Regenerate the opcode and library signature tables and swit
 check-opcodes: ## Check that the opcode and library tables and switches are up to date with t1-cx-core-opcodetable/opcodes_definitions.go and libraries_definitions.go
 	go run ./t2-cx-core-opcodegen -root . -check
 
+generate-gidtags: ## Regenerate the tag constants and name table of t0-cx-core-gidtag from gidtag.Table, see docs/GidVariants.md
+	go run ./t1-cx-core-gidtaggen
+
+check-gidtags: ## Check that t0-cx-core-gidtag/gidtag_gen.go is up to date with gidtag.Table
+	go run ./t1-cx-core-gidtaggen -check
+
 generate-objmodel: ## Regenerate the Gid, manager and manager test files of t3-cx-core-ast and the site counts of docs/ObjectModel.md
 	go run ./t0-cx-core-objmodelgen -dir t3-cx-core-ast
 
-check: check-tiers llvm-clang check-inits check-ifaces check-names check-parser check-json check-recovers check-objmodel check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 test-386 ## tier, init, interface, naming, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default, ptr64 and 386)
+check: check-tiers llvm-clang check-inits check-ifaces check-names check-parser check-json check-recovers check-objmodel check-gidtags check-opcodes check-gcreach check-strhot vet test-go test test-ptr64 test-386 ## tier, init, interface, naming, JSON, recover, object model, opcode table, GC reach and STRHOT checks, vet, Go tests and CX program tests (default, ptr64 and 386)
 
 bench-compare: ## Time the t0-cx-tools-benchmarks/compare programs in cx and Go (needs taskset, and clang for cx native)
 	go build -tags="$(TAGS)" -o ./bin/$(CXEXE) ./t11-cx-command-cx

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	assert "github.com/skycoin/skycoin-cx/t0-cx-core-assert"
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	stringpool "github.com/skycoin/skycoin-cx/t2-cx-core-stringpool"
 )
@@ -15,7 +16,7 @@ import (
 type SourceFileGid int64
 
 const (
-	SourceFileGidTypeTag objmodel.TypeTag = 0x10
+	SourceFileGidTypeTag objmodel.TypeTag = gidtag.SourceFile
 	SourceFileGidNil     SourceFileGid    = 0
 )
 

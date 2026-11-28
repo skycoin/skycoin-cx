@@ -13,6 +13,7 @@ import (
 var coreImportsAllowed = map[string]bool{
 	"t0-cx-core-assert":              true,
 	"t0-cx-core-floatparse":          true,
+	"t0-cx-core-gidtag":              true,
 	"t0-cx-runtime-filelog":          true,
 	"t0-cx-core-syspackages":         true,
 	"t0-cx-core-valuetypes":          true,

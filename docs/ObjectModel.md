@@ -33,7 +33,8 @@ not follow the standard yet is listed in
 
 These are the managed object types. The type tag is fixed forever, like an
 opcode number. A removed type keeps its tag, and a new type takes the next
-free one.
+free one. Each tag is a row of `gidtag.Table`, see
+[GidVariants.md](GidVariants.md).
 
 | Object | Type tag | Arena today | Index type today |
 | --- | --- | --- | --- |
@@ -125,7 +126,9 @@ A Gid names one object of one type. It is an `int64`.
   is the type tag. The tag is masked out wherever generations are compared,
   so the generation proper is bits 32 to 55, 24 bits.
 * Type tags run from `0x01` to `0x7F`, so bit 63 is always 0 and a valid Gid
-  is always positive. Every negative value and 0 is invalid.
+  is always positive. Every negative value and 0 is invalid. Every tag in
+  use, the IR tags and those of the system libraries, is a row of
+  `gidtag.Table`, see [GidVariants.md](GidVariants.md).
 * Generations start at 1. The generation of a slot goes up by one each time
   its object is released. A slot whose generation reaches
   `GidGenerationLast` is retired and never reused, so a generation never
@@ -189,8 +192,8 @@ func GidTypeTag(gid int64) TypeTag
 func GidAssertFailure(gid int64, typeTag TypeTag, capacity int)
 
 // GidTypeTagNameTable names the object type of each type tag, for the
-// assert messages. It is generated from the type table.
-var GidTypeTagNameTable = [256]string{0x01: "CXProgram" /* ... */}
+// assert messages. It is the generated gidtag.NameTable.
+var GidTypeTagNameTable = gidtag.NameTable
 ```
 
 The bit operations work on `uint64(gid)`, so the masks are `uint64`
@@ -204,7 +207,7 @@ compiler rejects a `CXFunctionGid` where a `CXArgumentGid` is wanted.
 type CXArgumentGid int64
 
 const (
-	CXArgumentGidTypeTag objmodel.TypeTag = 0x09
+	CXArgumentGidTypeTag objmodel.TypeTag = gidtag.CXArgument // 0x09
 	CXArgumentGidNil     CXArgumentGid    = 0
 )
 ```
@@ -353,8 +356,10 @@ than it declares. The next most is 448 in `test-slices.cx`.
 The 14 managers differ only in their type, so `<obj>_gid.go`,
 `<obj>_mng.go` and the test `<obj>_mng_test.go` are generated from one
 template by `t0-cx-core-objmodelgen` (`make generate-objmodel`), a tier 0
-`package main` that holds the type table above. It also writes
-`GidTypeTagNameTable` into `t1-cx-core-objmodel/gid_typetagname.go`, which also names the tags of hand written managers such as the string pool. The
+`package main` that holds the type table above, and the type tag of each
+is the constant of its name in `t0-cx-core-gidtag`. `objmodel.GidTypeTagNameTable`
+is `gidtag.NameTable`, which `make generate-gidtags` writes from
+`gidtag.Table`, see [GidVariants.md](GidVariants.md). The
 generated files are committed and start with a `Code generated ... DO NOT
 EDIT.` line.
 `make check-objmodel` fails when one is stale, when a generated file is no

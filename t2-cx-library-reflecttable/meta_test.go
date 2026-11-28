@@ -2,8 +2,6 @@ package reflecttable
 
 import (
 	"testing"
-
-	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
 // metaTestTable is a table with the scalars i32 and i64 and the room of a
@@ -15,17 +13,6 @@ func metaTestTable() ([]byte, int64, int64) {
 	i64 := builder.BuilderTypeAdd(Type{TypeKind: KindScalar, TypeSize: 8, TypeAlignment: 8, TypeName: builder.BuilderTypeNames.NamePoolIntern("i64"), TypeElement: -1, TypeLength: -1, TypeFunction: -1})
 	table := builder.BuilderEncode()
 	return table, TypeOfIndex(table, i32), TypeOfIndex(table, i64)
-}
-
-// TestPackageTagRange checks the package tag against the reflect range of
-// D154 and that no other Gid uses it.
-func TestPackageTagRange(t *testing.T) {
-	if PackageTag < 0x40 || PackageTag > 0x5F || PackageTag == TypeTag || PackageTag == FunctionTag {
-		t.Errorf("package tag %#x is outside the reflect range or taken", PackageTag)
-	}
-	if objmodel.GidTypeTagNameTable[PackageTag] != "" {
-		t.Errorf("package tag %#x is taken by %s", PackageTag, objmodel.GidTypeTagNameTable[PackageTag])
-	}
 }
 
 // TestMetaStructReadAndEncode builds a struct, reads it back with the

@@ -5,36 +5,10 @@ import (
 	"testing"
 
 	"github.com/skycoin/skycoin-cx/t0-cx-runtime-output"
-	"github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
-	reflecttable "github.com/skycoin/skycoin-cx/t2-cx-library-reflecttable"
 	"github.com/skycoin/skycoin-cx/t2-cx-runtime-ir"
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 )
-
-// TestTagsCollision checks the AST tag against its range of gid-variants
-// D154 and every other tag in use.
-func TestTagsCollision(t *testing.T) {
-	if AstTag < 0x40 || AstTag > 0x5F {
-		t.Errorf("AST tag %#x is outside the reflect, meta, cxir and compiler range 0x40 to 0x5F", AstTag)
-	}
-	used := map[objmodel.TypeTag]string{}
-	for tag, name := range objmodel.GidTypeTagNameTable {
-		if name != "" {
-			used[objmodel.TypeTag(tag)] = name
-		}
-	}
-	for tag, name := range map[objmodel.TypeTag]string{
-		reflecttable.TypeTag: "reflect type", reflecttable.FunctionTag: "reflect function", reflecttable.TypeNameTag: "reflect type name",
-		reflecttable.PackageTag: "meta package", objmodel.TypeTag(ir.ImageTag): "cxir image", objmodel.TypeTag(ir.ImageNameTag): "cxir name",
-		objmodel.TypeTag(AstTag): "compiler AST",
-	} {
-		if other, taken := used[tag]; taken {
-			t.Errorf("tag %#x of %s is taken by %s", tag, name, other)
-		}
-		used[tag] = name
-	}
-}
 
 // compilerStub parses every program into one package with one global and
 // lowers nothing, so the state is tested without the Go compiler.

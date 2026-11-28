@@ -20,26 +20,6 @@ func TestTypeHandleLayout(t *testing.T) {
 	}
 }
 
-// TestTagRanges checks each tag against the ranges of D154.
-func TestTagRanges(t *testing.T) {
-	for _, tag := range []objmodel.TypeTag{TypeTag, FunctionTag} {
-		if tag < 0x40 || tag > 0x5F {
-			t.Errorf("tag %#x is outside the reflect range 0x40 to 0x5F", tag)
-		}
-	}
-	for _, tag := range []objmodel.TypeTag{TypeNameTag, MemberNameTag} {
-		if tag < 0x01 || tag > 0x1F {
-			t.Errorf("pool tag %#x is outside 0x01 to 0x1F", tag)
-		}
-	}
-	if objmodel.GidTypeTagNameTable[TypeNameTag] != "" {
-		t.Errorf("tag %#x of the type name pool is taken by %s", TypeNameTag, objmodel.GidTypeTagNameTable[TypeNameTag])
-	}
-	if objmodel.GidTypeTagNameTable[MemberNameTag] != "String" {
-		t.Errorf("tag %#x is not the StringGid tag", MemberNameTag)
-	}
-}
-
 // testTable is a struct Node with a field value i32 and a field next *Node,
 // a method Visit(Node, i32) bool, and an array [3]i32.
 func testTable() []byte {

@@ -7,6 +7,7 @@ package reflecttable
 import (
 	"encoding/binary"
 
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
@@ -21,14 +22,13 @@ const (
 	KindFunction int32 = 6
 )
 
-// The type tags of the handles, see gid-variants D154. TypeTag and
-// FunctionTag are in the reflect range 0x40 to 0x5F, TypeNameTag is the
-// interned type name pool and MemberNameTag is the StringGid tag.
+// The type tags of the handles, see docs/GidVariants.md. MemberNameTag is
+// the StringGid tag, though member names have their own pool in the table.
 const (
-	TypeTag       objmodel.TypeTag = 0x40
-	FunctionTag   objmodel.TypeTag = 0x41
-	TypeNameTag   objmodel.TypeTag = 0x11
-	MemberNameTag objmodel.TypeTag = 0x0F
+	TypeTag       objmodel.TypeTag = gidtag.ReflectType
+	FunctionTag   objmodel.TypeTag = gidtag.ReflectFunction
+	TypeNameTag   objmodel.TypeTag = gidtag.ReflectTypeName
+	MemberNameTag objmodel.TypeTag = gidtag.String
 )
 
 // The words of the table header, each an int32 at four times its number.

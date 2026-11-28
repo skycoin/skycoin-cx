@@ -6,13 +6,16 @@ const objmodelgenTemplates = `
 {{- define "gid" -}}
 package ast
 
-import objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+import (
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
+	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
+)
 
 // {{.Object}}Gid names one {{.Object}} in its manager, see docs/ObjectModel.md.
 type {{.Object}}Gid int64
 
 const (
-	{{.Object}}GidTypeTag objmodel.TypeTag = {{.TypeTag}}
+	{{.Object}}GidTypeTag objmodel.TypeTag = gidtag.{{.Object}}
 	{{.Object}}GidNil     {{.Object}}Gid      = 0
 )
 {{end}}
@@ -170,6 +173,7 @@ package ast
 import (
 	"testing"
 
+	gidtag "github.com/skycoin/skycoin-cx/t0-cx-core-gidtag"
 	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 )
 
@@ -368,18 +372,4 @@ func Test{{.Object}}MngAsserts(t *testing.T) {
 	}
 }
 {{end}}
-`
-
-// objmodelgenTypeTagNameTemplate writes the type name table of package
-// objmodel, which names a type tag in an assert message without a string
-// parameter on the Get and Release path.
-const objmodelgenTypeTagNameTemplate = `package objmodel
-
-// GidTypeTagNameTable names the object type of each type tag. An unused tag
-// has an empty name.
-var GidTypeTagNameTable = [256]string{
-{{- range .}}
-	{{printf "0x%02X" .TypeTag}}: "{{.Object}}",
-{{- end}}
-}
 `
