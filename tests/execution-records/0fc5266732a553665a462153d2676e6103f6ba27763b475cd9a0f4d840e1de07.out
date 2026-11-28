@@ -1,0 +1,1 @@
+error: CX_RUNTIME_LIBRARY_DISABLED, operation serialize.CxSerializeEncodedSizeInBytesGet is not enabled, enable it with --enable=serialize.CxSerializeEncodedSizeInBytesGet

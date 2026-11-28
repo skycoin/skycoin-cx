@@ -1,0 +1,9 @@
+encode into 6 bytes -1
+encode into 16 bytes 7
+decode from 6 bytes -1, id 1
+decode a bool of 2 -1, id 1, ready false
+decode 7, id 7, ready true, score 9
+decode a bad str -1
+pointer size -1, encode -1
+no type size -1, encode -1, decode -1
+value smaller than its type -1

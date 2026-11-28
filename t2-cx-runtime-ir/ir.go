@@ -308,6 +308,12 @@ const (
 	OpcodeReflectCxFunctionOutputCountGet
 	OpcodeReflectCxFunctionOutputTypeGet
 	OpcodeReflectCxStringPoolTextRead
+	// The serialize opcodes, one per function of the serialize library in
+	// the order of its opcode numbers, decision D150. InstrAux is the address
+	// of the type table of the reflect library in the data segment.
+	OpcodeSerializeCxSerializeEncodedSizeInBytesGet
+	OpcodeSerializeCxSerializeValueEncode
+	OpcodeSerializeCxSerializeValueDecode
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -617,7 +623,7 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeReflectCxStringPoolTextRead
+	OpcodeLibraryLast  = OpcodeSerializeCxSerializeValueDecode
 )
 
 // OpcodeReflectFirst and OpcodeReflectLast bound the opcodes of the reflect
@@ -630,6 +636,25 @@ const (
 // OpcodeReflect reports whether op is an opcode of the reflect library.
 func OpcodeReflect(op Opcode) bool {
 	return op >= OpcodeReflectFirst && op <= OpcodeReflectLast
+}
+
+// OpcodeSerializeFirst and OpcodeSerializeLast bound the opcodes of the
+// serialize library, in the order of
+// opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet on.
+const (
+	OpcodeSerializeFirst = OpcodeSerializeCxSerializeEncodedSizeInBytesGet
+	OpcodeSerializeLast  = OpcodeSerializeCxSerializeValueDecode
+)
+
+// OpcodeSerialize reports whether op is an opcode of the serialize library.
+func OpcodeSerialize(op Opcode) bool {
+	return op >= OpcodeSerializeFirst && op <= OpcodeSerializeLast
+}
+
+// OpcodeTypeTableReads reports whether op reads the type table of the
+// reflect library, an opcode of the reflect or the serialize library.
+func OpcodeTypeTableReads(op Opcode) bool {
+	return OpcodeReflect(op) || OpcodeSerialize(op)
 }
 
 // OpcodeLibrary reports whether op is an opcode of a system library.

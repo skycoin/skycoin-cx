@@ -24,6 +24,7 @@
     * [Output modes](#output-modes)
     * [The cipher library](#the-cipher-library)
     * [The reflect library](#the-reflect-library)
+    * [The serialize library](#the-serialize-library)
     * [The net library](#the-net-library)
   * [Statements](#statements)
     * [If and if/else](#if-and-ifelse)
@@ -1006,6 +1007,7 @@ cx --enable=file,net program.cx
 | `cipher` | every function of `sys/cipher`, see [The cipher library](#the-cipher-library) |
 | `terminal` | `os.ArgCount`, `os.ArgRead` and `os.InputLineRead`, see [The terminal library](#the-terminal-library). Enabled by default |
 | `reflect` | every function of `sys/reflect`, see [The reflect library](#the-reflect-library) |
+| `serialize` | every function of `sys/serialize`, see [The serialize library](#the-serialize-library) |
 
 `os.Exit`, `sys/time`, `sys/regexp` and `sys/string` are not system
 libraries. They end the program, read the clock or compute, and always
@@ -1019,7 +1021,7 @@ message names the library.
 error: main.cx:7, CX_RUNTIME_LIBRARY_DISABLED, library file is not enabled, enable it with --enable=file
 ```
 
-A program that uses a function of `file`, `net`, `cipher`, `terminal` or `reflect` and does not
+A program that uses a function of `file`, `net`, `cipher`, `terminal`, `reflect` or `serialize` and does not
 enable it is refused before it runs, with the same code and message and no position.
 The run loop never checks a library (decision D119).
 
@@ -1059,7 +1061,7 @@ a program that reads its arguments or input, and
 
 Every function of `cipher` is its own opcode, 796 to 804, and every
 function of `net`, 805 to 819, every function of `file`, 820 to 875,
-and every function of `terminal`, 876 to 878, and every function of `reflect`, 880 to 904 (decision D119). The compiler turns every call of `os.Run`, the one
+and every function of `terminal`, 876 to 878, every function of `reflect`, 880 to 904, and every function of `serialize`, 905 to 907 (decision D119). The compiler turns every call of `os.Run`, the one
 function of `process`, into the opcode `LibraryCall` (795), which carries the library
 number and the function number. The numbers are in `constants.LibraryTable` and
 `constants.LibraryFunctionLifecycleTable` and follow the rules of opcode
@@ -1252,6 +1254,59 @@ func main() {
 	buffer[0] = 7UB
 	var copied i32 = reflect.CxStructFieldValueWrite(p, t, 1, buffer)
 	printf("fields %d, y at %d, copied %d, y %d\n", reflect.CxStructFieldCountGet(t), reflect.CxStructFieldOffsetInBytesGet(t, 1), copied, p.y)
+}
+```
+
+### [The serialize library](#table-of-contents)
+
+`sys/serialize` turns a value into bytes and back from its type, the type
+handle of `reflect.CxTypeOfValueGet` (decision D150). It is the system
+library `serialize`, off unless a run enables it with `--enable=serialize`.
+A program needs `reflect` as well for the handle, so it runs with
+`--enable=reflect,serialize`. It runs on the old loop, on vm, in an image
+and in a native executable, and no call allocates.
+
+| function | returns |
+|---|---|
+| `serialize.CxSerializeEncodedSizeInBytesGet(type i64)` | `i32` encoded size of a value of the type, -1 for a type that does not encode or one with a slice |
+| `serialize.CxSerializeValueEncode(value, type i64, buffer)` | `i32` bytes written into the `ui8` array, -1 if the buffer is short |
+| `serialize.CxSerializeValueDecode(buffer, value, type i64)` | `i32` bytes read from the `ui8` array into the variable, -1 if the buffer is short or bad |
+
+The encoding is little endian and has no padding.
+
+* A scalar is its bytes. A decoded `bool` byte must be 0 or 1.
+* A `str` is 8 bytes, the handle its slot holds. Strings are not yet pool
+  Gids (D139), so the handle is the address of the string in the run that
+  encoded it and a decode takes only the address of an object in memory.
+* A struct is its fields in order, and an array its elements.
+* A slice is a 4 byte element count then its elements. A decode needs a
+  slice with the capacity for the count and sets its length. Only the old
+  loop runs a program with slices.
+* A pointer or a function does not encode.
+
+A refused decode changes nothing in the value.
+
+```cx
+package main
+
+import "sys/reflect"
+import "sys/serialize"
+
+type Point struct {
+	x i32
+	y i16
+}
+
+func main() {
+	var p Point
+	var q Point
+	var buffer [8]ui8
+	p.x = 258
+	p.y = 3H
+	var t i64 = reflect.CxTypeOfValueGet(p)
+	var written i32 = serialize.CxSerializeValueEncode(p, t, buffer)
+	var read i32 = serialize.CxSerializeValueDecode(buffer, q, t)
+	printf("size %d, wrote %d, read %d, x %d, y %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t), written, read, q.x, q.y)
 }
 ```
 

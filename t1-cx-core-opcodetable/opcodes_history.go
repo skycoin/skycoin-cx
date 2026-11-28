@@ -223,6 +223,9 @@ package opcodetable
 // 2611280001  assigned      902 reflect.CxFunctionOutputCountGet
 // 2611280001  assigned      903 reflect.CxFunctionOutputTypeGet
 // 2611280001  assigned      904 reflect.CxStringPoolTextRead
+// 2611280002  assigned      905 serialize.CxSerializeEncodedSizeInBytesGet
+// 2611280002  assigned      906 serialize.CxSerializeValueEncode
+// 2611280002  assigned      907 serialize.CxSerializeValueDecode
 // 2711200001  reassignable  559 str.eq
 // 2711200001  reassignable  560 str.uneq
 // 2711200001  reassignable  582 str.lt

@@ -20,13 +20,14 @@ package opcodetable
 // Library numbers. LibraryCount is one past the highest and sizes the per
 // library tables.
 const (
-	LibraryNumberFile     = 1
-	LibraryNumberNet      = 2
-	LibraryNumberProcess  = 3
-	LibraryNumberCipher   = 4
-	LibraryNumberTerminal = 5
-	LibraryNumberReflect  = 6
-	LibraryCount          = 7
+	LibraryNumberFile      = 1
+	LibraryNumberNet       = 2
+	LibraryNumberProcess   = 3
+	LibraryNumberCipher    = 4
+	LibraryNumberTerminal  = 5
+	LibraryNumberReflect   = 6
+	LibraryNumberSerialize = 7
+	LibraryCount           = 8
 )
 
 // LibraryPolicyEnabledWhenImported is the default policy for a library that
@@ -55,6 +56,7 @@ var LibraryTable = [...]Library{
 	{LibraryNumberCipher, "cipher", 2611240003, false, false},
 	{LibraryNumberTerminal, "terminal", 2611270001, true, true},
 	{LibraryNumberReflect, "reflect", 2611280001, false, true},
+	{LibraryNumberSerialize, "serialize", 2611280002, false, true},
 }
 
 // LibraryByName returns the library named name.

@@ -19,11 +19,11 @@ func (s *state) reflectTableAppend() {
 	s.stateReadOnly = append(s.stateReadOnly, ir.Span{SpanStart: s.stateReflectTable, SpanEnd: s.stateDataEnd})
 }
 
-// reflectCall gives a reflect opcode the address of the type table, and
-// reflect.CxTypeOfValueGet the type number of its input, which the compiler
-// knows. Any other library opcode is returned as it is.
+// reflectCall gives a reflect or serialize opcode the address of the type
+// table, and reflect.CxTypeOfValueGet the type number of its input, which
+// the compiler knows. Any other library opcode is returned as it is.
 func (s *state) reflectCall(call ir.Instr, inputs []ast.CXTypeSignatureIndex) (ir.Instr, ReasonCode) {
-	if !ir.OpcodeReflect(call.InstrOpcode) {
+	if !ir.OpcodeTypeTableReads(call.InstrOpcode) {
 		return call, ReasonNone
 	}
 	call.InstrAux = s.stateReflectTable

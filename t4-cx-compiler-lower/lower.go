@@ -188,7 +188,7 @@ func Program(prgrm *ast.CXProgram) (ir.Image, []Failure) {
 	image.ImageStackSize = s.stateStackSize
 	image.ImageDataStart = s.stateDataStart
 	image.ImageData = append([]byte(nil), prgrm.Memory[s.stateDataStart:s.stateDataEnd]...)
-	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] {
+	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] || prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberSerialize] {
 		s.reflectTableAppend()
 	}
 	functions := prgrm.CXProgramFunctionSlotCount()
@@ -1090,7 +1090,8 @@ func libraryBufferInput(prgrm *ast.CXProgram, signatureIndex ast.CXTypeSignature
 // libraryBuffer lowers a byte buffer input as the address and the byte size
 // of the ui8 array, each a pointer, at offset of the block. The vm form
 // reads or fills memory there, as the old loop does at the array's offset.
-// anyType takes a value of any type, the struct value of the reflect library.
+// anyType takes a value of any type, the struct value of the reflect library
+// and the value of the serialize library.
 func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex, offset uint32, anyType bool) ([]ir.Instr, ReasonCode) {
 	prgrm := s.stateProgram
 	signature := prgrm.CXTypeSignatureFromArrayGet(signatureIndex)
@@ -1172,6 +1173,9 @@ func libraryOpcodeOf(opcode int) ir.Opcode {
 	if opcode >= opcodetable.OpcodeReflectCxTypeOfValueGet && opcode <= opcodetable.OpcodeReflectCxStringPoolTextRead {
 		return ir.OpcodeReflectFirst + ir.Opcode(opcode-opcodetable.OpcodeReflectCxTypeOfValueGet)
 	}
+	if opcode >= opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet && opcode <= opcodetable.OpcodeSerializeCxSerializeValueDecode {
+		return ir.OpcodeSerializeFirst + ir.Opcode(opcode-opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet)
+	}
 	return ir.OpcodeInvalid
 }
 
@@ -1223,7 +1227,7 @@ func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, c
 			if call.InstrOpcode == ir.OpcodeReflectCxTypeOfValueGet {
 				continue
 			}
-			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset, ir.OpcodeReflect(call.InstrOpcode)); reason != ReasonNone {
+			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset, ir.OpcodeTypeTableReads(call.InstrOpcode)); reason != ReasonNone {
 				return code, reason
 			}
 			continue

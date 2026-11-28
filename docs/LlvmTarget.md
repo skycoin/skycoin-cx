@@ -116,6 +116,10 @@ table in `cx_mem` and the type number of `CxTypeOfValueGet`, and read the
 table as `t2-cx-library-reflecttable` does. They need nothing from the Go
 side, so a TinyGo build links the same C.
 
+The serialize functions take the same two arguments and encode as
+`ValueEncode` and `ValueDecode` of that package do. No
+slice lowers to an image, so they refuse a slice type.
+
 `OpcodeOutputHandOff` and `OpcodeOutputFlush` call `cx_rt_output_hand_off`
 and `cx_rt_output_flush`. For `--output-mode=thread` cx build compiles the
 runtime with `CX_RT_OUTPUT_THREAD` and `-pthread`, and the hand off copies

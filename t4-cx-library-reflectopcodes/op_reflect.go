@@ -20,10 +20,10 @@ type LibraryState struct {
 var Library LibraryState
 
 // LibraryPrepare builds the type table of prgrm when it calls the reflect
-// library, before the old loop runs it, so no opcode builds anything.
+// or the serialize library, before the old loop runs it, so no opcode builds anything.
 func LibraryPrepare(prgrm *ast.CXProgram) {
 	Library.LibraryTypeTable = ast.ReflectTable{}
-	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] {
+	if prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberReflect] || prgrm.ProgramLibrariesUsed[opcodetable.LibraryNumberSerialize] {
 		Library.LibraryTypeTable = ast.ReflectTableBuild(prgrm)
 	}
 }

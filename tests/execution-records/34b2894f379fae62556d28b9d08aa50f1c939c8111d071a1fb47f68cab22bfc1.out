@@ -1,0 +1,8 @@
+[]i32 encoded size -1
+[]i32 16: 3 0 0 0 1 0 0 0 2 1 0 0 255 255 255 255
+[]i32 read 16, len 3: 1 258 -1
+[]i32 into a nil slice read -1, len 0
+nil []i32 4: 0 0 0 0
+Bag encoded size -1
+Bag 14: 5 0 0 0 2 0 0 0 1 44 1 2 254 255
+Bag read 14: id 5, 2 pairs, 1 300, 2 -2

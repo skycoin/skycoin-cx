@@ -2170,3 +2170,196 @@ CX_RT_REFLECT(cx_string_pool_text_read) {
 	uint8_t *buffer = reflectBlockBytes(mem, size, ptrSize, block + 8, &room);
 	CX_RT_REFLECT_I32(8 + 2 * ptrSize, reflectNameTextRead(t, handle, buffer, room));
 }
+
+// The serialize opcodes, decision D150. They read the type table of the
+// reflect library as ValueEncode and ValueDecode of
+// t2-cx-library-reflecttable do. No slice lowers to an image, so a slice
+// type does not encode here.
+static int reflectTypeNamed(reflectTable t, int32_t index, const char *text, int32_t length) {
+	int32_t name = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeName);
+	if (name < 0 || name >= reflectWord(t, reflectHeaderTypeNameCount))
+		return 0;
+	int64_t offset = (int64_t)reflectWord(t, reflectHeaderNameBytes) + reflectRecord(t, reflectHeaderTypeNames, name, 2, 0);
+	return reflectRecord(t, reflectHeaderTypeNames, name, 2, 1) == length && offset >= 0 &&
+		(uint64_t)(offset + length) <= t.size && memcmp(t.bytes + offset, text, (size_t)length) == 0;
+}
+
+static int serializeTypeValid(reflectTable t, int32_t index) {
+	return index >= 0 && index < reflectWord(t, reflectHeaderTypeCount);
+}
+
+#define serializeDepthLimit 32
+#define serializeKindScalar 1
+
+static int64_t serializeSize(reflectTable t, int32_t index, int depth) {
+	if (depth > serializeDepthLimit || !serializeTypeValid(t, index))
+		return -1;
+	int32_t kind = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeKind);
+	if (kind == serializeKindScalar) {
+		if (reflectTypeNamed(t, index, "str", 3))
+			return 8;
+		int32_t size = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeSize);
+		return size > 0 ? size : -1;
+	}
+	if (kind == reflectKindStruct) {
+		int32_t first = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeFieldFirst);
+		int32_t count = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeFieldCount);
+		int64_t total = 0;
+		for (int32_t i = 0; i < count; i++) {
+			int64_t size = serializeSize(t, reflectRecord(t, reflectHeaderFields, first + i, reflectFieldWords, reflectFieldType), depth + 1);
+			if (size < 0)
+				return -1;
+			total += size;
+			if (total > 0x7fffffff)
+				return -1;
+		}
+		return total;
+	}
+	if (kind == reflectKindArray) {
+		int32_t length = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeLength);
+		int64_t size = serializeSize(t, reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeElement), depth + 1);
+		if (size < 0 || length < 0 || (int64_t)length * size > 0x7fffffff)
+			return -1;
+		return (int64_t)length * size;
+	}
+	return -1;
+}
+
+typedef struct {
+	reflectTable table;
+	uint8_t *mem;
+	uint64_t memSize;
+	uint32_t ptrSize;
+	uint8_t *buffer;
+	uint64_t bufferSize;
+	uint64_t at;
+	int decode;
+	int write;
+} serializeWalk;
+
+static uint8_t *serializeBytes(serializeWalk *w, uint64_t size) {
+	if (size > w->bufferSize - w->at)
+		return NULL;
+	uint8_t *bytes = w->buffer + w->at;
+	w->at += size;
+	return bytes;
+}
+
+// serializeObjectValid reports whether a heap object starts at address and
+// ends inside mem, by the size in its header.
+static int serializeObjectValid(serializeWalk *w, uint64_t address) {
+	uint64_t header = 1 + 2 * (uint64_t)w->ptrSize;
+	uint64_t invalid = w->ptrSize == 4 ? 0xffffffffu : ~0ull;
+	if (address >= invalid || address + header > w->memSize)
+		return 0;
+	uint64_t size = readPtr(w->mem, address + header - w->ptrSize, w->ptrSize);
+	return size >= header && address + size <= w->memSize;
+}
+
+static int serializeValue(serializeWalk *w, uint8_t *value, uint64_t room, int32_t index, int depth) {
+	reflectTable t = w->table;
+	if (depth > serializeDepthLimit || !serializeTypeValid(t, index))
+		return 0;
+	int64_t size = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeSize);
+	if (size <= 0 || (uint64_t)size > room)
+		return 0;
+	int32_t kind = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeKind);
+	if (kind == serializeKindScalar && reflectTypeNamed(t, index, "str", 3)) {
+		uint8_t *bytes = serializeBytes(w, 8);
+		if (bytes == NULL)
+			return 0;
+		if (!w->decode) {
+			uint64_t address = readPtr(value, 0, w->ptrSize);
+			memcpy(bytes, &address, 8);
+			return 1;
+		}
+		uint64_t address;
+		memcpy(&address, bytes, 8);
+		if (address != 0 && !serializeObjectValid(w, address))
+			return 0;
+		if (w->write)
+			memcpy(value, &address, w->ptrSize);
+		return 1;
+	}
+	if (kind == serializeKindScalar) {
+		uint8_t *bytes = serializeBytes(w, (uint64_t)size);
+		if (bytes == NULL)
+			return 0;
+		if (!w->decode)
+			memcpy(bytes, value, (size_t)size);
+		else if (size == 1 && bytes[0] > 1 && reflectTypeNamed(t, index, "bool", 4))
+			return 0;
+		else if (w->write)
+			memcpy(value, bytes, (size_t)size);
+		return 1;
+	}
+	if (kind == reflectKindStruct) {
+		int32_t first = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeFieldFirst);
+		int32_t count = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeFieldCount);
+		for (int32_t i = 0; i < count; i++) {
+			int32_t fieldType = reflectRecord(t, reflectHeaderFields, first + i, reflectFieldWords, reflectFieldType);
+			int64_t offset = reflectRecord(t, reflectHeaderFields, first + i, reflectFieldWords, reflectFieldOffset);
+			if (offset < 0 || offset > size || !serializeValue(w, value + offset, (uint64_t)(size - offset), fieldType, depth + 1))
+				return 0;
+		}
+		return 1;
+	}
+	if (kind == reflectKindArray) {
+		int32_t element = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeElement);
+		int64_t length = reflectRecord(t, reflectHeaderTypes, index, reflectTypeWords, reflectTypeLength);
+		if (!serializeTypeValid(t, element))
+			return 0;
+		int64_t elementSize = reflectRecord(t, reflectHeaderTypes, element, reflectTypeWords, reflectTypeSize);
+		if (elementSize <= 0 || length < 0 || length * elementSize > size)
+			return 0;
+		for (int64_t i = 0; i < length; i++)
+			if (!serializeValue(w, value + i * elementSize, (uint64_t)(size - i * elementSize), element, depth + 1))
+				return 0;
+		return 1;
+	}
+	return 0;
+}
+
+static int32_t serializeRun(serializeWalk *w, uint8_t *value, uint64_t room, int64_t handle) {
+	int32_t index = reflectTypeIndex(w->table, handle, 0);
+	if (index < 0 || !serializeValue(w, value, room, index, 0) || w->at > 0x7fffffff)
+		return -1;
+	return (int32_t)w->at;
+}
+
+void cx_rt_serialize_encoded_size_in_bytes_get(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block, uint32_t table, uint32_t typeIndex) {
+	reflectTable t = reflectTableAt(mem, size, table);
+	int64_t handle;
+	(void)ptrSize, (void)typeIndex;
+	memcpy(&handle, block, 8);
+	int32_t index = reflectTypeIndex(t, handle, 0);
+	int64_t encoded = index < 0 ? -1 : serializeSize(t, index, 0);
+	CX_RT_REFLECT_I32(8, (int32_t)encoded);
+}
+
+void cx_rt_serialize_value_encode(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block, uint32_t table, uint32_t typeIndex) {
+	serializeWalk w = {reflectTableAt(mem, size, table), mem, size, ptrSize, NULL, 0, 0, 0, 0};
+	uint64_t room;
+	int64_t handle;
+	(void)typeIndex;
+	uint8_t *value = reflectBlockBytes(mem, size, ptrSize, block, &room);
+	memcpy(&handle, block + 2 * ptrSize, 8);
+	w.buffer = reflectBlockBytes(mem, size, ptrSize, block + 2 * ptrSize + 8, &w.bufferSize);
+	CX_RT_REFLECT_I32(4 * ptrSize + 8, serializeRun(&w, value, room, handle));
+}
+
+void cx_rt_serialize_value_decode(uint8_t *mem, uint64_t size, uint32_t ptrSize, uint8_t *block, uint32_t table, uint32_t typeIndex) {
+	serializeWalk w = {reflectTableAt(mem, size, table), mem, size, ptrSize, NULL, 0, 0, 1, 0};
+	uint64_t room;
+	int64_t handle;
+	(void)typeIndex;
+	w.buffer = reflectBlockBytes(mem, size, ptrSize, block, &w.bufferSize);
+	uint8_t *value = reflectBlockBytes(mem, size, ptrSize, block + 2 * ptrSize, &room);
+	memcpy(&handle, block + 4 * ptrSize, 8);
+	int32_t result = serializeRun(&w, value, room, handle);
+	if (result >= 0) {
+		w.at = 0, w.write = 1;
+		result = serializeRun(&w, value, room, handle);
+	}
+	CX_RT_REFLECT_I32(4 * ptrSize + 8, result);
+}

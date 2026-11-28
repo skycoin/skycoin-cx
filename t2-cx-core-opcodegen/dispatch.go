@@ -31,6 +31,7 @@ var dispatchGroups = []dispatchGroup{
 	{opcodetable.OpcodeGroupNet, "t4-cx-library-netopcodes/net_dispatch", "netopcodes", "NetOpcodeDispatch", "", "", "", ""},
 	{opcodetable.OpcodeGroupFile, "t5-cx-library-fileopcodes/file_dispatch", "fileopcodes", "FileOpcodeDispatch", "!nocxos", "nocxos", "", ""},
 	{opcodetable.OpcodeGroupReflect, "t4-cx-library-reflectopcodes/reflect_dispatch", "reflectopcodes", "ReflectOpcodeDispatch", "", "", "", ""},
+	{opcodetable.OpcodeGroupSerialize, "t4-cx-library-serializeopcodes/serialize_dispatch", "serializeopcodes", "SerializeOpcodeDispatch", "", "", "", ""},
 }
 
 // coreImports are the handler packages of OpcodeGroupCore.

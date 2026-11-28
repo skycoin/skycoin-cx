@@ -1,0 +1,91 @@
+// Encodes scalars, a nested struct, a fixed array and a struct with a str
+// field through the serialize library, prints the bytes and decodes them
+// back (decision D150). Run with --enable=reflect,serialize.
+
+package main
+
+import "sys/reflect"
+import "sys/serialize"
+
+type Inner struct {
+	flag  bool
+	small i16
+}
+
+type Outer struct {
+	id     i32
+	inner  Inner
+	values [3]ui16
+	rate   f64
+	last   i8
+}
+
+type Named struct {
+	code i32
+	name str
+}
+
+// bytesShow prints the first count bytes of buffer.
+func bytesShow(label str, buffer [64]ui8, count i32) {
+	var i i32
+	printf("%s %d:", label, count)
+	for i = 0; i < count; i++ {
+		printf(" %d", ui8.i32(buffer[i]))
+	}
+	printf("\n")
+}
+
+func main() {
+	var buffer [64]ui8
+	var count i32
+
+	var number i64
+	number = 258L
+	count = serialize.CxSerializeValueEncode(number, reflect.CxTypeOfValueGet(number), buffer)
+	bytesShow("i64", buffer, count)
+	var numberBack i64
+	printf("i64 read %d, value %d\n", serialize.CxSerializeValueDecode(buffer, numberBack, reflect.CxTypeOfValueGet(numberBack)), numberBack)
+
+	var ratio f32
+	ratio = 1.5
+	count = serialize.CxSerializeValueEncode(ratio, reflect.CxTypeOfValueGet(ratio), buffer)
+	bytesShow("f32", buffer, count)
+
+	var outer Outer
+	var t i64
+	outer.id = -2
+	outer.inner.flag = true
+	outer.inner.small = 515H
+	outer.values[0] = 1UH
+	outer.values[1] = 256UH
+	outer.values[2] = 65535UH
+	outer.rate = 2.0D
+	outer.last = 127B
+	t = reflect.CxTypeOfValueGet(outer)
+	printf("Outer encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t))
+	count = serialize.CxSerializeValueEncode(outer, t, buffer)
+	bytesShow("Outer", buffer, count)
+
+	var back Outer
+	count = serialize.CxSerializeValueDecode(buffer, back, t)
+	printf("Outer read %d: id %d flag %v small %d values %d %d %d rate %f last %d\n", count, back.id, back.inner.flag, back.inner.small, back.values[0], back.values[1], back.values[2], back.rate, back.last)
+
+	var grid [2][2]i32
+	grid[0][1] = 1
+	grid[1][0] = 256
+	t = reflect.CxTypeOfValueGet(grid)
+	printf("grid encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t))
+	count = serialize.CxSerializeValueEncode(grid, t, buffer)
+	bytesShow("grid", buffer, count)
+
+	var named Named
+	named.code = 9
+	named.name = "serialize"
+	t = reflect.CxTypeOfValueGet(named)
+	printf("Named encoded size %d\n", serialize.CxSerializeEncodedSizeInBytesGet(t))
+	count = serialize.CxSerializeValueEncode(named, t, buffer)
+	bytesShow("Named", buffer, count)
+	var namedBack Named
+	count = serialize.CxSerializeValueDecode(buffer, namedBack, t)
+	printf("Named read %d: code %d name %s\n", count, namedBack.code, namedBack.name)
+}

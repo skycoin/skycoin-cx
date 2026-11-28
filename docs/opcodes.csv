@@ -813,3 +813,6 @@ number,name,version_assigned,version_deprecated,version_reassignment_allowed,for
 902,reflect.CxFunctionOutputCountGet,2611280001,0,0,
 903,reflect.CxFunctionOutputTypeGet,2611280001,0,0,
 904,reflect.CxStringPoolTextRead,2611280001,0,0,
+905,serialize.CxSerializeEncodedSizeInBytesGet,2611280002,0,0,
+906,serialize.CxSerializeValueEncode,2611280002,0,0,
+907,serialize.CxSerializeValueDecode,2611280002,0,0,

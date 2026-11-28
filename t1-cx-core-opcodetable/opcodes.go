@@ -852,6 +852,9 @@ var OpcodeLifecycleTable = [...]OpcodeLifecycle{
 	{902, "reflect.CxFunctionOutputCountGet", 2611280001, 0, 0},
 	{903, "reflect.CxFunctionOutputTypeGet", 2611280001, 0, 0},
 	{904, "reflect.CxStringPoolTextRead", 2611280001, 0, 0},
+	{905, "serialize.CxSerializeEncodedSizeInBytesGet", 2611280002, 0, 0},
+	{906, "serialize.CxSerializeValueEncode", 2611280002, 0, 0},
+	{907, "serialize.CxSerializeValueDecode", 2611280002, 0, 0},
 }
 
 // OpcodeLifecycle is one row of OpcodeLifecycleTable.
@@ -1135,6 +1138,11 @@ const (
 	OpcodeReflectCxFunctionOutputCountGet      = 902
 	OpcodeReflectCxFunctionOutputTypeGet       = 903
 	OpcodeReflectCxStringPoolTextRead          = 904
+
+	// The serialize library, decision D150.
+	OpcodeSerializeCxSerializeEncodedSizeInBytesGet = 905
+	OpcodeSerializeCxSerializeValueEncode           = 906
+	OpcodeSerializeCxSerializeValueDecode           = 907
 
 	// The slice built-ins after append, which the compiler checks by number.
 	OpResize = 210

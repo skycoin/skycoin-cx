@@ -931,6 +931,8 @@ func (machine *Machine) slow() Stop {
 		ir.OpcodeReflectCxFunctionNameGet, ir.OpcodeReflectCxFunctionInputCountGet, ir.OpcodeReflectCxFunctionInputTypeGet,
 		ir.OpcodeReflectCxFunctionOutputCountGet, ir.OpcodeReflectCxFunctionOutputTypeGet, ir.OpcodeReflectCxStringPoolTextRead:
 		reflectOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, in.InstrAux, in.InstrN)
+	case ir.OpcodeSerializeCxSerializeEncodedSizeInBytesGet, ir.OpcodeSerializeCxSerializeValueEncode, ir.OpcodeSerializeCxSerializeValueDecode:
+		serializeOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, in.InstrAux)
 	case ir.OpcodePrintValue:
 		machine.MachineOutput = printValue(machine.MachineOutput, mem, a, valuetypes.Code(in.InstrM), byte(in.InstrN))
 	case ir.OpcodeTestEqual:
