@@ -6,7 +6,6 @@ import (
 
 	"github.com/skycoin/skycoin-cx/t0-cx-core-valuetypes"
 	"github.com/skycoin/skycoin-cx/t0-cx-runtime-output"
-	objmodel "github.com/skycoin/skycoin-cx/t1-cx-core-objmodel"
 	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
 )
 
@@ -14,13 +13,33 @@ import (
 // library resource in the reflect, meta and cxir range 0x40 to 0x5F and
 // ImageNameTag an interned pool in 0x01 to 0x1F.
 const (
-	ImageTag     objmodel.TypeTag = 0x43
-	ImageNameTag objmodel.TypeTag = 0x12
+	ImageTag     uint8 = 0x43
+	ImageNameTag uint8 = 0x12
 )
 
 // imageStoreGeneration is the generation of every Gid of an ImageStore,
 // which never releases an image or a name.
 const imageStoreGeneration = 1
+
+// The Gid layout of t1-cx-core-objmodel, bits 0 to 31 the index, 32 to 55
+// the generation and 56 to 63 the tag. ir does not import objmodel, which
+// brings fmt into cx-core-image, too large for a microcontroller.
+const (
+	gidGenerationShift = 32
+	gidTagShift        = 56
+)
+
+func gidTag(gid int64) uint8 {
+	return uint8(uint64(gid) >> gidTagShift)
+}
+
+func gidGeneration(gid int64) uint32 {
+	return uint32(uint64(gid)>>gidGenerationShift) & 0xFFFFFF
+}
+
+func gidIndex(gid int64) uint32 {
+	return uint32(uint64(gid))
+}
 
 // The sizes of the structs sys/cxir declares, packed as CX packs a struct.
 const (
@@ -179,16 +198,16 @@ func (store *ImageStore) namesOf(image *Image) *imageStoreNames {
 
 // imageGidCompose returns the image Gid of index, 0 for the running image.
 func imageGidCompose(index int) int64 {
-	return int64(uint64(ImageTag)<<objmodel.GidTypeTagShift | uint64(imageStoreGeneration)<<objmodel.GidGenerationShift | uint64(uint32(index)))
+	return int64(uint64(ImageTag)<<gidTagShift | uint64(imageStoreGeneration)<<gidGenerationShift | uint64(uint32(index)))
 }
 
 // imageGidIndex returns the index of imageGid, false when it is no
 // image Gid of store.
 func (store *ImageStore) imageGidIndex(imageGid int64) (int, bool) {
-	if imageGid <= 0 || objmodel.GidTypeTag(imageGid) != ImageTag || objmodel.GidGeneration(imageGid) != imageStoreGeneration {
+	if imageGid <= 0 || gidTag(imageGid) != ImageTag || gidGeneration(imageGid) != imageStoreGeneration {
 		return 0, false
 	}
-	index := int64(objmodel.GidIndex(imageGid))
+	index := int64(gidIndex(imageGid))
 	return int(index), index <= int64(store.imageStoreCount)
 }
 
@@ -261,7 +280,7 @@ func (store *ImageStore) nameIntern(text []byte) int64 {
 
 // nameGidCompose returns the name Gid of pool entry index.
 func nameGidCompose(index int) int64 {
-	return int64(uint64(ImageNameTag)<<objmodel.GidTypeTagShift | uint64(imageStoreGeneration)<<objmodel.GidGenerationShift | uint64(uint32(index)))
+	return int64(uint64(ImageNameTag)<<gidTagShift | uint64(imageStoreGeneration)<<gidGenerationShift | uint64(uint32(index)))
 }
 
 // nameBytes returns the text of a name Gid, empty for 0, false when it is
@@ -270,10 +289,10 @@ func (store *ImageStore) nameBytes(name int64) ([]byte, bool) {
 	if name == 0 {
 		return nil, true
 	}
-	if name < 0 || objmodel.GidTypeTag(name) != ImageNameTag || objmodel.GidGeneration(name) != imageStoreGeneration {
+	if name < 0 || gidTag(name) != ImageNameTag || gidGeneration(name) != imageStoreGeneration {
 		return nil, false
 	}
-	index := int64(objmodel.GidIndex(name))
+	index := int64(gidIndex(name))
 	if index >= int64(len(store.imageStoreNameEntries)) {
 		return nil, false
 	}
@@ -919,8 +938,8 @@ func (store *ImageStore) ImageStoreSourceFileNameGet(current *Image, imageGid in
 // enables is enabled in allowed, the rule for an image a program runs
 // (decision D153).
 func ImageOperationsWithin(image *Image, allowed *opcodetable.OpcodeSet) bool {
-	for i, word := range image.ImageOperationsEnabled {
-		if word&^allowed[i] != 0 {
+	for i := range image.ImageOperationsEnabled {
+		if image.ImageOperationsEnabled[i]&^allowed[i] != 0 {
 			return false
 		}
 	}
