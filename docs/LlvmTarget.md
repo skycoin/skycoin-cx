@@ -124,6 +124,10 @@ The meta functions take the same two arguments and write the table in
 `cx_mem` as the functions of `meta.go` in that package do. A pointer or
 slice type they make has the size of the pointer size cx build passes.
 
+A program that calls the cxir library has no native form, and cx build
+refuses it. A native executable holds machine code, not an image to read,
+and has no vm to run an image (decision D153).
+
 `OpcodeOutputHandOff` and `OpcodeOutputFlush` call `cx_rt_output_hand_off`
 and `cx_rt_output_flush`. For `--output-mode=thread` cx build compiles the
 runtime with `CX_RT_OUTPUT_THREAD` and `-pthread`, and the hand off copies

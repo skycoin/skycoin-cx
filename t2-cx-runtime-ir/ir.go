@@ -332,6 +332,43 @@ const (
 	OpcodeMetaCxPackageDefinitionFinish
 	OpcodeMetaCxPackageDefinitionNameGet
 	OpcodeMetaCxStringPoolTextAppend
+	// The cxir opcodes, one per function of the cxir library in the order of
+	// its opcode numbers, decision D153. They read and build images in the
+	// ImageStore of the machine.
+	OpcodeCxirCxProgramImageCurrentGet
+	OpcodeCxirCxProgramImageCreate
+	OpcodeCxirCxProgramImageFunctionCountGet
+	OpcodeCxirCxProgramImageEntryMainFunctionGet
+	OpcodeCxirCxProgramImageEntryInitFunctionGet
+	OpcodeCxirCxProgramImageStackSizeInBytesGet
+	OpcodeCxirCxProgramImageDataStartGet
+	OpcodeCxirCxProgramImageDataRead
+	OpcodeCxirCxProgramImageDataWrite
+	OpcodeCxirCxProgramImageFileEncode
+	OpcodeCxirCxProgramImageFileDecode
+	OpcodeCxirCxProgramImageRun
+	OpcodeCxirCxProgramFunctionNameGet
+	OpcodeCxirCxProgramFunctionFrameSizeInBytesGet
+	OpcodeCxirCxProgramFunctionInputCountGet
+	OpcodeCxirCxProgramFunctionInputSlotRead
+	OpcodeCxirCxProgramFunctionOutputCountGet
+	OpcodeCxirCxProgramFunctionOutputSlotRead
+	OpcodeCxirCxProgramFunctionLocalCountGet
+	OpcodeCxirCxProgramFunctionLocalRead
+	OpcodeCxirCxProgramFunctionAppend
+	OpcodeCxirCxProgramFunctionInstructionCountGet
+	OpcodeCxirCxProgramFunctionInstructionRead
+	OpcodeCxirCxProgramFunctionInstructionWrite
+	OpcodeCxirCxProgramFunctionInstructionAppend
+	OpcodeCxirCxOpcodeNameGet
+	OpcodeCxirCxOpcodeByNameGet
+	OpcodeCxirCxOpcodeLibraryRequiredGet
+	OpcodeCxirCxSourceLineAtProgramCounterRead
+	OpcodeCxirCxSourceFileNameGet
+	OpcodeCxirCxProgramImageEntryMainFunctionSet
+	OpcodeCxirCxProgramLocalNameGet
+	OpcodeCxirCxStringPoolTextAppend
+	OpcodeCxirCxStringPoolTextRead
 	// OpcodeBoolNot and the rest of the bool family read A and B and write C.
 	OpcodeBoolNot
 	OpcodeBoolAnd
@@ -641,7 +678,7 @@ const (
 // libraries, which run on the block at sp (decision D119).
 const (
 	OpcodeLibraryFirst = OpcodeCipherHashStateNew
-	OpcodeLibraryLast  = OpcodeMetaCxStringPoolTextAppend
+	OpcodeLibraryLast  = OpcodeCxirCxStringPoolTextRead
 )
 
 // OpcodeReflectFirst and OpcodeReflectLast bound the opcodes of the reflect
@@ -696,4 +733,16 @@ func OpcodeTypeTableUses(op Opcode) bool {
 // OpcodeLibrary reports whether op is an opcode of a system library.
 func OpcodeLibrary(op Opcode) bool {
 	return op >= OpcodeLibraryFirst && op <= OpcodeLibraryLast
+}
+
+// OpcodeCxirFirst and OpcodeCxirLast bound the opcodes of the cxir library,
+// in the order of opcodetable.OpcodeCxirCxProgramImageCurrentGet on.
+const (
+	OpcodeCxirFirst = OpcodeCxirCxProgramImageCurrentGet
+	OpcodeCxirLast  = OpcodeCxirCxStringPoolTextRead
+)
+
+// OpcodeCxir reports whether op is an opcode of the cxir library.
+func OpcodeCxir(op Opcode) bool {
+	return op >= OpcodeCxirFirst && op <= OpcodeCxirLast
 }

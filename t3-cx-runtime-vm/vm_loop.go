@@ -939,6 +939,8 @@ func (machine *Machine) slow() Stop {
 		ir.OpcodeMetaCxFunctionDefinitionFinish, ir.OpcodeMetaCxPackageDefinitionBegin, ir.OpcodeMetaCxPackageDefinitionFinish,
 		ir.OpcodeMetaCxPackageDefinitionNameGet, ir.OpcodeMetaCxStringPoolTextAppend:
 		metaOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, in.InstrAux)
+	case ir.OpcodeCxirCxProgramImageRun:
+		return machine.cxirRun()
 	case ir.OpcodePrintValue:
 		machine.MachineOutput = printValue(machine.MachineOutput, mem, a, valuetypes.Code(in.InstrM), byte(in.InstrN))
 	case ir.OpcodeTestEqual:
@@ -992,6 +994,10 @@ func (machine *Machine) slow() Stop {
 		machine.MachineOutput = strconv.AppendFloat(machine.MachineOutput, float64(rF64(mem, a)), 'g', -1, 64)
 		machine.MachineOutput = append(machine.MachineOutput, '\n')
 	default:
+		if ir.OpcodeCxir(in.InstrOpcode) {
+			cxirOpcodeRun(in.InstrOpcode, mem, machine.MachineStackPointer, machine.MachineImageStore, machine.MachineImage)
+			return stopSlow
+		}
 		machine.machineResumePc = machine.MachinePc
 		return StopOpcodeInvalid
 	}

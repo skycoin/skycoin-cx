@@ -1,0 +1,47 @@
+package main
+
+import "sys/cxir"
+
+// The compiled image of this program, encoded, decoded into a writable copy
+// and encoded again, gives the same bytes, and the copy reads as the
+// running image does (decision D153).
+
+func square(x i32) (y i32) {
+	y = x * x
+}
+
+func main() {
+	var current i64 = cxir.CxProgramImageCurrentGet()
+	var file [16384]ui8
+	var again [16384]ui8
+	var size i32 = cxir.CxProgramImageFileEncode(current, file)
+	var copy i64 = cxir.CxProgramImageFileDecode(file, size)
+	var equal bool = size > 0 && size == cxir.CxProgramImageFileEncode(copy, again)
+	var i i32
+	for i = 0; i < size; i++ {
+		if file[i] != again[i] {
+			equal = false
+		}
+	}
+	printf("encoded, decoded and encoded again equal %v\n", equal)
+	var same bool = cxir.CxProgramImageFunctionCountGet(copy) == cxir.CxProgramImageFunctionCountGet(current) && cxir.CxProgramImageEntryMainFunctionGet(copy) == cxir.CxProgramImageEntryMainFunctionGet(current)
+	var function i32
+	var pc i32
+	var a cxir.CxInstruction
+	var b cxir.CxInstruction
+	var status i32
+	for function = 0; function < cxir.CxProgramImageFunctionCountGet(current); function++ {
+		if cxir.CxProgramFunctionNameGet(copy, function) != cxir.CxProgramFunctionNameGet(current, function) {
+			same = false
+		}
+		for pc = 0; pc < cxir.CxProgramFunctionInstructionCountGet(current, function); pc++ {
+			status = cxir.CxProgramFunctionInstructionRead(current, function, pc, a)
+			status = cxir.CxProgramFunctionInstructionRead(copy, function, pc, b)
+			if a.Opcode != b.Opcode || a.A != b.A || a.B != b.B || a.C != b.C || a.N != b.N || a.M != b.M || a.Aux != b.Aux {
+				same = false
+			}
+		}
+	}
+	printf("the copy reads as the running image %v\n", same)
+	printf("square %d\n", square(7))
+}

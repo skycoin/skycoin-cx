@@ -1,0 +1,10 @@
+main is named main true
+add has 2 instructions, a frame of 12, 2 inputs, 1 outputs, 3 variables
+input 1 at 4, 4 bytes
+output 0 at 8, 4 bytes
+pc 0 on line 12 is I32Add true, A 0 B 4 C 8 mode 7
+pc 1 is Return true
+variable 1 at 4, 4 bytes, named b true, file name of 20 bytes
+library opcode true, plain opcode false
+no such function -1, no such opcode -1
+sum 5

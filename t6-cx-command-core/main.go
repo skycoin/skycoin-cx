@@ -16,6 +16,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t1-cx-core-opcodetable"
 	sandbox "github.com/skycoin/skycoin-cx/t1-cx-runtime-sandbox"
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-cxiropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-metaopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-serializeopcodes"
@@ -38,12 +39,13 @@ var coreLibraryOpcodesLinked = [opcodetable.LibraryCount]bool{
 	opcodetable.LibraryNumberReflect:   true,
 	opcodetable.LibraryNumberSerialize: true,
 	opcodetable.LibraryNumberMeta:      true,
+	opcodetable.LibraryNumberCxir:      true,
 }
 
 // coreOpcodeDispatch is the opcode switch of this core, the switch of
 // t5-cx-runtime-core and then the switches of the libraries it links.
 func coreOpcodeDispatch(prgrm *ast.CXProgram, code int, inputs []ast.CXValue, outputs []ast.CXValue) bool {
-	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs) || coreOpcodeDispatchNet(prgrm, code, inputs, outputs) || coreOpcodeDispatchFile(prgrm, code, inputs, outputs) || reflectopcodes.ReflectOpcodeDispatch(prgrm, code, inputs, outputs) || serializeopcodes.SerializeOpcodeDispatch(prgrm, code, inputs, outputs) || metaopcodes.MetaOpcodeDispatch(prgrm, code, inputs, outputs)
+	return core.CoreOpcodeDispatch(prgrm, code, inputs, outputs) || coreOpcodeDispatchCipher(prgrm, code, inputs, outputs) || coreOpcodeDispatchNet(prgrm, code, inputs, outputs) || coreOpcodeDispatchFile(prgrm, code, inputs, outputs) || reflectopcodes.ReflectOpcodeDispatch(prgrm, code, inputs, outputs) || serializeopcodes.SerializeOpcodeDispatch(prgrm, code, inputs, outputs) || metaopcodes.MetaOpcodeDispatch(prgrm, code, inputs, outputs) || cxiropcodes.CxirOpcodeDispatch(prgrm, code, inputs, outputs)
 }
 
 func main() {

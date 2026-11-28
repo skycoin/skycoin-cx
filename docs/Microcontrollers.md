@@ -19,6 +19,9 @@ go build -tags=cxcore -o cx-core-image ./t4-cx-command-image
 ./cx-core-image program.cximage
 ```
 
+cx-core-image checks every image with `ir.ImageCheck` before it runs it,
+see [The image check](IR.md#the-image-check), and refuses a damaged one.
+
 On a board the image is embedded. The `cximageembed` tag embeds
 `t4-cx-command-image/program.cximage` as a string, which stays in flash:
 

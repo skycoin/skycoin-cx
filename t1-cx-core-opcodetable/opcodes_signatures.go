@@ -41,6 +41,9 @@ const (
 	// OpcodeGroupMeta is the meta library in t4-cx-library-metaopcodes, in every
 	// build and every core (decision D151).
 	OpcodeGroupMeta
+	// OpcodeGroupCxir is the cxir library in t4-cx-library-cxiropcodes, in every
+	// build and every core (decision D153).
+	OpcodeGroupCxir
 	OpcodeGroupCount
 )
 
@@ -178,6 +181,7 @@ var opcodeGroupLinked = [OpcodeGroupCount]bool{
 	OpcodeGroupReflect:   true,
 	OpcodeGroupSerialize: true,
 	OpcodeGroupMeta:      true,
+	OpcodeGroupCxir:      true,
 }
 
 // opcodeGroupLibrary is the system library of each group whose opcodes are
@@ -190,6 +194,7 @@ var opcodeGroupLibrary = [OpcodeGroupCount]int{
 	OpcodeGroupReflect:   LibraryNumberReflect,
 	OpcodeGroupSerialize: LibraryNumberSerialize,
 	OpcodeGroupMeta:      LibraryNumberMeta,
+	OpcodeGroupCxir:      LibraryNumberCxir,
 }
 
 // OpcodeLibraryOf returns the system library whose function opcode code is,

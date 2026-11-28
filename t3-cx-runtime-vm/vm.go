@@ -117,6 +117,10 @@ type Machine struct {
 	machineDataEnd      uint32
 	machinePrintCursor  uint32
 	MachineFrames       [ir.ImageCallDepthMax]Frame
+	// MachineImageStore holds the images of sys/cxir and MachineImageRunner
+	// runs them, nil for an image that does not enable the cxir library.
+	MachineImageStore  *ir.ImageStore
+	MachineImageRunner *ImageRunner
 }
 
 // MachineNew sizes the memory of a machine for image and gives it an output
@@ -124,8 +128,13 @@ type Machine struct {
 func MachineNew(image *ir.Image, outputSize int) *Machine {
 	machine := &Machine{MachineImage: image}
 	machine.machineDataEnd = ir.ImageDataEnd(image)
-	machine.MachineMemory = make([]byte, int(machine.machineDataEnd)+int(image.ImageScratchSize))
+	machine.MachineMemory = make([]byte, int(machine.machineDataEnd)+int(image.ImageScratchSize)+ir.ImageCheckTailSize)
 	machine.MachineOutput = make([]byte, 0, max(outputSize, MachineOutputMin))
+	if image.ImageOperationsEnabled.OpcodeSetLibraryAny(opcodetable.LibraryNumberCxir) {
+		machine.MachineImageStore = ir.ImageStoreNew(ir.ImageStoreRoomDefault)
+		machine.MachineImageStore.ImageStoreCurrentSet(image)
+		machine.MachineImageRunner = ImageRunnerNew(machine.MachineImageStore, &image.ImageOperationsEnabled)
+	}
 	machine.Reset()
 	return machine
 }

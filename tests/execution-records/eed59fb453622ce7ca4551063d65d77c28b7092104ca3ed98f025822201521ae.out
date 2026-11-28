@@ -1,0 +1,14 @@
+functions 1, main 0, 2 instructions, stack 65536, data at 65536
+42
+run 0
+encoded 312 bytes, encoded again equal true
+42
+run decoded 0
+encode into 16 bytes -1, decode a cut file -1
+decode a file of another version -1
+write a jump past the end 0, run -1
+write a print outside memory 0, run -1
+write an invalid opcode -1, append to no function -1
+write to the running image -1, append to it -1, run it -1
+read the data of the copy 4, first byte 42
+store full after 4 images, create 0, decode -1

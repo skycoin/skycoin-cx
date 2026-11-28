@@ -1,0 +1,47 @@
+package main
+
+import "sys/cxir"
+
+// The image of the running program, read only, decision D153.
+
+func nameOf(text [24]ui8, length i32) (name i64) {
+	name = cxir.CxStringPoolTextAppend(text, length)
+}
+
+func add(a i32, b i32) (c i32) {
+	c = a + b
+}
+
+func main() {
+	var image i64 = cxir.CxProgramImageCurrentGet()
+	var count i32 = cxir.CxProgramImageFunctionCountGet(image)
+	var target i64 = nameOf([24]ui8{97UB, 100UB, 100UB}, 3)
+	var found i32 = -1
+	var i i32
+	for i = 0; i < count; i++ {
+		if cxir.CxProgramFunctionNameGet(image, i) == target {
+			found = i
+		}
+	}
+	printf("main is named main %v\n", cxir.CxProgramFunctionNameGet(image, cxir.CxProgramImageEntryMainFunctionGet(image)) == nameOf([24]ui8{109UB, 97UB, 105UB, 110UB}, 4))
+	printf("add has %d instructions, a frame of %d, %d inputs, %d outputs, %d variables\n", cxir.CxProgramFunctionInstructionCountGet(image, found), cxir.CxProgramFunctionFrameSizeInBytesGet(image, found), cxir.CxProgramFunctionInputCountGet(image, found), cxir.CxProgramFunctionOutputCountGet(image, found), cxir.CxProgramFunctionLocalCountGet(image, found))
+	var slot cxir.CxFrameSlot
+	var status i32 = cxir.CxProgramFunctionInputSlotRead(image, found, 1, slot)
+	printf("input 1 at %d, %d bytes\n", slot.Offset, slot.Size)
+	status = cxir.CxProgramFunctionOutputSlotRead(image, found, 0, slot)
+	printf("output 0 at %d, %d bytes\n", slot.Offset, slot.Size)
+	var instruction cxir.CxInstruction
+	var line cxir.CxSourceLine
+	status = cxir.CxProgramFunctionInstructionRead(image, found, 0, instruction)
+	status = cxir.CxSourceLineAtProgramCounterRead(image, found, 0, line)
+	printf("pc 0 on line %d is I32Add %v, A %d B %d C %d mode %d\n", line.Number, cxir.CxOpcodeNameGet(ui16.i32(instruction.Opcode)) == nameOf([24]ui8{73UB, 51UB, 50UB, 65UB, 100UB, 100UB}, 6), instruction.A, instruction.B, instruction.C, instruction.Mode)
+	status = cxir.CxProgramFunctionInstructionRead(image, found, 1, instruction)
+	printf("pc 1 is Return %v\n", cxir.CxOpcodeNameGet(ui16.i32(instruction.Opcode)) == nameOf([24]ui8{82UB, 101UB, 116UB, 117UB, 114UB, 110UB}, 6))
+	var local cxir.CxFrameLocal
+	var text [64]ui8
+	status = cxir.CxProgramFunctionLocalRead(image, found, 1, local)
+	printf("variable 1 at %d, %d bytes, named b %v, file name of %d bytes\n", local.Offset, local.Size, cxir.CxProgramLocalNameGet(image, ui32.i32(local.Name)) == nameOf([24]ui8{98UB}, 1), cxir.CxStringPoolTextRead(cxir.CxSourceFileNameGet(image, ui32.i32(line.File)), text))
+	printf("library opcode %v, plain opcode %v\n", cxir.CxOpcodeLibraryRequiredGet(cxir.CxOpcodeByNameGet(nameOf([24]ui8{67UB, 120UB, 105UB, 114UB, 67UB, 120UB, 80UB, 114UB, 111UB, 103UB, 114UB, 97UB, 109UB, 73UB, 109UB, 97UB, 103UB, 101UB, 82UB, 117UB, 110UB}, 21))), cxir.CxOpcodeLibraryRequiredGet(ui16.i32(instruction.Opcode)))
+	printf("no such function %d, no such opcode %d\n", cxir.CxProgramFunctionInstructionRead(image, count, 0, instruction), cxir.CxOpcodeByNameGet(nameOf([24]ui8{78UB, 111UB, 116UB, 104UB, 105UB, 110UB, 103UB}, 7)))
+	printf("sum %d\n", add(2, 3))
+}

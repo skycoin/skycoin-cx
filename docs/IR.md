@@ -24,6 +24,7 @@ numbers quoted below are the same in every build. See [Opcodes](#opcodes).
   * [Built programs](#built-programs)
 * [Opcodes](#opcodes)
 * [The runtime image](#the-runtime-image)
+  * [The image check](#the-image-check)
 * [Known oddities](#known-oddities)
 
 ## Pipeline
@@ -820,9 +821,9 @@ one loop, and vm fails on a program that does not lower.
 * The library opcodes that run on vm, `cipher.HashStateNew`,
   `cipher.HashStateRelease`, every function of `sys/net`, `os.Close`,
   `os.Seek`, `os.Sync`, the three of `terminal` (D142), the 25 of
-  `reflect` and the three of `serialize` (D150) and the 15 of `meta`
-  (D151), each lower to their own image opcode, `OpcodeCipherHashStateNew`
-  to `OpcodeMetaCxStringPoolTextAppend`. A block at sp holds the
+  `reflect` and the three of `serialize` (D150), the 15 of `meta`
+  (D151) and the 34 of `cxir` (D153), each lower to their own image opcode,
+  `OpcodeCipherHashStateNew` to `OpcodeCxirCxStringPoolTextRead`. A block at sp holds the
   inputs then the outputs, packed as `ast.NativeFunctionOf` lays them out,
   with `OpcodeCallFrame`, one `OpcodeCallArg` per input, the opcode, then
   `OpcodeCallResult` per output. A `str` input is a pointer read from the
@@ -844,6 +845,9 @@ one loop, and vm fails on a program that does not lower.
   section for the records meta adds, and the table is not a read only span,
   as a meta opcode writes it in place. A meta opcode carries the address of
   the table in `InstrAux`.
+* A buffer input of a cxir opcode takes a value of any type too, a
+  `cxir.CxInstruction` or another struct of sys/cxir that the opcode reads
+  or fills in place.
 
 The subset is the bool, integer and float operators, conversions and print,
 `string.PrintLine`, `printf` with a str literal format, identity, declarations,
@@ -906,6 +910,45 @@ as `execute.RunCompiled` does.
   every instruction, and so does a loop past the size where Go stops
   inlining the memory accessors into it.
 * A run allocates nothing (`TestRunVmAllocs`).
+* `Machine.MachineImageStore` holds the images of sys/cxir in an
+  `ir.ImageStore`, made by `MachineNew` with its room when the image
+  enables the library (D153). `OpcodeCxirCxProgramImageRun` runs an image on
+  the second machine of `vm.ImageRunner`, made at the same time, and shares
+  the output buffer, so a full output or a flush of the image stops the
+  first machine at that instruction, which goes on with the image after
+  `Resume`. That machine has no runner, so an image cannot run another.
+* The memory of a machine ends with `ir.ImageCheckTailSize` zero bytes
+  after the scratch, which no instruction of a lowered program reaches.
+
+### The image check
+
+vm trusts its image: an operand, a jump or a call outside the image would
+make Go panic. `ir.ImageCheck` is the loader check of an image that did
+not come from the compiler, which `cx-core-image` runs on every file and
+`cxir.CxProgramImageRun` on every image (decision D153). It allocates
+nothing and refuses an image when
+
+* the data segment starts inside the stack, or the memory passes 4 GiB,
+* an entry is no function with code, a frame is larger than the stack, or
+  the lines or variables of a function lie outside their tables,
+* an opcode is `OpcodeInvalid` or past the last, a function does not end
+  with `OpcodeReturn` or `OpcodeJump`, or a jump leaves its function,
+* a call or a library opcode has no `OpcodeCallFrame` before it in its
+  block, a block being the code between jump targets, the frame does not
+  hold the callee, or an argument or result lies outside that frame,
+* an operand lies outside the frame of its function or the memory. An
+  operand of N bytes must fit, and a scalar operand needs its first byte
+  inside, as the tail after the scratch holds the rest,
+* a print reads text outside `ImageText`, or a library opcode is not in
+  `ImageOperationsEnabled` (D119).
+
+`ir.ImageCheckNames`, which `cx-core-image` runs as well, checks that every
+line and variable names an entry of its name table, which only an error
+message reads. An image of sys/cxir keeps its names as name Gids of its
+`ir.ImageStore`, not in the string tables of `ir.Image`, so the run path of
+the library has no string (D139).
+
+Every program of `tests/` that lowers passes both.
 
 Two programs behave differently on purpose. At the call depth limit the old
 loop crashes with an index out of range in `ast.RuntimeError`, and a runtime

@@ -13,6 +13,7 @@ import (
 	"github.com/skycoin/skycoin-cx/t3-cx-core-ast"
 	vm "github.com/skycoin/skycoin-cx/t3-cx-runtime-vm"
 	lower "github.com/skycoin/skycoin-cx/t4-cx-compiler-lower"
+	"github.com/skycoin/skycoin-cx/t4-cx-library-cxiropcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-metaopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-reflectopcodes"
 	"github.com/skycoin/skycoin-cx/t4-cx-library-serializeopcodes"
@@ -185,6 +186,14 @@ func ExecutorRun(prgrm *ast.CXProgram, executor string, cxArgs []string) int32 {
 	reflectopcodes.LibraryPrepare(prgrm)
 	serializeopcodes.LibraryPrepare(reflectopcodes.Library.LibraryTypeTable)
 	metaopcodes.LibraryPrepare(reflectopcodes.Library.LibraryTypeTable)
+	if LibrariesActive(prgrm)[opcodetable.LibraryNumberCxir] {
+		// The old loop reads the image vm would run, lowered once here (D153).
+		var current *ir.Image
+		if image, _, outside := ExecutorLower(prgrm); outside == "" {
+			current = &image
+		}
+		cxiropcodes.LibraryPrepare(current, &prgrm.ProgramOperationsEnabled)
+	}
 	interpreter.RunPrepare(prgrm)
 	if err := interpreter.RunCompiled(prgrm, 0, cxArgs); err != nil {
 		panic(err)

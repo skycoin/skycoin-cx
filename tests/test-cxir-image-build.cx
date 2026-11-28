@@ -1,0 +1,78 @@
+package main
+
+import "sys/cxir"
+
+// An image built from nothing in CX: main prints the i32 at the start of its
+// data segment. Encoded, decoded and encoded again it gives the same bytes,
+// and both copies run in a fresh machine (decision D153).
+
+func nameOf(text [24]ui8, length i32) (name i64) {
+	name = cxir.CxStringPoolTextAppend(text, length)
+}
+
+func opcodeOf(text [24]ui8, length i32) (opcode ui16) {
+	opcode = i32.ui16(cxir.CxOpcodeByNameGet(nameOf(text, length)))
+}
+
+// imageBuild returns an image whose main prints value, run on the i32 the
+// data segment starts with.
+func imageBuild(value ui8) (image i64) {
+	image = cxir.CxProgramImageCreate()
+	var function i32 = cxir.CxProgramFunctionAppend(image, nameOf([24]ui8{109UB, 97UB, 105UB, 110UB}, 4), 0)
+	var status i32 = cxir.CxProgramImageEntryMainFunctionSet(image, function)
+	var data [4]ui8
+	data[0] = value
+	status = cxir.CxProgramImageDataWrite(image, 0, data)
+	var in cxir.CxInstruction
+	in.Opcode = opcodeOf([24]ui8{73UB, 51UB, 50UB, 80UB, 114UB, 105UB, 110UB, 116UB}, 8)
+	in.A = i32.ui32(cxir.CxProgramImageDataStartGet(image))
+	var pc i32 = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+	in.Opcode = opcodeOf([24]ui8{82UB, 101UB, 116UB, 117UB, 114UB, 110UB}, 6)
+	in.A = 0U
+	pc = cxir.CxProgramFunctionInstructionAppend(image, function, in)
+}
+
+func main() {
+	var image i64 = imageBuild(42UB)
+	printf("functions %d, main %d, %d instructions, stack %d, data at %d\n", cxir.CxProgramImageFunctionCountGet(image), cxir.CxProgramImageEntryMainFunctionGet(image), cxir.CxProgramFunctionInstructionCountGet(image, 0), cxir.CxProgramImageStackSizeInBytesGet(image), cxir.CxProgramImageDataStartGet(image))
+	printf("run %d\n", cxir.CxProgramImageRun(image))
+
+	var file [1024]ui8
+	var again [1024]ui8
+	var size i32 = cxir.CxProgramImageFileEncode(image, file)
+	var decoded i64 = cxir.CxProgramImageFileDecode(file, size)
+	var equal bool = size == cxir.CxProgramImageFileEncode(decoded, again)
+	var i i32
+	for i = 0; i < size; i++ {
+		if file[i] != again[i] {
+			equal = false
+		}
+	}
+	printf("encoded %d bytes, encoded again equal %v\n", size, equal)
+	printf("run decoded %d\n", cxir.CxProgramImageRun(decoded))
+	var short [16]ui8
+	printf("encode into 16 bytes %d, decode a cut file %d\n", cxir.CxProgramImageFileEncode(image, short), cxir.CxProgramImageFileDecode(file, size-1))
+	file[9] = file[9] + 1UB
+	printf("decode a file of another version %d\n", cxir.CxProgramImageFileDecode(file, size))
+
+	var in cxir.CxInstruction
+	var read [4]ui8
+	in.Opcode = opcodeOf([24]ui8{74UB, 117UB, 109UB, 112UB}, 4)
+	in.M = 9U
+	var broken i64 = imageBuild(7UB)
+	printf("write a jump past the end %d, run %d\n", cxir.CxProgramFunctionInstructionWrite(broken, 0, 1, in), cxir.CxProgramImageRun(broken))
+	in.M = 0U
+	in.Opcode = opcodeOf([24]ui8{82UB, 101UB, 116UB, 117UB, 114UB, 110UB}, 6)
+	var restored i32 = cxir.CxProgramFunctionInstructionWrite(broken, 0, 1, in)
+	in.Opcode = opcodeOf([24]ui8{73UB, 51UB, 50UB, 80UB, 114UB, 105UB, 110UB, 116UB}, 8)
+	in.A = 4000000U
+	printf("write a print outside memory %d, run %d\n", cxir.CxProgramFunctionInstructionWrite(broken, 0, 0, in), cxir.CxProgramImageRun(broken))
+	in.Opcode = 0UH
+	printf("write an invalid opcode %d, append to no function %d\n", cxir.CxProgramFunctionInstructionWrite(broken, 0, 0, in), cxir.CxProgramFunctionInstructionAppend(broken, 5, in))
+
+	var current i64 = cxir.CxProgramImageCurrentGet()
+	printf("write to the running image %d, append to it %d, run it %d\n", cxir.CxProgramImageDataWrite(current, 0, read), cxir.CxProgramFunctionAppend(current, nameOf([24]ui8{102UB}, 1), 0), cxir.CxProgramImageRun(current))
+	printf("read the data of the copy %d, first byte %d\n", cxir.CxProgramImageDataRead(decoded, 0, read), read[0])
+	var fourth i64 = cxir.CxProgramImageCreate()
+	printf("store full after %d images, create %d, decode %d\n", restored + 4, cxir.CxProgramImageCreate(), cxir.CxProgramImageFileDecode(again, size))
+}

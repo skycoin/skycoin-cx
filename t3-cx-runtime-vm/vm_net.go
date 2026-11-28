@@ -65,6 +65,7 @@ func netBufferLength(buffer []byte, length int32) []byte {
 
 // netReplayEndAssertFailure ends a program that asks for an update the
 // replay record does not hold.
+// STRHOT REPORTER: builds the assert text from the update number, #412.
 func netReplayEndAssertFailure() {
 	assert.PreconditionTrue(false, fmt.Sprintf("the net replay record has no update %d, or one of its entries names a socket the program did not open", networkbatch.NetUpdateNumber()))
 }

@@ -1091,7 +1091,7 @@ func libraryBufferInput(prgrm *ast.CXProgram, signatureIndex ast.CXTypeSignature
 // of the ui8 array, each a pointer, at offset of the block. The vm form
 // reads or fills memory there, as the old loop does at the array's offset.
 // anyType takes a value of any type, the struct value of the reflect library
-// and the value of the serialize library.
+// and the value of the serialize library, and the structs of the cxir library.
 func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatureIndex, offset uint32, anyType bool) ([]ir.Instr, ReasonCode) {
 	prgrm := s.stateProgram
 	signature := prgrm.CXTypeSignatureFromArrayGet(signatureIndex)
@@ -1122,64 +1122,7 @@ func (s *state) libraryBuffer(code []ir.Instr, signatureIndex ast.CXTypeSignatur
 // libraryOpcodeOf returns the image opcode of a system library opcode that
 // runs on vm, ir.OpcodeInvalid for any other opcode (decision D119).
 func libraryOpcodeOf(opcode int) ir.Opcode {
-	switch opcode {
-	case opcodetable.OpcodeCipherHashStateNew:
-		return ir.OpcodeCipherHashStateNew
-	case opcodetable.OpcodeCipherHashStateRelease:
-		return ir.OpcodeCipherHashStateRelease
-	case opcodetable.OpcodeNetUpdate:
-		return ir.OpcodeNetUpdate
-	case opcodetable.OpcodeNetReadyCount:
-		return ir.OpcodeNetReadyCount
-	case opcodetable.OpcodeNetReadyNext:
-		return ir.OpcodeNetReadyNext
-	case opcodetable.OpcodeNetClock:
-		return ir.OpcodeNetClock
-	case opcodetable.OpcodeNetRead:
-		return ir.OpcodeNetRead
-	case opcodetable.OpcodeNetWrite:
-		return ir.OpcodeNetWrite
-	case opcodetable.OpcodeNetClose:
-		return ir.OpcodeNetClose
-	case opcodetable.OpcodeNetTimeoutSet:
-		return ir.OpcodeNetTimeoutSet
-	case opcodetable.OpcodeNetTCPListen:
-		return ir.OpcodeNetTCPListen
-	case opcodetable.OpcodeNetTCPDial:
-		return ir.OpcodeNetTCPDial
-	case opcodetable.OpcodeNetUDPListen:
-		return ir.OpcodeNetUDPListen
-	case opcodetable.OpcodeNetUDPDial:
-		return ir.OpcodeNetUDPDial
-	case opcodetable.OpcodeNetUDPReadFrom:
-		return ir.OpcodeNetUDPReadFrom
-	case opcodetable.OpcodeNetUDPWriteTo:
-		return ir.OpcodeNetUDPWriteTo
-	case opcodetable.OpcodeNetUDPPeerResolve:
-		return ir.OpcodeNetUDPPeerResolve
-	case opcodetable.OpcodeFileClose:
-		return ir.OpcodeFileClose
-	case opcodetable.OpcodeFileSeek:
-		return ir.OpcodeFileSeek
-	case opcodetable.OpcodeFileSync:
-		return ir.OpcodeFileSync
-	case opcodetable.OpcodeTerminalArgCount:
-		return ir.OpcodeTerminalArgCount
-	case opcodetable.OpcodeTerminalArgRead:
-		return ir.OpcodeTerminalArgRead
-	case opcodetable.OpcodeTerminalInputLineRead:
-		return ir.OpcodeTerminalInputLineRead
-	}
-	if opcode >= opcodetable.OpcodeReflectCxTypeOfValueGet && opcode <= opcodetable.OpcodeReflectCxStringPoolTextRead {
-		return ir.OpcodeReflectFirst + ir.Opcode(opcode-opcodetable.OpcodeReflectCxTypeOfValueGet)
-	}
-	if opcode >= opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet && opcode <= opcodetable.OpcodeSerializeCxSerializeValueDecode {
-		return ir.OpcodeSerializeFirst + ir.Opcode(opcode-opcodetable.OpcodeSerializeCxSerializeEncodedSizeInBytesGet)
-	}
-	if opcode >= opcodetable.OpcodeMetaCxStructDefinitionBegin && opcode <= opcodetable.OpcodeMetaCxStringPoolTextAppend {
-		return ir.OpcodeMetaFirst + ir.Opcode(opcode-opcodetable.OpcodeMetaCxStructDefinitionBegin)
-	}
-	return ir.OpcodeInvalid
+	return ir.OpcodeOfLibraryOperation(opcode)
 }
 
 // libraryCall lowers a call of a system library function that runs on vm,
@@ -1230,7 +1173,7 @@ func (s *state) libraryCall(code []ir.Instr, cxAtomicOp *ast.CXAtomicOperator, c
 			if call.InstrOpcode == ir.OpcodeReflectCxTypeOfValueGet {
 				continue
 			}
-			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset, ir.OpcodeTypeTableReads(call.InstrOpcode)); reason != ReasonNone {
+			if code, reason = s.libraryBuffer(code, signatureIndex, inputSlots[i].SlotOffset, ir.OpcodeTypeTableReads(call.InstrOpcode) || ir.OpcodeCxir(call.InstrOpcode)); reason != ReasonNone {
 				return code, reason
 			}
 			continue

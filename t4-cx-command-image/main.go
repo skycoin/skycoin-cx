@@ -39,6 +39,14 @@ func coreImageRun() int32 {
 		coreImageWrite(os.Stderr, "cx-core-image: "+ir.ImageFileProblemMessages[fileProblem]+"\n")
 		return valuetypes.CXCompilationError
 	}
+	checkProblem := ir.ImageCheck(&image, make([]uint64, ir.ImageCheckLabelWords(&image)))
+	if checkProblem == ir.ImageCheckProblemNone {
+		checkProblem = ir.ImageCheckNames(&image)
+	}
+	if checkProblem != ir.ImageCheckProblemNone {
+		coreImageWrite(os.Stderr, "cx-core-image: "+ir.ImageCheckProblemMessages[checkProblem]+"\n")
+		return valuetypes.CXCompilationError
+	}
 	terminal.ArgsSet(args)
 	for _, unlinked := range coreImageLibrariesUnlinked {
 		if coreImageOpcodesEnabled(&image.ImageOperationsEnabled, unlinked.coreImageLibraryOpcodeFirst, unlinked.coreImageLibraryOpcodeLast) {
