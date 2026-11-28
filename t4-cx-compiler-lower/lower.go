@@ -859,7 +859,7 @@ func (s *state) placeOfSignature(code []ir.Instr, signatureIndex ast.CXTypeSigna
 				return code, p, ReasonOperandIndexed
 			}
 			stride := pointerToUint32(valuetypes.TotalLength(details.Lengths[i+1:])) * elementSize
-			if code, reason = s.placeIndex(code, &p, indexSignature, stride); reason != ReasonNone {
+			if code, reason = s.placeIndex(code, &p, indexSignature, stride, pointerToUint32(details.Lengths[i])); reason != ReasonNone {
 				return code, p, reason
 			}
 		}
@@ -951,7 +951,7 @@ func (s *state) placeDereferences(code []ir.Instr, p *place, arg *ast.CXArgument
 			}
 			stride := pointerToUint32(valuetypes.TotalLength(lengths) * elementSize)
 			derefPointer = false
-			if code, reason = s.placeIndex(code, p, arg.Indexes[indexCount], stride); reason != ReasonNone {
+			if code, reason = s.placeIndex(code, p, arg.Indexes[indexCount], stride, pointerToUint32(arg.Lengths[indexCount])); reason != ReasonNone {
 				return code, reason
 			}
 			indexCount++
@@ -966,9 +966,13 @@ func (s *state) placeDereferences(code []ir.Instr, p *place, arg *ast.CXArgument
 }
 
 // placeIndex adds the i32 at indexSignature times stride to p, which
-// becomes computed. The old loop reads 4 bytes at the index whatever its
-// type.
-func (s *state) placeIndex(code []ir.Instr, p *place, indexSignature ast.CXTypeSignatureIndex, stride uint32) ([]ir.Instr, ReasonCode) {
+// becomes computed, and checks it against length. The old loop reads 4
+// bytes at the index whatever its type.
+func (s *state) placeIndex(code []ir.Instr, p *place, indexSignature ast.CXTypeSignatureIndex, stride uint32, length uint32) ([]ir.Instr, ReasonCode) {
+	if length == 0 {
+		// A dimension of length 0 is a slice field, on the heap.
+		return code, ReasonOperandHeap
+	}
 	code, indexPlace, reason := s.placeOf(code, indexSignature)
 	if reason != ReasonNone {
 		return code, reason
@@ -978,7 +982,7 @@ func (s *state) placeIndex(code []ir.Instr, p *place, indexSignature ast.CXTypeS
 	if reason != ReasonNone {
 		return code, reason
 	}
-	in := ir.Instr{InstrN: stride}
+	in := ir.Instr{InstrN: stride, InstrAux: length}
 	operandSet(&in, 1, index)
 	if p.placeComputed {
 		in.InstrOpcode = ir.OpcodeAddressIndex

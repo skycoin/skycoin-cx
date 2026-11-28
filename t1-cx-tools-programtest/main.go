@@ -334,6 +334,25 @@ func runTestCases(t *testrunner.TestRunner) {
 		"1\nerror: test-array-index-negative.cx:7, CX_RUNTIME_INVALID_CAST, 11\n===Callstack===\n>>> store()\n",
 		"\ttest-array-index-negative.cx:7 : identity() : <index out of range>\n\n>>> main()\n",
 	)
+	for _, length := range []string{"128", "100"} {
+		for _, scope := range []string{"local", "global"} {
+			line, after := "7", ""
+			if scope == "global" {
+				line, after = "11", "0\n"
+			}
+			name := "test-array-bounds-" + scope + "-" + length
+			t.RunWant(name+"-end.cx", valuetypes.CXRuntimeSliceIndexOutOfRange, "an index at the length of a "+scope+" ["+length+"]i32 is a runtime error",
+				"5\n"+after+"error: "+name+"-end.cx:"+line+", CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9\n")
+			t.RunWant(name+"-negative.cx", valuetypes.CXRuntimeInvalidCast, "a negative index of a "+scope+" ["+length+"]i32 is a runtime error",
+				"5\n"+after+"error: "+name+"-negative.cx:"+line+", CX_RUNTIME_INVALID_CAST, 11\n")
+			if length == "100" {
+				t.RunWant(name+"-gap.cx", valuetypes.CXRuntimeSliceIndexOutOfRange, "index 127 of a "+scope+" [100]i32, below the next power of two, is a runtime error",
+					"5\n"+after+"error: "+name+"-gap.cx:"+line+", CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9\n")
+			}
+		}
+	}
+	t.RunWant("test-array-bounds-2d.cx", valuetypes.CXRuntimeSliceIndexOutOfRange, "the inner index of a [3][5]i32 is checked against 5",
+		"5\n0\nerror: test-array-bounds-2d.cx:7, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9\n")
 	t.RunWant("test-stack-print-uninit.cx", valuetypes.CXRuntimeError, "the call stack prints a str local whose declaration never ran without a panic (skycoin-cx#407)",
 		"error: test-stack-print-uninit.cx:20, CX_RUNTIME_ERROR, runtime error: integer divide by zero\n===Callstack===\n>>> fail()\n",
 		"\ttest-stack-print-uninit.cx:26 : printf() : <invalid address>\n",

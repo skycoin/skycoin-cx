@@ -1,0 +1,16 @@
+5
+0
+error: test-array-bounds-global-128-negative.cx:11, CX_RUNTIME_INVALID_CAST, 11
+===Callstack===
+>>> store()
+ProgramInput
+	test-array-bounds-global-128-negative.cx:9 : store() : -1
+Expressions
+ 	test-array-bounds-global-128-negative.cx:11 : identity() : <index out of range>
+	test-array-bounds-global-128-negative.cx:13 : i32.print() : 0
+
+>>> main()
+Expressions
+ 	test-array-bounds-global-128-negative.cx:18 : i32.neg() : -1
+	test-array-bounds-global-128-negative.cx:13 : i32.print() : 0
+

@@ -287,6 +287,45 @@ func main() {
 	}
 }
 
+// TestLlvmIndexChecks checks that an index of a power of two array gets the
+// mask check and any other the unsigned compare, each with its comment
+// (optimizations 0006 and 0007).
+func TestLlvmIndexChecks(t *testing.T) {
+	initProgram()
+	compileRunSources(t, []string{"index.cx"}, []string{`package main
+
+func store(i i32) {
+	var p [128]i32
+	var q [100]i32
+	p[i] = 1
+	q[i] = 2
+	i32.print(p[i] + q[i])
+}
+
+func main() {
+	store(3)
+}
+`})
+	image, failures := lower.Program(astbuild.AST)
+	if len(failures) > 0 {
+		t.Fatalf("does not lower: %+v", failures)
+	}
+	module, _, err := llvm.Emit(&image, buildLlvmOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"; index check, fast path: index AND NOT(128 - 1), mask 0xffffff80\n",
+		", -128\n",
+		"; index check, slow path: unsigned index < length 100\n",
+		"icmp uge i32 ",
+	} {
+		if !bytes.Contains(module, []byte(want)) {
+			t.Errorf("module has no %q", want)
+		}
+	}
+}
+
 // TestLlvmCompareBenchmarks builds the t0-cx-tools-benchmarks/compare programs with
 // cx build --target=llvm and checks that each prints the hash of
 // expected.txt and its pass line. It needs clang.

@@ -108,15 +108,16 @@ func (machine *Machine) loop() Stop {
 				return machine.stopAt(stopSlow, pc, fp, sp)
 			}
 		case ir.OpcodeAddressIndexStatic:
+			// One unsigned compare checks both ends (optimization 0007).
 			index := rI32(mem, b)
-			if index < 0 {
-				return machine.stopAt(StopIndexNegative, pc, fp, sp)
+			if uint32(index) >= in.InstrAux {
+				return machine.stopAt(indexStop(index), pc, fp, sp)
 			}
 			wUI32(mem, c, a+uint32(index)*in.InstrN)
 		case ir.OpcodeAddressIndex:
 			index := rI32(mem, b)
-			if index < 0 {
-				return machine.stopAt(StopIndexNegative, pc, fp, sp)
+			if uint32(index) >= in.InstrAux {
+				return machine.stopAt(indexStop(index), pc, fp, sp)
 			}
 			wUI32(mem, c, rUI32(mem, a)+in.InstrM+uint32(index)*in.InstrN)
 		case ir.OpcodeAddressLoad, ir.OpcodeAddressStore:

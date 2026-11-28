@@ -43,6 +43,7 @@ const (
 	StopStackOverflow
 	StopIndexNegative
 	StopAddressInvalid
+	StopIndexOutOfRange
 	StopCount
 )
 
@@ -343,6 +344,13 @@ func (e *emitter) line(format string, args ...any) {
 	e.body.WriteByte('\n')
 }
 
+// comment writes an IR comment line, a note for the reader of the IR.
+func (e *emitter) comment(format string, args ...any) {
+	e.body.WriteString("  ; ")
+	fmt.Fprintf(&e.body, format, args...)
+	e.body.WriteByte('\n')
+}
+
 // accesses lists the operands of in with their sizes.
 func accesses(in *ir.Instr) []access {
 	n, m := in.InstrN, in.InstrM
@@ -587,9 +595,37 @@ func (e *emitter) check(cond string, stop Stop, pc uint32) {
 	bad, ok := e.newLabel("stop"), e.newLabel("ok")
 	e.line("br i1 %s, label %%%s, label %%%s, !prof !0", cond, bad, ok)
 	e.body.WriteString(ok + ":\n")
+	e.coldStop(bad, stop, pc)
+}
+
+// checkIndex stops the run when index is not below length, with one
+// compare and one branch (optimizations 0006 and 0007). A length that is a
+// power of two is checked with a mask, any other as an unsigned compare.
+func (e *emitter) checkIndex(index string, length uint32, pc uint32) {
+	bad := e.localNew()
+	if length != 0 && length&(length-1) == 0 {
+		masked := e.localNew()
+		e.comment("index check, fast path: index AND NOT(%d - 1), mask 0x%08x", length, ^(length - 1))
+		e.line("%s = and i32 %s, %d", masked, index, int32(^(length - 1)))
+		e.line("%s = icmp ne i32 %s, 0", bad, masked)
+	} else {
+		e.comment("index check, slow path: unsigned index < length %d", length)
+		e.line("%s = icmp uge i32 %s, %d", bad, index, length)
+	}
+	stop, ok := e.newLabel("stop"), e.newLabel("ok")
+	e.line("br i1 %s, label %%%s, label %%%s, !prof !0", bad, stop, ok)
+	e.body.WriteString(ok + ":\n")
+	negative, negativeLabel, rangeLabel := e.localNew(), e.newLabel("stop"), e.newLabel("stop")
+	fmt.Fprintf(&e.cold, "%s:\n  %s = icmp slt i32 %s, 0\n  br i1 %s, label %%%s, label %%%s\n", stop, negative, index, negative, negativeLabel, rangeLabel)
+	e.coldStop(negativeLabel, StopIndexNegative, pc)
+	e.coldStop(rangeLabel, StopIndexOutOfRange, pc)
+}
+
+// coldStop writes the cold block label that stops the run with stop at pc.
+func (e *emitter) coldStop(label string, stop Stop, pc uint32) {
 	text := e.str(e.stopText(pc, stop))
 	e.declare("cx_rt_stop", "declare void @cx_rt_stop(i32, ptr) noreturn cold nounwind")
-	fmt.Fprintf(&e.cold, "%s:\n  call void @cx_rt_stop(i32 %d, ptr %s)\n  unreachable\n", bad, e.options.StopCodes[stop], text)
+	fmt.Fprintf(&e.cold, "%s:\n  call void @cx_rt_stop(i32 %d, ptr %s)\n  unreachable\n", label, e.options.StopCodes[stop], text)
 }
 
 func (e *emitter) emitFunction(id uint32, fn *ir.Func) error {
@@ -904,9 +940,7 @@ func (e *emitter) instrAddress(pc uint32, in *ir.Instr) error {
 		if err != nil {
 			return err
 		}
-		negative := e.localNew()
-		e.line("%s = icmp slt i32 %s, 0", negative, index)
-		e.check(negative, StopIndexNegative, pc)
+		e.checkIndex(index, in.InstrAux, pc)
 		product := e.localNew()
 		e.line("%s = mul i32 %s, %d", product, index, in.InstrN)
 		sum := e.localNew()

@@ -1,0 +1,20 @@
+// A global [100]i32 indexed at 127 is a runtime error after its last
+// element, 99, is written and read back, and the global after it is
+// not written.
+package main
+
+var a [100]i32
+var after i32
+
+func store(i i32) {
+	global a, after
+	a[i] = 5
+	i32.print(a[i])
+	i32.print(after)
+}
+
+func main() {
+	store(99)
+	store(127)
+	i32.print(2)
+}

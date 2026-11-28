@@ -14,7 +14,7 @@ const ImageFileMagic = "CXIMAGE\x00"
 // ImageFileVersion is the layout version of an image file. Opcode numbers
 // change from one cx version to the next, so a file also stores OpcodeCount
 // and InstrSize, and ImageFileDecode refuses a file whose values differ.
-const ImageFileVersion = 2
+const ImageFileVersion = 3
 
 // ImageFileEncode returns image as bytes that ImageFileDecode reads back,
 // every field little endian in declaration order.

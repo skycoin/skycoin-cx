@@ -198,7 +198,7 @@ func TestRunAddress(t *testing.T) {
 	main := ir.Func{FuncFrameSize: 24, FuncCode: []ir.Instr{
 		// index at frame 16 is 2
 		{InstrOpcode: ir.OpcodeI32Add, InstrMode: ir.InstrModeFrameC, InstrA: vmTestOne, InstrB: vmTestOne, InstrC: 16},
-		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrMode: frameA | ir.InstrModeFrameB, InstrA: 0, InstrB: 16, InstrN: 4, InstrC: scratch},
+		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrMode: frameA | ir.InstrModeFrameB, InstrA: 0, InstrB: 16, InstrN: 4, InstrC: scratch, InstrAux: 4},
 		{InstrOpcode: ir.OpcodeAddressStore, InstrA: vmTestSeven, InstrC: scratch, InstrD: 1, InstrN: 4},
 		// pointer to a[0] at frame 20, then load *(p + 8)
 		{InstrOpcode: ir.OpcodeAddressOf, InstrMode: frameA | ir.InstrModeFrameC, InstrA: 0, InstrC: 20},
@@ -224,25 +224,29 @@ func TestRunAddress(t *testing.T) {
 	}
 }
 
-// TestRunAddressStops stops on a negative index and on an address past the
-// data segment.
+// TestRunAddressStops stops on a negative index, on an index at the length
+// of its array and on an address past the data segment.
 func TestRunAddressStops(t *testing.T) {
 	const scratch = 64 + 16 + uint32(valuetypes.ObjectHeaderSize) + 3
 	negative := ir.Func{FuncFrameSize: 4, FuncCode: []ir.Instr{
 		{InstrOpcode: ir.OpcodeI32Sub, InstrMode: ir.InstrModeFrameC, InstrA: vmTestZero, InstrB: vmTestOne, InstrC: 0},
-		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrMode: ir.InstrModeFrameB, InstrA: vmTestZero, InstrB: 0, InstrN: 4, InstrC: scratch},
+		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrMode: ir.InstrModeFrameB, InstrA: vmTestZero, InstrB: 0, InstrN: 4, InstrC: scratch, InstrAux: 4},
 		{InstrOpcode: ir.OpcodeReturn},
 	}}
 	outside := ir.Func{FuncFrameSize: 4, FuncCode: []ir.Instr{
-		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrA: vmTestZero, InstrB: vmTestHundred, InstrN: 4, InstrC: scratch},
+		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrA: vmTestZero, InstrB: vmTestHundred, InstrN: 4, InstrC: scratch, InstrAux: 1000},
 		{InstrOpcode: ir.OpcodeAddressLoad, InstrA: scratch, InstrN: 4, InstrC: scratch},
+		{InstrOpcode: ir.OpcodeReturn},
+	}}
+	pastEnd := ir.Func{FuncFrameSize: 4, FuncCode: []ir.Instr{
+		{InstrOpcode: ir.OpcodeAddressIndexStatic, InstrA: vmTestZero, InstrB: vmTestHundred, InstrN: 4, InstrC: scratch, InstrAux: 100},
 		{InstrOpcode: ir.OpcodeReturn},
 	}}
 	for _, c := range []struct {
 		fn   ir.Func
 		stop Stop
 		pc   uint32
-	}{{negative, StopIndexNegative, 1}, {outside, StopAddressInvalid, 1}} {
+	}{{negative, StopIndexNegative, 1}, {outside, StopAddressInvalid, 1}, {pastEnd, StopIndexOutOfRange, 0}} {
 		image := vmTestImage(c.fn)
 		image.ImageScratchSize = 4
 		stop, pc := MachineNew(image, 0).Run(0, 0)

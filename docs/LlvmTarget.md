@@ -45,8 +45,11 @@ and links no LLVM.
   frame in memory.
 * A load of a literal of `ImageReadOnly` becomes a constant.
 * Every check of vm stops the native run the same way: the call depth and
-  stack size of a call, a negative index, an address outside the stack and
-  data segment, and an integer division by zero. The run prints the line vm
+  stack size of a call, an index outside its array, an address outside the
+  stack and data segment, and an integer division by zero. An index check is
+  one compare and one branch: a mask when the length is a power of two, an
+  unsigned compare with the length otherwise, with a comment in the IR
+  naming the check (optimizations 0006 and 0007). The run prints the line vm
   prints and exits with its exit code.
 
 ## Templates and the runtime

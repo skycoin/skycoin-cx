@@ -12,8 +12,8 @@ number, and the measurement behind it.
 | 0003 | [Pass the frame pointer only to functions that need it](../optimizations/0003-frame-pointer-only-when-needed.txt) | proposed |
 | 0004 | [Call depth only for recursive functions](../optimizations/0004-call-depth-only-for-recursion.txt) | decided, D144 |
 | 0005 | [Arrays as locals and one LLVM global per CX global](../optimizations/0005-arrays-and-globals-out-of-cx-mem.txt) | proposed |
-| 0006 | [Power of two sizes for one instruction bound checks, fast and slow path](../optimizations/0006-power-of-two-sizes.txt) | decided, D146 |
-| 0007 | [Index check as one unsigned compare, the slow path](../optimizations/0007-unsigned-single-compare-bounds.txt) | requested |
+| 0006 | [Power of two sizes for one instruction bound checks, fast and slow path](../optimizations/0006-power-of-two-sizes.txt) | index check built in #614, D146 |
+| 0007 | [Index check as one unsigned compare, the slow path](../optimizations/0007-unsigned-single-compare-bounds.txt) | built in #614 |
 
 The measurements come from hand edits of the IR that `cx build --target=llvm`
 writes, rebuilt with clang -O2 and timed with perf stat on an x86-64 desktop,

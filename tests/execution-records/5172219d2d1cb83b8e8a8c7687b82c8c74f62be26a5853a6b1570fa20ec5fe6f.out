@@ -1,0 +1,13 @@
+5
+error: test-array-bounds-local-128-end.cx:7, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> store()
+ProgramInput
+	test-array-bounds-local-128-end.cx:5 : store() : 128
+Expressions
+ 	test-array-bounds-local-128-end.cx:7 : identity() : <index out of range>
+
+>>> main()
+Expressions
+ 	test-array-bounds-local-128-end.cx:7 : identity() : <index out of range>
+

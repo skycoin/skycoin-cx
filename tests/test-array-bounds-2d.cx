@@ -1,0 +1,16 @@
+// The inner index of a [3][5]i32 is checked against 5, not against the
+// whole array, so a[1][5] is a runtime error and does not reach a[2][0].
+package main
+
+func store(i i32, j i32) {
+	var a [3][5]i32
+	a[i][j] = 5
+	i32.print(a[i][j])
+	i32.print(a[2][0])
+}
+
+func main() {
+	store(2, 4)
+	store(1, 5)
+	i32.print(2)
+}

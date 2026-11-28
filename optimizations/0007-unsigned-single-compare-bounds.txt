@@ -1,5 +1,5 @@
 0007 Index check as one unsigned compare
-Status: requested by Synth (message 777), the slow path of 0006. Not built.
+Status: requested by Synth (message 777), the slow path of 0006. Built in #614.
 
 Where: the index check in the LLVM output (t3-cx-compiler-llvm) and in the
 vm (OpcodeAddressIndex in the vm loop).
@@ -20,3 +20,12 @@ power of two (0006).
 
 Expected cost: no more than today's check, which already does one compare
 for the lower bound and one for the memory end.
+
+Built: the lowering stores the length of the indexed dimension in Aux of
+OpcodeAddressIndex and OpcodeAddressIndexStatic. vm compares the index once
+as a uint32 for every length. The LLVM output compares it the same way when
+the length is not a power of two, with a comment naming the check. The
+cold path tells a negative index (CX_RUNTIME_INVALID_CAST) from one past the
+end (CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE), so the hot path keeps one compare.
+The old loop checks the same lengths. cx-bench cx-llvm medians of 7 runs,
+layouts a and b, moved by -0.9 to +1.4 percent, within the run to run spread.

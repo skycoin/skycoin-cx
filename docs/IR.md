@@ -875,8 +875,12 @@ as `execute.RunCompiled` does.
   the output is written. The lowering adds a hand off after every print in
   the output modes `instant` and `thread`, and `ImageOutputMode` tells the
   caller which writer to use (decision D142).
-* `StopIndexNegative` is a negative index, `CX_RUNTIME_INVALID_CAST` as in
-  `types.I32ToPtrCast`. `StopAddressInvalid` is a computed address or str
+* An index is checked against the length of its array dimension, `Aux` of
+  `OpcodeAddressIndex`, with one unsigned compare, so a negative index fails
+  the same compare (optimization 0007). `StopIndexNegative` is a negative
+  index, `CX_RUNTIME_INVALID_CAST` as in `types.I32ToPtrCast`, and
+  `StopIndexOutOfRange` an index at or past the length,
+  `CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE` as for a slice. `StopAddressInvalid` is a computed address or str
   outside the stack and data segment, where the old loop would read the heap.
 * `StopDivideByZero` and `StopStackOverflow` end the run. `printer.VmErrorPrint` prints them as
   the old loop does, the line from `ir.LineAt` and the call stack by copying

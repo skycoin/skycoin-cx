@@ -33,10 +33,11 @@ const (
 // buildLlvmStops maps each stop of the emitted code to the vm stop it
 // copies.
 var buildLlvmStops = [llvm.StopCount]vm.Stop{
-	llvm.StopDivideByZero:   vm.StopDivideByZero,
-	llvm.StopStackOverflow:  vm.StopStackOverflow,
-	llvm.StopIndexNegative:  vm.StopIndexNegative,
-	llvm.StopAddressInvalid: vm.StopAddressInvalid,
+	llvm.StopDivideByZero:    vm.StopDivideByZero,
+	llvm.StopStackOverflow:   vm.StopStackOverflow,
+	llvm.StopIndexNegative:   vm.StopIndexNegative,
+	llvm.StopAddressInvalid:  vm.StopAddressInvalid,
+	llvm.StopIndexOutOfRange: vm.StopIndexOutOfRange,
 }
 
 // buildLlvmOptions gives the emitted code the exit codes and messages of vm.

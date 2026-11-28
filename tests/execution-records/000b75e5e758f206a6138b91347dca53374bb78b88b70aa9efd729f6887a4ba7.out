@@ -1,0 +1,15 @@
+5
+0
+error: test-array-bounds-global-128-end.cx:11, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> store()
+ProgramInput
+	test-array-bounds-global-128-end.cx:9 : store() : 128
+Expressions
+ 	test-array-bounds-global-128-end.cx:11 : identity() : <index out of range>
+	test-array-bounds-global-128-end.cx:13 : i32.print() : 0
+
+>>> main()
+Expressions
+ 	test-array-bounds-global-128-end.cx:13 : i32.print() : 0
+

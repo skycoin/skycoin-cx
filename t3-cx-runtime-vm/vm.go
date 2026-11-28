@@ -40,6 +40,9 @@ const (
 	// StopOutputFlush asks the caller to write MachineOutput and wait until
 	// it is written, the flush of the program, then Resume (decision D142).
 	StopOutputFlush
+	// StopIndexOutOfRange is an array index at or past the length of the
+	// array, the error the old loop gives for a slice index.
+	StopIndexOutOfRange
 	// StopCount is one past the last Stop.
 	StopCount
 )
@@ -51,25 +54,27 @@ const stopSlow = StopCount
 // StopExitCodes is the process exit code of each Stop, the code the old loop
 // exits with for the same failure. Read only.
 var StopExitCodes = [StopCount]int32{
-	StopReturn:         valuetypes.CXSuccess,
-	StopOutputFull:     valuetypes.CXSuccess,
-	StopTestFailed:     valuetypes.CXSuccess,
-	StopDivideByZero:   valuetypes.CXRuntimeError,
-	StopStackOverflow:  valuetypes.CXRuntimeStackOverflowError,
-	StopOpcodeInvalid:  valuetypes.CXRuntimeNotImplemented,
-	StopIndexNegative:  valuetypes.CXRuntimeInvalidCast,
-	StopAddressInvalid: valuetypes.CXRuntimeError,
-	StopOutputFlush:    valuetypes.CXSuccess,
+	StopReturn:          valuetypes.CXSuccess,
+	StopOutputFull:      valuetypes.CXSuccess,
+	StopTestFailed:      valuetypes.CXSuccess,
+	StopDivideByZero:    valuetypes.CXRuntimeError,
+	StopStackOverflow:   valuetypes.CXRuntimeStackOverflowError,
+	StopOpcodeInvalid:   valuetypes.CXRuntimeNotImplemented,
+	StopIndexNegative:   valuetypes.CXRuntimeInvalidCast,
+	StopIndexOutOfRange: valuetypes.CXRuntimeSliceIndexOutOfRange,
+	StopAddressInvalid:  valuetypes.CXRuntimeError,
+	StopOutputFlush:     valuetypes.CXSuccess,
 }
 
 // StopMessages is what vm prints after the error string for each error
 // stop, the value the panic of the old loop carried. Read only.
 var StopMessages = [StopCount]string{
-	StopDivideByZero:   "runtime error: integer divide by zero",
-	StopStackOverflow:  opcodetable.StackOverflowError,
-	StopOpcodeInvalid:  "invalid image opcode",
-	StopIndexNegative:  strconv.Itoa(valuetypes.CXRuntimeInvalidCast),
-	StopAddressInvalid: "address outside the stack and data segment",
+	StopDivideByZero:    "runtime error: integer divide by zero",
+	StopStackOverflow:   opcodetable.StackOverflowError,
+	StopOpcodeInvalid:   "invalid image opcode",
+	StopIndexNegative:   strconv.Itoa(valuetypes.CXRuntimeInvalidCast),
+	StopIndexOutOfRange: strconv.Itoa(valuetypes.CXRuntimeSliceIndexOutOfRange),
+	StopAddressInvalid:  "address outside the stack and data segment",
 }
 
 // Resumable reports whether the caller may Resume after stop.
@@ -206,4 +211,13 @@ func (machine *Machine) stopAt(stop Stop, pc uint32, fp uint32, sp uint32) Stop 
 	machine.MachineFramePointer = fp
 	machine.MachineStackPointer = sp
 	return stop
+}
+
+// indexStop is the stop of an index that failed its check, negative or past
+// the end, as the old loop tells them apart.
+func indexStop(index int32) Stop {
+	if index < 0 {
+		return StopIndexNegative
+	}
+	return StopIndexOutOfRange
 }

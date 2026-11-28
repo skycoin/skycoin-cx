@@ -1,0 +1,15 @@
+// A local [128]i32 indexed at 128 is a runtime error after its last
+// element, 127, is written and read back.
+package main
+
+func store(i i32) {
+	var a [128]i32
+	a[i] = 5
+	i32.print(a[i])
+}
+
+func main() {
+	store(127)
+	store(128)
+	i32.print(2)
+}

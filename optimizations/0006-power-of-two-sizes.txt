@@ -1,6 +1,8 @@
 0006 Power of two sizes for one instruction bound checks
 Status: decided by Synth, D146 (internal sizes powers of two, the stack size limit
-a power of two, two paths for program arrays). Not built.
+a power of two, two paths for program arrays). The two paths of the index
+check built in #614. The power of two stack, frame and buffer sizes are not
+built.
 
 Problem: a bound check written as two compares (below zero, at or above the
 end) costs two compares and two branches.
@@ -32,3 +34,10 @@ check tests which path it is at run time.
 
 The compiler writes a comment next to each check in the emitted IR, naming
 the check and its mask.
+
+Built (index check only): a power of two length gets
+  index AND NOT(length - 1), branch if not zero
+in the LLVM output, with a comment naming the check and its mask. clang -O2
+turns that test into the same unsigned compare as the slow path (cmp +
+jae), so on x86-64 both paths compile to one compare and one branch. vm uses
+the unsigned compare of 0007 for every length.

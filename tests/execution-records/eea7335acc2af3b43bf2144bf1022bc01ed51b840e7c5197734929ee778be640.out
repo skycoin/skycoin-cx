@@ -1,0 +1,16 @@
+5
+0
+error: test-array-bounds-2d.cx:7, CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE, 9
+===Callstack===
+>>> store()
+ProgramInput
+	test-array-bounds-2d.cx:5 : store() : 1
+ProgramInput
+	test-array-bounds-2d.cx:5 : store() : 5
+Expressions
+ 	test-array-bounds-2d.cx:7 : identity() : <index out of range>
+
+>>> main()
+Expressions
+ 	test-array-bounds-2d.cx:7 : identity() : <index out of range>
+

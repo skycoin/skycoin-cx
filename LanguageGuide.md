@@ -421,6 +421,10 @@ Lastly, we can see how we can set array elements using the bracket
 notation, e.g. `arr1[0] = 10`.
 Each index takes its own brackets, as in `arr3[1][0]`. A comma inside
 the brackets, `arr3[1, 0]`, is a syntax error.
+Every index is checked against the length of its dimension at run time. An
+index below 0 is the runtime error `CX_RUNTIME_INVALID_CAST`, and an index
+at or past the length, `arr1[5]` above, is
+`CX_RUNTIME_SLICE_INDEX_OUT_OF_RANGE` as for a slice.
 
 An array can hold pointers and structs of another package, as in Go,
 in variables, fields, parameters and results. `[3]*i32` is an array of

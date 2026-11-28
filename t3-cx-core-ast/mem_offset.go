@@ -198,6 +198,20 @@ func offsetIndexFromI32(value int32, fault *bool) valuetypes.Pointer {
 	return valuetypes.I32ToPtrCast(value)
 }
 
+// offsetArrayIndex is value as an index of an array dimension of length
+// elements. Outside it, it panics with its CX error or sets *fault. Length 0
+// is a slice field, which the slice check after it checks.
+func offsetArrayIndex(value int32, length valuetypes.Pointer, fault *bool) valuetypes.Pointer {
+	if valuetypes.Pointer(uint32(value)) < length || (length == 0 && value >= 0) {
+		return valuetypes.Pointer(value)
+	}
+	if value < 0 {
+		return offsetIndexFromI32(value, fault)
+	}
+	offsetSliceIndexCheck(false, fault)
+	return 0
+}
+
 // offsetSliceIndexCheck panics with CXRuntimeSliceIndexOutOfRange when
 // an index is out of range, or sets *fault when fault is set.
 func offsetSliceIndexCheck(valid bool, fault *bool) {
@@ -267,7 +281,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp valuetypes.Pointer, oldArg *CXArgum
 			sizeOfElement := subSize * sizeToUse
 			// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 			// Now an arena getter, site S0374.
-			argTypeSigOffset += offsetIndexFromI32(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, fp, nil, prgrm.CXTypeSignatureFromArrayGet(arrDetails.Indexes[i]), fault)), fault) * sizeOfElement
+			argTypeSigOffset += offsetArrayIndex(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, fp, nil, prgrm.CXTypeSignatureFromArrayGet(arrDetails.Indexes[i]), fault)), arrDetails.Lengths[i], fault) * sizeOfElement
 		}
 
 		return argTypeSigOffset
@@ -292,7 +306,7 @@ func finalOffsetCompute(prgrm *CXProgram, fp valuetypes.Pointer, oldArg *CXArgum
 				sizeOfElement := subSize * sizeToUse
 				// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 				// Now an arena getter, site S0376.
-				finalOffset += offsetIndexFromI32(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, fp, nil, prgrm.CXTypeSignatureFromArrayGet(arrDetails.Indexes[i]), fault)), fault) * sizeOfElement
+				finalOffset += offsetArrayIndex(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, fp, nil, prgrm.CXTypeSignatureFromArrayGet(arrDetails.Indexes[i]), fault)), arrDetails.Lengths[i], fault) * sizeOfElement
 			}
 		}
 
@@ -485,7 +499,7 @@ func DereferenceArrayCalculate(prgrm *CXProgram, drfsStruct *DereferenceStruct) 
 
 	// OBJMODEL: state.CXTypeSignatureMng.CXTypeSignatureGet(gid), phase 5 #332.
 	// Now an arena getter, site S0385.
-	drfsStruct.finalOffset += offsetIndexFromI32(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, drfsStruct.fp, nil, prgrm.CXTypeSignatureFromArrayGet(drfsStruct.arg.Indexes[drfsStruct.indexCounter]), drfsStruct.fault)), drfsStruct.fault) * drfsStruct.sizeofElement // TODO:PTR Use Read_ptr
+	drfsStruct.finalOffset += offsetArrayIndex(valuetypes.I32Read(prgrm.Memory, finalOffsetCompute(prgrm, drfsStruct.fp, nil, prgrm.CXTypeSignatureFromArrayGet(drfsStruct.arg.Indexes[drfsStruct.indexCounter]), drfsStruct.fault)), drfsStruct.arg.Lengths[drfsStruct.indexCounter], drfsStruct.fault) * drfsStruct.sizeofElement // TODO:PTR Use Read_ptr
 	drfsStruct.indexCounter++
 }
 

@@ -201,11 +201,13 @@ const (
 	// failed test when they differ. C is the message string.
 	OpcodeTestEqual
 	// OpcodeAddressIndexStatic writes the address A plus N times the i32 at
-	// B to the address slot C. A negative index stops the run. An address
-	// slot is a uint32 in the scratch area.
+	// B to the address slot C. Aux is the length of the array. An index that
+	// is not below Aux as a uint32, so also a negative one, stops the run. An
+	// address slot is a uint32 in the scratch area.
 	OpcodeAddressIndexStatic
 	// OpcodeAddressIndex writes the address in slot A plus M, plus N times
-	// the i32 at B, to slot C.
+	// the i32 at B, to slot C, checked against Aux as
+	// OpcodeAddressIndexStatic.
 	OpcodeAddressIndex
 	// OpcodeAddressDerefStatic writes the pointer at A to slot C. A pointer
 	// outside the stack and data segment stops the run.
